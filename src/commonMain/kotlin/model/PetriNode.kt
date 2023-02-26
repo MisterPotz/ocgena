@@ -1,8 +1,8 @@
 package model
 
 interface PetriNode {
-    val inputArcs : List<Arc>
-    val outputArcs : List<Arc>
+    val inputArcs : MutableList<Arc>
+    val outputArcs : MutableList<Arc>
     companion object {
         val EMPTY = emptyList<Arc>()
     }

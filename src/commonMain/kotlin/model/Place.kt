@@ -3,12 +3,17 @@ package model
 class Place(
     override val label : String? = null,
     val type : ObjectType,
-    override val inputArcs: List<Arc> = emptyList(),
-    override val outputArcs: List<Arc> = emptyList(),
+    override val inputArcs: MutableList<Arc> = mutableListOf(),
+    override val outputArcs: MutableList<Arc> = mutableListOf(),
 ) : PetriNode, LabelHolder {
     var tokens : Int = 0
 
-    fun consume(amount: Int) {
-        require
+    fun consumeTokens(amount: Int) {
+        require(tokens >= amount)
+        tokens -= amount
+    }
+
+    fun addTokens(amount: Int) {
+        tokens += amount
     }
 }

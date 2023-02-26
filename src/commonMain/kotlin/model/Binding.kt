@@ -16,20 +16,29 @@ class Binding(
                         // TODO: enforce full consistency? -> let's suppose at this development stage
                         //  that the net is already consistent in a sense that there are no other arc for the same
                         //  object type
-                        "arcs required to be of same type for the same object type"
+                        "arcs required to be of same type for one object type"
                     }
-                    val toBeConsumed = inputArc.multiplicity
-                    val toBeProduced = outputArc.multiplicity
-                    inputPlace.
+                    val toBeConsumed : Int
+                    val toBeProduced : Int
+
+                    when (inputArc) {
+                       is NormalArc -> {
+                            toBeConsumed = inputArc.multiplicity
+                            toBeProduced = outputArc.multiplicity
+                       }
+                        is VariableArc -> {
+                            toBeConsumed = inputPlace.tokens
+                            // TODO: here, can alter the amount of tokens that are produced based on the given
+                            //  consumed amount of tokens
+                            toBeProduced = toBeConsumed
+                        }
+                        else -> throw IllegalStateException("unrecognized type of arc: $inputArc")
+                    }
+                    inputPlace.consumeTokens(toBeConsumed)
+                    outputPlace.addTokens(toBeProduced)
+
                 }
 
-            }
-        }
-        for (inputPlace in inputPlaces) {
-            for (outputPlace in outputPlaces) {
-                if (inputPlace.type == outputPlace.type) {
-
-                }
             }
         }
     }

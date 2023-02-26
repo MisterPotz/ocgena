@@ -1,16 +1,14 @@
 package model
 
 abstract class Arc {
-    open val arrowNode : PetriNode? = null
-    open val tailNode : PetriNode? = null
-    abstract val multiplicity : Int
+    open var arrowNode : PetriNode? = null
+    open var tailNode : PetriNode? = null
 
     fun requireTailPlace() : Place {
         return checkNotNull(tailNode as? Place) {
             "tail place was required not null"
         }
     }
-
 
     fun requireArrowPlace() : Place {
         return checkNotNull(arrowNode as? Place) {
@@ -23,9 +21,9 @@ abstract class Arc {
 }
 
 class NormalArc(
-    override val arrowNode: PetriNode?,
-    override val tailNode: PetriNode?,
-    override val multiplicity: Int = 1
+    override var arrowNode: PetriNode?,
+    override var tailNode: PetriNode?,
+    val multiplicity: Int = 1
 ) : Arc() {
     override fun tailPlaceHasEnoughTokens() : Boolean {
         return (tailNode!! as Place).tokens >= multiplicity
@@ -37,16 +35,16 @@ class NormalArc(
 }
 
 class VariableArc(
-    override val arrowNode: PetriNode?,
-    override val tailNode: PetriNode?,
+    override var arrowNode: PetriNode?,
+    override var tailNode: PetriNode?,
     // TODO: sets up the allowed multiplicity dynamically, probably needs some parameters
-    private val _multiplicity : () -> Int,
+//    private val _multiplicity : () -> Int,
 ) : Arc() {
-    override val multiplicity : Int
-        get() = _multiplicity()
+//    override val multiplicity : Int
+//        get() = _multiplicity()
     override fun tailPlaceHasEnoughTokens(): Boolean {
-        val multiplicity = _multiplicity()
-        return (tailNode!! as Place).tokens >= multiplicity
+//        val multiplicity = _multiplicity()
+        return (tailNode!! as Place).tokens >= 1
     }
 
     override fun isSameArcType(other: Arc): Boolean {
