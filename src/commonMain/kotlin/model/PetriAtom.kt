@@ -1,7 +1,7 @@
 package model
 
 interface PetriAtom {
-    fun acceptConsistencyChecker(visitor: ParsingConsistencyCheckVisitor)
+    fun acceptVisitor(visitor: PetriAtomVisitor)
     var subgraphIndex : Int
 
     companion object {

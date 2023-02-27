@@ -1,76 +1,55 @@
 package model
 
+import kotlinx.coroutines.sync.Mutex
+
+/**
+ * the net, formed with passed arguments, must already be consistent
+ */
 class OCNet(
-    /**
-     * at least one place from all possible subgraphs of a net (not
-     * necessarily input places)
-     */
-    private val places : List<Place>
+    val inputPlaces : List<Place>,
+    val outputPlaces : List<Place>,
+    val objectTypes : List<ObjectType>
 ) {
-    private var lastConsistencyResults : List<ConsistencyCheckError>? = null
-    private var inputPlaces : List<Place>? = null
-    private var outputPlaces : List<Place>? = null
+    private val executionLock : Mutex = Mutex()
 
-    val isConsistent : Boolean
-        get() = lastConsistencyResults?.isEmpty() ?: false
+    interface Logger {
+        // TODO: pass in to visitors to log the performance
+        fun logBindingExecution(binding: Binding)
+    }
 
-    fun checkConsistency() : List<ConsistencyCheckError> {
-        val inconsistencies = mutableListOf<ConsistencyCheckError>()
+    interface ExecutionConditions {
 
-        val visitedAtomsSet = mutableSetOf<PetriAtom>()
-        val createdCheckVisitors = mutableListOf<FullParsingConsistencyCheckVisitor>()
+        // for terminate
+        fun checkIfTerminate(ocNet: OCNet) : Boolean
 
-        var currentSubgraphIndex = createdCheckVisitors.size
+        // TODO: for debug ability
+        suspend fun checkIfSuspend(ocNet: OCNet, lastExecutionBinding: Binding)
 
-        // case 1 - parse and check for isolated subgraphs
-        for (place in places) {
-            if (place in visitedAtomsSet) {
-                // the subgraph of this place was already visited
-            } else {
-                val visitor = FullParsingConsistencyCheckVisitor(
-                    assignedSubgraphIndex = currentSubgraphIndex
-                )
-                createdCheckVisitors.add(visitor)
-                place.acceptConsistencyChecker(visitor)
-                visitedAtomsSet.addAll(visitor.visitedSet)
-                currentSubgraphIndex = createdCheckVisitors.size
+        // TODO: this method can fulfill both interactive mode and automatic
+        suspend fun selectBindingToExecute(enabledBindings : List<Binding>) : Binding
+    }
+
+    suspend fun run(
+        executionConditions: ExecutionConditions,
+        logger: Logger
+    ) {
+        if (executionLock.isLocked) return
+        executionLock.lock()
+
+        val enabledBindingCollectorVisitor = EnabledBindingCollectorVisitor()
+
+        while (!executionConditions.checkIfTerminate(this)) {
+            // find enabled bindings
+            for (inputPlace in inputPlaces)  {
+                inputPlace.acceptVisitor(enabledBindingCollectorVisitor)
             }
+            val collectedEnabledBindings = enabledBindingCollectorVisitor.obtainedEnabledBindings
+            val selectedBinding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
+            enabledBindingCollectorVisitor.clear()
+
+            executionConditions.checkIfSuspend(this, selectedBinding)
         }
 
-        for (i in 2..createdCheckVisitors.size) {
-            val checkVisitor = createdCheckVisitors[i - 1]
-            inconsistencies.add(
-                ConsistencyCheckError.IsolatedSubgraphsDetected(
-                    checkVisitor.visitedSet.toList()
-                )
-            )
-        }
-
-        // case 2 - check input places presence
-        val allInputPlaces = mutableListOf<Place>()
-        for (visitor in createdCheckVisitors) {
-            allInputPlaces.addAll(visitor.obtainedInputPlaces)
-        }
-        if (allInputPlaces.isEmpty()) {
-            inconsistencies.add(ConsistencyCheckError.NoInputPlacesDetected)
-        }
-
-        // case 3 - check output places presence
-        val allOutputPlaces = mutableListOf<Place>()
-        for (visitor in createdCheckVisitors) {
-            allOutputPlaces.addAll(visitor.obtainedOutputPlaces)
-        }
-        if (allOutputPlaces.isEmpty()) {
-            inconsistencies.add(ConsistencyCheckError.NoOutputPlacesDetected)
-        }
-        lastConsistencyResults = inconsistencies
-        if (isConsistent) {
-            inputPlaces = allInputPlaces
-            outputPlaces = allOutputPlaces
-        } else {
-            inputPlaces = null
-            outputPlaces = null
-        }
-        return inconsistencies
+        executionLock.unlock()
     }
 }

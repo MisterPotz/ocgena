@@ -6,7 +6,7 @@ interface PetriNode: ConsistencyCheckable, PetriAtom {
 
     fun addInputArc(arc: Arc)
     fun addOutputArc(arc: Arc)
-    override fun acceptConsistencyChecker(visitor: ParsingConsistencyCheckVisitor)
+    override fun acceptVisitor(visitor: PetriAtomVisitor)
 
     companion object {
         val EMPTY = emptyList<Arc>()

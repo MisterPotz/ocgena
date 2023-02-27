@@ -1,51 +1,47 @@
 package model
 
-class FullParsingConsistencyCheckVisitor(
-    val assignedSubgraphIndex : Int,
-) : ParsingConsistencyCheckVisitor {
-    private class VisitedAndRecursiveStacks(
-        val visitedSet: MutableSet<PetriAtom> = mutableSetOf(),
-        val recursiveStack: MutableList<PetriAtom> = mutableListOf()
-    )
-    private val cyclicStacks : VisitedAndRecursiveStacks = VisitedAndRecursiveStacks()
-    val obtainedOutputPlaces : MutableList<Place> = mutableListOf()
-    val obtainedInputPlaces : MutableList<Place> = mutableListOf()
+class ConsistencyCheckPetriAtomVisitor(
+    val assignedSubgraphIndex: Int,
+) : PetriAtomVisitor {
+    private val recursionProtector = RecursionProtector()
+    val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
+    val obtainedInputPlaces: MutableList<Place> = mutableListOf()
 
     private val inconsistenciesSet: MutableList<ConsistencyCheckError> = mutableListOf()
 
-    val visitedSet : MutableSet<PetriAtom>
-        get() = cyclicStacks.visitedSet
+    val visitedSet: MutableSet<PetriAtom>
+        get() = recursionProtector.visitedSet
 
-    override fun checkConsistencyForArc(arc: Arc) {
-        setSubgraphIndexTo(arc)
-        recordIfArcConsistencyErrors(arc)
+    override fun visitArc(arc: Arc) {
         protectWithRecursionStack(arc) {
+            setSubgraphIndexTo(arc)
+            recordIfArcConsistencyErrors(arc)
             arc.arrowNode?.let { arrowNode ->
                 when (arrowNode) {
-                    is Transition -> checkConsistencyForTransition(arrowNode)
-                    is Place -> checkConsistencyForPlace(arrowNode)
+                    is Transition -> visitTransition(arrowNode)
+                    is Place -> visitPlace(arrowNode)
                     else -> throw IllegalStateException("unsupported arrowNode $arrowNode of type ${arrowNode::class}")
                 }
             }
         }
     }
 
-    override fun checkConsistencyForTransition(transition: Transition) {
-        setSubgraphIndexTo(transition)
-        recordIfTransitionConsistencyErrors(transition)
+    override fun visitTransition(transition: Transition) {
         protectWithRecursionStack(transition) {
+            setSubgraphIndexTo(transition)
+            recordIfTransitionConsistencyErrors(transition)
             for (outputArc in transition.outputArcs) {
-                checkConsistencyForArc(outputArc)
+                visitArc(outputArc)
             }
         }
     }
 
-    override fun checkConsistencyForPlace(place: Place) {
-        setSubgraphIndexTo(place)
-        recordIfPlaceConsistencyErrors(place)
+    override fun visitPlace(place: Place) {
         protectWithRecursionStack(place) {
+            setSubgraphIndexTo(place)
+            recordIfPlaceConsistencyErrors(place)
             for (outputArc in place.outputArcs) {
-                checkConsistencyForArc(outputArc)
+                visitArc(outputArc)
             }
         }
     }
@@ -55,7 +51,7 @@ class FullParsingConsistencyCheckVisitor(
             inconsistenciesSet.add(
                 ConsistencyCheckError.MissingNode(
                     arc = arc,
-                    debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, arc)
+                    debugPath = copyAndAppendTraversalPath(arc)
                 )
             )
         }
@@ -63,7 +59,7 @@ class FullParsingConsistencyCheckVisitor(
             inconsistenciesSet.add(
                 ConsistencyCheckError.ArcInputEqualsOutput(
                     arc = arc,
-                    debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, arc)
+                    debugPath = copyAndAppendTraversalPath(arc)
                 )
             )
         }
@@ -72,13 +68,14 @@ class FullParsingConsistencyCheckVisitor(
     private fun setSubgraphIndexTo(petriAtom: PetriAtom) {
         petriAtom.subgraphIndex = assignedSubgraphIndex
     }
+
     private fun recordIfTransitionConsistencyErrors(transition: Transition) {
         // case 1
         if (transition.inputArcs.isEmpty() || transition.outputArcs.isEmpty()) {
             inconsistenciesSet.add(
                 ConsistencyCheckError.MissingArc(
                     transition = transition,
-                    debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, transition)
+                    debugPath = copyAndAppendTraversalPath(transition)
                 )
             )
         }
@@ -92,7 +89,7 @@ class FullParsingConsistencyCheckVisitor(
                     ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition(
                         place = inputPlace,
                         transition = transition,
-                        debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, transition)
+                        debugPath = copyAndAppendTraversalPath(transition)
                     )
                 )
             } else {
@@ -107,7 +104,7 @@ class FullParsingConsistencyCheckVisitor(
                     ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition(
                         place = outputPlace,
                         transition = transition,
-                        debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, transition)
+                        debugPath = copyAndAppendTraversalPath(transition)
                     )
                 )
             }
@@ -146,7 +143,7 @@ class FullParsingConsistencyCheckVisitor(
                 inconsistenciesSet.add(
                     ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                         transition = transition,
-                        debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, transition)
+                        debugPath = copyAndAppendTraversalPath(transition)
                     )
                 )
             }
@@ -157,7 +154,7 @@ class FullParsingConsistencyCheckVisitor(
                 inconsistenciesSet.add(
                     ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                         transition = transition,
-                        debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, transition)
+                        debugPath = copyAndAppendTraversalPath(transition)
                     )
                 )
             }
@@ -170,46 +167,31 @@ class FullParsingConsistencyCheckVisitor(
             inconsistenciesSet.add(
                 ConsistencyCheckError.IsolatedPlace(
                     place = place,
-                    debugPath = copyAndAppendTraversalPath(cyclicStacks.recursiveStack, place)
+                    debugPath = copyAndAppendTraversalPath(place)
                 )
             )
         }
         // case 2 - input place has input arcs
         if (place.placeType == PlaceType.INPUT && place.inputArcs.isNotEmpty()) {
             inconsistenciesSet.add(
-                ConsistencyCheckError.InputPlaceHasInputArcs(place, copyAndAppendTraversalPath(cyclicStacks.recursiveStack, place))
+                ConsistencyCheckError.InputPlaceHasInputArcs(place, copyAndAppendTraversalPath(place))
             )
         }
         // case 3 - output place has output arcs
         if (place.placeType == PlaceType.OUTPUT && place.outputArcs.isNotEmpty()) {
             inconsistenciesSet.add(
-                ConsistencyCheckError.OutputPlaceHasOutputArcs(place, copyAndAppendTraversalPath(cyclicStacks.recursiveStack, place))
+                ConsistencyCheckError.OutputPlaceHasOutputArcs(place, copyAndAppendTraversalPath(place))
             )
         }
     }
 
-    private fun copyAndAppendTraversalPath(recursiveStack : List<PetriAtom>, atom: PetriAtom): List<PetriAtom> {
-        return recursiveStack.toMutableList().apply {
+    private fun copyAndAppendTraversalPath(atom: PetriAtom): List<PetriAtom> {
+        return recursionProtector.recursiveStack.toMutableList().apply {
             add(atom)
         }.toList()
     }
 
     private fun protectWithRecursionStack(petriAtom: PetriAtom, block: () -> Unit) {
-        val recursiveStack = cyclicStacks.recursiveStack
-        val visitedSet = cyclicStacks.visitedSet
-
-        if (recursiveStack.contains(petriAtom)) {
-            return
-        }
-        if (visitedSet.contains(petriAtom)) {
-            return
-        }
-
-        visitedSet.add(petriAtom)
-        recursiveStack.add(petriAtom)
-
-        block()
-
-        recursiveStack.remove(petriAtom)
+        recursionProtector.protectWithRecursionStack(petriAtom, block)
     }
 }

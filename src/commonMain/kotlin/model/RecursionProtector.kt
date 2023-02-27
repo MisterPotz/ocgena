@@ -1,0 +1,25 @@
+package model
+
+class RecursionProtector() {
+    val visitedSet: MutableSet<PetriAtom> = mutableSetOf()
+    val recursiveStack: MutableList<PetriAtom> = mutableListOf()
+
+    fun protectWithRecursionStack(petriAtom: PetriAtom, block: () -> Unit) {
+        val recursiveStack = recursiveStack
+        val visitedSet = visitedSet
+
+        if (recursiveStack.contains(petriAtom)) {
+            return
+        }
+        if (visitedSet.contains(petriAtom)) {
+            return
+        }
+
+        visitedSet.add(petriAtom)
+        recursiveStack.add(petriAtom)
+
+        block()
+
+        recursiveStack.remove(petriAtom)
+    }
+}

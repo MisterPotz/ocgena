@@ -4,8 +4,8 @@ abstract class Arc : ConsistencyCheckable, PetriAtom {
     open var arrowNode : PetriNode? = null
     open var tailNode : PetriNode? = null
 
-    override fun acceptConsistencyChecker(visitor: ParsingConsistencyCheckVisitor) {
-        visitor.checkConsistencyForArc(this)
+    override fun acceptVisitor(visitor: PetriAtomVisitor) {
+        visitor.visitArc(this)
     }
 
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
@@ -13,6 +13,18 @@ abstract class Arc : ConsistencyCheckable, PetriAtom {
     fun requireTailPlace() : Place {
         return checkNotNull(tailNode as? Place) {
             "tail place was required not null"
+        }
+    }
+
+    fun requireTailTransition() : Transition {
+        return checkNotNull(tailNode as? Transition) {
+            "tail transition was required to be not null"
+        }
+    }
+
+    fun requireArrowTransition() : Transition {
+        return checkNotNull(arrowNode as? Transition) {
+            "tail transition was required to be not null"
         }
     }
 

@@ -34,7 +34,7 @@ class Transition(
         return inputArcs.all { it.tailPlaceHasEnoughTokens() }
     }
 
-    override fun acceptConsistencyChecker(visitor: ParsingConsistencyCheckVisitor) {
-        visitor.checkConsistencyForTransition(this)
+    override fun acceptVisitor(visitor: PetriAtomVisitor) {
+        visitor.visitTransition(this)
     }
 }

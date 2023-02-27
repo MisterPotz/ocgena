@@ -1,12 +1,12 @@
 package model
 
-interface ParsingConsistencyCheckVisitor {
+interface PetriAtomVisitor {
 
-    fun checkConsistencyForArc(arc: Arc)
+    fun visitArc(arc: Arc)
 
-    fun checkConsistencyForTransition(transition: Transition)
+    fun visitTransition(transition: Transition)
 
-    fun checkConsistencyForPlace(place: Place)
+    fun visitPlace(place: Place)
 }
 
 interface ConsistencyCheckable {

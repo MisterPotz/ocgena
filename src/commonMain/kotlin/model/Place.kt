@@ -32,8 +32,8 @@ class Place(
         }
     }
 
-    override fun acceptConsistencyChecker(visitor: ParsingConsistencyCheckVisitor) {
-        visitor.checkConsistencyForPlace(this)
+    override fun acceptVisitor(visitor: PetriAtomVisitor) {
+        visitor.visitPlace(this)
     }
 
     fun consumeTokens(amount: Int) {
