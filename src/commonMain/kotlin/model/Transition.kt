@@ -37,4 +37,8 @@ class Transition(
     override fun acceptVisitor(visitor: PetriAtomVisitor) {
         visitor.visitTransition(this)
     }
+
+    override fun isSameType(other: PetriNode): Boolean {
+        return other is Transition
+    }
 }

@@ -6,6 +6,8 @@ interface PetriNode: ConsistencyCheckable, PetriAtom {
 
     fun addInputArc(arc: Arc)
     fun addOutputArc(arc: Arc)
+
+    fun isSameType(other : PetriNode) : Boolean
     override fun acceptVisitor(visitor: PetriAtomVisitor)
 
     companion object {

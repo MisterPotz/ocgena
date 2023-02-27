@@ -65,6 +65,11 @@ sealed class ConsistencyCheckError(
         val debugPath: List<PetriAtom>
     ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
 
+    data class IsNotBipartite(
+        val arc: Arc,
+        val debugPath: List<PetriAtom>
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+
     data class ArcInputEqualsOutput(
         val arc: Arc,
         val debugPath: List<PetriAtom>,

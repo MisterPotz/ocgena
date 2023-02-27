@@ -44,4 +44,8 @@ class Place(
     fun addTokens(amount: Int) {
         tokens += amount
     }
+
+    override fun isSameType(other: PetriNode): Boolean {
+        return other is Place
+    }
 }

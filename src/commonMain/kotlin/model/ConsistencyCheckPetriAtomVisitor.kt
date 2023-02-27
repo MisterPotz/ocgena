@@ -47,7 +47,10 @@ class ConsistencyCheckPetriAtomVisitor(
     }
 
     private fun recordIfArcConsistencyErrors(arc: Arc) {
-        if (arc.tailNode == null || arc.arrowNode == null) {
+        val tailNode = arc.tailNode
+        val arrowNode = arc.arrowNode
+
+        if (tailNode == null || arrowNode == null) {
             inconsistenciesSet.add(
                 ConsistencyCheckError.MissingNode(
                     arc = arc,
@@ -55,9 +58,18 @@ class ConsistencyCheckPetriAtomVisitor(
                 )
             )
         }
-        if (arc.tailNode == arc.arrowNode) {
+        if (tailNode == arrowNode) {
             inconsistenciesSet.add(
                 ConsistencyCheckError.ArcInputEqualsOutput(
+                    arc = arc,
+                    debugPath = copyAndAppendTraversalPath(arc)
+                )
+            )
+        }
+
+        if (tailNode != null && arrowNode != null && arrowNode.isSameType(tailNode)) {
+            inconsistenciesSet.add(
+                ConsistencyCheckError.IsNotBipartite(
                     arc = arc,
                     debugPath = copyAndAppendTraversalPath(arc)
                 )
