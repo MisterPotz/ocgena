@@ -3,7 +3,7 @@ package dsl
 class OCScopeImpl(
     val rootScope: OCScopeImpl? = null,
     val defaultScopeType: ObjectTypeDSL? = null,
-) : TypeScope {
+) : TypeScope, SubgraphDSL {
     private val groupIdIssuer: GroupsIdIssuer =
         rootScope?.groupIdIssuer ?: GroupsIdIssuer()
     private val defaultTransitionIdIssuer: NestedIdIssuer
@@ -22,6 +22,21 @@ class OCScopeImpl(
                 label = "object"
             )
 
+    private var _subgraphInput : PlaceDSL? = null
+    private var _subgraphOutput : PlaceDSL? = null
+
+    override var input: PlaceDSL
+        get() = checkNotNull(_subgraphInput)
+        set(value) {
+            _subgraphInput = value
+        }
+
+    override var output: PlaceDSL
+        get() = checkNotNull(_subgraphOutput)
+        set(value) {
+            _subgraphOutput = value
+        }
+
     val places: MutableMap<String, PlaceDSL> = rootScope?.places ?: mutableMapOf()
     private val transitions: MutableMap<String, TransitionDSL> = rootScope?.transitions ?: mutableMapOf()
     private val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
@@ -32,6 +47,11 @@ class OCScopeImpl(
 
     override fun place(block: OCPlaceScope.() -> Unit): PlaceDSL {
         return internalPlace(null, block)
+    }
+
+    override fun setAsInputOutput(placeDSL: PlaceDSL) {
+        input = placeDSL
+        output = placeDSL
     }
 
     override fun place(label: String, block: OCPlaceScope.() -> Unit): PlaceDSL {
@@ -72,6 +92,8 @@ class OCScopeImpl(
         return transitionDSLImpl
     }
 
+
+
     override fun selectPlace(block: PlaceDSL.() -> Boolean): PlaceDSL {
         return places.values.first { atomDSL ->
             atomDSL.block()
@@ -102,6 +124,18 @@ class OCScopeImpl(
         return internalArc(this, linkChainDSLList, multiplicity = multiplicity, isVariable = false)
     }
 
+    override fun subgraph(block: SubgraphDSL.() -> Unit): LinkChainDSL {
+        val newScope = OCScopeImpl(
+            rootScope = rootScope,
+            defaultScopeType = defaultScopeType
+        )
+        newScope.block()
+        return LinkChainDSLImpl(
+            firstElement = newScope.input,
+            lastElement = newScope.output
+        )
+    }
+
     override fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL {
         return internalArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
     }
@@ -120,18 +154,15 @@ class OCScopeImpl(
         multiplicity: Int,
         isVariable: Boolean,
     ): LinkChainDSL {
-        val newLinkChainDSLImpl = LinkChainDSLImpl()
+        val newLinkChainDSLImpl = LinkChainDSLImpl(firstElement = from.lastElement, lastElement = to.firstElement)
 
-        newLinkChainDSLImpl.orderedAtomsList.apply {
-            addAll(from.orderedAtomsList)
+        newLinkChainDSLImpl.apply {
             val newArc = if (isVariable) {
                 VariableArcDSLImpl(tailAtom = from.lastElement, arrowAtom = to.firstElement)
             } else {
                 NormalArcDSLImpl(multiplicity = multiplicity, tailAtom = from.lastElement, arrowAtom = to.firstElement)
             }
-            add(newArc)
             arcs.add(newArc)
-            addAll(to.orderedAtomsList)
         }
         return newLinkChainDSLImpl
     }

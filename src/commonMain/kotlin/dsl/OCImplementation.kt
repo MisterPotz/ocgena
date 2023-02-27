@@ -2,21 +2,9 @@ package dsl
 
 import model.PlaceType
 
-class LinkChainDSLImpl : LinkChainDSL {
-    override val orderedAtomsList: MutableList<AtomDSL> = mutableListOf()
-
-    override val firstElement: AtomDSL
-        get() = orderedAtomsList.first()
-    override val lastElement: AtomDSL
-        get() = orderedAtomsList.last()
-
-    override fun selectPlace(block: PlaceDSL.(atomIndex: Int) -> Boolean): PlaceDSL {
-        return Utils.selectPlace(orderedAtomsList, block)
-    }
-
-    override fun selectTransition(block: TransitionDSL.(atomIndex: Int) -> Boolean): TransitionDSL {
-        return Utils.selectTransition(orderedAtomsList, block)
-    }
+class LinkChainDSLImpl(
+    override val firstElement: AtomDSL,
+    override val lastElement: AtomDSL) : LinkChainDSL {
 }
 
 class VariableArcDSLImpl(
@@ -68,40 +56,16 @@ class PlaceDSLImpl(
 
     override var initialTokens: Int = 0
     override var placeType: PlaceType = PlaceType.NORMAL
-
-    override val orderedAtomsList: List<AtomDSL> = listOf(this)
-
-    override fun selectPlace(block: PlaceDSL.(atomIndex: Int) -> Boolean): PlaceDSL {
-        return Utils.selectPlace(orderedAtomsList, block)
-    }
-
-    override fun selectTransition(block: TransitionDSL.(atomIndex: Int) -> Boolean): TransitionDSL {
-        return Utils.selectTransition(orderedAtomsList, block)
-    }
 }
 
 class TransitionDSLImpl(
     defaultLabel: String,
 ) : TransitionDSL {
-    override val orderedAtomsList: List<AtomDSL> = listOf(this)
-    var userAssignedLabel: Boolean = false
 
     override val firstElement: AtomDSL
         get() = this
     override val lastElement: AtomDSL
         get() = this
     override var label: String = defaultLabel
-        set(value) {
-            userAssignedLabel = true
-            field = value
-        }
-
-    override fun selectPlace(block: PlaceDSL.(atomIndex: Int) -> Boolean): PlaceDSL {
-        return Utils.selectPlace(orderedAtomsList, block)
-    }
-
-    override fun selectTransition(block: TransitionDSL.(atomIndex: Int) -> Boolean): TransitionDSL {
-        return Utils.selectTransition(orderedAtomsList, block)
-    }
 }
 

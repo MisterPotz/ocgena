@@ -4,14 +4,14 @@ import model.OCNetChecker
 import model.PlaceType
 
 class OCNetBuilder {
-    fun build(block: OCScope.() -> Unit): OCNetChecker {
-        val oCScopeImpl = OCScopeImpl()
-        oCScopeImpl.block()
-
-        // TODO: convert the dsl into petri net
-
-        return OCNetChecker(places = oCScopeImpl.places)
-    }
+//    fun build(block: OCScope.() -> Unit): OCNetChecker {
+//        val oCScopeImpl = OCScopeImpl()
+//        oCScopeImpl.block()
+//
+//        // TODO: convert the dsl into petri net
+//
+//        return OCNetChecker(places = oCScopeImpl.places)
+//    }
 }
 
 interface ObjectTypeDSL {
@@ -25,10 +25,9 @@ interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL
 
 interface AtomDSL {}
 interface LinkChainDSL : HasLast, HasFirst {
-    val orderedAtomsList: List<AtomDSL>
 
-    fun selectPlace(block: (PlaceDSL).(atomIndex: Int) -> Boolean): PlaceDSL
-    fun selectTransition(block: (TransitionDSL).(atomIndex: Int) -> Boolean): TransitionDSL
+//    fun selectPlace(block: (PlaceDSL).(atomIndex: Int) -> Boolean): PlaceDSL
+//    fun selectTransition(block: (TransitionDSL).(atomIndex: Int) -> Boolean): TransitionDSL
 }
 
 interface HasFirst {
@@ -83,6 +82,8 @@ interface OCScope {
     infix fun List<HasLast>.arcTo(linkChainDSL: LinkChainDSL): HasLast
     infix fun LinkChainDSL.arcTo(linkChainDSLList: List<HasFirst>): HasFirst
 
+    fun subgraph(block : SubgraphDSL.() -> Unit) : LinkChainDSL
+
     fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): LinkChainDSL
     fun List<HasLast>.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast
     fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSLList: List<HasFirst>): HasFirst
@@ -99,59 +100,8 @@ interface OCPlaceScope {
     var placeType: PlaceType
 }
 
-class CheckDSL {
-    init {
-        val ocNetBuilder = OCNetBuilder()
-        ocNetBuilder.build {
-            val place2 = place {
-
-            }
-            val student = objectType("student")
-            val leader = objectType("leader")
-
-            forType(student) {
-                place {
-                    objectType = leader
-                } arcTo transition { }
-
-            }
-
-            val chain = place {
-                placeType = PlaceType.INPUT
-            } variableArcTo transition {
-
-            } variableArcTo place2 arcTo transition {
-
-            } arcTo listOf(
-                place("name1") {
-
-                },
-                place("name2") { }
-            )
-
-            variableArcTo transition("transition1") {
-
-            } arcTo place {
-                placeType = PlaceType.OUTPUT
-            }
-
-            selectTransition { label == "transition1" } arcTo place {
-                placeType = PlaceType.NORMAL
-            }
-
-            val firstPlace = chain.selectPlace { placeType == PlaceType.INPUT }
-            firstPlace arcTo chain.selectTransition { it == 1 }
-        }
-
-        ocNetBuilder.build {
-            place {
-                placeType = PlaceType.INPUT
-            } arcTo transition {
-
-            } arcTo listOf(
-                place() {  },
-
-            )
-        }
-    }
+interface SubgraphDSL : OCScope {
+    var input : PlaceDSL
+    var output: PlaceDSL
+    fun setAsInputOutput(placeDSL: PlaceDSL)
 }

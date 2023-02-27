@@ -14,14 +14,14 @@ class OCNetChecker(
     val isConsistent : Boolean
         get() = lastConsistencyResults?.isEmpty() ?: false
 
-    fun createConsistentOCNet() : OCNet {
-        require(isConsistent)
-        return OCNet(
-            inputPlaces = checkNotNull(inputPlaces),
-            outputPlaces = checkNotNull(outputPlaces),
-            objectTypes = // TODO: pass the object types
-        )
-    }
+//    fun createConsistentOCNet() : OCNet {
+//        require(isConsistent)
+//        return OCNet(
+//            inputPlaces = checkNotNull(inputPlaces),
+//            outputPlaces = checkNotNull(outputPlaces),
+//            objectTypes = // TODO: pass the object types
+//        )
+//    }
 
     fun checkConsistency() : List<ConsistencyCheckError> {
         val inconsistencies = mutableListOf<ConsistencyCheckError>()
