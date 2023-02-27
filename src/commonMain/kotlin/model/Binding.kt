@@ -1,12 +1,10 @@
 package model
 
 class Binding(
-    val transition: Transition,
+    private val transition: Transition,
 ) {
 
     fun execute() {
-        val inputPlaces = transition.inputPlaces
-        val outputPlaces = transition.outputPlaces
         for (inputArc in transition.inputArcs) {
             for (outputArc in transition.inputArcs) {
                 val inputPlace = inputArc.requireTailPlace()
@@ -24,7 +22,7 @@ class Binding(
                     when (inputArc) {
                        is NormalArc -> {
                             toBeConsumed = inputArc.multiplicity
-                            toBeProduced = outputArc.multiplicity
+                            toBeProduced = (outputArc as NormalArc).multiplicity
                        }
                         is VariableArc -> {
                             toBeConsumed = inputPlace.tokens
@@ -36,9 +34,7 @@ class Binding(
                     }
                     inputPlace.consumeTokens(toBeConsumed)
                     outputPlace.addTokens(toBeProduced)
-
                 }
-
             }
         }
     }

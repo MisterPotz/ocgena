@@ -1,8 +1,14 @@
 package model
 
-abstract class Arc {
+abstract class Arc : ConsistencyCheckable, PetriAtom {
     open var arrowNode : PetriNode? = null
     open var tailNode : PetriNode? = null
+
+    override fun acceptConsistencyChecker(visitor: ParsingConsistencyCheckVisitor) {
+        visitor.checkConsistencyForArc(this)
+    }
+
+    override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
 
     fun requireTailPlace() : Place {
         return checkNotNull(tailNode as? Place) {
