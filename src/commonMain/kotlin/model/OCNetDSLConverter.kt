@@ -14,6 +14,7 @@ class OCNetDSLConverter(
 
     private val createdPlaces: MutableList<Place> = mutableListOf()
     private val createdTransitions: MutableList<Transition> = mutableListOf()
+    private val createdArcs : MutableList<Arc> = mutableListOf()
 
     private fun getOrCreateTransition(transitionDSL: TransitionDSL): Transition {
         return createdTransitions.find { transitionDSL.label == it.label }
@@ -39,7 +40,9 @@ class OCNetDSLConverter(
                     placeType = placeDSL.placeType,
                     _inputArcs = mutableListOf(),
                     _outputArcs = mutableListOf()
-                )
+                ).also {
+                    createdPlaces.add(it)
+                }
             }
     }
 
@@ -90,11 +93,12 @@ class OCNetDSLConverter(
             place?._inputArcs?.add(arc)
         } else {
             place?._outputArcs?.add(arc)
-            transition?._outputArcs?.add(arc)
+            transition?._inputArcs?.add(arc)
         }
+        createdArcs.add(arc)
     }
 
-    fun convert(): List<Place> {
+    fun convert(): Output {
         for (arcDSL in ocNetOCScopeImpl.arcs) {
             createConnectedPlaceAndTransition(arcDSL)
         }
@@ -106,6 +110,26 @@ class OCNetDSLConverter(
         for (transitionDSL in ocNetOCScopeImpl.transitions.values) {
             getOrCreateTransition(transitionDSL)
         }
-        return createdPlaces
+        return Output(
+            places = createdPlaces,
+            transitions = createdTransitions,
+            arcs = createdArcs
+        )
+    }
+
+    class Output(
+        val places : List<Place>,
+        val transitions: List<Transition>,
+        val arcs : List<Arc>
+    ) {
+        override fun toString(): String {
+            return """
+                |Output(
+                |   places: $places
+                |   transitions: $transitions,
+                |   arcs: $arcs
+                |)
+            """.trimMargin()
+        }
     }
 }

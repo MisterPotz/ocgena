@@ -76,6 +76,11 @@ class OCScopeImplTest {
     }
 
     @Test
+    fun testTransitionsAmount() {
+        assertEquals(ocScopeImpl.transitions.size, 8)
+    }
+
+    @Test
     fun testPlaceTypes() {
         assertEquals(
             3,
@@ -138,7 +143,7 @@ class OCScopeImplTest {
     }
 
     @Test
-    fun testAccessToNodesAndConnectedArcs() {
+    fun testAccessToNodesAndConnectedArcsForOrder() {
         with(ocScopeImpl) {
             arcs.forEach {
                 println(it)
@@ -158,6 +163,27 @@ class OCScopeImplTest {
             inputArcFor(place("o3"))
             inputArcFor(place("o4"))
             inputArcFor(place("o5"))
+        }
+    }
+
+    @Test
+    fun testAccessToNodesAndConnectedArcsForItem() {
+        with(ocScopeImpl) {
+            arcs.forEach {
+                println(it)
+            }
+            outputArcFor(place("item_1"))
+            outputArcFor(place("item_2"))
+            outputArcFor(place("item_3"))
+            outputArcFor(place("item_4"))
+            outputArcFor(place("item_5"))
+
+
+            inputArcFor(place("item_2"))
+            inputArcFor(place("item_3"))
+            inputArcFor(place("item_4"))
+            inputArcFor(place("item_5"))
+            inputArcFor(place("item_6"))
         }
     }
 

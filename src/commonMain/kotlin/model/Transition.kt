@@ -40,4 +40,8 @@ class Transition(
     override fun isSameType(other: PetriNode): Boolean {
         return other is Transition
     }
+
+    override fun toString(): String {
+        return "transition [ $label ]"
+    }
 }

@@ -7,71 +7,162 @@ enum class ErrorLevel {
 
 sealed class ConsistencyCheckError(
     val level: ErrorLevel,
+    val debugPath: List<PetriAtom>?,
+    val arcs: List<Arc>? = null,
+    val transition: Transition? = null,
+    val place: Place? = null,
 ) {
+
     // STRUCTURE ---
-    data class IsolatedSubgraphsDetected(
-        val isolatedAtoms : List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.WARNING)
-    object NoInputPlacesDetected : ConsistencyCheckError(ErrorLevel.CRITICAL)
-    object NoOutputPlacesDetected : ConsistencyCheckError(ErrorLevel.CRITICAL)
+    class IsolatedSubgraphsDetected(
+    ) : ConsistencyCheckError(ErrorLevel.WARNING, null) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
+
+    object NoInputPlacesDetected : ConsistencyCheckError(ErrorLevel.CRITICAL, null) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
+
+    object NoOutputPlacesDetected : ConsistencyCheckError(ErrorLevel.CRITICAL, null) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
     // TRANSITION ---
-    data class MissingArc(
-        val transition: Transition,
-        val debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+    class MissingArc(
+        transition: Transition,
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, transition = transition) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
     // TODO: what about case, when there is only \mu arc connected to transition?
-    data class VariableArcIsTheOnlyConnected(
-        val transition: Transition,
-        val debugPath: List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.WARNING)
+    class VariableArcIsTheOnlyConnected(
+        transition: Transition,
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, transition = transition) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
     /**
      * well-formed condition (by Aalst) is not held
      */
-    data class InconsistentVariabilityArcs(
-        val transition: Transition,
-        val inputArc: Arc,
-        val outputArc: Arc,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+    class InconsistentVariabilityArcs(
+        transition: Transition,
+        inputArc: Arc,
+        outputArc: Arc,
+    ) : ConsistencyCheckError(
+        ErrorLevel.CRITICAL,
+        debugPath = null,
+        arcs = listOf(inputArc, outputArc),
+        transition = transition
+    ) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
     // PLACE ---
-    data class MultipleArcsFromSinglePlaceToSingleTransition(
-        val place : Place,
-        val transition: Transition,
-        val debugPath: List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+    class MultipleArcsFromSinglePlaceToSingleTransition(
+        place: Place,
+        transition: Transition,
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place, transition = transition) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
     // TODO: can actually be checked when have set of all atoms
-    data class IsolatedPlace(
-        val place: Place,
-        val debugPath : List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.WARNING)
+    class IsolatedPlace(
+        place: Place,
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, place = place) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
-    data class InputPlaceHasInputArcs(
-        val place : Place,
-        val debugPath : List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+    class InputPlaceHasInputArcs(
+        place: Place,
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
-    data class OutputPlaceHasOutputArcs(
-        val place : Place,
-        val debugPath : List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+    class OutputPlaceHasOutputArcs(
+        place: Place,
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
     // ARC ---
-    data class MissingNode(
+    class MissingNode(
         val arc: Arc,
-        val debugPath: List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
-    data class IsNotBipartite(
+    class IsNotBipartite(
         val arc: Arc,
-        val debugPath: List<PetriAtom>
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath) {
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+    }
 
-    data class ArcInputEqualsOutput(
+    class ArcInputEqualsOutput(
         val arc: Arc,
-        val debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL)
+        debugPath: List<PetriAtom>,
+    ) : ConsistencyCheckError(
+        ErrorLevel.CRITICAL,
+        debugPath
+    ) {
+
+        override fun label(): String {
+            return this::class.simpleName!!
+        }
+
+        override fun toString(): String {
+            return "ArcInputEqualsOutput(arc=$arc)"
+        }
+    }
+
+    abstract fun label(): String
+
+    override fun toString(): String {
+        return """
+            ${label()}(
+                level: $level
+                path: ${debugPath?.let { toStringDebugPath(it) }}
+                arcs: $arcs
+                transition: $transition
+                place: $place
+            )
+        """.trimIndent()
+    }
+
+    companion object {
+        fun toStringDebugPath(debugPath: List<PetriAtom>): String {
+            return debugPath.joinToString(separator = "\t")
+        }
+    }
 }

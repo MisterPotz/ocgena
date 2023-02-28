@@ -9,8 +9,8 @@ class Place(
     override val label : String? = null,
     val type : ObjectType,
     val placeType : PlaceType,
-    val _inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    val _outputArcs: MutableList<Arc> = mutableListOf<Arc>()
+    val _inputArcs: MutableList<Arc> = mutableListOf(),
+    val _outputArcs: MutableList<Arc> = mutableListOf()
 ) : PetriNode, LabelHolder, ConsistencyCheckable {
     override val inputArcs: List<Arc>
         get() = _inputArcs
@@ -47,5 +47,9 @@ class Place(
 
     override fun isSameType(other: PetriNode): Boolean {
         return other is Place
+    }
+
+    override fun toString(): String {
+        return "place [$label [ $type ]]"
     }
 }

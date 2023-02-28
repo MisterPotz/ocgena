@@ -6,49 +6,78 @@ class ConsistencyCheckPetriAtomVisitor(
     private val recursionProtector = RecursionProtector()
     val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
     val obtainedInputPlaces: MutableList<Place> = mutableListOf()
-    val obtainedObjectTypes : MutableSet<ObjectType> = mutableSetOf()
+    val obtainedObjectTypes: MutableSet<ObjectType> = mutableSetOf()
     private val inconsistenciesSet: MutableList<ConsistencyCheckError> = mutableListOf()
+
+    private var discoveredSubgraphIndex: Int? = null
+
+    val subgraphIndex: Int
+        get() = discoveredSubgraphIndex ?: assignedSubgraphIndex
 
     val visitedSet: MutableSet<PetriAtom>
         get() = recursionProtector.visitedSet
 
+    private fun checkIfExistsSubgraphIndex(petriAtom: PetriAtom) : Boolean {
+        if (petriAtom.subgraphIndex != assignedSubgraphIndex
+            && petriAtom.subgraphIndex != PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
+        ) {
+            discoveredSubgraphIndex = petriAtom.subgraphIndex
+            return true
+        }
+        return false
+    }
+
     override fun visitArc(arc: Arc) {
         protectWithRecursionStack(arc) {
-            setSubgraphIndexTo(arc)
             recordIfArcConsistencyErrors(arc)
-            arc.arrowNode?.let { arrowNode ->
-                when (arrowNode) {
-                    is Transition -> visitTransition(arrowNode)
-                    is Place -> visitPlace(arrowNode)
-                    else -> throw IllegalStateException("unsupported arrowNode $arrowNode of type ${arrowNode::class}")
+            val foundParsedSubgraph = checkIfExistsSubgraphIndex(arc)
+            if (!foundParsedSubgraph) {
+                arc.arrowNode?.let { arrowNode ->
+                    when (arrowNode) {
+                        is Transition -> visitTransition(arrowNode)
+                        is Place -> visitPlace(arrowNode)
+                        else -> throw IllegalStateException("unsupported arrowNode $arrowNode of type ${arrowNode::class}")
+                    }
                 }
             }
+            setSubgraphIndexTo(arc)
         }
     }
 
     override fun visitTransition(transition: Transition) {
         protectWithRecursionStack(transition) {
-            setSubgraphIndexTo(transition)
             recordIfTransitionConsistencyErrors(transition)
-            for (outputArc in transition.outputArcs) {
-                visitArc(outputArc)
+            val foundParsedSubgraph = checkIfExistsSubgraphIndex(transition)
+            if (!foundParsedSubgraph) {
+                for (outputArc in transition.outputArcs) {
+                    visitArc(outputArc)
+                }
             }
+            setSubgraphIndexTo(transition)
         }
     }
 
     override fun visitPlace(place: Place) {
         protectWithRecursionStack(place) {
-            setSubgraphIndexTo(place)
-            saveObjectType(place)
+            savePlaceData(place)
             recordIfPlaceConsistencyErrors(place)
-            for (outputArc in place.outputArcs) {
-                visitArc(outputArc)
+            val foundParsedSubgraph = checkIfExistsSubgraphIndex(place)
+            if (!foundParsedSubgraph) {
+                for (outputArc in place.outputArcs) {
+                    visitArc(outputArc)
+                }
             }
+            setSubgraphIndexTo(place)
         }
     }
 
-    private fun saveObjectType(place: Place) {
+    private fun savePlaceData(place: Place) {
         obtainedObjectTypes.add(place.type)
+        when (place.placeType) {
+            PlaceType.INPUT -> obtainedInputPlaces.add(place)
+            PlaceType.OUTPUT -> obtainedOutputPlaces.add(place)
+            PlaceType.NORMAL -> Unit
+        }
     }
 
     private fun recordIfArcConsistencyErrors(arc: Arc) {
@@ -83,7 +112,7 @@ class ConsistencyCheckPetriAtomVisitor(
     }
 
     private fun setSubgraphIndexTo(petriAtom: PetriAtom) {
-        petriAtom.subgraphIndex = assignedSubgraphIndex
+        petriAtom.subgraphIndex = subgraphIndex
     }
 
     private fun recordIfTransitionConsistencyErrors(transition: Transition) {

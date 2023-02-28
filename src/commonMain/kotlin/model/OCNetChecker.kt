@@ -27,11 +27,12 @@ class OCNetChecker(
         val inconsistencies = mutableListOf<ConsistencyCheckError>()
 
         val createdCheckVisitors = mutableListOf<ConsistencyCheckPetriAtomVisitor>()
-        var currentSubgraphIndex = createdCheckVisitors.size
+        var currentSubgraphIndex = 0
 
+        var maxSubgraphIndex = -1
         // case 1 - parse and check for isolated subgraphs
         for (place in places) {
-            if (place.subgraphIndex in 1..currentSubgraphIndex) {
+            if (place.subgraphIndex in 0..maxSubgraphIndex) {
                 // the subgraph of this place was already visited
             } else {
                 val visitor = ConsistencyCheckPetriAtomVisitor(
@@ -39,17 +40,13 @@ class OCNetChecker(
                 )
                 createdCheckVisitors.add(visitor)
                 place.acceptVisitor(visitor)
-                currentSubgraphIndex = createdCheckVisitors.size
+                maxSubgraphIndex = maxSubgraphIndex.coerceAtLeast(visitor.subgraphIndex)
+                currentSubgraphIndex = maxSubgraphIndex + 1
             }
         }
 
-        for (i in 2..createdCheckVisitors.size) {
-            val checkVisitor = createdCheckVisitors[i - 1]
-            inconsistencies.add(
-                ConsistencyCheckError.IsolatedSubgraphsDetected(
-                    checkVisitor.visitedSet.toList()
-                )
-            )
+        if (maxSubgraphIndex > 0) {
+            inconsistencies.add(ConsistencyCheckError.IsolatedSubgraphsDetected())
         }
 
         // case 2 - check input places presence

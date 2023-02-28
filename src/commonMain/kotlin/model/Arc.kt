@@ -50,6 +50,10 @@ class NormalArc(
     override fun isSameArcType(other: Arc): Boolean {
         return other is NormalArc
     }
+
+    override fun toString(): String {
+        return "->"
+    }
 }
 
 class VariableArc(
@@ -67,5 +71,9 @@ class VariableArc(
 
     override fun isSameArcType(other: Arc): Boolean {
         return other is VariableArc
+    }
+
+    override fun toString(): String {
+        return "=>"
     }
 }
