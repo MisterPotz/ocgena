@@ -2,13 +2,10 @@ package model
 
 class Transition(
     override val label : String? = null,
-    val _inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    val _outputArcs: MutableList<Arc> = mutableListOf<Arc>()
+    override val inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
+    override val outputArcs: MutableList<Arc> = mutableListOf<Arc>()
 ) : PetriNode, LabelHolder {
-    override val inputArcs: List<Arc>
-        get() = _inputArcs
-    override val outputArcs: List<Arc>
-        get() = _outputArcs
+
 
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
 
@@ -18,11 +15,11 @@ class Transition(
         get() = outputArcs.mapNotNull { it.arrowNode }.filterIsInstance<Place>()
 
     override fun addInputArc(arc: Arc) {
-        _inputArcs.add(arc)
+        inputArcs.add(arc)
     }
 
     override fun addOutputArc(arc: Arc) {
-        _outputArcs.add(arc)
+        outputArcs.add(arc)
     }
 
     fun getEnabledBinding() : Binding? {
@@ -44,4 +41,32 @@ class Transition(
     override fun toString(): String {
         return "transition [ $label ]"
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as Transition
+
+        if (label != other.label) return false
+        if (inputArcs != other.inputArcs) return false
+        if (outputArcs != other.outputArcs) return false
+        if (subgraphIndex != other.subgraphIndex) return false
+        if (inputPlaces != other.inputPlaces) return false
+        if (outputPlaces != other.outputPlaces) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = label?.hashCode() ?: 0
+        result = 31 * result + inputArcs.hashCode()
+        result = 31 * result + outputArcs.hashCode()
+        result = 31 * result + subgraphIndex
+        result = 31 * result + inputPlaces.hashCode()
+        result = 31 * result + outputPlaces.hashCode()
+        return result
+    }
+
+
 }

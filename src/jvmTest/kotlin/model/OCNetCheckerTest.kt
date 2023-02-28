@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import kotlin.reflect.jvm.internal.impl.protobuf.ByteString.Output
 import kotlin.test.assertNotNull
 
 class OCNetCheckerTest {
@@ -119,38 +118,66 @@ class OCNetCheckerTest {
         assertEquals(2, ocScope.getFilteredObjectTypes().size) {
             "expected size 2: 2 object types were used (default, and custom)"
         }
-        assertNotNull(errors.find { it is ConsistencyCheckError.VariableArcIsTheOnlyConnected } )
+        assertNotNull(errors.find { it is ConsistencyCheckError.VariableArcIsTheOnlyConnected })
     }
 
     @Test
     fun testIsNotBipartiteError() {
+        val errors = createAndCheckForConsistency {
+            place { } arcTo place { }
+        }
 
+        assertNotNull(errors.find { it is ConsistencyCheckError.IsNotBipartite })
     }
 
     @Test
     fun testOutputPlaceWithOutputArcsError() {
+        val errors = createAndCheckForConsistency {
+            place { placeType = PlaceType.INPUT }
+                .arcTo(transition { })
+                .arcTo(place { placeType = PlaceType.OUTPUT })
+                .arcTo(transition { })
+                .arcTo(place { placeType = PlaceType.OUTPUT })
+        }
 
+        assertNotNull(errors.find { it is ConsistencyCheckError.OutputPlaceHasOutputArcs })
     }
 
     @Test
     fun testInputPlaceWithInputArcsError() {
+        val errors = createAndCheckForConsistency {
+            place { } arcTo place { placeType = PlaceType.INPUT }
+        }
 
+        assertNotNull(errors.find { it is ConsistencyCheckError.InputPlaceHasInputArcs })
     }
 
     @Test
     fun testMultipleArcsFromSinglePlaceError() {
-
+        val errors = createAndCheckForConsistency {
+            val place = place { }
+            place { } arcTo transition("t") arcTo place
+            transition("t") arcTo place
+        }
+        assertNotNull(errors.find { it is ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition })
     }
 
     @Test
     fun testArcInputAsArcOutputError() {
-
+        val errors = createAndCheckForConsistency {
+            val place = place { }
+            place arcTo place
+        }
+        assertNotNull(errors.find { it is ConsistencyCheckError.ArcInputEqualsOutput })
     }
 
     @Test
     fun testInconsistentVariabilityArcs() {
-
+        val errors = createAndCheckForConsistency {
+            place { }
+                .arcTo(transition { })
+                .variableArcTo(place { })
+        }
+        assertNotNull(errors.find { it is ConsistencyCheckError.InconsistentVariabilityArcs })
     }
-
-    // TODO: create tests for consistency error cases (incorrect model)
 }

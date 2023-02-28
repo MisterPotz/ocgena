@@ -153,6 +153,8 @@ class ConsistencyCheckPetriAtomVisitor(
                         debugPath = copyAndAppendTraversalPath(transition)
                     )
                 )
+            } else {
+                visitedPlaces.add(outputPlace)
             }
         }
 

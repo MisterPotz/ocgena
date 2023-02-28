@@ -1,6 +1,7 @@
 package model
 
 import dsl.ArcDSL
+import dsl.NodeDSL
 import dsl.NormalArcDSL
 import dsl.OCScopeImpl
 import dsl.PlaceDSL
@@ -20,8 +21,8 @@ class OCNetDSLConverter(
         return createdTransitions.find { transitionDSL.label == it.label }
             ?: Transition(
                 label = transitionDSL.label,
-                _inputArcs = mutableListOf(),
-                _outputArcs = mutableListOf(),
+                inputArcs = mutableListOf(),
+                outputArcs = mutableListOf(),
             ).also {
                 createdTransitions.add(it)
             }
@@ -38,8 +39,8 @@ class OCNetDSLConverter(
                     label = placeDSL.label,
                     type = objectType,
                     placeType = placeDSL.placeType,
-                    _inputArcs = mutableListOf(),
-                    _outputArcs = mutableListOf()
+                    inputArcs = mutableListOf(),
+                    outputArcs = mutableListOf()
                 ).also {
                     createdPlaces.add(it)
                 }
@@ -49,25 +50,34 @@ class OCNetDSLConverter(
     private fun createConnectedPlaceAndTransition(
         arcDSL: ArcDSL,
     ) {
-        val placeDSL = (arcDSL.tailAtom as? PlaceDSL) ?: (arcDSL.arrowAtom as? PlaceDSL)
-        val transitionDSL = (arcDSL.tailAtom as? TransitionDSL) ?: (arcDSL.arrowAtom as? TransitionDSL)
+
+        val node1DSL : NodeDSL? = (arcDSL.tailAtom as? PlaceDSL) ?: (arcDSL.tailAtom as? TransitionDSL)
+        val node2DSL : NodeDSL? =  (arcDSL.arrowAtom as? PlaceDSL) ?: (arcDSL.arrowAtom as? TransitionDSL)
 
         // even if both dsl models are null, that would be probably be revealed by subsequent consistency check
-        val arcIsInputToPlace = placeDSL?.let { arcDSL.isInputFor(placeDSL) } ?: true
+        val arcIsInputToNode1 = node1DSL?.let { arcDSL.isInputFor(node1DSL) } ?: true
 
-        val place = placeDSL?.let { getOrCreatePlace(it) }
-        val transition = transitionDSL?.let { getOrCreateTransition(it) }
-
-        val arrowNode = if (arcIsInputToPlace) {
-            place
-        } else {
-            transition
+        val node1 = when (node1DSL) {
+            is PlaceDSL -> getOrCreatePlace(node1DSL)
+            is TransitionDSL -> getOrCreateTransition(node1DSL)
+            else -> throw IllegalStateException("not supported")
+        }
+        val node2 = when (node2DSL) {
+            is PlaceDSL -> getOrCreatePlace(node2DSL)
+            is TransitionDSL -> getOrCreateTransition(node2DSL)
+            else -> throw IllegalStateException("not supported")
         }
 
-        val tailNode = if (arcIsInputToPlace) {
-            transition
+        val arrowNode = if (arcIsInputToNode1) {
+            node1
         } else {
-            place
+            node2
+        }
+
+        val tailNode = if (arcIsInputToNode1) {
+            node2
+        } else {
+            node1
         }
         val arc = when (arcDSL) {
             is VariableArcDSL -> {
@@ -88,12 +98,12 @@ class OCNetDSLConverter(
             else -> return
         }
 
-        if (arcIsInputToPlace) {
-            transition?._outputArcs?.add(arc)
-            place?._inputArcs?.add(arc)
+        if (arcIsInputToNode1) {
+            node2.outputArcs.add(arc)
+            node1.inputArcs.add(arc)
         } else {
-            place?._outputArcs?.add(arc)
-            transition?._inputArcs?.add(arc)
+            node1.outputArcs.add(arc)
+            node2.inputArcs.add(arc)
         }
         createdArcs.add(arc)
     }
