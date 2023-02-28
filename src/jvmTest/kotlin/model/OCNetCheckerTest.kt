@@ -1,9 +1,10 @@
 package model
 
-import dsl.OCScopeImpl
 import dsl.createExampleModel
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 
 class OCNetCheckerTest {
     val ocScopeImpl = createExampleModel()
@@ -28,7 +29,7 @@ class OCNetCheckerTest {
     }
 
     @Test
-    fun checkConsistency() {
+    fun checkCorrectModelIsConsistent() {
         val converter = OCNetDSLConverter(ocScopeImpl)
         val result = converter.convert()
         val places = result.places
@@ -38,5 +39,13 @@ class OCNetCheckerTest {
             "inconsistencies detected :\n" +
                     consistencyResults.joinToString(separator = "\n").prependIndent()
         }
+        val consistentNet = assertDoesNotThrow {
+            consistencyChecker.createConsistentOCNet()
+        }
+        assertEquals(3, consistentNet.inputPlaces.size)
+        assertEquals(3, consistentNet.outputPlaces.size)
+        assertEquals(3, consistentNet.objectTypes.size)
     }
+
+    // TODO: create tests for consistency error cases (incorrect model)
 }
