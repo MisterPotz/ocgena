@@ -4,26 +4,32 @@ class OCScopeImpl(
     val rootScope: OCScopeImpl? = null,
     val defaultScopeType: ObjectTypeDSL? = null,
 ) : TypeScope, SubgraphDSL {
-    private val groupIdIssuer: GroupsIdIssuer =
-        rootScope?.groupIdIssuer ?: GroupsIdIssuer()
-    private val defaultTransitionIdIssuer: NestedIdIssuer
-        get() = groupIdIssuer.nestedIdIssuerFor("t")
-    private val defaultPlaceIdIssuer: NestedIdIssuer
-        get() = groupIdIssuer.nestedIdIssuerFor("p")
+    val places: MutableMap<String, PlaceDSL> = rootScope?.places ?: mutableMapOf()
+    val transitions: MutableMap<String, TransitionDSL> = rootScope?.transitions ?: mutableMapOf()
+    val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
 
-    private val defaultObjectIdIssuer: NestedIdIssuer
-        get() = groupIdIssuer.nestedIdIssuerFor("ot")
+
+    val arcs: MutableList<ArcDSL> = rootScope?.arcs ?: mutableListOf()
+    private val groupIdIssuer: GroupsIdCreator =
+        rootScope?.groupIdIssuer ?: GroupsIdCreator()
+    private val defaultTransitionIdIssuer: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("t")
+
+    private val objectIdIssuer: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("objects")
 
     private val defaultObjectTypeDSL: ObjectTypeDSL =
         defaultScopeType
             ?: rootScope?.defaultObjectTypeDSL
-            ?: ObjectTypeImpl(
-                id = defaultObjectIdIssuer.getInlineBuilder().newIdString(),
-                label = "object"
-            )
+            ?: objectType(label = "ot", placeNameCreator = {
+                "p$it"
+            })
 
-    private var _subgraphInput : PlaceDSL? = null
-    private var _subgraphOutput : PlaceDSL? = null
+    private val defaultPlaceIdIssuer: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("p")
+
+    private var _subgraphInput: PlaceDSL? = null
+    private var _subgraphOutput: PlaceDSL? = null
 
     override var input: PlaceDSL
         get() = checkNotNull(_subgraphInput)
@@ -37,10 +43,6 @@ class OCScopeImpl(
             _subgraphOutput = value
         }
 
-    val places: MutableMap<String, PlaceDSL> = rootScope?.places ?: mutableMapOf()
-    private val transitions: MutableMap<String, TransitionDSL> = rootScope?.transitions ?: mutableMapOf()
-    private val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
-    private val arcs: MutableList<ArcDSL> = rootScope?.arcs ?: mutableListOf()
 
     override val scopeType: ObjectTypeDSL
         get() = checkNotNull(defaultScopeType)
@@ -74,6 +76,14 @@ class OCScopeImpl(
         return internalTransition(label) { }
     }
 
+    fun inputArcFor(placeDSL: NodeDSL): ArcDSL {
+        return arcs.find { it.arrowAtom == placeDSL }!!
+    }
+
+    fun outputArcFor(placeDSL: NodeDSL): ArcDSL {
+        return arcs.find { it.tailAtom == placeDSL }!!
+    }
+
     private fun internalTransition(label: String?, block: OCTransitionScope.() -> Unit): TransitionDSL {
         if (label != null) {
             val transition = transitions[label]
@@ -81,18 +91,18 @@ class OCScopeImpl(
                 return transition
             }
         }
-        val defaultId = defaultTransitionIdIssuer.getInlineBuilder().newIdString()
+
+        val defaultId = defaultTransitionIdIssuer.newLabelId()
 
         val transitionDSLImpl = TransitionDSLImpl(
-            defaultLabel = label ?: defaultId,
+            transitionIndex = defaultTransitionIdIssuer.lastIntId,
+            defaultLabel = label ?: defaultTransitionIdIssuer.lastLabelId,
         )
         transitionDSLImpl.block()
 
         transitions[label ?: defaultId] = transitionDSLImpl
         return transitionDSLImpl
     }
-
-
 
     override fun selectPlace(block: PlaceDSL.() -> Boolean): PlaceDSL {
         return places.values.first { atomDSL ->
@@ -222,13 +232,21 @@ class OCScopeImpl(
         ocScopeImpl.block()
     }
 
-    override fun objectType(label: String): ObjectTypeDSL {
+    override fun objectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)): ObjectTypeDSL {
         return objectTypes.getOrPut(label) {
-            val newId = defaultObjectIdIssuer.getInlineBuilder().newIdString()
+            val newId = objectIdIssuer.newIntId()
+            groupIdIssuer.addPatternIdCreatorFor(label, startIndex = 1, placeNameCreator)
             ObjectTypeImpl(newId, label)
         }
     }
 
+    override fun objectType(label: String): ObjectTypeDSL {
+        return objectTypes.getOrPut(label) {
+            val newId = objectIdIssuer.newIntId()
+            groupIdIssuer.addPatternIdCreatorFor(label, startIndex = 1) { "${label}_$it" }
+            ObjectTypeImpl(newId, label)
+        }
+    }
 
     private fun internalPlace(label: String? = null, block: OCPlaceScope.() -> Unit): PlaceDSL {
         // TODO: simplify code for place dsl, as change of label inside the ocplacescope is not required
@@ -238,36 +256,47 @@ class OCScopeImpl(
                 return place
             }
         }
-        var defaultId = defaultPlaceIdIssuer.getInlineBuilder().newIdString()
-        val objectTypesStack = mutableListOf<ObjectTypeDSL>(defaultObjectTypeDSL)
+
+        val scopeType = defaultScopeType ?: defaultObjectTypeDSL
+        val placeIdIssuer = groupIdIssuer.patternIdCreatorFor(scopeType.label)
+
+        var defaultId = placeIdIssuer.newIntId()
+        var defaultLabelId = placeIdIssuer.lastLabelId
+
+        val objectTypesStack = mutableListOf(scopeType)
 
         val placeDSLImpl =
             PlaceDSLImpl(
-                onAssignNewLabel = { },
+                indexForType = defaultId,
                 onAssignNewObjectType = {
                     for (i in objectTypesStack.size.downTo(1)) {
                         val type = objectTypesStack[i]
-
-                        groupIdIssuer.nestedIdIssuerFor(type.label).getInlineBuilder().removeLast()
+                        val usedPatternIdCreator = groupIdIssuer.patternIdCreatorFor(type.label)
+                        usedPatternIdCreator.removeLast()
                         objectTypesStack.removeLast()
                     }
                     objectTypesStack.add(it)
-                    defaultId = groupIdIssuer.nestedIdIssuerFor(it.label).getInlineBuilder().newIdString()
+                    val patternIdCreator = groupIdIssuer.patternIdCreatorFor(it.label)
+                    defaultId = patternIdCreator.newIntId()
+                    defaultLabelId = patternIdCreator.lastLabelId
                 },
                 labelFactory = {
-                    label ?: defaultId
+                    label ?: defaultLabelId
                 },
+
                 objectType = defaultObjectTypeDSL
             )
         placeDSLImpl.block()
-        places[label ?: defaultId] = (placeDSLImpl)
+        placeDSLImpl.indexForType = defaultId
+
+        places[label ?: defaultLabelId] = (placeDSLImpl)
         return placeDSLImpl
     }
 
     companion object {
         const val DEFAULT_PLACE_PREFIX = "p"
         const val DEFAULT_TRANSITION_PREFIX = "t"
-        const val OBJECT_TYPE_PREFIX = "ot"
+        const val DEFAULT_OBJECT_TYPE = "ot"
         const val USER_SAFE_PREFIX = "u"
     }
 }

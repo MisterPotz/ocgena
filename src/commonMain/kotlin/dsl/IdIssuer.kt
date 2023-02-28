@@ -1,17 +1,20 @@
 package dsl
 
-class IdIssuer(private val prefix : String = "atom") {
-    private var uniqueIdCounter: Long = 0L
+class IdIssuer(private val startIndex : Int = 0) {
+    private var uniqueIdCounter: Int = startIndex
 
-    fun createId(): Long {
+    val lastUsed: Int
+        get() {
+            require(uniqueIdCounter > startIndex)
+            return uniqueIdCounter - 1
+        }
+
+    fun createId(): Int {
         return uniqueIdCounter++
     }
 
     fun decrease() {
         uniqueIdCounter--
     }
-
-    fun createIdString(): String {
-        return prefix + createId().toString()
-    }
 }
+

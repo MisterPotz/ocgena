@@ -18,10 +18,15 @@ interface ObjectTypeDSL {
     val label: String
 }
 
-interface PlaceDSL : OCPlaceScope, LinkChainDSL, AtomDSL {
+interface NodeDSL
+interface PlaceDSL : OCPlaceScope, LinkChainDSL, AtomDSL, NodeDSL {
+    // the index of this place for its type
+    var indexForType : Int
 }
 
-interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL
+interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL, NodeDSL {
+    var transitionIndex : Int
+}
 
 interface AtomDSL {}
 interface LinkChainDSL : HasLast, HasFirst {
@@ -62,6 +67,8 @@ interface OCScope {
     fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit)
 
     // creates new or returns already defined
+    fun objectType(label: String, placeNameCreator: ((placeIndexForType : Int) -> String)): ObjectTypeDSL
+
     fun objectType(label: String): ObjectTypeDSL
 
     // creates new or retrieves existing
@@ -96,7 +103,7 @@ interface OCScope {
 interface OCPlaceScope {
     var initialTokens: Int
     var objectType: ObjectTypeDSL
-    var label: String
+    val label: String
     var placeType: PlaceType
 }
 
