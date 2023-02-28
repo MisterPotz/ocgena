@@ -40,8 +40,27 @@ class ObjectTypeImpl(
     override val id: Int,
     override val label: String,
 ) : ObjectTypeDSL {
+
     override fun toString(): String {
         return label
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as ObjectTypeImpl
+
+        if (id != other.id) return false
+        if (label != other.label) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id
+        result = 31 * result + label.hashCode()
+        return result
     }
 }
 

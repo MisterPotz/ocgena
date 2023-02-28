@@ -7,7 +7,7 @@ class ConsistencyCheckPetriAtomVisitor(
     val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
     val obtainedInputPlaces: MutableList<Place> = mutableListOf()
     val obtainedObjectTypes: MutableSet<ObjectType> = mutableSetOf()
-    private val inconsistenciesSet: MutableList<ConsistencyCheckError> = mutableListOf()
+    val inconsistenciesSet: MutableList<ConsistencyCheckError> = mutableListOf()
 
     private var discoveredSubgraphIndex: Int? = null
 
@@ -232,9 +232,7 @@ class ConsistencyCheckPetriAtomVisitor(
     }
 
     private fun copyAndAppendTraversalPath(atom: PetriAtom): List<PetriAtom> {
-        return recursionProtector.recursiveStack.toMutableList().apply {
-            add(atom)
-        }.toList()
+        return recursionProtector.recursiveStack.toList()
     }
 
     private fun protectWithRecursionStack(petriAtom: PetriAtom, block: () -> Unit) {

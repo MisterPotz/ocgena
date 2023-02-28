@@ -13,6 +13,7 @@ class GroupsIdCreator {
         group: String,
         startIndex : Int,
         formatter: (index: Int) -> String) : PatternIdCreator {
+        if (group in idCreators) return idCreators[group]!!
         idCreators[group] = PatternIdCreator(startIndex, formatter)
         return idCreators[group]!!
     }

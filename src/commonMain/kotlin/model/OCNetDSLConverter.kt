@@ -113,14 +113,19 @@ class OCNetDSLConverter(
         return Output(
             places = createdPlaces,
             transitions = createdTransitions,
-            arcs = createdArcs
+            arcs = createdArcs,
+            allPetriNodes = buildList {
+                addAll(createdPlaces)
+                addAll(createdTransitions)
+            }
         )
     }
 
     class Output(
         val places : List<Place>,
         val transitions: List<Transition>,
-        val arcs : List<Arc>
+        val arcs : List<Arc>,
+        val allPetriNodes : List<PetriNode>
     ) {
         override fun toString(): String {
             return """

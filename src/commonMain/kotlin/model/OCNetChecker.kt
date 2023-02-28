@@ -4,7 +4,7 @@ class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
-    private val places : List<Place>
+    private val allPetriNodes : List<PetriNode>,
 ) {
     private var lastConsistencyResults : List<ConsistencyCheckError>? = null
     private var inputPlaces : List<Place>? = null
@@ -12,7 +12,12 @@ class OCNetChecker(
     private var objectTypes : List<ObjectType>? = null
 
     val isConsistent : Boolean
-        get() = lastConsistencyResults?.isEmpty() ?: false
+        get() {
+            // consistent when no critical errors observed
+            return lastConsistencyResults?.let {
+                it.none { it.level == ErrorLevel.CRITICAL }
+            } ?: false
+        }
 
     fun createConsistentOCNet() : OCNet {
         require(isConsistent)
@@ -31,18 +36,21 @@ class OCNetChecker(
 
         var maxSubgraphIndex = -1
         // case 1 - parse and check for isolated subgraphs
-        for (place in places) {
-            if (place.subgraphIndex in 0..maxSubgraphIndex) {
+        for (petriNode in allPetriNodes) {
+            if (petriNode.subgraphIndex in 0..maxSubgraphIndex) {
                 // the subgraph of this place was already visited
             } else {
                 val visitor = ConsistencyCheckPetriAtomVisitor(
                     assignedSubgraphIndex = currentSubgraphIndex
                 )
                 createdCheckVisitors.add(visitor)
-                place.acceptVisitor(visitor)
+                petriNode.acceptVisitor(visitor)
                 maxSubgraphIndex = maxSubgraphIndex.coerceAtLeast(visitor.subgraphIndex)
                 currentSubgraphIndex = maxSubgraphIndex + 1
             }
+        }
+        for (visitor in createdCheckVisitors) {
+            inconsistencies.addAll(visitor.inconsistenciesSet)
         }
 
         if (maxSubgraphIndex > 0) {

@@ -8,16 +8,25 @@ class OCScopeImpl(
     val transitions: MutableMap<String, TransitionDSL> = rootScope?.transitions ?: mutableMapOf()
     val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
 
-
     val arcs: MutableList<ArcDSL> = rootScope?.arcs ?: mutableListOf()
     private val groupIdIssuer: GroupsIdCreator =
         rootScope?.groupIdIssuer ?: GroupsIdCreator()
+
+    init {
+        if (rootScope == null) {
+            groupIdIssuer.addPatternIdCreatorFor("t", startIndex = 1) {
+                "t_$it"
+            }
+        }
+    }
+
     private val defaultTransitionIdIssuer: PatternIdCreator
         get() = groupIdIssuer.patternIdCreatorFor("t")
 
     private val objectIdIssuer: PatternIdCreator
         get() = groupIdIssuer.patternIdCreatorFor("objects")
 
+    private var defaultObjectTypeWasUsed = false
     private val defaultObjectTypeDSL: ObjectTypeDSL =
         defaultScopeType
             ?: rootScope?.defaultObjectTypeDSL
@@ -265,7 +274,9 @@ class OCScopeImpl(
             objectTypes
         } else {
             objectTypes.toMutableMap().apply {
-                remove(defaultObjectTypeDSL.label)
+                if (!defaultObjectTypeWasUsed) {
+                    remove(defaultObjectTypeDSL.label)
+                }
             }
         }
     }
@@ -292,7 +303,7 @@ class OCScopeImpl(
                 indexForType = defaultId,
                 onAssignNewObjectType = {
                     for (i in objectTypesStack.size.downTo(1)) {
-                        val type = objectTypesStack[i]
+                        val type = objectTypesStack[i-1]
                         val usedPatternIdCreator = groupIdIssuer.patternIdCreatorFor(type.label)
                         usedPatternIdCreator.removeLast()
                         objectTypesStack.removeLast()
@@ -310,7 +321,9 @@ class OCScopeImpl(
             )
         placeDSLImpl.block()
         placeDSLImpl.indexForType = defaultId
-
+        if (placeDSLImpl.objectType == defaultObjectTypeDSL) {
+            defaultObjectTypeWasUsed = true
+        }
         places[label ?: defaultLabelId] = (placeDSLImpl)
         return placeDSLImpl
     }
