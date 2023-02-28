@@ -1,13 +1,10 @@
 package dsl
 
 import model.PlaceType
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -138,7 +135,7 @@ class OCScopeImplTest {
 
     @Test
     fun testObjectTypesAmount() {
-        assertEquals(ocScopeImpl.objectTypes.size, 3)
+        assertEquals(ocScopeImpl.getFilteredObjectTypes().size, 3)
     }
 
     @Test
@@ -215,24 +212,90 @@ class OCScopeImplTest {
             outputArcFor(place("o4"))
             assertThrows<Throwable>{ outputArcFor(place("o5")) }
 
+            assertEquals(2, outputArcsFor(place("o3")).size)
+            assertEquals(2, inputArcsFor(place("o3")).size)
+
+
             assertThrows<Throwable>{ inputArcFor(place("o1")) }
             inputArcFor(place("o2"))
             inputArcFor(place("o3"))
             inputArcFor(place("o4"))
             inputArcFor(place("o5"))
+        }
+    }
 
+    @Test
+    fun testTransitionArcs() {
+        with(ocScopeImpl) {
+            // output
+            outputArcsFor(transition("place order")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
+            outputArcsFor(transition("send invoice")).let {
+                assertEquals(1, it.size)
+                assertTrue(it.first() is NormalArcDSL)
+            }
+            outputArcsFor(transition("send reminder")).let {
+                assertEquals(1, it.size)
+            }
+            outputArcsFor(transition("pay order")).let {
+                assertEquals(1, it.size)
+            }
+            outputArcsFor(transition("mark as completed")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
+            outputArcsFor(transition("pick item")).let {
+                assertEquals(1, it.size)
+            }
+            outputArcsFor(transition("start route")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
+            outputArcsFor(transition("end route")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
 
-            outputArcFor(transition("place order"))
-            outputArcFor(transition("send invoice"))
-            outputArcFor(transition("send reminder"))
-            outputArcFor(transition("pay order"))
-            outputArcFor(transition("mark as completed"))
-
-            inputArcFor(transition("place order"))
-            inputArcFor(transition("send invoice"))
-            inputArcFor(transition("send reminder"))
-            inputArcFor(transition("pay order"))
-            inputArcFor(transition("mark as completed"))
+            // input
+            inputArcsFor(transition("place order")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
+            inputArcsFor(transition("send invoice")).let {
+                assertEquals(1, it.size)
+                assertTrue(it.first() is NormalArcDSL)
+            }
+            inputArcsFor(transition("send reminder")).let {
+                assertEquals(1, it.size)
+            }
+            inputArcsFor(transition("pay order")).let {
+                assertEquals(1, it.size)
+            }
+            inputArcsFor(transition("mark as completed")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
+            inputArcsFor(transition("pick item")).let {
+                assertEquals(1, it.size)
+            }
+            inputArcsFor(transition("start route")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
+            inputArcsFor(transition("end route")).let {
+                assertEquals(2, it.size)
+                assertNotNull(it.find { it is VariableArcDSL })
+                assertNotNull(it.find { it is NormalArcDSL })
+            }
         }
     }
 }

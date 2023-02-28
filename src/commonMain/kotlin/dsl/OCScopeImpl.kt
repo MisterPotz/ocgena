@@ -80,8 +80,20 @@ class OCScopeImpl(
         return arcs.find { it.arrowAtom == placeDSL }!!
     }
 
+    fun inputArcsFor(placeDSL: NodeDSL) : List<ArcDSL> {
+        return arcs.filter { it.arrowAtom == placeDSL }.apply {
+            checkNotNull(firstOrNull())
+        }
+    }
+
     fun outputArcFor(placeDSL: NodeDSL): ArcDSL {
         return arcs.find { it.tailAtom == placeDSL }!!
+    }
+
+    fun outputArcsFor(placeDSL: NodeDSL) : List<ArcDSL> {
+        return arcs.filter { it.tailAtom == placeDSL }.apply {
+            checkNotNull(firstOrNull())
+        }
     }
 
     private fun internalTransition(label: String?, block: OCTransitionScope.() -> Unit): TransitionDSL {
@@ -245,6 +257,16 @@ class OCScopeImpl(
             val newId = objectIdIssuer.newIntId()
             groupIdIssuer.addPatternIdCreatorFor(label, startIndex = 1) { "${label}_$it" }
             ObjectTypeImpl(newId, label)
+        }
+    }
+
+    fun getFilteredObjectTypes() : Map<String, ObjectTypeDSL> {
+        return if (objectTypes.size == 1) {
+            objectTypes
+        } else {
+            objectTypes.toMutableMap().apply {
+                remove(defaultObjectTypeDSL.label)
+            }
         }
     }
 
