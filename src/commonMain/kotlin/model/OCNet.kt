@@ -69,7 +69,7 @@ class OCNet(
 
             val selectedBinding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
             selectedBinding.execute()
-
+            logger.logBindingExecution(selectedBinding)
             executionConditions.checkIfSuspend(this, lastExecutionBinding = selectedBinding)
         }
 
