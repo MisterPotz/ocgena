@@ -9,8 +9,8 @@ class Place(
     override val label : String? = null,
     val type : ObjectType,
     val placeType : PlaceType,
-    private val _inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    private val _outputArcs: MutableList<Arc> = mutableListOf<Arc>()
+    val _inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
+    val _outputArcs: MutableList<Arc> = mutableListOf<Arc>()
 ) : PetriNode, LabelHolder, ConsistencyCheckable {
     override val inputArcs: List<Arc>
         get() = _inputArcs

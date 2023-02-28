@@ -1,10 +1,9 @@
 package model
 
 class Transition(
-    val id : String,
     override val label : String? = null,
-    private val _inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    private val _outputArcs: MutableList<Arc> = mutableListOf<Arc>()
+    val _inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
+    val _outputArcs: MutableList<Arc> = mutableListOf<Arc>()
 ) : PetriNode, LabelHolder {
     override val inputArcs: List<Arc>
         get() = _inputArcs

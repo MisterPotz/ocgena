@@ -3,14 +3,17 @@ package dsl
 import model.PlaceType
 
 class LinkChainDSLImpl(
-    override val firstElement: AtomDSL,
-    override val lastElement: AtomDSL) : LinkChainDSL {
+    override val firstElement: NodeDSL,
+    override val lastElement: NodeDSL) : LinkChainDSL {
 }
 
 class VariableArcDSLImpl(
-    override var tailAtom: AtomDSL,
-    override var arrowAtom: AtomDSL,
+    override var tailAtom: NodeDSL,
+    override var arrowAtom: NodeDSL,
 ) : VariableArcDSL {
+    override fun isInputFor(nodeDSL: NodeDSL): Boolean {
+        return arrowAtom == nodeDSL
+    }
     override fun toString(): String {
         return "var arc [ $tailAtom => $arrowAtom ]"
     }
@@ -18,19 +21,23 @@ class VariableArcDSLImpl(
 
 class NormalArcDSLImpl(
     override var multiplicity: Int,
-    override var tailAtom: AtomDSL,
-    override var arrowAtom: AtomDSL,
+    override var tailAtom: NodeDSL,
+    override var arrowAtom: NodeDSL,
 ) : NormalArcDSL {
+    override fun isInputFor(nodeDSL: NodeDSL): Boolean {
+        return arrowAtom == nodeDSL
+    }
+
     override fun toString(): String {
         return "norm arc [ $tailAtom -> $arrowAtom ]"
     }
 }
 
-class HasLastImpl(override val lastElement: AtomDSL) : HasLast
-class HasFirstImpl(override val firstElement: AtomDSL) : HasFirst
+class HasLastImpl(override val lastElement: NodeDSL) : HasLast
+class HasFirstImpl(override val firstElement: NodeDSL) : HasFirst
 
 class ObjectTypeImpl(
-    val id: Int,
+    override val id: Int,
     override val label: String,
 ) : ObjectTypeDSL {
     override fun toString(): String {
@@ -45,9 +52,9 @@ class PlaceDSLImpl(
     private val labelFactory: () -> String,
     objectType: ObjectTypeDSL,
 ) : PlaceDSL {
-    override val firstElement: AtomDSL
+    override val firstElement: NodeDSL
         get() = this
-    override val lastElement: AtomDSL
+    override val lastElement: NodeDSL
         get() = this
     override var objectType: ObjectTypeDSL = objectType
         set(value) {
@@ -72,9 +79,9 @@ class TransitionDSLImpl(
     defaultLabel: String,
 ) : TransitionDSL {
 
-    override val firstElement: AtomDSL
+    override val firstElement: NodeDSL
         get() = this
-    override val lastElement: AtomDSL
+    override val lastElement: NodeDSL
         get() = this
     override var label: String = defaultLabel
 

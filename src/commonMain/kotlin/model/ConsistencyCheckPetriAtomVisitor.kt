@@ -6,7 +6,7 @@ class ConsistencyCheckPetriAtomVisitor(
     private val recursionProtector = RecursionProtector()
     val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
     val obtainedInputPlaces: MutableList<Place> = mutableListOf()
-
+    val obtainedObjectTypes : MutableSet<ObjectType> = mutableSetOf()
     private val inconsistenciesSet: MutableList<ConsistencyCheckError> = mutableListOf()
 
     val visitedSet: MutableSet<PetriAtom>
@@ -39,11 +39,16 @@ class ConsistencyCheckPetriAtomVisitor(
     override fun visitPlace(place: Place) {
         protectWithRecursionStack(place) {
             setSubgraphIndexTo(place)
+            saveObjectType(place)
             recordIfPlaceConsistencyErrors(place)
             for (outputArc in place.outputArcs) {
                 visitArc(outputArc)
             }
         }
+    }
+
+    private fun saveObjectType(place: Place) {
+        obtainedObjectTypes.add(place.type)
     }
 
     private fun recordIfArcConsistencyErrors(arc: Arc) {

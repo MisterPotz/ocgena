@@ -80,10 +80,12 @@ class OCScopeImpl(
         return arcs.find { it.arrowAtom == placeDSL }!!
     }
 
+    fun allArcsFor(nodeDSL: NodeDSL) : List<ArcDSL> {
+        return arcs.filter { it.arrowAtom == nodeDSL || it.tailAtom == nodeDSL }
+    }
+
     fun inputArcsFor(placeDSL: NodeDSL) : List<ArcDSL> {
-        return arcs.filter { it.arrowAtom == placeDSL }.apply {
-            checkNotNull(firstOrNull())
-        }
+        return arcs.filter { it.arrowAtom == placeDSL }
     }
 
     fun outputArcFor(placeDSL: NodeDSL): ArcDSL {
@@ -91,9 +93,7 @@ class OCScopeImpl(
     }
 
     fun outputArcsFor(placeDSL: NodeDSL) : List<ArcDSL> {
-        return arcs.filter { it.tailAtom == placeDSL }.apply {
-            checkNotNull(firstOrNull())
-        }
+        return arcs.filter { it.tailAtom == placeDSL }
     }
 
     private fun internalTransition(label: String?, block: OCTransitionScope.() -> Unit): TransitionDSL {
