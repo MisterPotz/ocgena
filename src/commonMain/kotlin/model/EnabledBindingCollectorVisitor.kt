@@ -3,11 +3,16 @@ package model
 class EnabledBindingCollectorVisitor : PetriAtomVisitor {
 
     private val recursionProtector = RecursionProtector()
-    val obtainedEnabledBindings : MutableList<Binding> = mutableListOf()
+    private val obtainedEnabledBindings : MutableList<Binding> = mutableListOf()
 
     fun clear() {
         obtainedEnabledBindings.clear()
     }
+
+    fun getEnabledBindings() : List<Binding> {
+        return obtainedEnabledBindings.toList()
+    }
+
     override fun visitArc(arc: Arc) {
         recursionProtector.protectWithRecursionStack(arc) {
             arc.tailNode!!.acceptVisitor(this)

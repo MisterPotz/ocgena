@@ -20,13 +20,30 @@ class OCNet(
     interface ExecutionConditions {
 
         // for terminate
-        fun checkIfTerminate(ocNet: OCNet) : Boolean
+        fun checkTerminateConditionSatisfied(ocNet: OCNet) : Boolean
 
         // TODO: for debug ability
         suspend fun checkIfSuspend(ocNet: OCNet, lastExecutionBinding: Binding)
 
         // TODO: this method can fulfill both interactive mode and automatic
         suspend fun selectBindingToExecute(enabledBindings : List<Binding>) : Binding
+    }
+
+    class ConsoleDebugExecutionConditions() : ExecutionConditions {
+        override fun checkTerminateConditionSatisfied(ocNet: OCNet): Boolean {
+            // TODO: check for terminate token amounts at place nodes
+            return false
+        }
+
+        override suspend fun checkIfSuspend(ocNet: OCNet, lastExecutionBinding: Binding) {
+            Unit
+        }
+
+        override suspend fun selectBindingToExecute(enabledBindings: List<Binding>): Binding {
+            // by default, select the first one
+            return enabledBindings.first()
+        }
+
     }
 
     suspend fun run(
@@ -38,18 +55,26 @@ class OCNet(
 
         val enabledBindingCollectorVisitor = EnabledBindingCollectorVisitor()
 
-        while (!executionConditions.checkIfTerminate(this)) {
+        while (!executionConditions.checkTerminateConditionSatisfied(this)) {
             // find enabled bindings
             for (inputPlace in inputPlaces)  {
                 inputPlace.acceptVisitor(enabledBindingCollectorVisitor)
             }
-            val collectedEnabledBindings = enabledBindingCollectorVisitor.obtainedEnabledBindings
-            val selectedBinding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
+            val collectedEnabledBindings = enabledBindingCollectorVisitor.getEnabledBindings()
             enabledBindingCollectorVisitor.clear()
 
-            executionConditions.checkIfSuspend(this, selectedBinding)
+            if (collectedEnabledBindings.isEmpty()) {
+                break
+            }
+
+            val selectedBinding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
+            selectedBinding.execute()
+
+            executionConditions.checkIfSuspend(this, lastExecutionBinding = selectedBinding)
         }
 
         executionLock.unlock()
+
+        // TODO: output some results somewhere after execution is finished?
     }
 }

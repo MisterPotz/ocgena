@@ -15,6 +15,7 @@ class Place(
 
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
     var tokens : Int = 0
+    var terminateTokens: Int? = null
 
     override fun addInputArc(arc: Arc) {
         when (placeType) {

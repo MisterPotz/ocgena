@@ -4,7 +4,11 @@ class Binding(
     private val transition: Transition,
 ) {
 
+    var executed : Boolean = false
+        private set
+
     fun execute() {
+        require(!executed)
         for (inputArc in transition.inputArcs) {
             for (outputArc in transition.inputArcs) {
                 val inputPlace = inputArc.requireTailPlace()
@@ -37,6 +41,7 @@ class Binding(
                 }
             }
         }
+        executed = true
     }
 
     companion object {
