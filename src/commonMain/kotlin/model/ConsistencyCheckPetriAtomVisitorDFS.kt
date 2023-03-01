@@ -1,9 +1,8 @@
 package model
 
-class ConsistencyCheckPetriAtomVisitor(
+class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,
-) : PetriAtomVisitor {
-    private val recursionProtector = RecursionProtector()
+) : AbsPetriAtomVisitorDFS() {
     val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
     val obtainedInputPlaces: MutableList<Place> = mutableListOf()
     val obtainedObjectTypes: MutableSet<ObjectType> = mutableSetOf()
@@ -27,48 +26,24 @@ class ConsistencyCheckPetriAtomVisitor(
         return false
     }
 
-    override fun visitArc(arc: Arc) {
-        protectWithRecursionStack(arc) {
-            recordIfArcConsistencyErrors(arc)
-            val foundParsedSubgraph = checkIfExistsSubgraphIndex(arc)
-            if (!foundParsedSubgraph) {
-                arc.arrowNode?.let { arrowNode ->
-                    when (arrowNode) {
-                        is Transition -> visitTransition(arrowNode)
-                        is Place -> visitPlace(arrowNode)
-                        else -> throw IllegalStateException("unsupported arrowNode $arrowNode of type ${arrowNode::class}")
-                    }
-                }
-            }
-            setSubgraphIndexTo(arc)
-        }
+    override fun doForAtomAfterDFS(atom: PetriAtom) {
+        setSubgraphIndexTo(atom)
     }
 
-    override fun visitTransition(transition: Transition) {
-        protectWithRecursionStack(transition) {
-            recordIfTransitionConsistencyErrors(transition)
-            val foundParsedSubgraph = checkIfExistsSubgraphIndex(transition)
-            if (!foundParsedSubgraph) {
-                for (outputArc in transition.outputArcs) {
-                    visitArc(outputArc)
-                }
-            }
-            setSubgraphIndexTo(transition)
-        }
+    override fun doForArcBeforeDFS(arc: Arc): Boolean {
+        recordIfArcConsistencyErrors(arc)
+        return checkIfExistsSubgraphIndex(arc)
     }
 
-    override fun visitPlace(place: Place) {
-        protectWithRecursionStack(place) {
-            savePlaceData(place)
-            recordIfPlaceConsistencyErrors(place)
-            val foundParsedSubgraph = checkIfExistsSubgraphIndex(place)
-            if (!foundParsedSubgraph) {
-                for (outputArc in place.outputArcs) {
-                    visitArc(outputArc)
-                }
-            }
-            setSubgraphIndexTo(place)
-        }
+    override fun doForTransitionBeforeDFS(transition: Transition): Boolean {
+        recordIfTransitionConsistencyErrors(transition)
+        return checkIfExistsSubgraphIndex(transition)
+    }
+
+    override fun doForPlaceBeforeDFS(place: Place): Boolean {
+        savePlaceData(place)
+        recordIfPlaceConsistencyErrors(place)
+        return checkIfExistsSubgraphIndex(place)
     }
 
     private fun savePlaceData(place: Place) {

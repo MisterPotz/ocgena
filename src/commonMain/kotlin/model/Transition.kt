@@ -30,7 +30,7 @@ class Transition(
         return inputArcs.all { it.tailPlaceHasEnoughTokens() }
     }
 
-    override fun acceptVisitor(visitor: PetriAtomVisitor) {
+    override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitTransition(this)
     }
 

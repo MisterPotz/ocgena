@@ -4,7 +4,7 @@ abstract class Arc : ConsistencyCheckable, PetriAtom {
     open var arrowNode : PetriNode? = null
     open var tailNode : PetriNode? = null
 
-    override fun acceptVisitor(visitor: PetriAtomVisitor) {
+    override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitArc(this)
     }
 

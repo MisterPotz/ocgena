@@ -1,12 +1,55 @@
 package model
 
-interface PetriAtomVisitor {
+interface PetriAtomVisitorDFS {
 
     fun visitArc(arc: Arc)
 
     fun visitTransition(transition: Transition)
 
     fun visitPlace(place: Place)
+}
+
+abstract class AbsPetriAtomVisitorDFS : PetriAtomVisitorDFS {
+    protected val recursionProtector = RecursionProtector()
+
+    final override fun visitArc(arc: Arc) {
+        recursionProtector.protectWithRecursionStack(arc) {
+            val canStopParsing = doForArcBeforeDFS(arc)
+            if (!canStopParsing) {
+                arc.arrowNode!!.acceptVisitor(this)
+            }
+            doForAtomAfterDFS(arc)
+        }
+    }
+
+    final override fun visitTransition(transition: Transition) {
+        recursionProtector.protectWithRecursionStack(transition) {
+            val canStopParsing = doForTransitionBeforeDFS(transition)
+            if (!canStopParsing) {
+                for (outputArc in transition.outputArcs) {
+                    visitArc(outputArc)
+                }
+            }
+            doForAtomAfterDFS(transition)
+        }
+    }
+
+    final override fun visitPlace(place: Place) {
+        recursionProtector.protectWithRecursionStack(place) {
+            val canStopParsing = doForPlaceBeforeDFS(place)
+            if (!canStopParsing) {
+                for (outputArc in place.outputArcs) {
+                    visitArc(outputArc)
+                }
+            }
+            doForAtomAfterDFS(place)
+        }
+    }
+
+    open fun doForAtomAfterDFS(atom: PetriAtom) = Unit
+    open fun doForArcBeforeDFS(arc: Arc) : Boolean = false
+    open fun doForTransitionBeforeDFS(transition: Transition) : Boolean = false
+    open fun doForPlaceBeforeDFS(place: Place) : Boolean = false
 }
 
 interface ConsistencyCheckable {

@@ -42,6 +42,7 @@ class OCNetDSLConverter(
                     inputArcs = mutableListOf(),
                     outputArcs = mutableListOf()
                 ).also {
+                    it.initialTokens = placeDSL.initialTokens
                     createdPlaces.add(it)
                 }
             }

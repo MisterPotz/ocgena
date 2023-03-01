@@ -31,7 +31,7 @@ class OCNetChecker(
     fun checkConsistency() : List<ConsistencyCheckError> {
         val inconsistencies = mutableListOf<ConsistencyCheckError>()
 
-        val createdCheckVisitors = mutableListOf<ConsistencyCheckPetriAtomVisitor>()
+        val createdCheckVisitors = mutableListOf<ConsistencyCheckPetriAtomVisitorDFS>()
         var currentSubgraphIndex = 0
 
         var maxSubgraphIndex = -1
@@ -40,7 +40,7 @@ class OCNetChecker(
             if (petriNode.subgraphIndex in 0..maxSubgraphIndex) {
                 // the subgraph of this place was already visited
             } else {
-                val visitor = ConsistencyCheckPetriAtomVisitor(
+                val visitor = ConsistencyCheckPetriAtomVisitorDFS(
                     assignedSubgraphIndex = currentSubgraphIndex
                 )
                 createdCheckVisitors.add(visitor)

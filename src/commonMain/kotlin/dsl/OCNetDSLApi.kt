@@ -2,59 +2,6 @@ package dsl
 
 import model.PlaceType
 
-interface ObjectTypeDSL {
-    val id: Int
-    val label: String
-}
-
-interface NodeDSL {
-    val label: String
-}
-
-interface PlaceDSL : OCPlaceScope, LinkChainDSL, AtomDSL, NodeDSL {
-    // the index of this place for its type
-    var indexForType: Int
-}
-
-interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL, NodeDSL {
-    var transitionIndex: Int
-}
-
-interface AtomDSL {}
-interface LinkChainDSL : HasLast, HasFirst {
-
-//    fun selectPlace(block: (PlaceDSL).(atomIndex: Int) -> Boolean): PlaceDSL
-//    fun selectTransition(block: (TransitionDSL).(atomIndex: Int) -> Boolean): TransitionDSL
-}
-
-interface HasFirst {
-    val firstElement: NodeDSL
-}
-
-interface HasLast {
-    val lastElement: NodeDSL
-}
-
-interface OCTransitionScope {
-    var label: String
-}
-
-interface ArcDSL : AtomDSL {
-    var tailAtom: NodeDSL
-    var arrowAtom: NodeDSL
-
-    fun isInputFor(nodeDSL: NodeDSL): Boolean
-}
-
-interface VariableArcDSL : ArcDSL
-interface NormalArcDSL : ArcDSL {
-    var multiplicity: Int
-}
-
-interface TypeScope : OCScope {
-    val scopeType: ObjectTypeDSL
-}
-
 interface OCScope {
     fun selectPlace(block: (PlaceDSL).() -> Boolean): PlaceDSL
     fun selectTransition(block: (TransitionDSL).() -> Boolean): TransitionDSL
@@ -99,6 +46,57 @@ interface OCScope {
     infix fun List<HasLast>.variableArcTo(linkChainDSL: LinkChainDSL): HasLast
     infix fun LinkChainDSL.variableArcTo(linkChainDSLList: List<HasFirst>): HasFirst
 }
+
+interface ObjectTypeDSL {
+    val id: Int
+    val label: String
+}
+
+interface NodeDSL {
+    val label: String
+}
+
+interface PlaceDSL : OCPlaceScope, LinkChainDSL, AtomDSL, NodeDSL {
+    // the index of this place for its type
+    var indexForType: Int
+}
+
+interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL, NodeDSL {
+    var transitionIndex: Int
+}
+
+interface AtomDSL {}
+interface LinkChainDSL : HasLast, HasFirst
+
+interface HasFirst {
+    val firstElement: NodeDSL
+}
+
+interface HasLast {
+    val lastElement: NodeDSL
+}
+
+interface OCTransitionScope {
+    var label: String
+    // delay? synchronization await time?
+}
+
+interface ArcDSL : AtomDSL {
+    var tailAtom: NodeDSL
+    var arrowAtom: NodeDSL
+
+    fun isInputFor(nodeDSL: NodeDSL): Boolean
+}
+
+interface VariableArcDSL : ArcDSL
+interface NormalArcDSL : ArcDSL {
+    var multiplicity: Int
+}
+
+interface TypeScope : OCScope {
+    val scopeType: ObjectTypeDSL
+}
+
 
 interface OCPlaceScope {
     var initialTokens: Int

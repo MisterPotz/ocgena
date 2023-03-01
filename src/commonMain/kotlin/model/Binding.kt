@@ -7,10 +7,23 @@ class Binding(
     var executed : Boolean = false
         private set
 
-    fun execute() {
+    var bindingIndex : Int = UNSET_BINDING_INDEX
+        private set
+    var loggingEnabled : Boolean = false
+        private set
+
+    private val consumedMap : MutableMap<String, Int> = mutableMapOf()
+    private val producedMap : MutableMap<String, Int> = mutableMapOf()
+
+    fun execute(
+        bindingIndex : Int,
+        loggingEnabled : Boolean
+    ) {
         require(!executed)
+        this.bindingIndex = bindingIndex
+        this.loggingEnabled = loggingEnabled
         for (inputArc in transition.inputArcs) {
-            for (outputArc in transition.inputArcs) {
+            for (outputArc in transition.outputArcs) {
                 val inputPlace = inputArc.requireTailPlace()
                 val outputPlace = outputArc.requireArrowPlace()
                 if (inputPlace.type == outputPlace.type) {
@@ -36,7 +49,9 @@ class Binding(
                         }
                         else -> throw IllegalStateException("unrecognized type of arc: $inputArc")
                     }
+                    consumedMap[inputPlace.label] = toBeConsumed
                     inputPlace.consumeTokens(toBeConsumed)
+                    producedMap[outputPlace.label] = toBeProduced
                     outputPlace.addTokens(toBeProduced)
                 }
             }
@@ -44,7 +59,32 @@ class Binding(
         executed = true
     }
 
+    private fun logPlaceLabelMap(
+        map: MutableMap<String, Int>
+    ) : String {
+        return map.map { (key, value) ->
+            "$key ${value}"
+        }.joinToString(", ")
+    }
+
+    override fun toString(): String {
+        return """
+            Binding(
+                index: ${bindingIndex.takeIf { it != UNSET_BINDING_INDEX } ?: "UNSET"} 
+                executed: $executed
+                transition:  $transition
+                ${if (loggingEnabled) { 
+                    "consumed map: [ ${logPlaceLabelMap(consumedMap)} ]" 
+                } else  {
+                    "logging disabled"
+                }}
+                ${if (loggingEnabled) { "produced map: [ ${logPlaceLabelMap(producedMap)} ]" } else "" }
+            )
+        """.trimIndent()
+    }
+
     companion object {
+        const val UNSET_BINDING_INDEX = -1
         fun createEnabledBinding(
             transition: Transition
         ) : Binding? {

@@ -8,7 +8,7 @@ interface PetriNode: ConsistencyCheckable, PetriAtom {
     fun addOutputArc(arc: Arc)
 
     fun isSameType(other : PetriNode) : Boolean
-    override fun acceptVisitor(visitor: PetriAtomVisitor)
+    override fun acceptVisitor(visitor: PetriAtomVisitorDFS)
 
     companion object {
         val EMPTY = emptyList<Arc>()

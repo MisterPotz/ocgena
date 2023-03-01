@@ -6,7 +6,7 @@ enum class PlaceType {
     OUTPUT
 }
 class Place(
-    override val label : String? = null,
+    override val label : String,
     val type : ObjectType,
     val placeType : PlaceType,
     override val inputArcs: MutableList<Arc> = mutableListOf(),
@@ -16,6 +16,7 @@ class Place(
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
     var tokens : Int = 0
     var terminateTokens: Int? = null
+    var initialTokens : Int? = null
 
     override fun addInputArc(arc: Arc) {
         when (placeType) {
@@ -29,7 +30,7 @@ class Place(
         }
     }
 
-    override fun acceptVisitor(visitor: PetriAtomVisitor) {
+    override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitPlace(this)
     }
 

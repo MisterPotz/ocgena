@@ -13,8 +13,32 @@ class OCNet(
     private val executionLock : Mutex = Mutex()
 
     interface Logger {
+        val loggingEnabled : Boolean
+
+        fun onStart()
         // TODO: pass in to visitors to log the performance
         fun logBindingExecution(binding: Binding)
+
+        fun onEnd()
+    }
+
+    class DebugLogger: Logger {
+        private val executedBindings : MutableList<Binding> = mutableListOf()
+        override val loggingEnabled: Boolean
+            get() = true
+
+        override fun onStart() {
+            println("execution started")
+        }
+
+        override fun logBindingExecution(binding: Binding) {
+            println("\texecute: ${binding.toString().prependIndent()}")
+            executedBindings.add(binding)
+        }
+
+        override fun onEnd() {
+            println("execution ended, executed bindings: ${executedBindings.size}")
+        }
     }
 
     interface ExecutionConditions {
@@ -40,6 +64,7 @@ class OCNet(
         }
 
         override suspend fun selectBindingToExecute(enabledBindings: List<Binding>): Binding {
+            println("\tenabled bindings: \n${enabledBindings.prettyPrint().prependIndent()}")
             // by default, select the first one
             return enabledBindings.first()
         }
@@ -53,10 +78,20 @@ class OCNet(
         if (executionLock.isLocked) return
         executionLock.lock()
 
-        val enabledBindingCollectorVisitor = EnabledBindingCollectorVisitor()
+        val enabledBindingCollectorVisitor = EnabledBindingCollectorVisitorDFS()
+        val tokenInitializerVisitor = TokenInitializerVisitorDFS()
+
+        logger.onStart()
+        // initialize all places with their initial tokens
+        for (inputPlace in inputPlaces) {
+            inputPlace.acceptVisitor(tokenInitializerVisitor)
+        }
+
+        var stepIndex : Int = 0
 
         while (!executionConditions.checkTerminateConditionSatisfied(this)) {
-            // find enabled bindings
+            println("Execution step: $stepIndex")
+            // find enabled bindings throughout all the graph
             for (inputPlace in inputPlaces)  {
                 inputPlace.acceptVisitor(enabledBindingCollectorVisitor)
             }
@@ -67,14 +102,13 @@ class OCNet(
                 break
             }
 
-            val selectedBinding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
-            selectedBinding.execute()
+            val selectedBinding : Binding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
+            selectedBinding.execute(stepIndex++, logger.loggingEnabled)
             logger.logBindingExecution(selectedBinding)
             executionConditions.checkIfSuspend(this, lastExecutionBinding = selectedBinding)
         }
+        logger.onEnd()
 
         executionLock.unlock()
-
-        // TODO: output some results somewhere after execution is finished?
     }
 }

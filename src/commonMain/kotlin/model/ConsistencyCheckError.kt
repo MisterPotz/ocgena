@@ -5,6 +5,10 @@ enum class ErrorLevel {
     CRITICAL
 }
 
+fun <T : Any> List<T>.prettyPrint() : String {
+    return joinToString("\n").prependIndent()
+}
+
 sealed class ConsistencyCheckError(
     val level: ErrorLevel,
     val debugPath: List<PetriAtom>?,

@@ -1,7 +1,7 @@
 package model
 
 interface PetriAtom {
-    fun acceptVisitor(visitor: PetriAtomVisitor)
+    fun acceptVisitor(visitor: PetriAtomVisitorDFS)
     var subgraphIndex : Int
 
     companion object {
