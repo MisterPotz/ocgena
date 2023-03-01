@@ -12,6 +12,13 @@ class OCNet(
 ) {
     private val executionLock : Mutex = Mutex()
 
+//    fun allPlaces() : List<Place> {
+//
+//    }
+//    fun collectMarking() : Map<String, Int> {
+//
+//    }
+
     interface Logger {
         val loggingEnabled : Boolean
 
@@ -68,7 +75,6 @@ class OCNet(
             // by default, select the first one
             return enabledBindings.first()
         }
-
     }
 
     suspend fun run(
@@ -97,7 +103,7 @@ class OCNet(
             }
             val collectedEnabledBindings = enabledBindingCollectorVisitor.getEnabledBindings()
             enabledBindingCollectorVisitor.clear()
-
+            enabledBindingCollectorVisitor.cleanStack()
             if (collectedEnabledBindings.isEmpty()) {
                 break
             }

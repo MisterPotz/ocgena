@@ -7,6 +7,8 @@ interface PetriAtomVisitorDFS {
     fun visitTransition(transition: Transition)
 
     fun visitPlace(place: Place)
+
+    fun cleanStack()
 }
 
 abstract class AbsPetriAtomVisitorDFS : PetriAtomVisitorDFS {
@@ -50,6 +52,10 @@ abstract class AbsPetriAtomVisitorDFS : PetriAtomVisitorDFS {
     open fun doForArcBeforeDFS(arc: Arc) : Boolean = false
     open fun doForTransitionBeforeDFS(transition: Transition) : Boolean = false
     open fun doForPlaceBeforeDFS(place: Place) : Boolean = false
+
+    override fun cleanStack() {
+        recursionProtector.clean()
+    }
 }
 
 interface ConsistencyCheckable {

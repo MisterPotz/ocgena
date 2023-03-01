@@ -22,4 +22,10 @@ class RecursionProtector() {
 
         recursiveStack.remove(petriAtom)
     }
+
+    fun clean() {
+        // is not in process state
+        require(recursiveStack.isEmpty())
+        visitedSet.clear()
+    }
 }
