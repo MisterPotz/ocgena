@@ -19,6 +19,7 @@ class Binding(
         bindingIndex : Int,
         loggingEnabled : Boolean
     ) {
+        // TODO: fix how consumed / produced are calculated
         require(!executed)
         this.bindingIndex = bindingIndex
         this.loggingEnabled = loggingEnabled
