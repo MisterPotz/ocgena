@@ -3,11 +3,10 @@ package model
 import dsl.OCNetBuilder
 import dsl.OCScope
 import dsl.createExampleModel
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
+import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class OCNetCheckerTest {
     val ocScopeImpl = createExampleModel()
@@ -23,11 +22,11 @@ class OCNetCheckerTest {
         val converter = OCNetDSLConverter(ocScopeImpl)
         val result = converter.convert()
 
-        assertTrue(result.places.isNotEmpty()) { "converted places were empty " }
+        assertTrue(result.places.isNotEmpty(), "converted places were empty ")
 
-        assertTrue(result.places.size == 14) { "incorrect amount of places" }
-        assertEquals(24, result.arcs.size) { "incorrect amount of arcs" }
-        assertEquals(8, result.transitions.size) { "incorrect amount of transitions" }
+        assertTrue(result.places.size == 14, "incorrect amount of places")
+        assertEquals(24, result.arcs.size,"incorrect amount of arcs")
+        assertEquals(8, result.transitions.size, "incorrect amount of transitions")
     }
 
     @Test
@@ -37,12 +36,10 @@ class OCNetCheckerTest {
         val places = result.places
         val consistencyChecker = OCNetChecker(result.allPetriNodes)
         val consistencyResults = consistencyChecker.checkConsistency()
-        assertTrue(consistencyResults.isEmpty()) {
+        assertTrue(consistencyResults.isEmpty(),
             "inconsistencies detected:\n" + consistencyResults.joinToString(separator = "\n").prependIndent()
-        }
-        val consistentNet = assertDoesNotThrow {
-            consistencyChecker.createConsistentOCNet()
-        }
+        )
+        val consistentNet = consistencyChecker.createConsistentOCNet()
         assertEquals(3, consistentNet.inputPlaces.size)
         assertEquals(3, consistentNet.outputPlaces.size)
         assertEquals(3, consistentNet.objectTypes.size)
@@ -62,7 +59,7 @@ class OCNetCheckerTest {
             // place types not specified
             place { } arcTo transition { } arcTo place { }
         }
-        assertTrue(errors.isNotEmpty()) { "errors were expected " }
+        assertTrue(errors.isNotEmpty(), "errors were expected ")
         assertNotNull(errors.find { it is ConsistencyCheckError.NoInputPlacesDetected }) { "isolated error expected" }
         assertNotNull(errors.find { it is ConsistencyCheckError.NoOutputPlacesDetected }) { "isolated error expected" }
     }
@@ -74,7 +71,7 @@ class OCNetCheckerTest {
             place { }
             place { } arcTo transition { }
         }
-        assertTrue(errors.isNotEmpty()) { "errors were expected " }
+        assertTrue(errors.isNotEmpty(), "errors were expected ")
         assertNotNull(errors.find { it is ConsistencyCheckError.IsolatedSubgraphsDetected }) { "isolated error expected" }
     }
 
@@ -112,12 +109,12 @@ class OCNetCheckerTest {
         val ocnetChecker = OCNetChecker(convertionResult.allPetriNodes)
         val errors = ocnetChecker.checkConsistency()
 
-        assertTrue(ocnetChecker.isConsistent) {
+        assertTrue(ocnetChecker.isConsistent,
             "expected consistent, errors:\n${errors.joinToString(separator = "\n").prependIndent()}"
-        }
-        assertEquals(2, ocScope.getFilteredObjectTypes().size) {
+        )
+        assertEquals(2, ocScope.getFilteredObjectTypes().size,
             "expected size 2: 2 object types were used (default, and custom)"
-        }
+        )
         assertNotNull(errors.find { it is ConsistencyCheckError.VariableArcIsTheOnlyConnected })
     }
 

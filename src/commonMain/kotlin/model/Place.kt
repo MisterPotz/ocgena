@@ -39,6 +39,10 @@ class Place(
         tokens -= amount
     }
 
+    fun consumeAllTokens() : Int {
+        return tokens
+    }
+
     fun addTokens(amount: Int) {
         tokens += amount
     }

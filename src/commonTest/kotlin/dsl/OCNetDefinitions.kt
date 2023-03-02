@@ -43,7 +43,7 @@ fun createExampleModel() : OCScopeImpl {
                 .variableArcTo(place { })
                 .arcTo(transition("pick item"))
                 .arcTo(place { })
-                .variableArcTo(transition("start route"))
+                .variableArcTo( transition("start route"))
                 .variableArcTo(place { })
                 .variableArcTo(transition("end route"))
                 .variableArcTo(place { })

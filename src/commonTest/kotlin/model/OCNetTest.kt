@@ -1,13 +1,15 @@
 package model
 
 import dsl.OCNetFacadeBuilder
-import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertNotNull
 
 class OCNetTest {
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun testRunSimpleModel() {
+    fun testRunSimpleModel() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
             place {
@@ -17,21 +19,19 @@ class OCNetTest {
                 .arcTo(transition {  })
                 .arcTo(place { placeType = PlaceType.OUTPUT })
         }
-        assertNotNull(ocNet) {
+        assertNotNull(ocNet,
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
-        }
+        )
         requireNotNull(ocNet)
-        runBlocking {
-            ocNet.run(
-                executionConditions = OCNet.ConsoleDebugExecutionConditions(),
-                logger = OCNet.DebugLogger()
-            )
-        }
-
+        ocNet.run(
+            executionConditions = OCNet.ConsoleDebugExecutionConditions(),
+            logger = OCNet.DebugLogger()
+        )
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun testAnotherModel() {
+    fun testAnotherModel() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
 
@@ -53,11 +53,9 @@ class OCNetTest {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         }
         requireNotNull(ocNet)
-        runBlocking {
-            ocNet.run(
-                executionConditions = OCNet.ConsoleDebugExecutionConditions(),
-                logger = OCNet.DebugLogger()
-            )
-        }
+        ocNet.run(
+            executionConditions = OCNet.ConsoleDebugExecutionConditions(),
+            logger = OCNet.DebugLogger()
+        )
     }
 }

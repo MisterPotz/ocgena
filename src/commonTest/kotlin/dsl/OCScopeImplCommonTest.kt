@@ -1,14 +1,15 @@
 package dsl
 
 import model.PlaceType
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import utils.mprintln
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 
-class OCScopeImplTest {
+class OCScopeImplCommonTest {
 
     private var _ocScopeImpl: OCScopeImpl? = null
     val ocScopeImpl
@@ -146,19 +147,19 @@ class OCScopeImplTest {
     fun testAccessToNodesAndConnectedArcsForOrder() {
         with(ocScopeImpl) {
             arcs.forEach {
-                println(it)
+                mprintln(it)
             }
             outputArcFor(place("o1"))
             outputArcFor(place("o2"))
             outputArcFor(place("o3"))
             outputArcFor(place("o4"))
-            assertThrows<Throwable>{ outputArcFor(place("o5")) }
+            assertFails {  outputArcFor(place("o5"))   }
 
             assertEquals(2, outputArcsFor(place("o3")).size)
             assertEquals(2, inputArcsFor(place("o3")).size)
 
 
-            assertThrows<Throwable>{ inputArcFor(place("o1")) }
+            assertFails { inputArcFor(place("o1")) }
             inputArcFor(place("o2"))
             inputArcFor(place("o3"))
             inputArcFor(place("o4"))
@@ -170,7 +171,7 @@ class OCScopeImplTest {
     fun testAccessToNodesAndConnectedArcsForItem() {
         with(ocScopeImpl) {
             arcs.forEach {
-                println(it)
+                mprintln(it)
             }
             outputArcFor(place("item_1"))
             outputArcFor(place("item_2"))
