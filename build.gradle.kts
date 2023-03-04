@@ -23,6 +23,12 @@ kotlin {
     js(IR) {
         binaries.executable()
         browser {
+            testTask {
+                useKarma {
+                    useFirefox()
+                    useChromeHeadless()
+                }
+            }
             commonWebpackConfig {
                 cssSupport {
                     enabled.set(true)
@@ -30,6 +36,7 @@ kotlin {
             }
         }
     }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -54,6 +61,7 @@ kotlin {
             dependencies {
                 implementation("org.junit.jupiter:junit-jupiter:5.8.1")
             }
+
         }
         val jsMain by getting {
             dependencies {
@@ -62,10 +70,18 @@ kotlin {
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:11.9.3-pre.346")
             }
         }
-        val jsTest by getting
-    }
-}
+        val jsTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
 
+                implementation(kotlin("test-js"))
+
+            }
+
+        }
+    }
+
+}
 application {
     mainClass.set("ru.misterpotz.application.ServerKt")
 }
