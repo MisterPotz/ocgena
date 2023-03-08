@@ -82,6 +82,7 @@ interface OCTransitionScope {
 }
 
 interface ArcDSL : AtomDSL {
+
     var tailAtom: NodeDSL
     var arrowAtom: NodeDSL
 

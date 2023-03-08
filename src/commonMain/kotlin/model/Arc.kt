@@ -39,9 +39,10 @@ abstract class Arc : ConsistencyCheckable, PetriAtom {
 }
 
 class NormalArc(
+    override val id: String,
     override var arrowNode: PetriNode?,
     override var tailNode: PetriNode?,
-    val multiplicity: Int = 1
+    val multiplicity: Int = 1,
 ) : Arc() {
     override fun tailPlaceHasEnoughTokens() : Boolean {
         return (tailNode!! as Place).tokens >= multiplicity
@@ -57,6 +58,7 @@ class NormalArc(
 }
 
 class VariableArc(
+    override val id: String,
     override var arrowNode: PetriNode?,
     override var tailNode: PetriNode?,
     // TODO: sets up the allowed multiplicity dynamically, probably needs some parameters

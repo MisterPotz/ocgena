@@ -52,6 +52,8 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
+                implementation("guru.nidi:graphviz-kotlin:0.18.1")
+
                 implementation("io.ktor:ktor-server-netty:2.0.2")
                 implementation("io.ktor:ktor-server-html-builder-jvm:2.0.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
@@ -60,6 +62,8 @@ kotlin {
         val jvmTest by getting {
             dependencies {
                 implementation("org.junit.jupiter:junit-jupiter:5.8.1")
+                implementation("guru.nidi:graphviz-kotlin:0.18.1")
+
             }
 
         }

@@ -6,6 +6,7 @@ enum class PlaceType {
     OUTPUT
 }
 class Place(
+    override val id: String,
     override val label : String,
     val type : ObjectType,
     val placeType : PlaceType,

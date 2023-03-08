@@ -1,5 +1,6 @@
 package model
 
+import converter.OCNetElements
 import dsl.ArcDSL
 import dsl.NodeDSL
 import dsl.NormalArcDSL
@@ -20,6 +21,7 @@ class OCNetDSLConverter(
     private fun getOrCreateTransition(transitionDSL: TransitionDSL): Transition {
         return createdTransitions.find { transitionDSL.label == it.label }
             ?: Transition(
+                id = transitionDSL.label,
                 label = transitionDSL.label,
                 inputArcs = mutableListOf(),
                 outputArcs = mutableListOf(),
@@ -40,12 +42,18 @@ class OCNetDSLConverter(
                     type = objectType,
                     placeType = placeDSL.placeType,
                     inputArcs = mutableListOf(),
-                    outputArcs = mutableListOf()
+                    outputArcs = mutableListOf(),
+                    id = placeDSL.label,
                 ).also {
                     it.initialTokens = placeDSL.initialTokens
                     createdPlaces.add(it)
                 }
             }
+    }
+
+    private fun createArcId(node1 : LabelHolder?, node2: LabelHolder?) : String {
+
+        return "${node1?.label}_${node2?.label}"
     }
 
     private fun createConnectedPlaceAndTransition(
@@ -84,7 +92,8 @@ class OCNetDSLConverter(
             is VariableArcDSL -> {
                 VariableArc(
                     arrowNode = arrowNode,
-                    tailNode = tailNode
+                    tailNode = tailNode,
+                    id = createArcId(tailNode, arrowNode)
                 )
             }
 
@@ -92,7 +101,8 @@ class OCNetDSLConverter(
                 NormalArc(
                     arrowNode = arrowNode,
                     tailNode = tailNode,
-                    multiplicity = arcDSL.multiplicity
+                    multiplicity = arcDSL.multiplicity,
+                    id = createArcId(tailNode, arrowNode)
                 )
             }
 
@@ -133,11 +143,11 @@ class OCNetDSLConverter(
     }
 
     class Output(
-        val places : List<Place>,
-        val transitions: List<Transition>,
-        val arcs : List<Arc>,
-        val allPetriNodes : List<PetriNode>
-    ) {
+        override val places : List<Place>,
+        override val transitions: List<Transition>,
+        override val arcs : List<Arc>,
+        override val allPetriNodes : List<PetriNode>
+    ): OCNetElements {
         override fun toString(): String {
             return """
                 |Output(
