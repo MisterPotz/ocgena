@@ -2,6 +2,9 @@ package model
 
 import dsl.OCNetBuilder
 import dsl.OCScope
+import dsl.ObjectTypeDSL
+import dsl.ObjectTypesContainer
+import dsl.PlacesContainer
 import dsl.createExampleModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,7 +60,7 @@ class OCNetCheckerTest {
     fun checkInputOutputAbsence() {
         val errors = createAndCheckForConsistency {
             // place types not specified
-            place { } arcTo transition { } arcTo place { }
+            place { }.arcTo(transition { }).arcTo(place { })
         }
         assertTrue(errors.isNotEmpty(), "errors were expected ")
         assertNotNull(errors.find { it is ConsistencyCheckError.NoInputPlacesDetected }) { "isolated error expected" }
@@ -112,10 +115,26 @@ class OCNetCheckerTest {
         assertTrue(ocnetChecker.isConsistent,
             "expected consistent, errors:\n${errors.joinToString(separator = "\n").prependIndent()}"
         )
-        assertEquals(2, ocScope.getFilteredObjectTypes().size,
+        assertEquals(2, ocScope.objectTypes.withoutDefaultObjectTypeIfPossible().size,
             "expected size 2: 2 object types were used (default, and custom)"
         )
         assertNotNull(errors.find { it is ConsistencyCheckError.VariableArcIsTheOnlyConnected })
+    }
+
+    private fun Map<String, ObjectTypeDSL>.withoutDefaultObjectTypeIfPossible(objectTypesContainer: ObjectTypesContainer, placeContainer: PlacesContainer): Map<String, ObjectTypeDSL> {
+        return if (size == 1) {
+            this
+        } else {
+            toMutableMap().apply {
+                if (!defaultObjectTypeWasUsed(objectTypesContainer.defaultObjectType, placeContainer)) {
+                    remove(objectTypesContainer.defaultObjectType.label)
+                }
+            }
+        }
+    }
+    private fun defaultObjectTypeWasUsed(defaultObjectTypeDSL: ObjectTypeDSL, placeContainer: PlacesContainer): Boolean {
+        return placeContainer.places.values.find { it.objectType == defaultObjectTypeDSL } != null
+
     }
 
     @Test

@@ -4,6 +4,7 @@ import model.PlaceType
 
 interface OCScope :
     ArcsAcceptor,
+    PlaceAcceptor,
     TransitionAcceptor,
     SubgraphConnector {
     fun selectPlace(block: (PlaceDSL).() -> Boolean): PlaceDSL
@@ -12,6 +13,8 @@ interface OCScope :
     fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit)
 
     // creates new or returns already defined
+}
+interface ObjectTypeAcceptor {
     fun objectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)): ObjectTypeDSL
 
     fun objectType(label: String): ObjectTypeDSL

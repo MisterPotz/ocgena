@@ -10,28 +10,40 @@ class OCScopeImpl(
         placeCreator = null
     ),
     private val transitionDelegate: TransitionDelegate = TransitionDelegate(),
+    private val objectTypeDelegate: ObjectTypeDelegate = ObjectTypeDelegate()
 ) : TypeScope,
     ArcsAcceptor by arcDelegate,
     ArcContainer,
     PlacesContainer,
     PlaceAcceptor by placeDelegate,
     TransitionContainer,
-    TransitionAcceptor by transitionDelegate {
-    val totalTransitions: MutableMap<String, TransitionDSL> = rootScope?.totalTransitions ?: mutableMapOf()
-    private val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
+    TransitionAcceptor by transitionDelegate,
+    ObjectTypesContainer,
+    ObjectTypeAcceptor by objectTypeDelegate {
+
+    override val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
     private val groupIdIssuer: GroupsIdCreator =
         rootScope?.groupIdIssuer ?: GroupsIdCreator()
+    private val objectIdIssuer: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("objects")
 
-    private val defaultObjectTypeDSL: ObjectTypeDSL =
-        defaultScopeType
-            ?: rootScope?.defaultObjectTypeDSL
+    init {
+        objectTypeDelegate.lateinitObjectTypeCreator = ObjectTypeCreator(
+            objectTypesContainer = this,
+            objectTypeIdCreator = objectIdIssuer,
+            groupsIdCreator = groupIdIssuer
+        )
+    }
+    override val defaultObjectType: ObjectTypeDSL = rootScope?.defaultObjectType
             ?: objectType(label = "ot", placeNameCreator = {
                 "p$it"
             })
 
+    private val assignedScopeTypeDSL: ObjectTypeDSL = defaultScopeType ?: defaultObjectType
+
     init {
         placeDelegate.placeCreator = PlaceCreator(
-            scopeType = defaultObjectTypeDSL,
+            scopeType = assignedScopeTypeDSL,
             placesContainer = this,
             groupIdIssuer = groupIdIssuer
         )
@@ -39,6 +51,7 @@ class OCScopeImpl(
             transitionContainer = this
         )
     }
+
 
     override val places: MutableMap<String, PlaceDSL>
         get() = rootScope?.places ?: mutableMapOf()
@@ -69,16 +82,10 @@ class OCScopeImpl(
     override val transitionPatternIdCreator: PatternIdCreator
         get() = groupIdIssuer.patternIdCreatorFor("t")
 
-    private val objectIdIssuer: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("objects")
 
     private val subgraphIdIssuer: PatternIdCreator
         get() = groupIdIssuer.patternIdCreatorFor("subgraph")
 
-    private val defaultObjectTypeWasUsed
-        get() : Boolean {
-            return places.values.find { it.objectType == defaultObjectTypeDSL } != null
-        }
 
     private val defaultPlaceIdIssuer: PatternIdCreator
         get() = groupIdIssuer.patternIdCreatorFor("p")
@@ -124,7 +131,7 @@ class OCScopeImpl(
     }
 
     override fun selectTransition(block: TransitionDSL.() -> Boolean): TransitionDSL {
-        return totalTransitions.values.first { transitionDSL ->
+        return transitions.values.first { transitionDSL ->
             transitionDSL.block()
         }
     }
@@ -135,34 +142,6 @@ class OCScopeImpl(
             defaultScopeType = objectTypeDSL
         )
         ocScopeImpl.block()
-    }
-
-    override fun objectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)): ObjectTypeDSL {
-        return objectTypes.getOrPut(label) {
-            val newId = objectIdIssuer.newIntId()
-            groupIdIssuer.addPatternIdCreatorFor(label, startIndex = 1, placeNameCreator)
-            ObjectTypeImpl(newId, label)
-        }
-    }
-
-    override fun objectType(label: String): ObjectTypeDSL {
-        return objectTypes.getOrPut(label) {
-            val newId = objectIdIssuer.newIntId()
-            groupIdIssuer.addPatternIdCreatorFor(label, startIndex = 1) { "${label}_$it" }
-            ObjectTypeImpl(newId, label)
-        }
-    }
-
-    fun getFilteredObjectTypes(): Map<String, ObjectTypeDSL> {
-        return if (objectTypes.size == 1) {
-            objectTypes
-        } else {
-            objectTypes.toMutableMap().apply {
-                if (!defaultObjectTypeWasUsed) {
-                    remove(defaultObjectTypeDSL.label)
-                }
-            }
-        }
     }
 
     companion object {

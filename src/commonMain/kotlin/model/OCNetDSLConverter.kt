@@ -124,10 +124,10 @@ class OCNetDSLConverter(
         }
         // if arcs were not connected to some defined places or transitions,
         // they weren't created before
-        for (placeDSL in ocNetOCScopeImpl.totalPlaces.values) {
+        for (placeDSL in ocNetOCScopeImpl.places.values) {
             getOrCreatePlace(placeDSL)
         }
-        for (transitionDSL in ocNetOCScopeImpl.totalTransitions.values) {
+        for (transitionDSL in ocNetOCScopeImpl.transitions.values) {
             getOrCreateTransition(transitionDSL)
         }
         return OCNetElementsImpl(
