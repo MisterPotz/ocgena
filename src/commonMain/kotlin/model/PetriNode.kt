@@ -3,6 +3,7 @@ package model
 interface PetriNode: ConsistencyCheckable, PetriAtom {
     val inputArcs : MutableList<Arc>
     val outputArcs : MutableList<Arc>
+    val label : String
 
     fun addInputArc(arc: Arc)
     fun addOutputArc(arc: Arc)

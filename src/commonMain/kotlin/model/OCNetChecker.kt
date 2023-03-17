@@ -13,10 +13,7 @@ class OCNetChecker(
 
     val isConsistent : Boolean
         get() {
-            // consistent when no critical errors observed
-            return lastConsistencyResults?.let {
-                it.none { it.level == ErrorLevel.CRITICAL }
-            } ?: false
+            return Companion.checkConsistency(lastConsistencyResults)
         }
 
     fun createConsistentOCNet() : OCNet {
@@ -90,5 +87,13 @@ class OCNetChecker(
             objectTypes = null
         }
         return inconsistencies
+    }
+
+    companion object {
+        fun checkConsistency(conistencyResults: List<ConsistencyCheckError>?) : Boolean {
+            return conistencyResults?.let {
+                it.none { it.level == ErrorLevel.CRITICAL }
+            } ?: false
+        }
     }
 }

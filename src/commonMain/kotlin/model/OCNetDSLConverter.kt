@@ -1,6 +1,5 @@
 package model
 
-import converter.OCNetElements
 import dsl.ArcDSL
 import dsl.NodeDSL
 import dsl.NormalArcDSL
@@ -119,19 +118,19 @@ class OCNetDSLConverter(
         createdArcs.add(arc)
     }
 
-    fun convert(): Output {
+    fun convert(): OCNetElementsImpl {
         for (arcDSL in ocNetOCScopeImpl.arcs) {
             createConnectedPlaceAndTransition(arcDSL)
         }
         // if arcs were not connected to some defined places or transitions,
         // they weren't created before
-        for (placeDSL in ocNetOCScopeImpl.places.values) {
+        for (placeDSL in ocNetOCScopeImpl.totalPlaces.values) {
             getOrCreatePlace(placeDSL)
         }
-        for (transitionDSL in ocNetOCScopeImpl.transitions.values) {
+        for (transitionDSL in ocNetOCScopeImpl.totalTransitions.values) {
             getOrCreateTransition(transitionDSL)
         }
-        return Output(
+        return OCNetElementsImpl(
             places = createdPlaces,
             transitions = createdTransitions,
             arcs = createdArcs,
@@ -142,20 +141,4 @@ class OCNetDSLConverter(
         )
     }
 
-    class Output(
-        override val places : List<Place>,
-        override val transitions: List<Transition>,
-        override val arcs : List<Arc>,
-        override val allPetriNodes : List<PetriNode>
-    ): OCNetElements {
-        override fun toString(): String {
-            return """
-                |Output(
-                |   places: $places
-                |   transitions: $transitions,
-                |   arcs: $arcs
-                |)
-            """.trimMargin()
-        }
-    }
 }

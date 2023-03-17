@@ -21,7 +21,7 @@ fun createExampleModel() : OCScopeImpl {
             }.arcTo(transition("place order"))
                 .arcTo(place { })
                 .arcTo(transition("send invoice"))
-                .arcTo(subgraph {
+                .connectTo(subgraph {
                     setAsInputOutput(place { })
 
                     input.arcTo(transition("send reminder"))

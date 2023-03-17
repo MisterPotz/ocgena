@@ -2,7 +2,7 @@ package model
 
 class Transition(
     override val id: String,
-    override val label : String? = null,
+    override val label : String,
     override val inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
     override val outputArcs: MutableList<Arc> = mutableListOf<Arc>()
 ) : PetriNode, LabelHolder {

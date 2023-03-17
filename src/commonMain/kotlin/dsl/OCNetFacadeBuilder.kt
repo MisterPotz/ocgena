@@ -1,17 +1,30 @@
 package dsl
 
+import converter.OCNetElements
 import model.ConsistencyCheckError
 import model.OCNet
 import model.OCNetChecker
 import model.OCNetDSLConverter
+import model.OCNetElementsImpl
 
 class OCNetFacadeBuilder {
-    var definedNetData : DefinedNetData? = null
+    var definedNetData: DefinedNetData? = null
         private set
 
-    val errors : List<ConsistencyCheckError>?
+    val errors: List<ConsistencyCheckError>?
         get() = definedNetData?.errors
-    fun tryBuildModel(block: OCScope.() -> Unit) : OCNet? {
+
+    class BuiltOCNet(
+        val ocNetElements: OCNetElements,
+        val errors: List<ConsistencyCheckError>,
+        val ocNet: OCNet?,
+    ) {
+        fun requireConsistentOCNet(): OCNet {
+            return ocNet!!
+        }
+    }
+
+    fun tryBuildModel(block: OCScope.() -> Unit): BuiltOCNet {
         val ocScope = OCNetBuilder.define(block)
         val converter = OCNetDSLConverter(ocScope)
         val convertionResult = converter.convert()
@@ -26,7 +39,11 @@ class OCNetFacadeBuilder {
             ocNetOCScopeImpl = ocScope
         )
         this.definedNetData = definedNetData
-        return definedNetData.ocNet
+        return BuiltOCNet(
+            ocNetElements = convertionResult,
+            errors = errors,
+            ocNet = ocNet
+        )
     }
 }
 

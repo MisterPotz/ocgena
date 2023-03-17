@@ -18,7 +18,7 @@ class OCNetTest {
             }
                 .arcTo(transition {  })
                 .arcTo(place { placeType = PlaceType.OUTPUT })
-        }
+        }.requireConsistentOCNet()
         assertNotNull(ocNet,
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         )
@@ -48,7 +48,7 @@ class OCNetTest {
                 .arcTo(place {  })
                 .arcTo(multiplicity = 2, transition { })
                 .arcTo(multiplicity = 3, place { placeType = PlaceType.OUTPUT })
-        }
+        }.requireConsistentOCNet()
         assertNotNull(ocNet) {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         }

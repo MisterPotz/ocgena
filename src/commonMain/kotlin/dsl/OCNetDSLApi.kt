@@ -2,7 +2,10 @@ package dsl
 
 import model.PlaceType
 
-interface OCScope {
+interface OCScope :
+    ArcsAcceptor,
+    TransitionAcceptor,
+    SubgraphConnector {
     fun selectPlace(block: (PlaceDSL).() -> Boolean): PlaceDSL
     fun selectTransition(block: (TransitionDSL).() -> Boolean): TransitionDSL
 
@@ -12,7 +15,9 @@ interface OCScope {
     fun objectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)): ObjectTypeDSL
 
     fun objectType(label: String): ObjectTypeDSL
+}
 
+interface PlaceAcceptor {
     // creates new or retrieves existing
     fun place(label: String): PlaceDSL
 
@@ -22,6 +27,10 @@ interface OCScope {
     // creates new or retrieves existing
     fun place(label: String, block: OCPlaceScope.() -> Unit): PlaceDSL
 
+}
+
+interface TransitionAcceptor {
+
     // creates new
     fun transition(block: OCTransitionScope.() -> Unit): TransitionDSL
 
@@ -30,21 +39,28 @@ interface OCScope {
 
     // creates new or retrieves existing
     fun transition(label: String): TransitionDSL
+}
 
-    infix fun LinkChainDSL.arcTo(linkChainDSL: LinkChainDSL): LinkChainDSL
+interface SubgraphConnector {
+    fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast
+    fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL) : SubgraphDSL
 
-    infix fun List<HasLast>.arcTo(linkChainDSL: LinkChainDSL): HasLast
-    infix fun LinkChainDSL.arcTo(linkChainDSLList: List<HasFirst>): HasFirst
+    fun subgraph(label: String? = null, block: SubgraphDSL.() -> Unit): SubgraphDSL
+}
 
-    fun subgraph(block: SubgraphDSL.() -> Unit): LinkChainDSL
+interface ArcsAcceptor {
 
-    fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): LinkChainDSL
-    fun List<HasLast>.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast
-    fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSLList: List<HasFirst>): HasFirst
+    fun HasLast.arcTo(multiplicity: Int = 1, linkChainDSL: LinkChainDSL): HasLast
+    fun HasLast.arcTo(multiplicity: Int = 1, linkChainDSL: HasFirst)
 
-    infix fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL
-    infix fun List<HasLast>.variableArcTo(linkChainDSL: LinkChainDSL): HasLast
-    infix fun LinkChainDSL.variableArcTo(linkChainDSLList: List<HasFirst>): HasFirst
+    fun LinkChainDSL.arcTo(multiplicity: Int = 1, linkChainDSL: LinkChainDSL): LinkChainDSL
+
+
+    fun HasLast.variableArcTo(linkChainDSL: LinkChainDSL): HasLast
+
+    fun HasLast.variableArcTo(hasFirst: HasFirst)
+
+    fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL
 }
 
 interface ObjectTypeDSL {
@@ -58,14 +74,14 @@ interface NodeDSL {
 
 interface PlaceDSL : OCPlaceScope, LinkChainDSL, AtomDSL, NodeDSL {
     // the index of this place for its type
-    var indexForType: Int
+    var objectTypeId: Int
 }
 
 interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL, NodeDSL {
     var transitionIndex: Int
 }
 
-interface AtomDSL {}
+interface AtomDSL
 interface LinkChainDSL : HasLast, HasFirst
 
 interface HasFirst {
@@ -106,9 +122,12 @@ interface OCPlaceScope {
     var placeType: PlaceType
 }
 
-interface SubgraphDSL : OCScope {
-    var input: PlaceDSL
-    var output: PlaceDSL
-    fun setAsInputOutput(placeDSL: PlaceDSL)
-}
 
+interface SubgraphDSL : ArcsAcceptor, TransitionAcceptor {
+    val label : String
+
+    val inArcsWithConnectedArrows : List<ArcDSL>
+    val outArcsWithConnectedTails : List<ArcDSL>
+    val inNode: HasLast
+    val outNode : HasFirst
+}

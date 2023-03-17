@@ -1,32 +1,27 @@
 package dsl
 
 class OCScopeImpl(
-    val rootScope: OCScopeImpl? = null,
-    val defaultScopeType: ObjectTypeDSL? = null,
-) : TypeScope, SubgraphDSL {
-    val places: MutableMap<String, PlaceDSL> = rootScope?.places ?: mutableMapOf()
-    val transitions: MutableMap<String, TransitionDSL> = rootScope?.transitions ?: mutableMapOf()
-    val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
-
-    val arcs: MutableList<ArcDSL> = rootScope?.arcs ?: mutableListOf()
+    private val rootScope: OCScopeImpl? = null,
+    private val defaultScopeType: ObjectTypeDSL? = null,
+    private val arcDelegate: ArcDelegate = ArcDelegate(
+        arcs = rootScope?.arcDelegate?.arcs ?: mutableListOf()
+    ),
+    private val placeDelegate: PlaceDelegate = PlaceDelegate(
+        placeCreator = null
+    ),
+    private val transitionDelegate: TransitionDelegate = TransitionDelegate(),
+) : TypeScope,
+    ArcsAcceptor by arcDelegate,
+    ArcContainer,
+    PlacesContainer,
+    PlaceAcceptor by placeDelegate,
+    TransitionContainer,
+    TransitionAcceptor by transitionDelegate {
+    val totalTransitions: MutableMap<String, TransitionDSL> = rootScope?.totalTransitions ?: mutableMapOf()
+    private val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
     private val groupIdIssuer: GroupsIdCreator =
         rootScope?.groupIdIssuer ?: GroupsIdCreator()
 
-    init {
-        if (rootScope == null) {
-            groupIdIssuer.addPatternIdCreatorFor("t", startIndex = 1) {
-                "t_$it"
-            }
-        }
-    }
-
-    private val defaultTransitionIdIssuer: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("t")
-
-    private val objectIdIssuer: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("objects")
-
-    private var defaultObjectTypeWasUsed = false
     private val defaultObjectTypeDSL: ObjectTypeDSL =
         defaultScopeType
             ?: rootScope?.defaultObjectTypeDSL
@@ -34,213 +29,102 @@ class OCScopeImpl(
                 "p$it"
             })
 
+    init {
+        placeDelegate.placeCreator = PlaceCreator(
+            scopeType = defaultObjectTypeDSL,
+            placesContainer = this,
+            groupIdIssuer = groupIdIssuer
+        )
+        transitionDelegate.lateAssignTransitionCreator = TransitionCreator(
+            transitionContainer = this
+        )
+    }
+
+    override val places: MutableMap<String, PlaceDSL>
+        get() = rootScope?.places ?: mutableMapOf()
+    override val transitions: MutableMap<String, TransitionDSL>
+        get() = rootScope?.transitions ?: mutableMapOf()
+
+    private val subgraphStruct = SubgraphStruct(
+        places = mutableMapOf(),
+        transitions = mutableMapOf(),
+        subgraphStructs = mutableMapOf()
+    )
+
+    override val arcs: List<ArcDSL>
+        get() = arcDelegate.arcs
+
+
+    init {
+        if (rootScope == null) {
+            groupIdIssuer.addPatternIdCreatorFor("t", startIndex = 1) {
+                "t$it"
+            }
+            groupIdIssuer.addPatternIdCreatorFor("subgraph", startIndex = 1) {
+                "subgraph$it"
+            }
+        }
+    }
+
+    override val transitionPatternIdCreator: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("t")
+
+    private val objectIdIssuer: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("objects")
+
+    private val subgraphIdIssuer: PatternIdCreator
+        get() = groupIdIssuer.patternIdCreatorFor("subgraph")
+
+    private val defaultObjectTypeWasUsed
+        get() : Boolean {
+            return places.values.find { it.objectType == defaultObjectTypeDSL } != null
+        }
+
     private val defaultPlaceIdIssuer: PatternIdCreator
         get() = groupIdIssuer.patternIdCreatorFor("p")
 
-    private var _subgraphInput: PlaceDSL? = null
-    private var _subgraphOutput: PlaceDSL? = null
-
-    override var input: PlaceDSL
-        get() = checkNotNull(_subgraphInput)
-        set(value) {
-            _subgraphInput = value
-        }
-
-    override var output: PlaceDSL
-        get() = checkNotNull(_subgraphOutput)
-        set(value) {
-            _subgraphOutput = value
-        }
-
-
     override val scopeType: ObjectTypeDSL
         get() = checkNotNull(defaultScopeType)
-
-    override fun place(block: OCPlaceScope.() -> Unit): PlaceDSL {
-        return internalPlace(null, block)
-    }
-
-    override fun setAsInputOutput(placeDSL: PlaceDSL) {
-        input = placeDSL
-        output = placeDSL
-    }
-
-    override fun place(label: String, block: OCPlaceScope.() -> Unit): PlaceDSL {
-        return internalPlace(label, block)
-    }
-
-    override fun place(label: String): PlaceDSL {
-        return internalPlace(label) { }
-    }
-
-    override fun transition(block: OCTransitionScope.() -> Unit): TransitionDSL {
-        return internalTransition(null, block)
-    }
-
-    override fun transition(label: String, block: OCTransitionScope.() -> Unit): TransitionDSL {
-        return internalTransition(label, block)
-    }
-
-    override fun transition(label: String): TransitionDSL {
-        return internalTransition(label) { }
-    }
-
-    fun inputArcFor(placeDSL: NodeDSL): ArcDSL {
-        return arcs.find { it.arrowAtom == placeDSL }!!
-    }
-
-    fun allArcsFor(nodeDSL: NodeDSL) : List<ArcDSL> {
-        return arcs.filter { it.arrowAtom == nodeDSL || it.tailAtom == nodeDSL }
-    }
-
-    fun inputArcsFor(placeDSL: NodeDSL) : List<ArcDSL> {
-        return arcs.filter { it.arrowAtom == placeDSL }
-    }
-
-    fun outputArcFor(placeDSL: NodeDSL): ArcDSL {
-        return arcs.find { it.tailAtom == placeDSL }!!
-    }
-
-    fun outputArcsFor(placeDSL: NodeDSL) : List<ArcDSL> {
-        return arcs.filter { it.tailAtom == placeDSL }
-    }
-
-    private fun internalTransition(label: String?, block: OCTransitionScope.() -> Unit): TransitionDSL {
-        if (label != null) {
-            val transition = transitions[label]
-            if (transition != null) {
-                return transition
-            }
-        }
-
-        val defaultId = defaultTransitionIdIssuer.newLabelId()
-
-        val transitionDSLImpl = TransitionDSLImpl(
-            transitionIndex = defaultTransitionIdIssuer.lastIntId,
-            defaultLabel = label ?: defaultTransitionIdIssuer.lastLabelId,
-        )
-        transitionDSLImpl.block()
-
-        transitions[label ?: defaultId] = transitionDSLImpl
-        return transitionDSLImpl
-    }
 
     override fun selectPlace(block: PlaceDSL.() -> Boolean): PlaceDSL {
         return places.values.first { atomDSL ->
             atomDSL.block()
         }
     }
-
-    override fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): LinkChainDSL {
-        return internalArc(this, linkChainDSL, multiplicity, isVariable = false)
+    override fun subgraph(label: String?, block: SubgraphDSL.() -> Unit): SubgraphDSL {
+        val newSubgraph = internalCreateSubgraph(label, block)
+        recordSubgraphToThisScope(newSubgraph)
+        return newSubgraph
     }
 
-    override fun LinkChainDSL.arcTo(linkChainDSL: LinkChainDSL): LinkChainDSL {
-        return internalArc(this, linkChainDSL, multiplicity = 1, isVariable = false)
+
+    private fun recordSubgraphToThisScope(newSubgraphDSL: SubgraphDSL) {
+        subgraphStruct.subgraphStructs[newSubgraphDSL.label] = newSubgraphDSL
     }
 
-    override fun List<HasLast>.arcTo(linkChainDSL: LinkChainDSL): HasLast {
-        return internalArc(this, linkChainDSL, multiplicity = 1, isVariable = false)
-    }
+    internal fun internalCreateSubgraph(label: String?, block: SubgraphDSL.() -> Unit): SubgraphDSL {
+        subgraphIdIssuer.newIntId()
 
-    override fun LinkChainDSL.arcTo(linkChainDSLList: List<HasFirst>): HasFirst {
-        return internalArc(this, linkChainDSLList, multiplicity = 1, isVariable = false)
-    }
-
-    override fun List<HasLast>.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast {
-        return internalArc(this, linkChainDSL, multiplicity = multiplicity, isVariable = false)
-    }
-
-    override fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSLList: List<HasFirst>): HasFirst {
-        return internalArc(this, linkChainDSLList, multiplicity = multiplicity, isVariable = false)
-    }
-
-    override fun subgraph(block: SubgraphDSL.() -> Unit): LinkChainDSL {
-        val newScope = OCScopeImpl(
-            rootScope = rootScope,
-            defaultScopeType = defaultScopeType
+        val newSubgraph = SubgraphImpl(
+            label = label ?: subgraphIdIssuer.lastLabelId,
+            rootScope = rootScope ?: this
         )
-        newScope.block()
-        return LinkChainDSLImpl(
-            firstElement = newScope.input,
-            lastElement = newScope.output
-        )
+        newSubgraph.block()
+        // don't add this subgraph to local subgraphs
+        return newSubgraph
     }
 
-    override fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL {
-        return internalArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
+    override fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL): SubgraphDSL {
+        val tailNode = this.lastElement
+        subgraphDSL.stru
     }
 
-    override fun List<HasLast>.variableArcTo(linkChainDSL: LinkChainDSL): HasLast {
-        return internalArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
-    }
+    override fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast {
 
-    override fun LinkChainDSL.variableArcTo(linkChainDSLList: List<HasFirst>): HasFirst {
-        return internalArc(this, linkChainDSLList, multiplicity = 1, isVariable = true)
-    }
-
-    private fun internalArc(
-        from: LinkChainDSL,
-        to: LinkChainDSL,
-        multiplicity: Int,
-        isVariable: Boolean,
-    ): LinkChainDSL {
-        val newLinkChainDSLImpl = LinkChainDSLImpl(firstElement = from.lastElement, lastElement = to.firstElement)
-
-        newLinkChainDSLImpl.apply {
-            val newArc = if (isVariable) {
-                VariableArcDSLImpl(tailAtom = from.lastElement, arrowAtom = to.firstElement)
-            } else {
-                NormalArcDSLImpl(multiplicity = multiplicity, tailAtom = from.lastElement, arrowAtom = to.firstElement)
-            }
-            arcs.add(newArc)
-        }
-        return newLinkChainDSLImpl
-    }
-
-    private fun internalArc(
-        from: List<HasLast>,
-        to: LinkChainDSL,
-        multiplicity: Int,
-        isVariable: Boolean,
-    ): HasLast {
-        val newLinkChainDSLImpl = HasLastImpl(to.lastElement)
-        val toElement = to.firstElement
-        for (fromEntity in from) {
-            val newArc = if (isVariable) {
-                VariableArcDSLImpl(tailAtom = fromEntity.lastElement, arrowAtom = toElement)
-            } else {
-                NormalArcDSLImpl(multiplicity = multiplicity, tailAtom = fromEntity.lastElement, arrowAtom = toElement)
-            }
-
-            arcs.add(newArc)
-        }
-        return newLinkChainDSLImpl
-    }
-
-    private fun internalArc(
-        from: LinkChainDSL,
-        to: List<HasFirst>,
-        multiplicity: Int,
-        isVariable: Boolean,
-    ): HasFirst {
-        val newLinkChainDSLImpl = HasFirstImpl(from.firstElement)
-
-        val fromElement = from.lastElement
-        for (toEntity in to) {
-            val newArc = if (isVariable) {
-                VariableArcDSLImpl(tailAtom = fromElement, arrowAtom = toEntity.firstElement)
-            } else {
-                NormalArcDSLImpl(multiplicity = multiplicity, tailAtom = fromElement, arrowAtom = toEntity.firstElement)
-            }
-
-            arcs.add(newArc)
-        }
-        return newLinkChainDSLImpl
     }
 
     override fun selectTransition(block: TransitionDSL.() -> Boolean): TransitionDSL {
-        return transitions.values.first { transitionDSL ->
+        return totalTransitions.values.first { transitionDSL ->
             transitionDSL.block()
         }
     }
@@ -269,7 +153,7 @@ class OCScopeImpl(
         }
     }
 
-    fun getFilteredObjectTypes() : Map<String, ObjectTypeDSL> {
+    fun getFilteredObjectTypes(): Map<String, ObjectTypeDSL> {
         return if (objectTypes.size == 1) {
             objectTypes
         } else {
@@ -279,53 +163,6 @@ class OCScopeImpl(
                 }
             }
         }
-    }
-
-    private fun internalPlace(label: String? = null, block: OCPlaceScope.() -> Unit): PlaceDSL {
-        // TODO: simplify code for place dsl, as change of label inside the ocplacescope is not required
-        if (label != null) {
-            val place = places[label]
-            if (place != null) {
-                return place
-            }
-        }
-
-        val scopeType = defaultScopeType ?: defaultObjectTypeDSL
-        val placeIdIssuer = groupIdIssuer.patternIdCreatorFor(scopeType.label)
-
-        var defaultId = placeIdIssuer.newIntId()
-        var defaultLabelId = placeIdIssuer.lastLabelId
-
-        val objectTypesStack = mutableListOf(scopeType)
-
-        val placeDSLImpl =
-            PlaceDSLImpl(
-                indexForType = defaultId,
-                onAssignNewObjectType = {
-                    for (i in objectTypesStack.size.downTo(1)) {
-                        val type = objectTypesStack[i-1]
-                        val usedPatternIdCreator = groupIdIssuer.patternIdCreatorFor(type.label)
-                        usedPatternIdCreator.removeLast()
-                        objectTypesStack.removeLast()
-                    }
-                    objectTypesStack.add(it)
-                    val patternIdCreator = groupIdIssuer.patternIdCreatorFor(it.label)
-                    defaultId = patternIdCreator.newIntId()
-                    defaultLabelId = patternIdCreator.lastLabelId
-                },
-                labelFactory = {
-                    label ?: defaultLabelId
-                },
-
-                objectType = defaultObjectTypeDSL
-            )
-        placeDSLImpl.block()
-        placeDSLImpl.indexForType = defaultId
-        if (placeDSLImpl.objectType == defaultObjectTypeDSL) {
-            defaultObjectTypeWasUsed = true
-        }
-        places[label ?: defaultLabelId] = (placeDSLImpl)
-        return placeDSLImpl
     }
 
     companion object {
