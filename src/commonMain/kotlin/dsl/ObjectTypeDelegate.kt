@@ -1,10 +1,8 @@
 package dsl
 
 class ObjectTypeDelegate(
-    var lateinitObjectTypeCreator : ObjectTypeCreator? = null
+    var objectTypeCreator : ObjectTypeCreator
 ) : ObjectTypeAcceptor {
-    val objectTypeCreator
-        get() = lateinitObjectTypeCreator!!
 
     override fun objectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)): ObjectTypeDSL {
         return objectTypeCreator.createObjectType(label, placeNameCreator)

@@ -1,103 +1,92 @@
 package dsl
 
+
+private class GroupIdCreatorSetupper() {
+    fun setupGroupIdCreator(groupsIdCreator: GroupsIdCreator) {
+        groupsIdCreator.addPatternIdCreatorFor("t", startIndex = 1) {
+            "t$it"
+        }
+        groupsIdCreator.addPatternIdCreatorFor("subgraphs", startIndex = 1) {
+            "subgr$it"
+        }
+    }
+}
+
+class OCScopeImplCreator() {
+    private val groupIdCreator: GroupsIdCreator = GroupsIdCreator().also {
+        GroupIdCreatorSetupper().setupGroupIdCreator(it)
+    }
+    val scopeEntities = ScopeAccessibleEntities(groupsIdCreator = groupIdCreator, parentScopeEntities = null)
+    val objectIdCreator: PatternIdCreator
+        get() = groupIdCreator.patternIdCreatorFor("objects")
+
+    val objectTypeCreator = ObjectTypeCreator(
+        objectTypesContainer = scopeEntities,
+        objectTypeIdCreator = objectIdCreator,
+        groupsIdCreator = groupIdCreator
+    )
+    val defaultObjectType: ObjectTypeDSL =
+        objectTypeCreator.createObjectType(label = "ot", placeNameCreator = { "p$it" })
+    val subgraphIdCreator : PatternIdCreator
+        get() = groupIdCreator.patternIdCreatorFor("subgraphs")
+    val arcDelegate = ArcDelegate(arcContainer = scopeEntities)
+    val placeDelegate = PlaceDelegate(
+        placeCreator = PlaceCreator(
+            scopeType = defaultObjectType,
+            placesContainer = scopeEntities,
+            groupIdCreator = groupIdCreator
+        )
+    )
+    val transitionDelegate = TransitionDelegate(
+        transitionCreator = TransitionCreator(
+            transitionContainer = scopeEntities
+        )
+    )
+}
+
+class SubgraphDelegate(
+    scopeAccessibleEntities: ScopeAccessibleEntities,
+
+    ) : SubgraphConnector {
+    val subgraphStruct: EntitiesCreatedInSubgraph = EntitiesCreatedInSubgraph()
+
+    override fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast {
+        TODO("Not yet implemented")
+    }
+
+    override fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL): SubgraphDSL {
+        TODO("Not yet implemented")
+    }
+
+    override fun subgraph(label: String?, block: SubgraphDSL.() -> Unit): SubgraphDSL {
+
+    }
+
+}
+
 class OCScopeImpl(
     private val rootScope: OCScopeImpl? = null,
-    private val defaultScopeType: ObjectTypeDSL? = null,
-    private val arcDelegate: ArcDelegate = ArcDelegate(
-        arcs = rootScope?.arcDelegate?.arcs ?: mutableListOf()
-    ),
-    private val placeDelegate: PlaceDelegate = PlaceDelegate(
-        placeCreator = null
-    ),
-    private val transitionDelegate: TransitionDelegate = TransitionDelegate(),
-    private val objectTypeDelegate: ObjectTypeDelegate = ObjectTypeDelegate()
+    override val scopeType: ObjectTypeDSL,
+    private val scopeEntities: ScopeAccessibleEntities,
+    private val groupsIdCreator: GroupsIdCreator,
+    private val arcDelegate: ArcDelegate,
+    private val placeDelegate: PlaceDelegate,
+    private val transitionDelegate: TransitionDelegate,
+    private val objectTypeDelegate: ObjectTypeDelegate,
 ) : TypeScope,
     ArcsAcceptor by arcDelegate,
-    ArcContainer,
-    PlacesContainer,
     PlaceAcceptor by placeDelegate,
-    TransitionContainer,
     TransitionAcceptor by transitionDelegate,
-    ObjectTypesContainer,
-    ObjectTypeAcceptor by objectTypeDelegate {
-
-    override val objectTypes: MutableMap<String, ObjectTypeDSL> = rootScope?.objectTypes ?: mutableMapOf()
-    private val groupIdIssuer: GroupsIdCreator =
-        rootScope?.groupIdIssuer ?: GroupsIdCreator()
-    private val objectIdIssuer: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("objects")
-
-    init {
-        objectTypeDelegate.lateinitObjectTypeCreator = ObjectTypeCreator(
-            objectTypesContainer = this,
-            objectTypeIdCreator = objectIdIssuer,
-            groupsIdCreator = groupIdIssuer
-        )
-    }
-    override val defaultObjectType: ObjectTypeDSL = rootScope?.defaultObjectType
-            ?: objectType(label = "ot", placeNameCreator = {
-                "p$it"
-            })
-
-    private val assignedScopeTypeDSL: ObjectTypeDSL = defaultScopeType ?: defaultObjectType
-
-    init {
-        placeDelegate.placeCreator = PlaceCreator(
-            scopeType = assignedScopeTypeDSL,
-            placesContainer = this,
-            groupIdIssuer = groupIdIssuer
-        )
-        transitionDelegate.lateAssignTransitionCreator = TransitionCreator(
-            transitionContainer = this
-        )
-    }
+    ObjectTypeAcceptor by objectTypeDelegate,
+    SubgraphConnector {
 
 
-    override val places: MutableMap<String, PlaceDSL>
-        get() = rootScope?.places ?: mutableMapOf()
-    override val transitions: MutableMap<String, TransitionDSL>
-        get() = rootScope?.transitions ?: mutableMapOf()
-
-    private val subgraphStruct = SubgraphStruct(
+    private val subgraphStruct = EntitiesCreatedInSubgraph(
         places = mutableMapOf(),
         transitions = mutableMapOf(),
-        subgraphStructs = mutableMapOf()
+        subgraphs = mutableMapOf()
     )
 
-    override val arcs: List<ArcDSL>
-        get() = arcDelegate.arcs
-
-
-    init {
-        if (rootScope == null) {
-            groupIdIssuer.addPatternIdCreatorFor("t", startIndex = 1) {
-                "t$it"
-            }
-            groupIdIssuer.addPatternIdCreatorFor("subgraph", startIndex = 1) {
-                "subgraph$it"
-            }
-        }
-    }
-
-    override val transitionPatternIdCreator: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("t")
-
-
-    private val subgraphIdIssuer: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("subgraph")
-
-
-    private val defaultPlaceIdIssuer: PatternIdCreator
-        get() = groupIdIssuer.patternIdCreatorFor("p")
-
-    override val scopeType: ObjectTypeDSL
-        get() = checkNotNull(defaultScopeType)
-
-    override fun selectPlace(block: PlaceDSL.() -> Boolean): PlaceDSL {
-        return places.values.first { atomDSL ->
-            atomDSL.block()
-        }
-    }
     override fun subgraph(label: String?, block: SubgraphDSL.() -> Unit): SubgraphDSL {
         val newSubgraph = internalCreateSubgraph(label, block)
         recordSubgraphToThisScope(newSubgraph)
@@ -106,40 +95,64 @@ class OCScopeImpl(
 
 
     private fun recordSubgraphToThisScope(newSubgraphDSL: SubgraphDSL) {
-        subgraphStruct.subgraphStructs[newSubgraphDSL.label] = newSubgraphDSL
+        subgraphStruct.subgraphs[newSubgraphDSL.label] = newSubgraphDSL
     }
 
     internal fun internalCreateSubgraph(label: String?, block: SubgraphDSL.() -> Unit): SubgraphDSL {
+        val subgraphIdIssuer = scopeEntities.subgraphIdIssuer
         subgraphIdIssuer.newIntId()
 
+        val inNode = UnresolvedHasLast()
+        val outNode = UnresolvedHasFirst()
+        val inputNodeDependentCommands = mutableListOf<() -> Unit>()
+        val outputNodeDependentCommands = mutableListOf<() -> Unit>()
         val newSubgraph = SubgraphImpl(
             label = label ?: subgraphIdIssuer.lastLabelId,
-            rootScope = rootScope ?: this
+            rootScope = this,
+            inNodeSpec = inNode,
+            outNodeSpec = outNode,
+            inputNodeDependentCommands = inputNodeDependentCommands,
+            outputNodeDependentCommands = outputNodeDependentCommands,
+            placeDelegate = placeDelegate,
+            transitionDelegate = transitionDelegate,
+            arcDelegate = SubgraphArcDelegate(
+                arcContainer = scopeEntities,
+                inNode = inNode,
+                outNode = outNode,
+                inputNodeDependentCommands = inputNodeDependentCommands,
+                outputNodeDependentCommands = outputNodeDependentCommands,
+            )
         )
+
         newSubgraph.block()
         // don't add this subgraph to local subgraphs
         return newSubgraph
     }
 
     override fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL): SubgraphDSL {
-        val tailNode = this.lastElement
-        subgraphDSL.stru
+
     }
 
     override fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast {
 
     }
 
-    override fun selectTransition(block: TransitionDSL.() -> Boolean): TransitionDSL {
-        return transitions.values.first { transitionDSL ->
-            transitionDSL.block()
-        }
-    }
-
     override fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit) {
         val ocScopeImpl = OCScopeImpl(
             rootScope = rootScope ?: this,
-            defaultScopeType = objectTypeDSL
+            scopeType = objectTypeDSL,
+            scopeEntities = ScopeAccessibleEntities(
+                groupsIdCreator = groupsIdCreator,
+                parentScopeEntities = ScopeAccessibleEntities(
+                    groupsIdCreator = groupsIdCreator,
+                    parentScopeEntities = scopeEntities
+                )
+            ),
+            groupsIdCreator = groupsIdCreator,
+            arcDelegate = arcDelegate,
+            placeDelegate = placeDelegate,
+            transitionDelegate = transitionDelegate,
+            objectTypeDelegate = objectTypeDelegate
         )
         ocScopeImpl.block()
     }

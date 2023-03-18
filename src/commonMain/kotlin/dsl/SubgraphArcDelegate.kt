@@ -1,9 +1,41 @@
 package dsl
 
-open class ArcDelegate(
-    val arcContainer: ArcContainer,
-) : ArcsAcceptor {
+class SubgraphArcDelegate(
+    arcContainer: ArcContainer,
+    val inNode : HasLast,
+    val outNode : HasFirst,
+    val inputNodeDependentCommands: MutableList<() -> Unit> = mutableListOf(),
+    val outputNodeDependentCommands : MutableList<() -> Unit> = mutableListOf()
+) : ArcDelegate(arcContainer) {
     private val arcCreator = ArcCreator()
+
+    private fun addOnOutputNodeArcCommands(
+        multiplicity: Int,
+        hasFirst: HasFirst,
+        variable: Boolean
+    ) {
+        outputNodeDependentCommands.add {
+            if (variable) {
+                inNode.variableArcTo(hasFirst)
+            } else {
+                inNode.arcTo(multiplicity, hasFirst)
+            }
+        }
+    }
+
+    private fun addOnInputNodeArcCommands(
+        multiplicity: Int,
+        hasFirst: HasFirst,
+        variable: Boolean
+    ) {
+        inputNodeDependentCommands.add {
+            if (variable) {
+                inNode.variableArcTo(hasFirst)
+            } else {
+                inNode.arcTo(multiplicity, hasFirst)
+            }
+        }
+    }
 
     private fun createAndAddArc(
         from: HasLast,
@@ -12,6 +44,14 @@ open class ArcDelegate(
         isVariable: Boolean,
     ) {
         val newArc = arcCreator.createArc(from, to, multiplicity, isVariable)
+        if (from == inNode && to == outNode) throw IllegalStateException()
+
+        if (from == inNode) {
+            addOnInputNodeArcCommands(multiplicity = multiplicity, variable = isVariable, hasFirst = to)
+        }
+        if (to == outNode) {
+            addOnOutputNodeArcCommands(multiplicity = multiplicity, variable = isVariable, hasFirst = to)
+        }
         arcContainer.arcs.add(newArc)
     }
 
@@ -44,4 +84,3 @@ open class ArcDelegate(
     }
 
 }
-

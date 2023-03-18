@@ -1,5 +1,5 @@
 package dsl
 
 interface ArcContainer {
-    val arcs : List<ArcDSL>
+    val arcs : MutableList<ArcDSL>
 }

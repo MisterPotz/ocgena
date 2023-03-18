@@ -3,7 +3,7 @@ package dsl
 class PlaceCreator(
     private val scopeType: ObjectTypeDSL,
     private val placesContainer: PlacesContainer,
-    private val groupIdIssuer: GroupsIdCreator
+    private val groupIdCreator: GroupsIdCreator
 ) {
     val places : MutableMap<String, PlaceDSL>
         get() = placesContainer.places
@@ -25,7 +25,7 @@ class PlaceCreator(
         }
 
         val placeDSLCreation = PlaceDSLCreation.createFromIdIssuerAndScopeType(
-            groupIdCreator = groupIdIssuer,
+            groupIdCreator = groupIdCreator,
             scopeType = scopeType,
             userPlaceLabel = label
         )

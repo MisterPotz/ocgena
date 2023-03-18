@@ -1,10 +1,8 @@
 package dsl
 
-class TransitionDelegate(
-    var lateAssignTransitionCreator: TransitionCreator? = null,
+open class TransitionDelegate(
+    private val transitionCreator: TransitionCreator,
 ) : TransitionAcceptor {
-    private val transitionCreator
-        get() = lateAssignTransitionCreator!!
 
     override fun transition(block: OCTransitionScope.() -> Unit): TransitionDSL {
         return transitionCreator.creteTransition(label = null, block)

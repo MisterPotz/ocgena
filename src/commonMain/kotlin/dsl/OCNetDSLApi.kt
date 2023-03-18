@@ -7,8 +7,6 @@ interface OCScope :
     PlaceAcceptor,
     TransitionAcceptor,
     SubgraphConnector {
-    fun selectPlace(block: (PlaceDSL).() -> Boolean): PlaceDSL
-    fun selectTransition(block: (TransitionDSL).() -> Boolean): TransitionDSL
 
     fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit)
 
@@ -128,9 +126,6 @@ interface OCPlaceScope {
 
 interface SubgraphDSL : ArcsAcceptor, TransitionAcceptor {
     val label : String
-
-    val inArcsWithConnectedArrows : List<ArcDSL>
-    val outArcsWithConnectedTails : List<ArcDSL>
     val inNode: HasLast
     val outNode : HasFirst
 }
