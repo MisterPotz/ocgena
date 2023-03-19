@@ -2,59 +2,37 @@ package dsl
 
 class SubgraphImpl(
     override val label: String,
-    val rootScope: OCScopeImpl,
-    val inNodeSpec: UnresolvedHasLast = UnresolvedHasLast(),
-    val outNodeSpec: UnresolvedHasFirst= UnresolvedHasFirst(),
-    val inputNodeDependentCommands: MutableList<() -> Unit> = mutableListOf(),
-    val outputNodeDependentCommands : MutableList<() -> Unit> = mutableListOf(),
     private val placeDelegate: PlaceDelegate,
     private val transitionDelegate: TransitionDelegate,
     private val arcDelegate: ArcDelegate,
+    private val subgraphDelegate: SubgraphDelegate,
+    private val subgraphConnectionResolver: SubgraphConnectionResolver
 ) : SubgraphDSL,
     PlaceAcceptor by placeDelegate,
     TransitionAcceptor by transitionDelegate,
-    ArcsAcceptor by rootScope,
-    SubgraphConnector {
-    val subgraphStruct = EntitiesCreatedInSubgraph()
+    ArcsAcceptor by arcDelegate,
+    SubgraphConnector by subgraphDelegate {
 
     override val inNode: HasLast
-        get() = inNodeSpec
+        get() = subgraphConnectionResolver.inNode
     override val outNode: HasFirst
-        get() = outNodeSpec
+        get() = subgraphConnectionResolver.outNode
 
-    override fun subgraph(label: String?, block: SubgraphDSL.() -> Unit): SubgraphDSL {
-        val subgraphDSL = rootScope.internalCreateSubgraph(label, block)
-        subgraphStruct.subgraphs[subgraphDSL.label] = subgraphDSL
-        return subgraphDSL
+    override fun leftConnectTo(linkChainDSL:LinkChainDSL): SubgraphDSL {
+        return internalLeftConnect(linkChainDSL)
     }
 
-    override fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast {
-        return if (this is SubgraphImpl) {
-            this.internalConnectTo(linkChainDSL)
-        } else throw IllegalStateException()
+    override fun rightConnectTo(linkChainDSL: LinkChainDSL): HasLast {
+        return internalRightConnect(linkChainDSL)
     }
 
-    override fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL): SubgraphDSL {
-       return if (subgraphDSL is SubgraphImpl) {
-           subgraphDSL.internalPreconnectWith(this)
-       } else throw IllegalStateException()
-    }
-
-    private fun internalPreconnectWith(linkChainDSL: LinkChainDSL): SubgraphDSL {
-        val last = linkChainDSL.lastElement
-        inNodeSpec.resolvedLastElement = last
-        for (inputNodeCommand in inputNodeDependentCommands) {
-            inputNodeCommand.invoke()
-        }
+    private fun internalLeftConnect(linkChainDSL: LinkChainDSL): SubgraphDSL {
+        subgraphConnectionResolver.resolveInputNode(linkChainDSL)
         return this
     }
 
-    private fun internalConnectTo(linkChainDSL: LinkChainDSL): HasLast {
-        val first = linkChainDSL.firstElement
-        outNodeSpec.resolvedFirstElement = first
-        for (outputNodeCommand in outputNodeDependentCommands) {
-            outputNodeCommand.invoke()
-        }
+    private fun internalRightConnect(linkChainDSL: LinkChainDSL): HasLast {
+        subgraphConnectionResolver.resolveOutputNode(linkChainDSL)
         return HasLastImpl(linkChainDSL.lastElement)
     }
 }

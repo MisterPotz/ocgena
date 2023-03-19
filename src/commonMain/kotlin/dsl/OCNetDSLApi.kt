@@ -128,4 +128,7 @@ interface SubgraphDSL : ArcsAcceptor, TransitionAcceptor {
     val label : String
     val inNode: HasLast
     val outNode : HasFirst
+
+    fun leftConnectTo(linkChainDSL: LinkChainDSL) : SubgraphDSL
+    fun rightConnectTo(linkChainDSL: LinkChainDSL) : HasLast
 }
