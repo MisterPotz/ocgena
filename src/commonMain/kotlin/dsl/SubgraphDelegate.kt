@@ -53,10 +53,10 @@ class SubgraphDelegate(
     }
 
     override fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast {
-        return this.rightConnectTo(linkChainDSL)
+        return this.connectToLeftOf(linkChainDSL)
     }
 
-    override fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL): SubgraphDSL {
-        return subgraphDSL.leftConnectTo(this)
+    override fun HasElement.connectTo(subgraphDSL: SubgraphDSL): SubgraphDSL {
+        return subgraphDSL.connectOnRightTo(this)
     }
 }

@@ -1,15 +1,13 @@
 package dsl
 
-import model.PlaceType
-
 class OCNetBuilder {
     companion object {
-        fun define(block: OCScope.() -> Unit): OCScopeImpl {
-            val oCScopeImpl = OCScopeImpl()
+        fun define(block: OCScope.() -> Unit): OCNetDSLElements {
+            val ocScopeCreator = OCScopeImplCreator()
+
+            val oCScopeImpl = ocScopeCreator.createRootOCScope()
             oCScopeImpl.block()
-
-            return oCScopeImpl
+            return oCScopeImpl.ocNetElements()
         }
-
     }
 }

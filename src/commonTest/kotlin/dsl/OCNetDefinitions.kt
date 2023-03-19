@@ -5,8 +5,8 @@ import model.PlaceType
 /**
  * @see <img src="src/jvmTest/resources/img.png" >
  */
-fun createExampleModel() : OCScopeImpl {
-    return OCScopeImpl().apply {
+fun createExampleModel(): OCNetDSLElements {
+    val ocNet = OCNetBuilder.define {
         val order = objectType("order") {
             "o$it"
         }
@@ -18,19 +18,21 @@ fun createExampleModel() : OCScopeImpl {
         forType(order) {
             place {
                 placeType = PlaceType.INPUT
-            }.arcTo(transition("place order"))
-                .arcTo(place { })
-                .arcTo(transition("send invoice"))
-                .connectTo(subgraph {
-                    setAsInputOutput(place { })
-
-                    input.arcTo(transition("send reminder"))
-                    transition("send reminder").arcTo(input)
-                })
-                .arcTo(transition("pay order"))
-                .arcTo(place { })
-                .arcTo(transition("mark as completed"))
-                .arcTo(place {
+            }.arcTo(1, transition("place order"))
+                .arcTo(1, place { })
+                .arcTo(1, transition("send invoice"))
+                .connectTo(
+                    subgraph {
+                        inNode
+                            .arcTo(1, place { })
+                            .arcTo(1, transition("send reminder"))
+                            .arcTo(1, inNode)
+                    })
+            transition("send invoice")
+                .arcTo(1, transition("pay order"))
+                .arcTo(1, place { })
+                .arcTo(1, transition("mark as completed"))
+                .arcTo(1, place {
                     placeType = PlaceType.OUTPUT
                 })
         }
@@ -41,9 +43,9 @@ fun createExampleModel() : OCScopeImpl {
             }
                 .variableArcTo(transition("place order"))
                 .variableArcTo(place { })
-                .arcTo(transition("pick item"))
-                .arcTo(place { })
-                .variableArcTo( transition("start route"))
+                .arcTo(1, transition("pick item"))
+                .arcTo(1, place { })
+                .variableArcTo(transition("start route"))
                 .variableArcTo(place { })
                 .variableArcTo(transition("end route"))
                 .variableArcTo(place { })
@@ -56,12 +58,13 @@ fun createExampleModel() : OCScopeImpl {
         forType(route) {
             place {
                 placeType = PlaceType.INPUT
-            }.arcTo(transition("start route"))
-                .arcTo(place { })
-                .arcTo(transition("end route"))
-                .arcTo(place {
+            }.arcTo(1, transition("start route"))
+                .arcTo(1, place { })
+                .arcTo(1, transition("end route"))
+                .arcTo(1, place {
                     placeType = PlaceType.OUTPUT
                 })
         }
     }
+    return ocNet
 }

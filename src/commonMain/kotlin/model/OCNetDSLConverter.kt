@@ -3,13 +3,13 @@ package model
 import dsl.ArcDSL
 import dsl.NodeDSL
 import dsl.NormalArcDSL
-import dsl.OCScopeImpl
+import dsl.OCNetDSLElements
 import dsl.PlaceDSL
 import dsl.TransitionDSL
 import dsl.VariableArcDSL
 
 class OCNetDSLConverter(
-    private val ocNetOCScopeImpl: OCScopeImpl,
+    private val ocNetOCScopeImpl: OCNetDSLElements,
 ) {
     private val foundObjectTypes: MutableMap<Int, ObjectType> = mutableMapOf()
 
@@ -124,20 +124,17 @@ class OCNetDSLConverter(
         }
         // if arcs were not connected to some defined places or transitions,
         // they weren't created before
-        for (placeDSL in ocNetOCScopeImpl.places.values) {
+        for (placeDSL in ocNetOCScopeImpl.places) {
             getOrCreatePlace(placeDSL)
         }
-        for (transitionDSL in ocNetOCScopeImpl.transitions.values) {
+        for (transitionDSL in ocNetOCScopeImpl.transitions) {
             getOrCreateTransition(transitionDSL)
         }
         return OCNetElementsImpl(
             places = createdPlaces,
             transitions = createdTransitions,
             arcs = createdArcs,
-            allPetriNodes = buildList {
-                addAll(createdPlaces)
-                addAll(createdTransitions)
-            }
+            objectTypes =  foundObjectTypes.values.toList()
         )
     }
 

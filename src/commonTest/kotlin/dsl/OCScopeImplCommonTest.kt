@@ -11,27 +11,28 @@ import kotlin.test.assertTrue
 
 class OCScopeImplCommonTest {
 
-    private var _ocScopeImpl: OCScopeImpl? = null
-    val ocScopeImpl
-        get() = _ocScopeImpl!!
+    private var _ocNetDSLElements: OCNetDSLElements? = null
+    val ocNetDSLElements = createExampleModel()
+    val objectSearcher = ObjectsSearcher(ocNetDSLElements)
+
 
     init {
-        _ocScopeImpl = createExampleModel()
+        _ocNetDSLElements = createExampleModel()
     }
 
     @Test
     fun testPlacesPerTypeAmount() {
-        val order = ocScopeImpl.objectType("order")
-        val item = ocScopeImpl.objectType("item")
-        val route = ocScopeImpl.objectType("route")
+        val order = ocNetDSLElements.objectType("order")
+        val item = ocNetDSLElements.objectType("item")
+        val route = ocNetDSLElements.objectType("route")
 
-        val orderPlaces = ocScopeImpl.totalPlaces
+        val orderPlaces = ocNetDSLElements.places
             .values
             .filter { it.objectType == order }
-        val itemPlaces = ocScopeImpl.totalPlaces
+        val itemPlaces = ocNetDSLElements.places
             .values
             .filter { it.objectType == item }
-        val routePlaces = ocScopeImpl.totalPlaces
+        val routePlaces = ocNetDSLElements.places
             .values
             .filter { it.objectType == route }
 
@@ -42,76 +43,76 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testTransitionPresence() {
-        ocScopeImpl.apply {
+        ocNetDSLElements.apply {
             assertNotNull(
-                totalTransitions.values.find { it.label == "place order" }
+                transitions.values.find { it.label == "place order" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "send invoice" }
+                transitions.values.find { it.label == "send invoice" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "send reminder" }
+                transitions.values.find { it.label == "send reminder" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "pay order" }
+                transitions.values.find { it.label == "pay order" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "mark as completed" }
+                transitions.values.find { it.label == "mark as completed" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "pick item" }
+                transitions.values.find { it.label == "pick item" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "start route" }
+                transitions.values.find { it.label == "start route" }
             )
             assertNotNull(
-                totalTransitions.values.find { it.label == "end route" }
+                transitions.values.find { it.label == "end route" }
             )
-            assertEquals(8, totalTransitions.size)
+            assertEquals(8, transitions.size)
         }
     }
 
     @Test
     fun testObjectTypesAmount() {
-        assertEquals(ocScopeImpl.getFilteredObjectTypes().size, 3)
+        assertEquals(objectSearcher.withoutDefaultObjectTypeIfPossible().size, 3)
     }
 
     @Test
     fun testTransitionsAmount() {
-        assertEquals(ocScopeImpl.totalTransitions.size, 8)
+        assertEquals(ocNetDSLElements.transitions.size, 8)
     }
 
     @Test
     fun testPlaceTypes() {
         assertEquals(
             3,
-            ocScopeImpl.totalPlaces.values.filter { it.placeType == PlaceType.INPUT }.size
+            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.INPUT }.size
         )
         assertEquals(
             3,
-            ocScopeImpl.totalPlaces.values.filter { it.placeType == PlaceType.OUTPUT }.size
+            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
         )
         assertEquals(
             3,
-            ocScopeImpl.totalPlaces.values.filter { it.placeType == PlaceType.OUTPUT }.size
+            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
         )
         // totally 14 places
-        assertEquals(14, ocScopeImpl.totalPlaces.size)
+        assertEquals(14, ocNetDSLElements.places.size)
     }
 
     @Test
     fun testArcsAmount() {
-        assertEquals(24, ocScopeImpl.arcs.size)
+        assertEquals(24, ocNetDSLElements.arcs.size)
 
-        assertEquals(8, ocScopeImpl.arcs.filterIsInstance<VariableArcDSL>().size)
+        assertEquals(8, ocNetDSLElements.arcs.filterIsInstance<VariableArcDSL>().size)
 
-        assertEquals(16, ocScopeImpl.arcs.filterIsInstance<NormalArcDSL>().size)
+        assertEquals(16, ocNetDSLElements.arcs.filterIsInstance<NormalArcDSL>().size)
     }
 
     @Test
     fun testPlaceNaming() {
         val indexRegex = Regex("""\d+""")
-        ocScopeImpl.totalPlaces.values
+        ocNetDSLElements.places.values
             .filter {
                 it.label.matches(Regex("""o\d+"""))
             }.let {
@@ -121,7 +122,7 @@ class OCScopeImplCommonTest {
                     match != null && match.groupValues.first().toInt() in 1..5
                 })
             }
-        ocScopeImpl.totalPlaces.values
+        ocNetDSLElements.places.values
             .filter {
                 it.label.matches(Regex("""item_\d+"""))
             }.let {
@@ -131,7 +132,7 @@ class OCScopeImplCommonTest {
                     match != null && match.groupValues.first().toInt() in 1..6
                 })
             }
-        ocScopeImpl.totalPlaces.values
+        ocNetDSLElements.places.values
             .filter {
                 it.label.matches(Regex("""r\d+"""))
             }.let {
@@ -145,9 +146,9 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testAccessToNodesAndConnectedArcsForOrder() {
-        val arcSearcher = ArcSearcher(ocScopeImpl)
+        val arcSearcher = ArcSearcher(ocNetDSLElements)
         with(arcSearcher) {
-            with(ocScopeImpl) {
+            with(ocNetDSLElements) {
                 arcs.forEach {
                     mprintln(it)
                 }
@@ -172,10 +173,10 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testAccessToNodesAndConnectedArcsForItem() {
-        val arcSearcher = ArcSearcher(ocScopeImpl)
+        val arcSearcher = ArcSearcher(ocNetDSLElements)
 
         with(arcSearcher) {
-            with(ocScopeImpl) {
+            with(ocNetDSLElements) {
                 arcs.forEach {
                     mprintln(it)
                 }
@@ -197,9 +198,9 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testTransitionArcs() {
-        val arcSearcher = ArcSearcher(ocScopeImpl)
+        val arcSearcher = ArcSearcher(ocNetDSLElements)
         with(arcSearcher) {
-            with(ocScopeImpl) {
+            with(ocNetDSLElements) {
                 // output
                 outputArcsFor(transition("place order")).let {
                     assertEquals(2, it.size)

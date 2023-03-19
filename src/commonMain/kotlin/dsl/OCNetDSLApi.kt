@@ -5,6 +5,7 @@ import model.PlaceType
 interface OCScope :
     ArcsAcceptor,
     PlaceAcceptor,
+    ObjectTypeAcceptor,
     TransitionAcceptor,
     SubgraphConnector {
 
@@ -44,24 +45,21 @@ interface TransitionAcceptor {
 
 interface SubgraphConnector {
     fun SubgraphDSL.connectTo(linkChainDSL: LinkChainDSL): HasLast
-    fun LinkChainDSL.connectTo(subgraphDSL: SubgraphDSL) : SubgraphDSL
+    fun HasElement.connectTo(subgraphDSL: SubgraphDSL) : SubgraphDSL
 
     fun subgraph(label: String? = null, block: SubgraphDSL.() -> Unit): SubgraphDSL
 }
 
 interface ArcsAcceptor {
 
-    fun HasLast.arcTo(multiplicity: Int = 1, linkChainDSL: LinkChainDSL): HasLast
-    fun HasLast.arcTo(multiplicity: Int = 1, linkChainDSL: HasFirst)
-
-    fun LinkChainDSL.arcTo(multiplicity: Int = 1, linkChainDSL: LinkChainDSL): LinkChainDSL
+    fun HasElement.arcTo(multiplicity: Int = 1, linkChainDSL: LinkChainDSL): HasLast
+    fun HasElement.arcTo(multiplicity: Int = 1, linkChainDSL: HasElement)
 
 
-    fun HasLast.variableArcTo(linkChainDSL: LinkChainDSL): HasLast
+    fun HasElement.variableArcTo(linkChainDSL: LinkChainDSL): HasLast
 
-    fun HasLast.variableArcTo(hasFirst: HasFirst)
+    fun HasElement.variableArcTo(hasFirst: HasElement)
 
-    fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL
 }
 
 interface ObjectTypeDSL {
@@ -83,14 +81,35 @@ interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL, NodeDSL {
 }
 
 interface AtomDSL
-interface LinkChainDSL : HasLast, HasFirst
-
-interface HasFirst {
-    val firstElement: NodeDSL
+interface LinkChainDSL : HasLast, HasFirst {
+    override val element: NodeDSL
+        get() = firstElement
 }
 
-interface HasLast {
+interface HasElement {
+    val element : NodeDSL
+
+    companion object {
+        fun safeElement(hasElement: HasElement) : NodeDSL {
+            return when(hasElement) {
+                is HasFirst -> hasElement.firstElement
+                is HasLast -> hasElement.lastElement
+                else -> hasElement.element
+            }
+        }
+    }
+}
+
+interface HasFirst : HasElement {
+    val firstElement: NodeDSL
+    override val element: NodeDSL
+        get() = firstElement
+}
+
+interface HasLast : HasElement {
     val lastElement: NodeDSL
+    override val element: NodeDSL
+        get() = lastElement
 }
 
 interface OCTransitionScope {
@@ -124,11 +143,12 @@ interface OCPlaceScope {
 }
 
 
+
 interface SubgraphDSL : ArcsAcceptor, TransitionAcceptor {
     val label : String
-    val inNode: HasLast
-    val outNode : HasFirst
+    val inNode: HasElement
+    val outNode : HasElement
 
-    fun leftConnectTo(linkChainDSL: LinkChainDSL) : SubgraphDSL
-    fun rightConnectTo(linkChainDSL: LinkChainDSL) : HasLast
+    fun connectOnRightTo(linkChainDSL: HasElement) : SubgraphDSL
+    fun connectToLeftOf(linkChainDSL: LinkChainDSL) : HasLast
 }

@@ -3,13 +3,20 @@ package dsl
 class ArcCreator(
 ) {
     fun createArc(
-        from: HasLast,
-        to: HasFirst,
+        from: HasElement,
+        to: HasElement,
         multiplicity: Int,
         isVariable: Boolean,
     ): ArcDSL {
-        val fromElement = from.lastElement
-        val toElement = to.firstElement
+        val fromElement = when (from) {
+            is HasLast -> from.lastElement
+            else -> from.element
+        }
+        val toElement = when(to) {
+            is HasFirst -> to.firstElement
+            else -> to.element
+        }
+
         val newArc = chooseArcTypeAndCreate(
             tailAtom = fromElement,
             arrowAtom = toElement,

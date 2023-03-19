@@ -5,7 +5,6 @@ import model.ConsistencyCheckError
 import model.OCNet
 import model.OCNetChecker
 import model.OCNetDSLConverter
-import model.OCNetElementsImpl
 
 class OCNetFacadeBuilder {
     var definedNetData: DefinedNetData? = null
@@ -36,7 +35,6 @@ class OCNetFacadeBuilder {
         val definedNetData = DefinedNetData(
             ocNet = ocNet,
             errors = errors,
-            ocNetOCScopeImpl = ocScope
         )
         this.definedNetData = definedNetData
         return BuiltOCNet(
@@ -50,5 +48,4 @@ class OCNetFacadeBuilder {
 class DefinedNetData(
     val ocNet: OCNet?,
     val errors: List<ConsistencyCheckError>,
-    val ocNetOCScopeImpl: OCScopeImpl,
 )

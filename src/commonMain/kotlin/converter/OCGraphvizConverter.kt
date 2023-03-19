@@ -1,8 +1,10 @@
 package converter
 
+import dsl.ObjectTypeDSL
 import model.Arc
 import model.ConsistencyCheckError
 import model.NormalArc
+import model.ObjectType
 import model.PetriNode
 import model.Place
 import model.Transition
@@ -16,6 +18,8 @@ interface OCNetElements {
     val arcs: List<Arc>
 
     val allPetriNodes: List<PetriNode>
+
+    val objectTypes : List<ObjectType>
 }
 
 

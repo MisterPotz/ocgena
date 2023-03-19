@@ -6,8 +6,8 @@ open class ArcDelegate(
     private val arcCreator = ArcCreator()
 
     private fun createAndAddArc(
-        from: HasLast,
-        to: HasFirst,
+        from: HasElement,
+        to: HasElement,
         multiplicity: Int,
         isVariable: Boolean,
     ) {
@@ -15,33 +15,22 @@ open class ArcDelegate(
         arcContainer.arcs.add(newArc)
     }
 
-    override fun HasLast.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast {
+    override fun HasElement.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast {
         createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
         return HasLastImpl(linkChainDSL.lastElement)
     }
 
-    override fun HasLast.arcTo(multiplicity: Int, linkChainDSL: HasFirst) {
+    override fun HasElement.arcTo(multiplicity: Int, linkChainDSL: HasElement) {
         createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
     }
 
-    override fun HasLast.variableArcTo(linkChainDSL: LinkChainDSL): HasLast {
+    override fun HasElement.variableArcTo(linkChainDSL: LinkChainDSL): HasLast {
         createAndAddArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
         return HasLastImpl(linkChainDSL.lastElement)
     }
 
-    override fun HasLast.variableArcTo(hasFirst: HasFirst) {
+    override fun HasElement.variableArcTo(hasFirst: HasElement) {
         createAndAddArc(this, hasFirst, multiplicity = 1, isVariable = true)
     }
-
-    override fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): LinkChainDSL {
-        createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
-        return LinkChainDSLImpl(firstElement = this.firstElement, lastElement = linkChainDSL.lastElement)
-    }
-
-    override fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL {
-        createAndAddArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
-        return LinkChainDSLImpl(firstElement = this.firstElement, lastElement = linkChainDSL.lastElement)
-    }
-
 }
 

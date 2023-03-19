@@ -7,8 +7,8 @@ class SubgraphConnectionResolver(
     private val outputNodeDependentCommands : MutableList<(outNode : HasFirst) -> Unit> = mutableListOf()
 ) {
     fun checkNodeConnectionIsUnresolved(
-        fromNode : HasLast,
-        toNode : HasFirst) : Boolean {
+        fromNode : HasElement,
+        toNode : HasElement) : Boolean {
         if (fromNode == inNode && toNode == outNode) throw IllegalStateException()
 
         if (fromNode == inNode) {
@@ -19,25 +19,29 @@ class SubgraphConnectionResolver(
         }
         return false
     }
-    fun checkIfInputNodeUnresolvedAndAddCommand(fromNode: HasLast, command: (inNode: HasLast) -> Unit) {
+    fun checkIfInputNodeUnresolvedAndAddCommand(fromNode: HasElement, command: (inNode: HasLast) -> Unit) {
         if (fromNode == inNode) {
             inputNodeDependentCommands.add(command)
         }
     }
-    fun checkIfOutputNodeUnresolvedAndAddCommand(toNode: HasFirst, command: (outNode: HasFirst) -> Unit) {
+    fun checkIfOutputNodeUnresolvedAndAddCommand(toNode: HasElement, command: (outNode: HasFirst) -> Unit) {
         if (outNode == toNode) {
             outputNodeDependentCommands.add(command)
         }
     }
 
-    fun resolveInputNode(fromNode: HasLast) {
-        inNode.resolvedLastElement = fromNode.lastElement
+    fun resolveInputNode(fromNode: HasElement) {
+        val element = when (linkChainDSL) {
+            is HasLast -> linkChainDSL.lastElement
+            else -> linkChainDSL.element
+        }
+        inNode.resolvedLastElement = element
         for (inputNodeCommand in inputNodeDependentCommands) {
             inputNodeCommand.invoke(inNode)
         }
     }
 
-    fun resolveOutputNode(toNode : HasFirst) {
+    fun resolveOutputNode(toNode : HasElement) {
         outNode.resolvedFirstElement = toNode.firstElement
         for (outputNodeCommand in outputNodeDependentCommands) {
             outputNodeCommand.invoke(outNode)
@@ -52,8 +56,8 @@ class SubgraphArcDelegate(
     private val arcCreator = ArcCreator()
 
     private fun createAndAddArc(
-        from: HasLast,
-        to: HasFirst,
+        from: HasElement,
+        to: HasElement,
         multiplicity: Int,
         isVariable: Boolean,
     ) {
@@ -78,31 +82,21 @@ class SubgraphArcDelegate(
         }
     }
 
-    override fun HasLast.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast {
+    override fun HasElement.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast {
         createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
         return HasLastImpl(linkChainDSL.lastElement)
     }
 
-    override fun HasLast.arcTo(multiplicity: Int, linkChainDSL: HasFirst) {
+    override fun HasElement.arcTo(multiplicity: Int, linkChainDSL: HasElement) {
         createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
     }
 
-    override fun HasLast.variableArcTo(linkChainDSL: LinkChainDSL): HasLast {
+    override fun HasElement.variableArcTo(linkChainDSL: LinkChainDSL): HasLast {
         createAndAddArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
         return HasLastImpl(linkChainDSL.lastElement)
     }
 
-    override fun HasLast.variableArcTo(hasFirst: HasFirst) {
+    override fun HasElement.variableArcTo(hasFirst: HasElement) {
         createAndAddArc(this, hasFirst, multiplicity = 1, isVariable = true)
-    }
-
-    override fun LinkChainDSL.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): LinkChainDSL {
-        createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
-        return LinkChainDSLImpl(firstElement = this.firstElement, lastElement = linkChainDSL.lastElement)
-    }
-
-    override fun LinkChainDSL.variableArcTo(linkChainDSL: LinkChainDSL): LinkChainDSL {
-        createAndAddArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
-        return LinkChainDSLImpl(firstElement = this.firstElement, lastElement = linkChainDSL.lastElement)
     }
 }

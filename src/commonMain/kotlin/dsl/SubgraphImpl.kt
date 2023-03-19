@@ -13,26 +13,32 @@ class SubgraphImpl(
     ArcsAcceptor by arcDelegate,
     SubgraphConnector by subgraphDelegate {
 
-    override val inNode: HasLast
+    override val inNode: HasElement
         get() = subgraphConnectionResolver.inNode
     override val outNode: HasFirst
         get() = subgraphConnectionResolver.outNode
 
-    override fun leftConnectTo(linkChainDSL:LinkChainDSL): SubgraphDSL {
-        return internalLeftConnect(linkChainDSL)
+    override fun connectOnRightTo(linkChainDSL: HasElement): SubgraphDSL {
+
+        resolveInputConnection(element)
+        return internalConnectOnRightTo(linkChainDSL)
     }
 
-    override fun rightConnectTo(linkChainDSL: LinkChainDSL): HasLast {
-        return internalRightConnect(linkChainDSL)
-    }
-
-    private fun internalLeftConnect(linkChainDSL: LinkChainDSL): SubgraphDSL {
+    private fun resolveInputConnection(nodeDSL: NodeDSL) {
         subgraphConnectionResolver.resolveInputNode(linkChainDSL)
+
+    }
+    override fun connectToLeftOf(linkChainDSL: LinkChainDSL): HasLast {
+        val element = linkChainDSL.firstElement
+
+        return HasLastImpl(linkChainDSL.lastElement)
+    }
+
+    private fun internalConnectOnRightTo(linkChainDSL: HasElement): SubgraphDSL {
         return this
     }
 
-    private fun internalRightConnect(linkChainDSL: LinkChainDSL): HasLast {
+    private fun internalConnectOnLeftOf(linkChainDSL: LinkChainDSL): HasLast {
         subgraphConnectionResolver.resolveOutputNode(linkChainDSL)
-        return HasLastImpl(linkChainDSL.lastElement)
     }
 }

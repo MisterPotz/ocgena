@@ -1,42 +1,10 @@
 package dsl
 
 
-class OCScopeImplCreator() {
-    private val groupIdCreator: GroupsIdCreator = GroupsIdCreator().also {
-        GroupIdCreatorSetupper().setupGroupIdCreator(it)
-    }
-    val scopeEntities = ScopeAccessibleEntities(groupsIdCreator = groupIdCreator, parentScopeEntities = null)
-    val objectIdCreator: PatternIdCreator
-        get() = groupIdCreator.patternIdCreatorFor("objects")
-
-    val objectTypeCreator = ObjectTypeCreator(
-        objectTypesContainer = scopeEntities,
-        objectTypeIdCreator = objectIdCreator,
-        groupsIdCreator = groupIdCreator
-    )
-    val defaultObjectType: ObjectTypeDSL =
-        objectTypeCreator.createObjectType(label = "ot", placeNameCreator = { "p$it" })
-    val subgraphIdCreator: PatternIdCreator
-        get() = groupIdCreator.patternIdCreatorFor("subgraphs")
-    val arcDelegate = ArcDelegate(arcContainer = scopeEntities)
-    val placeDelegate = PlaceDelegate(
-        placeCreator = PlaceCreator(
-            scopeType = defaultObjectType,
-            placesContainer = scopeEntities,
-            groupIdCreator = groupIdCreator
-        )
-    )
-    val transitionDelegate = TransitionDelegate(
-        transitionCreator = TransitionCreator(
-            transitionContainer = scopeEntities
-        )
-    )
-}
-
 class OCScopeImpl(
     private val rootScope: OCScopeImpl? = null,
     override val scopeType: ObjectTypeDSL,
-    private val scopeEntities: ScopeAccessibleEntities,
+    private val scopeAccessibleEntities: ScopeAccessibleEntities,
     private val groupsIdCreator: GroupsIdCreator,
     private val placeCreator: PlaceCreator,
     private val transitionCreator: TransitionCreator,
@@ -52,15 +20,30 @@ class OCScopeImpl(
     ObjectTypeAcceptor by objectTypeDelegate,
     SubgraphConnector by subgraphDelegate {
 
+    fun ocNetElements() : OCNetDSLElements {
+        return OCNetDSLElementsImpl(
+            places = scopeAccessibleEntities.places,
+            transitions = scopeAccessibleEntities.transitions,
+            arcs = scopeAccessibleEntities.arcs,
+            objectTypes = scopeAccessibleEntities.objectTypes,
+            defaultObjectTypeDSL = scopeAccessibleEntities.defaultObjectType
+        )
+    }
+
     override fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit) {
-        val ocScopeImpl = OCScopeImpl(
+        val ocScopeImpl = createChildOCSCope(objectTypeDSL)
+        ocScopeImpl.block()
+    }
+
+    private fun createChildOCSCope(objectTypeDSL: ObjectTypeDSL) : OCScopeImpl {
+        return OCScopeImpl(
             rootScope = rootScope ?: this,
             scopeType = objectTypeDSL,
-            scopeEntities = ScopeAccessibleEntities(
+            scopeAccessibleEntities = ScopeAccessibleEntities(
                 groupsIdCreator = groupsIdCreator,
                 parentScopeEntities = ScopeAccessibleEntities(
                     groupsIdCreator = groupsIdCreator,
-                    parentScopeEntities = scopeEntities
+                    parentScopeEntities = scopeAccessibleEntities
                 )
             ),
             groupsIdCreator = groupsIdCreator,
@@ -72,7 +55,6 @@ class OCScopeImpl(
             transitionCreator = transitionCreator,
             subgraphDelegate = subgraphDelegate
         )
-        ocScopeImpl.block()
     }
 
     companion object {
