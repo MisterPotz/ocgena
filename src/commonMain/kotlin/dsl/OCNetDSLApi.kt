@@ -50,9 +50,7 @@ interface SubgraphConnector {
     fun subgraph(label: String? = null, block: SubgraphDSL.() -> Unit): SubgraphDSL
 }
 
-interface NormalArcScope {
-    var multiplicity : Int
-}
+
 
 interface ArcsAcceptor {
     fun HasElement.arcTo(linkChainDSL: LinkChainDSL, block : (NormalArcScope.() -> Unit)? = null): HasLast
@@ -124,16 +122,21 @@ interface OCTransitionScope {
 }
 
 interface ArcDSL : AtomDSL {
-
+    var arcIndexForTailAtom : Int
     var tailAtom: NodeDSL
     var arrowAtom: NodeDSL
 
     fun isInputFor(nodeDSL: NodeDSL): Boolean
+    fun isOutputFor(nodeDSL: NodeDSL) : Boolean
 }
 
 interface VariableArcDSL : ArcDSL
 interface NormalArcDSL : ArcDSL {
     var multiplicity: Int
+}
+
+interface NormalArcScope {
+    var multiplicity : Int
 }
 
 interface TypeScope : OCScope {

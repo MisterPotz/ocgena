@@ -8,7 +8,7 @@ class NormalArcScopeImp : NormalArcScope {
 open class ArcDelegate(
     val arcContainer: ArcContainer,
 ) : ArcsAcceptor {
-    private val arcCreator = ArcCreator()
+    private val arcCreator = ArcCreator(arcContainer)
 
     protected fun createAndAddArc(
         from: HasElement,

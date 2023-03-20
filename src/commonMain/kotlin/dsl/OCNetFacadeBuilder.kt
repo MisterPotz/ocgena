@@ -24,8 +24,8 @@ class OCNetFacadeBuilder {
     }
 
     fun tryBuildModel(block: OCScope.() -> Unit): BuiltOCNet {
-        val ocScope = OCNetBuilder.define(block)
-        val converter = OCNetDSLConverter(ocScope)
+        val ocNetDSLElements = OCNetBuilder.define(block)
+        val converter = OCNetDSLConverter(ocNetDSLElements)
         val convertionResult = converter.convert()
         val ocNetChecker = OCNetChecker(convertionResult.allPetriNodes)
 

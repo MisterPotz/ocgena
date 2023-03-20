@@ -9,10 +9,10 @@ import dsl.TransitionDSL
 import dsl.VariableArcDSL
 
 class OCNetDSLConverter(
-    private val ocNetOCScopeImpl: OCNetDSLElements,
+    private val ocNetDSLElements: OCNetDSLElements,
 ) {
     private val foundObjectTypes: MutableMap<Int, ObjectType> = mutableMapOf()
-
+    private val elementsIdCreator = ElementsIdCreator()
     private val createdPlaces: MutableList<Place> = mutableListOf()
     private val createdTransitions: MutableList<Transition> = mutableListOf()
     private val createdArcs : MutableList<Arc> = mutableListOf()
@@ -20,7 +20,7 @@ class OCNetDSLConverter(
     private fun getOrCreateTransition(transitionDSL: TransitionDSL): Transition {
         return createdTransitions.find { transitionDSL.label == it.label }
             ?: Transition(
-                id = transitionDSL.label,
+                id = elementsIdCreator.createTransitionId(transitionDSL),
                 label = transitionDSL.label,
                 inputArcs = mutableListOf(),
                 outputArcs = mutableListOf(),
@@ -37,7 +37,7 @@ class OCNetDSLConverter(
                 }
 
                 Place(
-                    label = placeDSL.label,
+                    label = elementsIdCreator.createPlaceId(placeDSL),
                     type = objectType,
                     placeType = placeDSL.placeType,
                     inputArcs = mutableListOf(),
@@ -48,11 +48,6 @@ class OCNetDSLConverter(
                     createdPlaces.add(it)
                 }
             }
-    }
-
-    private fun createArcId(node1 : LabelHolder?, node2: LabelHolder?) : String {
-
-        return "${node1?.label}_${node2?.label}"
     }
 
     private fun createConnectedPlaceAndTransition(
@@ -87,12 +82,13 @@ class OCNetDSLConverter(
         } else {
             node1
         }
+        val arcId = elementsIdCreator.createArcId(arcDSL)
         val arc = when (arcDSL) {
             is VariableArcDSL -> {
                 VariableArc(
                     arrowNode = arrowNode,
                     tailNode = tailNode,
-                    id = createArcId(tailNode, arrowNode)
+                    id = arcId
                 )
             }
 
@@ -101,7 +97,7 @@ class OCNetDSLConverter(
                     arrowNode = arrowNode,
                     tailNode = tailNode,
                     multiplicity = arcDSL.multiplicity,
-                    id = createArcId(tailNode, arrowNode)
+                    id = arcId
                 )
             }
 
@@ -119,15 +115,15 @@ class OCNetDSLConverter(
     }
 
     fun convert(): OCNetElementsImpl {
-        for (arcDSL in ocNetOCScopeImpl.arcs) {
+        for (arcDSL in ocNetDSLElements.arcs) {
             createConnectedPlaceAndTransition(arcDSL)
         }
         // if arcs were not connected to some defined places or transitions,
         // they weren't created before
-        for (placeDSL in ocNetOCScopeImpl.places.values) {
+        for (placeDSL in ocNetDSLElements.places.values) {
             getOrCreatePlace(placeDSL)
         }
-        for (transitionDSL in ocNetOCScopeImpl.transitions.values) {
+        for (transitionDSL in ocNetDSLElements.transitions.values) {
             getOrCreateTransition(transitionDSL)
         }
         return OCNetElementsImpl(
@@ -137,5 +133,4 @@ class OCNetDSLConverter(
             objectTypes =  foundObjectTypes.values.toList()
         )
     }
-
 }

@@ -1,7 +1,6 @@
 package converter
 
 import dsl.OCNetFacadeBuilder
-import model.OCNetElementsImpl
 import utils.mprintln
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -17,7 +16,10 @@ class DotGeneratorTest {
         }
 
         val ocGraphvizConverter = OCGraphvizGenerator(
-            originalOCDOtDeclaration = DefaultOCNetDeclaration(),
+            originalOCDOtDeclaration = DefaultOCNetDeclaration(
+                nodeAttributes = mapOf("p1" to "color=\"red:white:blue:blue\" dir=none penWidth=2"),
+                edgeAttributes = mapOf()
+            ),
             ocNetElements = ocNet.ocNetElements,
             ocnetErrorService = EmptyOCNetErrorService
         )

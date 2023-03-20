@@ -9,11 +9,17 @@ class LinkChainDSLImpl(
 
 class VariableArcDSLImpl(
     override var tailAtom: NodeDSL,
+    override var arcIndexForTailAtom: Int,
     override var arrowAtom: NodeDSL,
 ) : VariableArcDSL {
     override fun isInputFor(nodeDSL: NodeDSL): Boolean {
         return arrowAtom == nodeDSL
     }
+
+    override fun isOutputFor(nodeDSL: NodeDSL): Boolean {
+        return tailAtom == nodeDSL
+    }
+
     override fun toString(): String {
         return "var arc [ $tailAtom => $arrowAtom ]"
     }
@@ -22,10 +28,16 @@ class VariableArcDSLImpl(
 class NormalArcDSLImpl(
     override var multiplicity: Int,
     override var tailAtom: NodeDSL,
+    override var arcIndexForTailAtom: Int,
     override var arrowAtom: NodeDSL,
 ) : NormalArcDSL {
+
     override fun isInputFor(nodeDSL: NodeDSL): Boolean {
         return arrowAtom == nodeDSL
+    }
+
+    override fun isOutputFor(nodeDSL: NodeDSL): Boolean {
+        return tailAtom == nodeDSL
     }
 
     override fun toString(): String {

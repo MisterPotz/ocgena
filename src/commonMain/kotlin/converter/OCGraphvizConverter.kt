@@ -1,6 +1,5 @@
 package converter
 
-import dsl.ObjectTypeDSL
 import model.Arc
 import model.ConsistencyCheckError
 import model.NormalArc

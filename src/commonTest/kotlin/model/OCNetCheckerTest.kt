@@ -2,10 +2,7 @@ package model
 
 import dsl.OCNetBuilder
 import dsl.OCScope
-import dsl.ObjectTypeDSL
-import dsl.ObjectTypesContainer
 import dsl.ObjectsSearcher
-import dsl.PlacesContainer
 import dsl.createExampleModel
 import kotlin.test.Test
 import kotlin.test.assertEquals
