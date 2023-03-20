@@ -1,87 +1,10 @@
 package converter
 
 import model.Arc
-import model.ConsistencyCheckError
 import model.NormalArc
-import model.ObjectType
-import model.PetriNode
-import model.Place
-import model.Transition
 import model.VariableArc
 
-interface OCNetElements {
-    val places: List<Place>
 
-    val transitions: List<Transition>
-
-    val arcs: List<Arc>
-
-    val allPetriNodes: List<PetriNode>
-
-    val objectTypes : List<ObjectType>
-}
-
-
-interface OCNetErrorService {
-    // observed consistency errors for given petri id
-    fun errorsForPetriAtomId(petriAtomId: String): List<ConsistencyCheckError>
-}
-
-object EmptyOCNetErrorService : OCNetErrorService {
-    override fun errorsForPetriAtomId(petriAtomId: String): List<ConsistencyCheckError> {
-        return emptyList()
-    }
-}
-
-//expect class OCGraphvizConverter {
-//    fun renderFile()
-//}
-
-interface OCDotDeclaration {
-    // assumption: it is ordered list of statements
-    // plain - doesn't contain any data that is relevant to simulation
-    fun getNodeAttributeList(nodeLabel: String): Map<String, String>
-
-    // plain - doesn't contain any data that is relevant to simulation
-    fun getEdgeAttributeList(edgeLabel: String): Map<String, String>
-}
-
-class DefaultOCNetDeclaration(
-    // in form key:"t1" value:"color=\"green\" ... other attributes"
-    val nodeAttributes: Map<String /* id */, String> = mapOf(),
-    val edgeAttributes: Map<String /* id */, String> = mapOf(),
-) : OCDotDeclaration {
-    override fun getNodeAttributeList(nodeLabel: String): Map<String, String> {
-        return nodeAttributes[nodeLabel]?.split(" ")?.map {
-            val keyAndValue = it.split("=")
-            keyAndValue[0] to keyAndValue[1]
-        }?.let {
-            buildMap {
-                for (i in it) {
-                    put(i.first, i.second)
-                }
-            }
-        } ?: mapOf()
-    }
-
-    override fun getEdgeAttributeList(edgeLabel: String): Map<String, String> {
-        return nodeAttributes[edgeLabel]?.split(" ")?.map {
-            val keyAndValue = it.split("=")
-            keyAndValue[0] to keyAndValue[1]
-        }?.let {
-            buildMap {
-                for (i in it) {
-                    put(i.first, i.second)
-                }
-            }
-        } ?: mapOf()
-    }
-
-}
-
-// probably it would be better to generate domain models at the same time
-// with editing the original declaration
-// but for now lets forget about the optimization lol
 class OCGraphvizGenerator(
     private val originalOCDOtDeclaration: OCDotDeclaration,
     private val ocNetElements: OCNetElements,
