@@ -1,48 +1,63 @@
 package dsl
 
 class SubgraphConnectionResolver(
-    val inNode : UnresolvedHasLast = UnresolvedHasLast(),
-    val outNode : UnresolvedHasFirst = UnresolvedHasFirst(),
-    private val inputNodeDependentCommands: MutableList<(inNode : HasLast) -> Unit> = mutableListOf(),
-    private val outputNodeDependentCommands : MutableList<(outNode : HasFirst) -> Unit> = mutableListOf()
+    val inNode: UnresolvedHasLast = UnresolvedHasLast(),
+    val outNode: UnresolvedHasFirst = UnresolvedHasFirst(),
+    private val inputNodeDependentCommands: MutableList<(inNode: HasLast) -> Unit> = mutableListOf(),
+    private val outputNodeDependentCommands: MutableList<(outNode: HasFirst) -> Unit> = mutableListOf(),
 ) {
     fun checkNodeConnectionIsUnresolved(
-        fromNode : HasElement,
-        toNode : HasElement) : Boolean {
+        fromNode: HasElement,
+        toNode: HasElement,
+    ): Boolean {
         if (fromNode == inNode && toNode == outNode) throw IllegalStateException()
 
-        if (fromNode == inNode) {
+        if (fromNode == inNode || toNode == inNode) {
             return true
         }
-        if (toNode == outNode) {
+        if (toNode == outNode || toNode == outNode) {
             return true
         }
         return false
     }
-    fun checkIfInputNodeUnresolvedAndAddCommand(fromNode: HasElement, command: (inNode: HasLast) -> Unit) {
-        if (fromNode == inNode) {
-            inputNodeDependentCommands.add(command)
+
+    fun addOnInputNodeResolvedCommand(
+        fromNode: HasElement,
+        toNode: HasElement,
+        command: (resolvedNode: HasElement) -> Unit,
+    ) {
+        require(checkNodeConnectionIsUnresolved(fromNode, toNode))
+        when (inNode) {
+            fromNode, toNode -> {
+                inputNodeDependentCommands.add(command)
+            }
         }
     }
-    fun checkIfOutputNodeUnresolvedAndAddCommand(toNode: HasElement, command: (outNode: HasFirst) -> Unit) {
-        if (outNode == toNode) {
-            outputNodeDependentCommands.add(command)
+
+    fun addOnOutputNodeResolvedCommand(
+        fromNode: HasElement,
+        toNode: HasElement,
+        command: (resolvedNode: HasElement) -> Unit,
+    ) {
+        require(checkNodeConnectionIsUnresolved(fromNode, toNode))
+        when (outNode) {
+            fromNode, toNode -> {
+                outputNodeDependentCommands.add(command)
+            }
         }
     }
 
     fun resolveInputNode(fromNode: HasElement) {
-        val element = when (linkChainDSL) {
-            is HasLast -> linkChainDSL.lastElement
-            else -> linkChainDSL.element
-        }
+        val element = fromNode.tryGetLastElement()
         inNode.resolvedLastElement = element
         for (inputNodeCommand in inputNodeDependentCommands) {
             inputNodeCommand.invoke(inNode)
         }
     }
 
-    fun resolveOutputNode(toNode : HasElement) {
-        outNode.resolvedFirstElement = toNode.firstElement
+    fun resolveOutputNode(toNode: HasElement) {
+        val element = toNode.tryGetFirstElement()
+        outNode.resolvedFirstElement = element
         for (outputNodeCommand in outputNodeDependentCommands) {
             outputNodeCommand.invoke(outNode)
         }
@@ -55,48 +70,54 @@ class SubgraphArcDelegate(
 ) : ArcDelegate(arcContainer) {
     private val arcCreator = ArcCreator()
 
-    private fun createAndAddArc(
+
+    private fun createAndAddPossiblyUnresolvedArc(
         from: HasElement,
         to: HasElement,
-        multiplicity: Int,
-        isVariable: Boolean,
+        typedArcCreator: TypedArcCreator,
     ) {
         if (subgraphConnectionResolver.checkNodeConnectionIsUnresolved(from, to)) {
-            subgraphConnectionResolver.checkIfInputNodeUnresolvedAndAddCommand(fromNode = from) { inNode ->
-                if (isVariable) {
-                    inNode.variableArcTo(to)
-                } else {
-                    inNode.arcTo(multiplicity, to)
-                }
+            subgraphConnectionResolver.addOnInputNodeResolvedCommand(fromNode = from, toNode = to) { inNode ->
+                createAndAddResolvedArc(from, to, typedArcCreator)
             }
-            subgraphConnectionResolver.checkIfOutputNodeUnresolvedAndAddCommand(toNode = to) { outNode ->
-                if (isVariable) {
-                    from.variableArcTo(outNode)
-                } else {
-                    from.arcTo(multiplicity, outNode)
-                }
+            subgraphConnectionResolver.addOnOutputNodeResolvedCommand(fromNode = from, toNode = to) { outNode ->
+                createAndAddResolvedArc(from, to, typedArcCreator)
             }
         } else {
-            val newArc = arcCreator.createArc(from, to, multiplicity, isVariable)
-            arcContainer.arcs.add(newArc)
+            createAndAddResolvedArc(from, to, typedArcCreator)
         }
     }
 
-    override fun HasElement.arcTo(multiplicity: Int, linkChainDSL: LinkChainDSL): HasLast {
-        createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
+    private fun createAndAddResolvedArc(from: HasElement, to: HasElement, typedArcCreator: TypedArcCreator) {
+        super.createAndAddArc(from, to, typedArcCreator)
+    }
+
+    override fun HasElement.arcTo(linkChainDSL: LinkChainDSL, block: (NormalArcScope.() -> Unit)?): HasLast {
+        val normalArcScope = createNormalArcScope(block)
+        createAndAddPossiblyUnresolvedArc(
+            this,
+            linkChainDSL,
+            TypedArcCreator.NormalArc(multiplicity = normalArcScope.multiplicity)
+        )
         return HasLastImpl(linkChainDSL.lastElement)
     }
 
-    override fun HasElement.arcTo(multiplicity: Int, linkChainDSL: HasElement) {
-        createAndAddArc(this, linkChainDSL, multiplicity, isVariable = false)
+    override fun HasElement.arcTo(linkChainDSL: HasElement, block: (NormalArcScope.() -> Unit)?) {
+        val normalArcScope = createNormalArcScope(block)
+        createAndAddPossiblyUnresolvedArc(
+            this,
+            linkChainDSL,
+            TypedArcCreator.NormalArc(multiplicity = normalArcScope.multiplicity)
+        )
     }
 
+
     override fun HasElement.variableArcTo(linkChainDSL: LinkChainDSL): HasLast {
-        createAndAddArc(this, linkChainDSL, multiplicity = 1, isVariable = true)
+        createAndAddPossiblyUnresolvedArc(this, linkChainDSL, TypedArcCreator.VariableArc)
         return HasLastImpl(linkChainDSL.lastElement)
     }
 
     override fun HasElement.variableArcTo(hasFirst: HasElement) {
-        createAndAddArc(this, hasFirst, multiplicity = 1, isVariable = true)
+        createAndAddPossiblyUnresolvedArc(this, hasFirst, TypedArcCreator.VariableArc)
     }
 }

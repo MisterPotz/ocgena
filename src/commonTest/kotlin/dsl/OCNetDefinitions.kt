@@ -18,21 +18,21 @@ fun createExampleModel(): OCNetDSLElements {
         forType(order) {
             place {
                 placeType = PlaceType.INPUT
-            }.arcTo(1, transition("place order"))
-                .arcTo(1, place { })
-                .arcTo(1, transition("send invoice"))
-                .connectTo(
-                    subgraph {
-                        inNode
-                            .arcTo(1, place { })
-                            .arcTo(1, transition("send reminder"))
-                            .arcTo(1, inNode)
-                    })
-            transition("send invoice")
-                .arcTo(1, transition("pay order"))
-                .arcTo(1, place { })
-                .arcTo(1, transition("mark as completed"))
-                .arcTo(1, place {
+            }.arcTo(transition("place order"))
+                .arcTo(place { })
+                .arcTo(transition("send invoice"))
+                .connectTo(subgraph {
+                    val place = place { }
+                    inNode
+                        .arcTo(place)
+                        .arcTo(transition("send reminder"))
+                        .arcTo(place)
+                        .arcTo(outNode)
+                })
+                .connectTo(transition("pay order"))
+                .arcTo(place { })
+                .arcTo(transition("mark as completed"))
+                .arcTo(place {
                     placeType = PlaceType.OUTPUT
                 })
         }
@@ -43,8 +43,8 @@ fun createExampleModel(): OCNetDSLElements {
             }
                 .variableArcTo(transition("place order"))
                 .variableArcTo(place { })
-                .arcTo(1, transition("pick item"))
-                .arcTo(1, place { })
+                .arcTo(transition("pick item"))
+                .arcTo(place { })
                 .variableArcTo(transition("start route"))
                 .variableArcTo(place { })
                 .variableArcTo(transition("end route"))
@@ -58,10 +58,10 @@ fun createExampleModel(): OCNetDSLElements {
         forType(route) {
             place {
                 placeType = PlaceType.INPUT
-            }.arcTo(1, transition("start route"))
-                .arcTo(1, place { })
-                .arcTo(1, transition("end route"))
-                .arcTo(1, place {
+            }.arcTo(transition("start route"))
+                .arcTo(place { })
+                .arcTo(transition("end route"))
+                .arcTo(place {
                     placeType = PlaceType.OUTPUT
                 })
         }

@@ -46,7 +46,7 @@ class OCScopeImplCreator() {
     fun createRootOCScope(): OCScopeImpl {
 
         return OCScopeImpl(
-            rootScope = null,
+            defaultObjectType = defaultObjectType,
             scopeType = defaultObjectType,
             scopeAccessibleEntities = scopeAccessibleEntities,
             groupsIdCreator = groupIdCreator,
@@ -56,7 +56,8 @@ class OCScopeImplCreator() {
             placeDelegate = placeDelegate,
             transitionDelegate = transitionDelegate,
             objectTypeDelegate = objectTypeDelegate,
-            subgraphDelegate = subgraphDelegate
+            subgraphDelegate = subgraphDelegate,
+
         )
     }
 }

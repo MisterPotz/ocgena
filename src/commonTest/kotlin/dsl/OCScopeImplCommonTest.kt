@@ -11,14 +11,9 @@ import kotlin.test.assertTrue
 
 class OCScopeImplCommonTest {
 
-    private var _ocNetDSLElements: OCNetDSLElements? = null
-    val ocNetDSLElements = createExampleModel()
-    val objectSearcher = ObjectsSearcher(ocNetDSLElements)
+    private val ocNetDSLElements = createExampleModel()
+    private val objectSearcher = ObjectsSearcher(ocNetDSLElements)
 
-
-    init {
-        _ocNetDSLElements = createExampleModel()
-    }
 
     @Test
     fun testPlacesPerTypeAmount() {

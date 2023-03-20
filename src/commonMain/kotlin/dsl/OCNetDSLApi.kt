@@ -50,16 +50,16 @@ interface SubgraphConnector {
     fun subgraph(label: String? = null, block: SubgraphDSL.() -> Unit): SubgraphDSL
 }
 
+interface NormalArcScope {
+    var multiplicity : Int
+}
+
 interface ArcsAcceptor {
-
-    fun HasElement.arcTo(multiplicity: Int = 1, linkChainDSL: LinkChainDSL): HasLast
-    fun HasElement.arcTo(multiplicity: Int = 1, linkChainDSL: HasElement)
-
+    fun HasElement.arcTo(linkChainDSL: LinkChainDSL, block : (NormalArcScope.() -> Unit)? = null): HasLast
+    fun HasElement.arcTo(linkChainDSL: HasElement, block : (NormalArcScope.() -> Unit)? = null)
 
     fun HasElement.variableArcTo(linkChainDSL: LinkChainDSL): HasLast
-
     fun HasElement.variableArcTo(hasFirst: HasElement)
-
 }
 
 interface ObjectTypeDSL {
@@ -89,13 +89,19 @@ interface LinkChainDSL : HasLast, HasFirst {
 interface HasElement {
     val element : NodeDSL
 
-    companion object {
-        fun safeElement(hasElement: HasElement) : NodeDSL {
-            return when(hasElement) {
-                is HasFirst -> hasElement.firstElement
-                is HasLast -> hasElement.lastElement
-                else -> hasElement.element
-            }
+    fun tryGetFirstElement() : NodeDSL {
+        return when (this) {
+            is HasFirst -> firstElement
+            is HasLast -> lastElement
+            else -> element
+        }
+    }
+
+    fun tryGetLastElement() : NodeDSL {
+        return when (this) {
+            is HasLast -> lastElement
+            is HasFirst -> firstElement
+            else -> element
         }
     }
 }

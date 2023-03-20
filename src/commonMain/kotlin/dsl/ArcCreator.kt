@@ -1,43 +1,37 @@
 package dsl
 
+sealed class TypedArcCreator {
+    data class NormalArc(val multiplicity: Int) : TypedArcCreator() {
+        override fun create(tailAtom: NodeDSL, arrowAtom: NodeDSL): ArcDSL {
+            return NormalArcDSLImpl(multiplicity = multiplicity, tailAtom = tailAtom, arrowAtom = arrowAtom)
+        }
+    }
+
+    object VariableArc : TypedArcCreator() {
+        override fun create(tailAtom: NodeDSL, arrowAtom: NodeDSL): ArcDSL {
+            return VariableArcDSLImpl(tailAtom = tailAtom, arrowAtom = arrowAtom)
+        }
+    }
+
+    abstract fun create(tailAtom: NodeDSL, arrowAtom: NodeDSL): ArcDSL
+}
+
 class ArcCreator(
 ) {
     fun createArc(
         from: HasElement,
         to: HasElement,
-        multiplicity: Int,
-        isVariable: Boolean,
+        arcTypeCreateParameters: TypedArcCreator,
     ): ArcDSL {
         val fromElement = when (from) {
             is HasLast -> from.lastElement
             else -> from.element
         }
-        val toElement = when(to) {
+        val toElement = when (to) {
             is HasFirst -> to.firstElement
             else -> to.element
         }
 
-        val newArc = chooseArcTypeAndCreate(
-            tailAtom = fromElement,
-            arrowAtom = toElement,
-            multiplicity = multiplicity,
-            isVariable = isVariable
-        )
-
-        return newArc
-    }
-
-
-    private fun chooseArcTypeAndCreate(
-        tailAtom: NodeDSL,
-        arrowAtom: NodeDSL,
-        multiplicity: Int,
-        isVariable: Boolean,
-    ): ArcDSL {
-        return if (isVariable) {
-            VariableArcDSLImpl(tailAtom = tailAtom, arrowAtom = arrowAtom)
-        } else {
-            NormalArcDSLImpl(multiplicity = multiplicity, tailAtom = tailAtom, arrowAtom = arrowAtom)
-        }
+        return arcTypeCreateParameters.create(tailAtom = fromElement, arrowAtom = toElement)
     }
 }

@@ -12,7 +12,7 @@ class DotGeneratorTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
             place { }
-                .arcTo(transition { })
+                .arcTo(transition { }) { }
                 .variableArcTo(place { })
         }
 
@@ -41,10 +41,7 @@ class DotGeneratorTest {
         ocNetFacadeBuilder.tryBuildModel {
             place("place1")
                 .variableArcTo(transition("tr1"))
-                .ar
-                .arcTo(place("place2"))
-                .variableArcTo()
-
+                .arcTo(place("place2")) { }
         }
     }
 }

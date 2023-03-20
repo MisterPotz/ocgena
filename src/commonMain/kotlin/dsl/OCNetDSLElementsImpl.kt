@@ -4,7 +4,8 @@ class OCNetDSLElementsImpl(
     override val places : MutableMap<String, PlaceDSL>,
     override val transitions: Map<String, TransitionDSL>,
     override val arcs : MutableList<ArcDSL>,
-    override val objectTypes: Map<String, ObjectTypeDSL>, override val defaultObjectTypeDSL: ObjectTypeDSL,
+    override val objectTypes: Map<String, ObjectTypeDSL>,
+    override val defaultObjectTypeDSL: ObjectTypeDSL,
 ): OCNetDSLElements {
     override fun objectType(s: String): ObjectTypeDSL {
         return objectTypes[s]!!

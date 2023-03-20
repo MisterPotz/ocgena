@@ -16,10 +16,11 @@ class OCNetTest {
                 initialTokens = 4
                 placeType = PlaceType.INPUT
             }
-                .arcTo(transition {  })
+                .arcTo(transition { })
                 .arcTo(place { placeType = PlaceType.OUTPUT })
         }.requireConsistentOCNet()
-        assertNotNull(ocNet,
+        assertNotNull(
+            ocNet,
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         )
         requireNotNull(ocNet)
@@ -45,9 +46,13 @@ class OCNetTest {
                 placeType = PlaceType.INPUT
             }
                 .arcTo(transition("t1"))
-                .arcTo(place {  })
-                .arcTo(multiplicity = 2, transition { })
-                .arcTo(multiplicity = 3, place { placeType = PlaceType.OUTPUT })
+                .arcTo(place { })
+                .arcTo(transition { }) {
+                    multiplicity = 2
+                }
+                .arcTo(place { placeType = PlaceType.OUTPUT }) {
+                    multiplicity = 3
+                }
         }.requireConsistentOCNet()
         assertNotNull(ocNet) {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"

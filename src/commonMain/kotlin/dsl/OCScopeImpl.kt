@@ -2,7 +2,7 @@ package dsl
 
 
 class OCScopeImpl(
-    private val rootScope: OCScopeImpl? = null,
+    private val defaultObjectType : ObjectTypeDSL,
     override val scopeType: ObjectTypeDSL,
     private val scopeAccessibleEntities: ScopeAccessibleEntities,
     private val groupsIdCreator: GroupsIdCreator,
@@ -20,13 +20,13 @@ class OCScopeImpl(
     ObjectTypeAcceptor by objectTypeDelegate,
     SubgraphConnector by subgraphDelegate {
 
-    fun ocNetElements() : OCNetDSLElements {
+    fun ocNetElements(): OCNetDSLElements {
         return OCNetDSLElementsImpl(
             places = scopeAccessibleEntities.places,
             transitions = scopeAccessibleEntities.transitions,
             arcs = scopeAccessibleEntities.arcs,
             objectTypes = scopeAccessibleEntities.objectTypes,
-            defaultObjectTypeDSL = scopeAccessibleEntities.defaultObjectType
+            defaultObjectTypeDSL = defaultObjectType
         )
     }
 
@@ -35,9 +35,9 @@ class OCScopeImpl(
         ocScopeImpl.block()
     }
 
-    private fun createChildOCSCope(objectTypeDSL: ObjectTypeDSL) : OCScopeImpl {
+    private fun createChildOCSCope(objectTypeDSL: ObjectTypeDSL): OCScopeImpl {
         return OCScopeImpl(
-            rootScope = rootScope ?: this,
+            defaultObjectType = defaultObjectType,
             scopeType = objectTypeDSL,
             scopeAccessibleEntities = ScopeAccessibleEntities(
                 groupsIdCreator = groupsIdCreator,
@@ -48,12 +48,18 @@ class OCScopeImpl(
             ),
             groupsIdCreator = groupsIdCreator,
             arcDelegate = arcDelegate,
-            placeDelegate = placeDelegate,
+            placeDelegate = PlaceDelegate(
+                placeCreator = PlaceCreator(
+                    objectTypeDSL,
+                    placesContainer = scopeAccessibleEntities,
+                    groupIdCreator = groupsIdCreator
+                )
+            ),
             transitionDelegate = transitionDelegate,
             objectTypeDelegate = objectTypeDelegate,
             placeCreator = placeCreator,
             transitionCreator = transitionCreator,
-            subgraphDelegate = subgraphDelegate
+            subgraphDelegate = subgraphDelegate,
         )
     }
 
