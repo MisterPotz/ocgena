@@ -69,6 +69,7 @@ kotlin {
         }
         val jsMain by getting {
             dependencies {
+                implementation(npm("peggy", "3.0.1"))
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react:18.2.0-pre.346")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:18.2.0-pre.346")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:11.9.3-pre.346")
@@ -84,8 +85,8 @@ kotlin {
 
         }
     }
-
 }
+
 application {
     mainClass.set("ru.misterpotz.application.ServerKt")
 }

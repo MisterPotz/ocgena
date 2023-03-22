@@ -1,0 +1,14 @@
+{
+  "name": "ocgena-js",
+  "version": "1.0.0",
+  "description": "Sandbox for testing out functionality related to javascript, which afterwards may be converted to Kotlin Multiplatform Javascript flavor.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "peggy": "^3.0.1"
+  }
+}

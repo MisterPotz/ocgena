@@ -1,9 +1,17 @@
 package converter
 
+import dsl.OCNetDSLElements
 import model.Arc
 import model.NormalArc
 import model.VariableArc
 
+class OCDotParseResult(
+    val ocNetDSLElements: OCNetDSLElements,
+    val ocDotDeclaration: OCDotDeclaration
+)
+expect class OCDotParser {
+    fun parse(ocDot: String) : OCDotParseResult
+}
 
 class OCGraphvizGenerator(
     private val originalOCDOtDeclaration: OCDotDeclaration,
