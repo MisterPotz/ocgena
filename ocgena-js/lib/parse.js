@@ -1,17 +1,8 @@
-// import { Edge, Node, RootCluster, Subgraph } from 'ts-graphviz';
-// import { convert } from './convert';
-import { AST } from './ast';
-
-export type Rule = 'dot' | 'ocnet' | 'node' | 'edge' | 'subgraph';
-
-function f() { 
-    return {x: 10, y : 3}
+function f() {
+    return { x: 10, y: 3 };
 }
-
-type P = typeof f
-
+export {};
 // export type ParseOption<T extends Rule = Rule> = AST.ParseOption<T>;
-
 /**
  * Parse string written in dot language and convert it to a model.
  *

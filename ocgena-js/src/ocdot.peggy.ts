@@ -216,8 +216,8 @@ function peg$parse(input: string, options?: ParseOptions) {
   const peg$source = options.grammarSource;
 
   const peg$startRuleFunctions: { [id: string]: any } = {
-    dot: peg$parsedot,
-    graph: peg$parsegraph,
+    ocdot: peg$parseocdot,
+    ocnet: peg$parseocnet,
     subgraph: peg$parsesubgraph,
     node: peg$parsenode,
     edge: peg$parseedge,
@@ -225,14 +225,14 @@ function peg$parse(input: string, options?: ParseOptions) {
     attribute: peg$parseattribute,
     cluster_statements: peg$parsecluster_statements,
   };
-  let peg$startRuleFunction: () => any = peg$parsedot;
+  let peg$startRuleFunction: () => any = peg$parseocdot;
 
   const peg$c0 = function (v: any): any {
     return v;
   };
   const peg$c1 = function (c1: any, graph: any, c2: any): any {
     return {
-      type: 'dot',
+      type: 'ocdot',
       body: [...c1, graph, ...c2],
       location: location(),
     };
@@ -244,8 +244,6 @@ function peg$parse(input: string, options?: ParseOptions) {
   const peg$c6 = '}';
   const peg$c7 = peg$literalExpectation('}', false);
   const peg$c8 = function (_kind: any, id: any, body: any): any {
-    const kind = _kind.toLowerCase();
-    const directed = kind === 'digraph';
     return id !== null
       ? { type: 'ocnet', id, body, location: location() }
       : { type: 'ocnet', body, location: location() };
@@ -273,7 +271,8 @@ function peg$parse(input: string, options?: ParseOptions) {
     return {
       type: 'edge',
       body: _body ?? [],
-      targets: [id, ...rhs],
+      from: id,
+      targets: [...rhs],
       location: location(),
     };
   };
@@ -314,11 +313,11 @@ function peg$parse(input: string, options?: ParseOptions) {
   const peg$c35 = '=>';
   const peg$c36 = peg$literalExpectation('=>', false);
   const peg$c37 = function (operator: any): any {
-    return { operator, location: location() };
+    return { type: operator, location: location() };
   };
   const peg$c38 = function (edgeop: any, id: any, rest: any): any {
     edgeops.push(edgeop);
-    return [id].concat(rest || []);
+    return [{ id, edgeop }].concat(rest || []);
   };
   const peg$c39 = function (id: any, port: any): any {
     return { type: 'node_ref', id, ...port, location: location() };
@@ -2246,13 +2245,13 @@ function peg$parse(input: string, options?: ParseOptions) {
     return new PeggySyntaxError(PeggySyntaxError.buildMessage(expected1, found), expected1, found, location1);
   }
 
-  function peg$parsedot(): any {
+  function peg$parseocdot(): any {
     let s0, s1, s2, s3;
 
     s0 = peg$currPos;
     s1 = peg$parse__();
     if ((s1 as any) !== peg$FAILED) {
-      s2 = peg$parse_dot();
+      s2 = peg$parse_ocdot();
       if ((s2 as any) !== peg$FAILED) {
         s3 = peg$parse__();
         if ((s3 as any) !== peg$FAILED) {
@@ -2275,13 +2274,13 @@ function peg$parse(input: string, options?: ParseOptions) {
     return s0;
   }
 
-  function peg$parsegraph(): any {
+  function peg$parseocnet(): any {
     let s0, s1, s2, s3;
 
     s0 = peg$currPos;
     s1 = peg$parse__();
     if ((s1 as any) !== peg$FAILED) {
-      s2 = peg$parse_graph();
+      s2 = peg$parse_ocnet();
       if ((s2 as any) !== peg$FAILED) {
         s3 = peg$parse__();
         if ((s3 as any) !== peg$FAILED) {
@@ -2579,7 +2578,7 @@ function peg$parse(input: string, options?: ParseOptions) {
     return s0;
   }
 
-  function peg$parse_dot(): any {
+  function peg$parse_ocdot(): any {
     let s0, s1, s2, s3, s4;
 
     s0 = peg$currPos;
@@ -2590,7 +2589,7 @@ function peg$parse(input: string, options?: ParseOptions) {
       s2 = peg$parsecomment();
     }
     if ((s1 as any) !== peg$FAILED) {
-      s2 = peg$parsegraph();
+      s2 = peg$parseocnet();
       if ((s2 as any) !== peg$FAILED) {
         s3 = [];
         s4 = peg$parsecomment();
@@ -2618,7 +2617,7 @@ function peg$parse(input: string, options?: ParseOptions) {
     return s0;
   }
 
-  function peg$parse_graph(): any {
+  function peg$parse_ocnet(): any {
     let s0, s1, s2, s3, s4, s5, s6, s7, s8;
 
     s0 = peg$currPos;

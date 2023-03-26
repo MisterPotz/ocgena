@@ -1,17 +1,4 @@
-// import { Edge, Node, RootCluster, Subgraph } from 'ts-graphviz';
-// import { convert } from './convert';
-import { AST } from './ast';
-
 export type Rule = 'dot' | 'ocnet' | 'node' | 'edge' | 'subgraph';
-
-function f() { 
-    return {x: 10, y : 3}
-}
-
-type P = typeof f
-
-// export type ParseOption<T extends Rule = Rule> = AST.ParseOption<T>;
-
 /**
  * Parse string written in dot language and convert it to a model.
  *
@@ -75,24 +62,3 @@ type P = typeof f
  * ```
  * @throws {SyntaxError}
  */
-// export function parse(dot: string): RootCluster;
-// export function parse(dot: string, options?: ParseOption<'dot'>): RootCluster;
-// export function parse(dot: string, options?: ParseOption<'graph'>): RootCluster;
-// export function parse(dot: string, options?: ParseOption<'edge'>): Edge;
-// export function parse(dot: string, options?: ParseOption<'node'>): Node;
-// export function parse(dot: string, options?: ParseOption<'subgraph'>): Subgraph;
-// export function parse(
-//   dot: string,
-//   { rule = 'dot' }: ParseOption<'graph' | 'edge' | 'node' | 'subgraph' | 'dot'> = {},
-// ): RootCluster | Subgraph | Node | Edge {
-//   const ast = AST.parse(dot, { rule });
-//   if (
-//     Array.isArray(ast) ||
-//     ast.type === AST.Types.Attribute ||
-//     ast.type === AST.Types.Attributes ||
-//     ast.type === AST.Types.Comment
-//   ) {
-//     throw new Error();
-//   }
-//   return convert(ast);
-// }

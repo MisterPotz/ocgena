@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules dot,graph,subgraph,node,edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts"
+    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node,edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts"
   },
   "author": "",
   "license": "ISC",
@@ -13,5 +13,8 @@
     "peggy": "^3.0.2",
     "prettier": "2.8.6",
     "ts-pegjs": "^3.1.0"
+  },
+  "dependencies": {
+    "ts-graphviz": "^1.5.5"
   }
 }

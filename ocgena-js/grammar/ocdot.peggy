@@ -19,11 +19,11 @@
   const edgeops: { operator: '->' | '=>', location: FileRange }[] = [];
 }
 
-start = dot
+start = ocdot
 
-dot = __ v:_dot __ { return v; }
+ocdot = __ v:_ocdot __ { return v; }
 
-graph = __ v:_graph __ { return v; }
+ocnet = __ v:_ocnet __ { return v; }
 
 node = __ v:_node __ { return v; }
 
@@ -43,19 +43,17 @@ comment = __ v:_comment __ { return v; }
 
 cluster_statements = (attribute / attributes / edge / subgraph / node / comment)*
 
-_dot
-  = c1:comment* graph:graph c2:comment* {
+_ocdot
+  = c1:comment* graph:ocnet c2:comment* {
       return {
-        type: 'dot',
+        type: 'ocdot',
         body: [...c1, graph, ...c2],
         location: location(),
       };
     }
 
-_graph
+_ocnet
   = _kind:("ocnet"i) _ id:_literal? __ "{" body:cluster_statements __ "}" {
-      const kind = _kind.toLowerCase();
-      const directed = kind === 'digraph';
       return id !== null
         ? { type: 'ocnet', id, body, location: location() }
         : { type: 'ocnet', body, location: location() };
@@ -81,7 +79,8 @@ _edge
       return {
         type: 'edge',
         body: _body ?? [],
-        targets: [id, ...rhs],
+        from : id,
+        targets: [...rhs],
         location: location(),
       };
     }
@@ -122,12 +121,12 @@ _edge_target
   = _edge_target_group
   / node_ref
 
-_edge_operator = operator:("->" / "=>") { return { operator, location: location() }; }
+_edge_operator = operator:("->" / "=>") { return { type: operator, location: location() }; }
 
 _edge_rhs
   = _ edgeop:_edge_operator _ id:_edge_target _ rest:_edge_rhs? {
       edgeops.push(edgeop);
-      return [id].concat(rest || []);
+      return [{id, edgeop}].concat(rest || []);
     }
 
 _node_ref = id:_literal port:_port? { return { type: 'node_ref', id, ...port, location: location() }; }

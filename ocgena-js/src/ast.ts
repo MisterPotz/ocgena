@@ -1,23 +1,23 @@
 import { Compass } from 'ts-graphviz';
-import { parse as _parse, IFileRange } from './dot.peggy';
+import { parse as _parse, FileRange as _FileRange } from './ocdot.peggy';
 
 /**
- * The `AST` module provides the ability to handle the AST as a result of parsing the dot language
+ * The `AST` module provides the ability to handle the AST as a result of parsing the ocdot language
  * for lower level operations.
  *
  * @alpha
  */
 export namespace AST {
-  export type FileRange = IFileRange;
+  export type FileRange = _FileRange;
   type ValueOf<T> = T[keyof T];
 
   /**
    * DOT object types.
    */
   export const Types = Object.freeze({
-    Dot: 'dot',
+    OcDot: 'ocdot',
     Comment: 'comment',
-    Graph: 'graph',
+    Ocnet: 'ocnet',
     Attribute: 'attribute',
     Attributes: 'attributes',
     Edge: 'edge',
@@ -28,6 +28,7 @@ export namespace AST {
     Literal: 'literal',
     ClusterStatements: 'cluster_statements',
   } as const);
+  // 'ocdot' | 'comment' etc
   export type Types = ValueOf<typeof Types>;
 
   export function isASTBaseNode(value: unknown): value is ASTBaseNode {
@@ -57,18 +58,16 @@ export namespace AST {
     quoted: boolean | 'html';
   }
 
-  export interface Dot extends ASTBaseParent<DotStatement> {
-    type: typeof Types.Dot;
+  export interface OcDot extends ASTBaseParent<OcDotStatement> {
+    type: typeof Types.OcDot;
   }
 
   /**
    * Graph AST object.
    */
-  export interface Graph extends ASTBaseParent<ClusterStatement> {
-    type: typeof Types.Graph;
+  export interface OcNet extends ASTBaseParent<ClusterStatement> {
+    type: typeof Types.Ocnet;
     id?: Literal;
-    directed: boolean;
-    strict: boolean;
   }
 
   export interface KeyValue {
@@ -107,7 +106,7 @@ export namespace AST {
   }
   export namespace Attributes {
     export const Kind = Object.freeze({
-      Graph: Types.Graph,
+      Ocnet: Types.Ocnet,
       Edge: Types.Edge,
       Node: Types.Node,
     } as const);
@@ -129,10 +128,21 @@ export namespace AST {
 
   export type EdgeTarget = NodeRef | NodeRefGroup;
 
+  export interface EdgeOperator extends ASTBaseNode { 
+      type : "->" | "=>"
+  }
+
+  export interface EdgeRHSElement {
+    id : EdgeTarget,
+    edgeop: EdgeOperator
+   }
+
+
   /** Edge AST object. */
   export interface Edge extends ASTBaseParent<Attribute> {
     type: typeof Types.Edge;
-    targets: [from: EdgeTarget, to: EdgeTarget, ...rest: EdgeTarget[]];
+    from : EdgeTarget,
+    targets: [to: EdgeRHSElement, ...rest: EdgeRHSElement[]];
   }
 
   /** Node AST object. */
@@ -147,16 +157,16 @@ export namespace AST {
     id?: Literal;
   }
 
-  export type DotStatement = Graph | Comment;
+  export type OcDotStatement = OcNet | Comment;
   export type ClusterStatement = Attribute | Attributes | Edge | Node | Subgraph | Comment;
 
   export type ASTNode =
     | Attribute
     | Attributes
     | Comment
-    | Dot
+    | OcDot
     | Edge
-    | Graph
+    | OcNet
     | Literal
     | Node
     | NodeRef
@@ -164,8 +174,8 @@ export namespace AST {
     | Subgraph;
 
   export type Rule =
-    | typeof Types.Dot
-    | typeof Types.Graph
+    | typeof Types.OcDot
+    | typeof Types.Ocnet
     | typeof Types.Node
     | typeof Types.Edge
     | typeof Types.Attributes
@@ -182,7 +192,7 @@ export namespace AST {
 
   /**
    * The basic usage is the same as the `parse` function,
-   * except that it returns the dot language
+   * except that it returns the ocdot language
    *
    * ```ts
    * import { AST } from '@ts-graphviz/parser';
@@ -197,7 +207,7 @@ export namespace AST {
    *
    * console.log(ast);
    * // {
-   * //   type: 'dot',
+   * //   type: 'ocdot',
    * //   body: [
    * //     {
    * //       type: 'graph',
@@ -270,8 +280,8 @@ export namespace AST {
    * // }
    * ```
    *
-   * @param dot string in the dot language to be parsed.
-   * @param options.rule Object type of dot string.
+   * @param ocdot string in the ocdot language to be parsed.
+   * @param options.rule Object type of ocdot string.
    * This can be "graph", "subgraph", "node", "edge",
    * "attributes", "attribute", "cluster_statements".
    *
@@ -327,32 +337,29 @@ export namespace AST {
    *
    * @throws {SyntaxError}
    */
-  export function parse(dot: string): Dot;
-  export function parse(dot: string, options: ParseOption<typeof Types.Edge>): Edge;
-  export function parse(dot: string, options: ParseOption<typeof Types.Node>): Node;
-  export function parse(dot: string, options: ParseOption<typeof Types.Graph>): Graph;
-  export function parse(dot: string, options: ParseOption<typeof Types.Attribute>): Attribute;
-  export function parse(dot: string, options: ParseOption<typeof Types.Attributes>): Attributes;
-  export function parse(dot: string, options: ParseOption<typeof Types.Subgraph>): Subgraph;
-  export function parse(dot: string, options: ParseOption<typeof Types.ClusterStatements>): ClusterStatement[];
-  export function parse(dot: string, options: ParseOption<typeof Types.Dot>): Dot;
-  export function parse(dot: string, options: ParseOption): Dot | Graph | ClusterStatement | ClusterStatement[];
-  export function parse(dot: string, { rule }: ParseOption = {}): Dot | Graph | ClusterStatement | ClusterStatement[] {
-    return _parse(dot, {
+  export function parse(ocdot: string): OcDot;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.Edge>): Edge;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.Node>): Node;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.Ocnet>): OcNet;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.Attribute>): Attribute;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.Attributes>): Attributes;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.Subgraph>): Subgraph;
+  export function parse(ocdot: string, options: ParseOption<typeof Types.ClusterStatements>): ClusterStatement[];
+  export function parse(ocdot: string, options: ParseOption<typeof Types.OcDot>): OcDot;
+  export function parse(ocdot: string, options: ParseOption): OcDot | OcNet | ClusterStatement | ClusterStatement[];
+  export function parse(ocdot: string, { rule }: ParseOption = {}): OcDot | OcNet | ClusterStatement | ClusterStatement[] {
+    return _parse(ocdot, {
       startRule: rule,
     });
   }
 
   export interface StringifyOption {
-    directed?: boolean;
     indentSize?: number;
   }
 
   export class Compiler {
-    protected directed: boolean;
     protected indentSize: number;
-    constructor({ directed = true, indentSize = 2 }: StringifyOption = {}) {
-      this.directed = directed;
+    constructor({ indentSize = 2 }: StringifyOption = {}) {
       this.indentSize = indentSize;
     }
 
@@ -383,14 +390,24 @@ export namespace AST {
           return ast.value.split('\n').map(this.pad('# ')).join('\n');
       }
     }
-    protected printDot(ast: AST.Dot): string {
+    protected printOcDot(ast: AST.OcDot): string {
       return ast.body.map(this.stringify.bind(this)).join('\n');
     }
+  
     protected printEdge(ast: AST.Edge): string {
-      const targets = ast.targets.map(this.stringify.bind(this)).join(this.directed ? ' -> ' : ' -- ');
+      const edgeOp = ast
+      const from = this.stringify(ast.from)
+      const targets = ast.targets.map(this.stringify.bind(this))/* .join(this.directed ? ' -> ' : ' -- '); */
+      const allEdgeTargets = [from, ...targets].join(' ')
+
       return ast.body.length === 0
-        ? `${targets};`
-        : `${targets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
+        ? `${allEdgeTargets};`
+        : `${allEdgeTargets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
+    }
+
+    protected printEdgeRHSElement(edgeRHSElement : EdgeRHSElement) : string { 
+      const edgeOp = edgeRHSElement.edgeop.type
+      return `${edgeOp} ${this.stringify(edgeRHSElement.id)}`
     }
 
     protected printNode(ast: AST.Node): string {
@@ -415,10 +432,10 @@ export namespace AST {
       return `{${ast.body.map(this.stringify.bind(this)).join(' ')}}`;
     }
 
-    protected printGroup(ast: AST.Graph): string {
+    protected printGroup(ast: AST.OcNet): string {
       return [
-        ast.strict ? 'strict' : null,
-        ast.directed ? 'digraph' : 'graph',
+        // ast.strict ? 'strict' : null,
+        // ast.directed ? 'digraph' : 'graph',
         ast.id ? this.stringify(ast.id) : null,
         ast.body.length === 0
           ? '{}'
@@ -451,31 +468,39 @@ export namespace AST {
       }
     }
 
-    public stringify(ast: AST.ASTNode): string {
-      switch (ast.type) {
-        case AST.Types.Attribute:
-          return this.printAttribute(ast);
-        case AST.Types.Attributes:
-          return this.printAttributes(ast);
-        case AST.Types.Comment:
-          return this.printComment(ast);
-        case AST.Types.Dot:
-          return this.printDot(ast);
-        case AST.Types.Edge:
-          return this.printEdge(ast);
-        case AST.Types.Node:
-          return this.printNode(ast);
-        case AST.Types.NodeRef:
-          return this.printNodeRef(ast);
-        case AST.Types.NodeRefGroup:
-          return this.printNodeRefGroup(ast);
-        case AST.Types.Graph:
-          this.directed = ast.directed;
-          return this.printGroup(ast);
-        case AST.Types.Subgraph:
-          return this.printSubgraph(ast);
-        case AST.Types.Literal:
-          return this.printLiteral(ast);
+    private isAstNode(object : any): object is AST.ASTNode {
+      return 'type' in object;
+    }
+
+    public stringify(ast: AST.ASTNode | EdgeRHSElement): string {
+      if (this.isAstNode(ast)) { 
+        switch (ast.type) {
+          case AST.Types.Attribute:
+            return this.printAttribute(ast);
+          case AST.Types.Attributes:
+            return this.printAttributes(ast);
+          case AST.Types.Comment:
+            return this.printComment(ast);
+          case AST.Types.OcDot:
+            return this.printOcDot(ast);
+          case AST.Types.Edge:
+            return this.printEdge(ast);
+          case AST.Types.Node:
+            return this.printNode(ast);
+          case AST.Types.NodeRef:
+            return this.printNodeRef(ast);
+          case AST.Types.NodeRefGroup:
+            return this.printNodeRefGroup(ast);
+          case AST.Types.Ocnet:
+            // this.directed = ast.directed;
+            return this.printGroup(ast);
+          case AST.Types.Subgraph:
+            return this.printSubgraph(ast);
+          case AST.Types.Literal:
+            return this.printLiteral(ast);
+        }
+      } else  {
+        return this.printEdgeRHSElement(ast)
       }
     }
   }

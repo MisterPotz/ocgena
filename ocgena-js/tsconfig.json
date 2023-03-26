@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "importHelpers": true,
+    "target": "es6",
+    "strict": true,
+    "lib": ["esnext"],
+    "allowJs": false,
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "outDir": "lib",
+    "rootDir": "src",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "declaration": true,
+  },
+  "include": ["src/**/*.ts"],
+  "lib": ["es2015"]
+  // "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
+}
