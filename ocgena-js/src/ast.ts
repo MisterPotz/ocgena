@@ -432,14 +432,14 @@ export namespace AST {
       return `{${ast.body.map(this.stringify.bind(this)).join(' ')}}`;
     }
 
-    protected printGroup(ast: AST.OcNet): string {
+    protected printOcNet(ast: AST.OcNet): string {
       return [
         // ast.strict ? 'strict' : null,
         // ast.directed ? 'digraph' : 'graph',
         ast.id ? this.stringify(ast.id) : null,
         ast.body.length === 0
-          ? '{}'
-          : `{\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
+          ? 'ocnet {}'
+          : `ocnet {\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
       ]
         .filter((v) => v !== null)
         .join(' ');
@@ -493,7 +493,7 @@ export namespace AST {
             return this.printNodeRefGroup(ast);
           case AST.Types.Ocnet:
             // this.directed = ast.directed;
-            return this.printGroup(ast);
+            return this.printOcNet(ast);
           case AST.Types.Subgraph:
             return this.printSubgraph(ast);
           case AST.Types.Literal:

@@ -12,8 +12,9 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "declaration": true,
+    "sourceMap": true
   },
   "include": ["src/**/*.ts"],
-  "lib": ["es2015"]
-  // "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
+  "lib": ["es2015"],
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"]
 }

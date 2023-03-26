@@ -2,7 +2,7 @@
 // import { convert } from './convert';
 import { AST } from './ast';
 
-export type Rule = 'dot' | 'ocnet' | 'node' | 'edge' | 'subgraph';
+export type Rule = 'ocdot' | 'ocnet' | 'node' | 'edge' | 'subgraph';
 
 function f() { 
     return {x: 10, y : 3}

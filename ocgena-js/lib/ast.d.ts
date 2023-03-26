@@ -315,7 +315,7 @@ export declare namespace AST {
         protected printNode(ast: AST.Node): string;
         protected printNodeRef(ast: AST.NodeRef): string;
         protected printNodeRefGroup(ast: AST.NodeRefGroup): string;
-        protected printGroup(ast: AST.OcNet): string;
+        protected printOcNet(ast: AST.OcNet): string;
         protected printSubgraph(ast: AST.Subgraph): string;
         protected printLiteral(ast: AST.Literal): string;
         private isAstNode;

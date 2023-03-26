@@ -4,8 +4,8 @@
   "description": "Sandbox for testing out functionality related to javascript, which afterwards may be converted to Kotlin Multiplatform Javascript flavor.",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node,edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts"
+    "test": "jest",
+    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node, edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts"
   },
   "author": "",
   "license": "ISC",

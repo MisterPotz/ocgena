@@ -1,4 +1,4 @@
-export type Rule = 'dot' | 'ocnet' | 'node' | 'edge' | 'subgraph';
+export type Rule = 'ocdot' | 'ocnet' | 'node' | 'edge' | 'subgraph';
 /**
  * Parse string written in dot language and convert it to a model.
  *
