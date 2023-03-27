@@ -1,7 +1,8 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function f() {
     return { x: 10, y: 3 };
 }
-export {};
 // export type ParseOption<T extends Rule = Rule> = AST.ParseOption<T>;
 /**
  * Parse string written in dot language and convert it to a model.

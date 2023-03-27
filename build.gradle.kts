@@ -22,19 +22,25 @@ kotlin {
     }
     js(IR) {
         binaries.executable()
-        browser {
+        nodejs {
             testTask {
-                useKarma {
-                    useFirefox()
-                    useChromeHeadless()
-                }
-            }
-            commonWebpackConfig {
-                cssSupport {
-                    enabled.set(true)
-                }
+                this.enabled = true
             }
         }
+//        browser {
+//            testTask {
+//                useKarma {
+////                    useFirefox()
+////                    useChromeHeadless()
+//                }
+//                enabled = false
+//            }
+//            commonWebpackConfig {
+//                cssSupport {
+//                    enabled.set(true)
+//                }
+//            }
+//        }
     }
 
     sourceSets {
@@ -70,6 +76,12 @@ kotlin {
         val jsMain by getting {
             dependencies {
                 implementation(npm("peggy", "3.0.1"))
+                val pathToLocalNpmModule = file("./ocgena-js/") //rootProject.projectDir.resolve("ocgena-js/")
+
+
+                println("path to the module $pathToLocalNpmModule")
+                implementation(npm("ocgena-js", pathToLocalNpmModule))
+//                implementation(npm(file("./ocgena-js")))
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react:18.2.0-pre.346")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:18.2.0-pre.346")
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:11.9.3-pre.346")
@@ -79,6 +91,17 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
 
+                val pathToLocalNpmModule = file("./ocgena-js/") //rootProject.projectDir.resolve("ocgena-js/")
+
+
+                println("path to the module $pathToLocalNpmModule")
+                implementation(npm("ocgena-js", pathToLocalNpmModule))
+
+//                val pathToLocalNpmModule = rootProject.projectDir.resolve("ocgena-js/")
+//                println("path to the module $pathToLocalNpmModule")
+//                implementation(npm("ocgena-js", pathToLocalNpmModule))
+
+//                implementation(npm(file("./ocgena-js")))
                 implementation(kotlin("test-js"))
 
             }
@@ -91,12 +114,16 @@ application {
     mainClass.set("ru.misterpotz.application.ServerKt")
 }
 
-tasks.named<Copy>("jvmProcessResources") {
-    val jsBrowserDistribution = tasks.named("jsBrowserDistribution")
-    from(jsBrowserDistribution)
-}
+//tasks.named<Copy>("jvmProcessResources") {
+//    val jsBrowserDistribution = tasks.named("jsBrowserDistribution")
+//    from(jsBrowserDistribution)
+//}
 
 tasks.named<JavaExec>("run") {
     dependsOn(tasks.named<Jar>("jvmJar"))
     classpath(tasks.named<Jar>("jvmJar"))
+}
+
+tasks.named("jsProductionExecutableCompileSync") {
+    dependsOn(tasks.named("jsNodeDevelopmentRun"))
 }

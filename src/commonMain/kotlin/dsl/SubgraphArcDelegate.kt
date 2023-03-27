@@ -68,7 +68,7 @@ class SubgraphArcDelegate(
     private val subgraphConnectionResolver: SubgraphConnectionResolver,
     arcContainer: ArcContainer,
 ) : ArcDelegate(arcContainer) {
-    private val arcCreator = ArcCreator()
+    private val arcCreator = ArcCreator(arcContainer)
 
 
     private fun createAndAddPossiblyUnresolvedArc(

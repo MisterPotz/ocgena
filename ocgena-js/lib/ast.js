@@ -1,11 +1,17 @@
-import { parse as _parse } from './ocdot.peggy';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.AST = void 0;
+const ocdot_peggy_1 = require("./ocdot.peggy");
 /**
  * The `AST` module provides the ability to handle the AST as a result of parsing the ocdot language
  * for lower level operations.
  *
  * @alpha
  */
-export var AST;
+var AST;
+
+// exports.kyoma={ geito: "steiner" };
+
 (function (AST) {
     /**
      * DOT object types.
@@ -28,6 +34,7 @@ export var AST;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeof value === 'object' && value !== null && typeof value.type === 'string';
     }
+
     AST.isASTBaseNode = isASTBaseNode;
     let Comment;
     (function (Comment) {
@@ -46,12 +53,13 @@ export var AST;
         });
     })(Attributes = AST.Attributes || (AST.Attributes = {}));
     function parse(ocdot, { rule } = {}) {
-        return _parse(ocdot, {
+        return (0, ocdot_peggy_1.parse)(ocdot, {
             startRule: rule,
         });
     }
     AST.parse = parse;
     class Compiler {
+        indentSize;
         constructor({ indentSize = 2 } = {}) {
             this.indentSize = indentSize;
         }
@@ -195,5 +203,5 @@ export var AST;
         return new Compiler(options).stringify(ast);
     }
     AST.stringify = stringify;
-})(AST || (AST = {}));
+})(AST = exports.AST || (exports.AST = {}));
 //# sourceMappingURL=ast.js.map

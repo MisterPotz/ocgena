@@ -2,6 +2,8 @@
 //
 // https://peggyjs.org/   https://github.com/metadevpro/ts-pegjs
 'use strict';
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.parse = exports.PeggySyntaxError = void 0;
 function peg$padEnd(str, targetLength, padString) {
     padString = padString || ' ';
     if (str.length > targetLength) {
@@ -11,7 +13,7 @@ function peg$padEnd(str, targetLength, padString) {
     padString += padString.repeat(targetLength);
     return str + padString.slice(0, targetLength);
 }
-export class PeggySyntaxError extends Error {
+class PeggySyntaxError extends Error {
     static buildMessage(expected, found) {
         function hex(ch) {
             return ch.charCodeAt(0).toString(16).toUpperCase();
@@ -87,6 +89,11 @@ export class PeggySyntaxError extends Error {
         }
         return 'Expected ' + describeExpected(expected) + ' but ' + describeFound(found) + ' found.';
     }
+    message;
+    expected;
+    found;
+    location;
+    name;
     constructor(message, expected, found, location) {
         super();
         this.message = message;
@@ -144,6 +151,7 @@ export class PeggySyntaxError extends Error {
         return str;
     }
 }
+exports.PeggySyntaxError = PeggySyntaxError;
 function peg$parse(input, options) {
     options = options !== undefined ? options : {};
     const peg$FAILED = {};
@@ -183,7 +191,11 @@ function peg$parse(input, options) {
     const peg$c9 = ';';
     const peg$c10 = peg$literalExpectation(';', false);
     const peg$c11 = function (keyValue) {
-        return Object.assign(Object.assign({ type: 'attribute' }, keyValue), { location: location() });
+        return {
+            type: 'attribute',
+            ...keyValue,
+            location: location(),
+        };
     };
     const peg$c12 = 'graph';
     const peg$c13 = peg$literalExpectation('graph', true);
@@ -198,7 +210,7 @@ function peg$parse(input, options) {
     const peg$c19 = function (id, rhs, _body) {
         return {
             type: 'edge',
-            body: _body !== null && _body !== void 0 ? _body : [],
+            body: _body ?? [],
             from: id,
             targets: [...rhs],
             location: location(),
@@ -208,7 +220,7 @@ function peg$parse(input, options) {
         return {
             type: 'node',
             id,
-            body: _body !== null && _body !== void 0 ? _body : [],
+            body: _body ?? [],
             location: location(),
         };
     };
@@ -248,7 +260,7 @@ function peg$parse(input, options) {
         return [{ id, edgeop }].concat(rest || []);
     };
     const peg$c39 = function (id, port) {
-        return Object.assign(Object.assign({ type: 'node_ref', id }, port), { location: location() });
+        return { type: 'node_ref', id, ...port, location: location() };
     };
     const peg$c40 = peg$otherExpectation('port');
     const peg$c41 = ':';
@@ -271,7 +283,7 @@ function peg$parse(input, options) {
         return id;
     };
     const peg$c48 = function (id, _body) {
-        const body = _body !== null && _body !== void 0 ? _body : [];
+        const body = _body ?? [];
         return id ? { type: 'subgraph', id, body, location: location() } : { type: 'subgraph', body, location: location() };
     };
     const peg$c49 = 'n';
@@ -299,7 +311,11 @@ function peg$parse(input, options) {
         return { value, quoted: true };
     };
     const peg$c69 = function (v) {
-        return Object.assign(Object.assign({ type: 'literal' }, v), { location: location() });
+        return {
+            type: 'literal',
+            ...v,
+            location: location(),
+        };
     };
     const peg$c70 = function (value) {
         return {
@@ -5177,7 +5193,7 @@ function peg$parse(input, options) {
         const str = value.trim();
         const matches = str.match(/\n([\t ]+|(?!\s).)/g);
         if (matches) {
-            const indentLengths = matches.map((match) => { var _a, _b; return (_b = (_a = match.match(/[\t ]/g)) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0; });
+            const indentLengths = matches.map((match) => match.match(/[\t ]/g)?.length ?? 0);
             const pattern = new RegExp(`\n[\t ]{${Math.min(...indentLengths)}}`, 'g');
             return str.replace(pattern, '\n');
         }
@@ -5197,5 +5213,5 @@ function peg$parse(input, options) {
             : peg$computeLocation(peg$maxFailPos, peg$maxFailPos));
     }
 }
-export const parse = peg$parse;
+exports.parse = peg$parse;
 //# sourceMappingURL=ocdot.peggy.js.map
