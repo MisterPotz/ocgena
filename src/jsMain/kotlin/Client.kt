@@ -3,10 +3,6 @@ import ast.Types
 import ast.parse
 import kotlinx.js.jso
 
-//fun getMyObject() : nibba {
-//    return js("nibba") as nibba
-//}
-
 fun Any.stringify(): String {
     return JSON.stringify(this)
 }
@@ -18,10 +14,6 @@ fun main() {
 //    val welcome = Welcome.create {
 //        name = "Kotlin/JS"
 //    }
-//    createRoot(container).render(welcome)
-//    bro()
-    console.log("im running mat' tvoyu")
-//    console.log("checking empty object on being asat node ${isASTBaseNode(js("""{ type: "biba boba 34" }"""))}")
     val ocDot = """
         |ocnet { 
         |    p1
