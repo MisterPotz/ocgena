@@ -1,3 +1,6 @@
+@file:OptIn(ExperimentalJsExport::class)
+@file:JsExport
+
 import ast.ParseOption__0
 import ast.Types
 import ast.parse

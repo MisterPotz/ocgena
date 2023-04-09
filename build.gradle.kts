@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.extraProperties
+
 plugins {
     kotlin("multiplatform") version "1.8.0"
     application
@@ -21,26 +23,13 @@ kotlin {
         }
     }
     js(IR) {
-        binaries.executable()
         nodejs {
+
             testTask {
                 this.enabled = true
             }
         }
-//        browser {
-//            testTask {
-//                useKarma {
-////                    useFirefox()
-////                    useChromeHeadless()
-//                }
-//                enabled = false
-//            }
-//            commonWebpackConfig {
-//                cssSupport {
-//                    enabled.set(true)
-//                }
-//            }
-//        }
+        binaries.executable()
     }
 
     sourceSets {
@@ -127,3 +116,32 @@ tasks.named<JavaExec>("run") {
 tasks.named("jsProductionExecutableCompileSync") {
     dependsOn(tasks.named("jsNodeDevelopmentRun"))
 }
+
+//tasks.named("compileProductionExecutableKotlinJs") {
+//    doLast {
+//        task("exportJsBinaries")
+//    }
+//}
+
+tasks.register<Delete>("deleteJsBinaries") {
+    val dir = layout.projectDirectory.dir("ocgenajs").asFile
+    if (dir.exists()) {
+        delete(layout.projectDirectory.dir("ocgenajs"))
+    }
+    doLast {
+        project.mkdir("ocgenajs")
+    }
+}
+
+tasks.register<Copy>("exportJsBinaries") {
+    dependsOn("compileProductionExecutableKotlinJs")
+    dependsOn("deleteJsBinaries")
+
+    from(layout.buildDirectory.dir("js/node_modules/ocgena/"))
+    into(layout.projectDirectory.dir("ocgenajs"))
+    mustRunAfter("compileProductionExecutableKotlinJs")
+}
+
+//tasks.named<KotlinJsCompile>("compileKotlinJs").configure {
+//    compilerOptions.moduleKind.set(org.jetbrains.kotlin.gradle.dsl.JsModuleKind.MODULE_COMMONJS)
+//}

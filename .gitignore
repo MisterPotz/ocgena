@@ -10,3 +10,6 @@ yarn.lock
 node_modules
 
 **/dukats/*
+
+# the exported binaries for ocgena js source code
+ocgenajs
