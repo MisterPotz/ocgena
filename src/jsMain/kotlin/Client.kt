@@ -4,13 +4,14 @@
 import ast.ParseOption__0
 import ast.Types
 import ast.parse
+import dsl.OCNetFacadeBuilder
 import kotlinx.js.jso
 
 fun Any.stringify(): String {
     return JSON.stringify(this)
 }
 
-fun main() {
+fun probeParse() : dynamic {
 //    val container = document.createElement("div")
 //    document.body!!.appendChild(container)
 //
@@ -30,5 +31,16 @@ fun main() {
         rule = Types.OcDot
     }
     val choto = parse(ocDot, rule)
-    console.log("loggin choto : ${JSON.stringify(choto)}")
+    val ocNetFacade = OCNetFacadeBuilder()
+    val builtModel = ocNetFacade.tryBuildModel {
+        place("t1")
+            .variableArcTo(transition("t1"))
+            .arcTo(place("p2"))
+    }
+    console.log(builtModel.ocNet?.toString())
+    return choto
+}
+
+fun main() {
+
 }

@@ -1,5 +1,5 @@
 {
-  "name": "ocgena-js",
+  "name": "ocdot-parser",
   "version": "1.0.0",
   "description": "Sandbox for testing out functionality related to javascript, which afterwards may be converted to Kotlin Multiplatform Javascript flavor.",
   "main": "./lib/ast.js",

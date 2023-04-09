@@ -124,4 +124,8 @@ class OCNet(
 
         executionLock.unlock()
     }
+
+    override fun toString(): String {
+        return "OCNet(inputPlaces=$inputPlaces, outputPlaces=$outputPlaces, objectTypes=$objectTypes, executionLock=$executionLock)"
+    }
 }
