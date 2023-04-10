@@ -9,9 +9,6 @@ const ocdot_peggy_1 = require("./ocdot.peggy");
  * @alpha
  */
 var AST;
-
-// exports.kyoma={ geito: "steiner" };
-
 (function (AST) {
     /**
      * DOT object types.
@@ -34,7 +31,6 @@ var AST;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeof value === 'object' && value !== null && typeof value.type === 'string';
     }
-
     AST.isASTBaseNode = isASTBaseNode;
     let Comment;
     (function (Comment) {

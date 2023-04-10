@@ -5,14 +5,23 @@
   "main": "./lib/ast.js",
   "scripts": {
     "test": "jest",
-    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node, edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts"
+    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node, edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts",
+    "make-dukats": "dukat -d ./dukats/ ./src/"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
+    "@babel/preset-typescript": "^7.21.4",
+    "babel-jest": "^29.5.0",
+    "dukat": "^0.5.8-rc.4",
+    "jest": "^29.5.0",
     "peggy": "^3.0.2",
     "prettier": "2.8.6",
-    "ts-pegjs": "^3.1.0"
+    "ts-jest": "^29.1.0",
+    "ts-pegjs": "^3.1.0",
+    "typescript": "^5.0.4"
   },
   "dependencies": {
     "ts-graphviz": "^1.5.5"
