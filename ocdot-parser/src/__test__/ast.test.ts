@@ -5,18 +5,19 @@ describe('parse', () => {
         const myOcDot = `
             ocnet { 
                 places { 
-                    p1
-                    p2;
-                    p3 ;
-                    p4
+                    p1 p2
                 }
                 transitions {
                     t1
-                    t2
-                    t3
                 }
-                
                 p1 => t1 -> p2 [ ];
+
+                subgraph kek { 
+                    subgraph bro { 
+
+                    }
+                } -> t1 -> { p1 p2 }
+                
             }
         `
         const result = AST.parse(myOcDot, {rule: AST.Types.OcDot})

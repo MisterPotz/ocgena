@@ -108,23 +108,28 @@ _attibutes_item
 
 _attribute_list = _ "[" list:(attibutes_item / comment)* __ "]" { return list; }
 
-_edge_subgraph_id = ("subgraph"i)? _ id:_literal? _ { return id; }
-_edge_subgraph = _ id:_edge_subgraph_id _ "{" _body:cluster_statements? __ "}" {
-  const body = _body ?? [ ];
-
+_edge_subgraph_id = ("subgraph"i)? _ id:_literal? _ { 
+  return id; 
 }
 
-_edge_target_group
-  =   "{" id:node_ref rest:(("," / ";")? v:node_ref { return v; })* ("," / ";")? __ "}" {
-      return {
-        type: 'node_ref_group',
-        body: [id, ...rest],
-        location: location(),
-      };
-    }
+_edge_subgraph = _ id:_edge_subgraph_id _ "{" _body:cluster_statements? __ "}" {
+  const body = _body ?? [ ];
+  return id
+    ? { type: 'edge_subgraph', id, body, location: location() }
+    : { type: 'edge_subgraph', body, location: location() };
+}
+
+// _edge_target_group
+//   =   "{" id:node_ref rest:(("," / ";")? v:node_ref { return v; })* ("," / ";")? __ "}" {
+//       return {
+//         type: 'node_ref_group',
+//         body: [id, ...rest],
+//         location: location(),
+//       };
+//     }
 
 _edge_target
-  = _edge_target_group
+  = _edge_subgraph
   / node_ref
 
 _edge_operator = operator:("->" / "=>") { return { type: operator, location: location() }; }

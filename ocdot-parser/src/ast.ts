@@ -23,8 +23,9 @@ export namespace AST {
     Edge: 'edge',
     Node: 'node',
     NodeRef: 'node_ref',
-    NodeRefGroup: 'node_ref_group',
+    // NodeRefGroup: 'node_ref_group',
     Subgraph: 'subgraph',
+    EdgeSubgraph: 'edge_subgraph',
     Literal: 'literal',
     ClusterStatements: 'cluster_statements',
     TypeDefinitions: 'type_definitions'
@@ -33,9 +34,9 @@ export namespace AST {
   export type Types = ValueOf<typeof Types>;
 
   export const SubgraphSpecialTypes = Object.freeze({
-    Places : 'places',
-    Transitions : 'transitions',
-    ObjectTypes : 'object types'
+    Places: 'places',
+    Transitions: 'transitions',
+    ObjectTypes: 'object types'
   } as const)
   export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>
 
@@ -77,14 +78,6 @@ export namespace AST {
   export interface OcNet extends ASTBaseParent<ClusterStatement> {
     type: typeof Types.Ocnet;
     id?: Literal;
-  }
-
-  export interface Transitions extends Subgraph {
-
-  }
-
-  export interface Places extends Subgraph { 
-
   }
 
   export interface KeyValue {
@@ -139,26 +132,31 @@ export namespace AST {
   }
 
   /** NodeRefGroup AST object. */
-  export interface NodeRefGroup extends ASTBaseParent<NodeRef> {
-    type: typeof Types.NodeRefGroup;
+  // export interface NodeRefGroup extends ASTBaseParent<NodeRef> {
+  //   type: typeof Types.NodeRefGroup;
+  // }
+
+  export interface EdgeSubgraph extends ASTBaseParent<ClusterStatement> {
+    type: typeof Types.EdgeSubgraph;
+    id?: Literal;
   }
 
-  export type EdgeTarget = NodeRef | NodeRefGroup;
+  export type EdgeTarget = NodeRef | EdgeSubgraph;
 
-  export interface EdgeOperator extends ASTBaseNode { 
-      type : "->" | "=>"
+  export interface EdgeOperator extends ASTBaseNode {
+    type: "->" | "=>"
   }
 
   export interface EdgeRHSElement {
-    id : EdgeTarget,
+    id: EdgeTarget,
     edgeop: EdgeOperator
-   }
+  }
 
 
   /** Edge AST object. */
   export interface Edge extends ASTBaseParent<Attribute> {
     type: typeof Types.Edge;
-    from : EdgeTarget,
+    from: EdgeTarget,
     targets: [to: EdgeRHSElement, ...rest: EdgeRHSElement[]];
   }
 
@@ -189,10 +187,8 @@ export namespace AST {
     | Literal
     | Node
     | NodeRef
-    | NodeRefGroup
-    | Subgraph
-    | Transitions
-    | Places;
+    | EdgeSubgraph
+    | Subgraph;
 
   export type Rule =
     | typeof Types.OcDot
@@ -387,6 +383,7 @@ export namespace AST {
     protected indent(line: string): string {
       return ' '.repeat(this.indentSize) + line;
     }
+
     protected pad(pad: string): (l: string) => string {
       return (l: string) => pad + l;
     }
@@ -414,7 +411,7 @@ export namespace AST {
     protected printOcDot(ast: AST.OcDot): string {
       return ast.body.map(this.stringify.bind(this)).join('\n');
     }
-  
+
     protected printEdge(ast: AST.Edge): string {
       const edgeOp = ast
       const from = this.stringify(ast.from)
@@ -426,7 +423,7 @@ export namespace AST {
         : `${allEdgeTargets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
     }
 
-    protected printEdgeRHSElement(edgeRHSElement : EdgeRHSElement) : string { 
+    protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string {
       const edgeOp = edgeRHSElement.edgeop.type
       return `${edgeOp} ${this.stringify(edgeRHSElement.id)}`
     }
@@ -435,9 +432,9 @@ export namespace AST {
       return ast.body.length == 0
         ? `${this.stringify(ast.id)};`
         : `${this.stringify(ast.id)} [\n${ast.body
-            .map(this.stringify.bind(this))
-            .map(this.indent.bind(this))
-            .join('\n')}\n];`;
+          .map(this.stringify.bind(this))
+          .map(this.indent.bind(this))
+          .join('\n')}\n];`;
     }
 
     protected printNodeRef(ast: AST.NodeRef): string {
@@ -449,28 +446,85 @@ export namespace AST {
         .filter((v) => v !== null)
         .join(':');
     }
-    protected printNodeRefGroup(ast: AST.NodeRefGroup): string {
-      return `{${ast.body.map(this.stringify.bind(this)).join(' ')}}`;
+
+    protected printEdgeSubgraphName(ast: AST.EdgeSubgraph): (string | null)[] {
+      if (ast.id == null) {
+        return []
+      } else {
+        return ['subgraph', this.stringify(ast.id)]
+      }
     }
 
-    protected printOcNet(ast: AST.OcNet): string {
+    protected printEdgeSubgraph(ast: AST.EdgeSubgraph): string {
+      const body = this.withIndentIncrease(() => {
+        return ast.body.length === 0
+          ? '{}'
+          : `{\n${ast.body.map(this.stringify.bind(this))
+            .map(this.indent.bind(this))
+            .join('\n')}\n${this.closingBracketIndented()}`;
+      })
+
       return [
-        // ast.strict ? 'strict' : null,
-        // ast.directed ? 'digraph' : 'graph',
-        ast.id ? this.stringify(ast.id) : null,
-        ast.body.length === 0
-          ? 'ocnet {}'
-          : `ocnet {\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
+        ...this.printEdgeSubgraphName(ast),
+        body
       ]
         .filter((v) => v !== null)
         .join(' ');
     }
 
-    protected checkSubgraphKeyword(ast : AST.Subgraph) : boolean { 
+    protected closingBracket(): string {
+      return this.indent('}')
+    }
+
+    protected withIndentIncrease(block: () => string): string {
+      this.indentSize += 2;
+      const result = block()
+      this.indentSize -= 2;
+      return result;
+    }
+
+    protected withIndentDecrease(block: () => string): string {
+      this.indentSize -= 2;
+      const result = block();
+      this.indentSize += 2;
+      return result;
+    }
+
+    protected closingBracketIndented(): string {
+      return this.withIndentDecrease(() => {
+        return this.indent('}')
+      })
+    }
+
+    
+
+    protected printOcNet(ast: AST.OcNet): string {
+
+      const body = this.withIndentIncrease(() => {
+        return ast.body.length === 0
+          ? 'ocnet {}'
+          : `ocnet {\n${ast.body
+            .map(this.stringify.bind(this))
+            .map(this.indent.bind(this))
+            .join('\n')
+          }\n${this.closingBracketIndented()}`
+      })
+
+      return [
+        // ast.strict ? 'strict' : null,
+        // ast.directed ? 'digraph' : 'graph',
+        ast.id ? this.stringify(ast.id) : null,
+        body,
+      ]
+        .filter((v) => v !== null)
+        .join(' ');
+    }
+
+    protected checkSubgraphKeyword(ast: AST.Subgraph): boolean {
       return ast.specialType != null
     }
 
-    protected printSubgraphName(ast: AST.Subgraph) : (string | null)[] {
+    protected printSubgraphName(ast: AST.Subgraph): (string | null)[] {
       if (this.checkSubgraphKeyword(ast)) {
         return [ast.specialType ?? ""]
       } else {
@@ -479,11 +533,16 @@ export namespace AST {
     }
 
     protected printSubgraph(ast: AST.Subgraph): string {
+      const body = this.withIndentIncrease(() => {
+        return ast.body.length === 0
+          ? '{}'
+          : `{\n${ast.body.map(this.stringify.bind(this))
+            .map(this.indent.bind(this)).join('\n')}\n${this.closingBracketIndented()
+          }`
+      })
       return [
         ...this.printSubgraphName(ast),
-        ast.body.length === 0
-          ? '{}'
-          : `{\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
+        body
       ]
         .filter((v) => v !== null)
         .join(' ');
@@ -500,23 +559,13 @@ export namespace AST {
       }
     }
 
-    protected printPlacesOrTransitions(ast : AST.Places | AST.Transitions) : string { 
-      const indented = 
-       ast.body
-          .map(this.stringify.bind(this))
-          .map(this.indent.bind(this))
-          .join('\n');
-      return `places {
-      ${indented}
-      }`
-    }
 
-    private isAstNode(object : any): object is AST.ASTNode {
+    private isAstNode(object: any): object is AST.ASTNode {
       return 'type' in object;
     }
 
     public stringify(ast: AST.ASTNode | EdgeRHSElement): string {
-      if (this.isAstNode(ast)) { 
+      if (this.isAstNode(ast)) {
         switch (ast.type) {
           case AST.Types.Attribute:
             return this.printAttribute(ast);
@@ -532,8 +581,8 @@ export namespace AST {
             return this.printNode(ast);
           case AST.Types.NodeRef:
             return this.printNodeRef(ast);
-          case AST.Types.NodeRefGroup:
-            return this.printNodeRefGroup(ast);
+          case AST.Types.EdgeSubgraph:
+            return this.printEdgeSubgraph(ast);
           case AST.Types.Ocnet:
             // this.directed = ast.directed;
             return this.printOcNet(ast);
@@ -542,7 +591,7 @@ export namespace AST {
           case AST.Types.Literal:
             return this.printLiteral(ast);
         }
-      } else  {
+      } else {
         return this.printEdgeRHSElement(ast)
       }
     }

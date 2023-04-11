@@ -22,15 +22,17 @@ var AST;
         Edge: 'edge',
         Node: 'node',
         NodeRef: 'node_ref',
-        NodeRefGroup: 'node_ref_group',
+        // NodeRefGroup: 'node_ref_group',
         Subgraph: 'subgraph',
+        EdgeSubgraph: 'edge_subgraph',
         Literal: 'literal',
         ClusterStatements: 'cluster_statements',
         TypeDefinitions: 'type_definitions'
     });
     AST.SubgraphSpecialTypes = Object.freeze({
         Places: 'places',
-        Transitions: 'transitions'
+        Transitions: 'transitions',
+        ObjectTypes: 'object types'
     });
     function isASTBaseNode(value) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,17 +123,63 @@ var AST;
                 .filter((v) => v !== null)
                 .join(':');
         }
-        printNodeRefGroup(ast) {
-            return `{${ast.body.map(this.stringify.bind(this)).join(' ')}}`;
+        printEdgeSubgraphName(ast) {
+            if (ast.id == null) {
+                return [];
+            }
+            else {
+                return ['subgraph', this.stringify(ast.id)];
+            }
+        }
+        printEdgeSubgraph(ast) {
+            const body = this.withIndentIncrease(() => {
+                return ast.body.length === 0
+                    ? '{}'
+                    : `{\n${ast.body.map(this.stringify.bind(this))
+                        .map(this.indent.bind(this))
+                        .join('\n')}\n${this.closingBracketIndented()}`;
+            });
+            return [
+                ...this.printEdgeSubgraphName(ast),
+                body
+            ]
+                .filter((v) => v !== null)
+                .join(' ');
+        }
+        closingBracket() {
+            return this.indent('}');
+        }
+        withIndentIncrease(block) {
+            this.indentSize += 2;
+            const result = block();
+            this.indentSize -= 2;
+            return result;
+        }
+        withIndentDecrease(block) {
+            this.indentSize -= 2;
+            const result = block();
+            this.indentSize += 2;
+            return result;
+        }
+        closingBracketIndented() {
+            return this.withIndentDecrease(() => {
+                return this.indent('}');
+            });
         }
         printOcNet(ast) {
+            const body = this.withIndentIncrease(() => {
+                return ast.body.length === 0
+                    ? 'ocnet {}'
+                    : `ocnet {\n${ast.body
+                        .map(this.stringify.bind(this))
+                        .map(this.indent.bind(this))
+                        .join('\n')}\n${this.closingBracketIndented()}`;
+            });
             return [
                 // ast.strict ? 'strict' : null,
                 // ast.directed ? 'digraph' : 'graph',
                 ast.id ? this.stringify(ast.id) : null,
-                ast.body.length === 0
-                    ? 'ocnet {}'
-                    : `ocnet {\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
+                body,
             ]
                 .filter((v) => v !== null)
                 .join(' ');
@@ -148,11 +196,15 @@ var AST;
             }
         }
         printSubgraph(ast) {
+            const body = this.withIndentIncrease(() => {
+                return ast.body.length === 0
+                    ? '{}'
+                    : `{\n${ast.body.map(this.stringify.bind(this))
+                        .map(this.indent.bind(this)).join('\n')}\n${this.closingBracketIndented()}`;
+            });
             return [
                 ...this.printSubgraphName(ast),
-                ast.body.length === 0
-                    ? '{}'
-                    : `{\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
+                body
             ]
                 .filter((v) => v !== null)
                 .join(' ');
@@ -166,15 +218,6 @@ var AST;
                 case 'html':
                     return `<${ast.value}>`;
             }
-        }
-        printPlacesOrTransitions(ast) {
-            const indented = ast.body
-                .map(this.stringify.bind(this))
-                .map(this.indent.bind(this))
-                .join('\n');
-            return `places {
-      ${indented}
-      }`;
         }
         isAstNode(object) {
             return 'type' in object;
@@ -196,8 +239,8 @@ var AST;
                         return this.printNode(ast);
                     case AST.Types.NodeRef:
                         return this.printNodeRef(ast);
-                    case AST.Types.NodeRefGroup:
-                        return this.printNodeRefGroup(ast);
+                    case AST.Types.EdgeSubgraph:
+                        return this.printEdgeSubgraph(ast);
                     case AST.Types.Ocnet:
                         // this.directed = ast.directed;
                         return this.printOcNet(ast);

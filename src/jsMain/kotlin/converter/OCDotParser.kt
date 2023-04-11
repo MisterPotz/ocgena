@@ -364,8 +364,6 @@ actual class OCDotParser {
             val result = parsedStructure.getOrThrow()
             console.log(result)
 
-            place
-
             return OCDotParseResult.Success(
                 ocNetDSLElements = OCNetDSLElementsImpl(
                     mutableMapOf(),
