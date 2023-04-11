@@ -5,10 +5,27 @@ import model.Arc
 import model.NormalArc
 import model.VariableArc
 
-class OCDotParseResult(
-    val ocNetDSLElements: OCNetDSLElements,
-    val ocDotDeclaration: OCDotDeclaration
-)
+
+interface FilePosition {
+    val offset : Int
+    val line : Int
+    val column : Int
+}
+interface FileRange {
+    val start : FilePosition
+    val end : FilePosition
+    val source : String?
+}
+
+sealed class OCDotParseResult {
+    data class Success(
+        val ocNetDSLElements: OCNetDSLElements,
+        val ocDotDeclaration: OCDotDeclaration
+    ) : OCDotParseResult()
+
+    data class Error(val location : FileRange) : OCDotParseResult()
+}
+
 expect class OCDotParser {
     fun parse(ocDot: String) : OCDotParseResult
 }
@@ -25,7 +42,7 @@ class OCGraphvizGenerator(
 
     private fun Arc.toEdgeStatement(): String {
         val tail = tailNode?.label ?: return ""
-        val arrow = arrowNode?.label ?: return ""
+        val arrow = arrowNode?.label ?: return ""ч
         return "$tail -> $arrow"
     }
 

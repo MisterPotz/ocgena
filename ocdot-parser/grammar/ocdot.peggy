@@ -41,7 +41,7 @@ attibutes_item = __ v:_attibutes_item __ { return v; }
 
 comment = __ v:_comment __ { return v; }
 
-cluster_statements = (attribute / attributes / edge / subgraph / node / comment)*
+cluster_statements = (attribute / attributes / edge / subgraph / node / comment )*
 
 _ocdot
   = c1:comment* graph:ocnet c2:comment* {
@@ -108,8 +108,14 @@ _attibutes_item
 
 _attribute_list = _ "[" list:(attibutes_item / comment)* __ "]" { return list; }
 
+_edge_subgraph_id = ("subgraph"i)? _ id:_literal? _ { return id; }
+_edge_subgraph = _ id:_edge_subgraph_id _ "{" _body:cluster_statements? __ "}" {
+  const body = _body ?? [ ];
+
+}
+
 _edge_target_group
-  = "{" id:node_ref rest:(("," / ";")? v:node_ref { return v; })* ("," / ";")? __ "}" {
+  =   "{" id:node_ref rest:(("," / ";")? v:node_ref { return v; })* ("," / ";")? __ "}" {
       return {
         type: 'node_ref_group',
         body: [id, ...rest],
@@ -144,11 +150,11 @@ _port "port"
 _subgraph_id = "subgraph"i _ id:_literal? _ { return id; }
 
 _subgraph
-  = id:_subgraph_id? "{" _body:cluster_statements? __ "}" {
+  = special_type:("places" / "transitions" / "object types")? _ id:_subgraph_id? _ "{" _body:cluster_statements? __ "}" {
       const body = _body ?? [];
       return id
-        ? { type: 'subgraph', id, body, location: location() }
-        : { type: 'subgraph', body, location: location() };
+        ? { type: 'subgraph', id, specialType: special_type, body, location: location() }
+        : { type: 'subgraph', specialType : special_type, body, location: location() };
     }
 
 _compass_keyword

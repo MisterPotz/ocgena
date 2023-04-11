@@ -4,13 +4,23 @@ describe('parse', () => {
     test('try parsing', () => { 
         const myOcDot = `
             ocnet { 
-                p1
+                places { 
+                    p1
+                    p2;
+                    p3 ;
+                    p4
+                }
+                transitions {
+                    t1
+                    t2
+                    t3
+                }
                 
-                p1 => t1 -> p2
+                p1 => t1 -> p2 [ ];
             }
         `
         const result = AST.parse(myOcDot, {rule: AST.Types.OcDot})
-        
+        console.log(JSON.stringify(result))
         console.log(AST.stringify(result))
         expect(result).toBeDefined();
     })

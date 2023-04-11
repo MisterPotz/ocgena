@@ -27,14 +27,23 @@ export namespace AST {
     Subgraph: 'subgraph',
     Literal: 'literal',
     ClusterStatements: 'cluster_statements',
+    TypeDefinitions: 'type_definitions'
   } as const);
   // 'ocdot' | 'comment' etc
   export type Types = ValueOf<typeof Types>;
+
+  export const SubgraphSpecialTypes = Object.freeze({
+    Places : 'places',
+    Transitions : 'transitions',
+    ObjectTypes : 'object types'
+  } as const)
+  export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>
 
   export function isASTBaseNode(value: unknown): value is ASTBaseNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return typeof value === 'object' && value !== null && typeof (value as any).type === 'string';
   }
+
 
   /**
    * AST node.
@@ -68,6 +77,14 @@ export namespace AST {
   export interface OcNet extends ASTBaseParent<ClusterStatement> {
     type: typeof Types.Ocnet;
     id?: Literal;
+  }
+
+  export interface Transitions extends Subgraph {
+
+  }
+
+  export interface Places extends Subgraph { 
+
   }
 
   export interface KeyValue {
@@ -155,8 +172,10 @@ export namespace AST {
   export interface Subgraph extends ASTBaseParent<ClusterStatement> {
     type: typeof Types.Subgraph;
     id?: Literal;
+    specialType?: SubgraphSpecialTypes
   }
 
+  export type TypeDefinition = Node | Comment;
   export type OcDotStatement = OcNet | Comment;
   export type ClusterStatement = Attribute | Attributes | Edge | Node | Subgraph | Comment;
 
@@ -171,7 +190,9 @@ export namespace AST {
     | Node
     | NodeRef
     | NodeRefGroup
-    | Subgraph;
+    | Subgraph
+    | Transitions
+    | Places;
 
   export type Rule =
     | typeof Types.OcDot
@@ -445,10 +466,21 @@ export namespace AST {
         .join(' ');
     }
 
+    protected checkSubgraphKeyword(ast : AST.Subgraph) : boolean { 
+      return ast.specialType != null
+    }
+
+    protected printSubgraphName(ast: AST.Subgraph) : (string | null)[] {
+      if (this.checkSubgraphKeyword(ast)) {
+        return [ast.specialType ?? ""]
+      } else {
+        return ['subgraph', ast.id ? this.stringify(ast.id) : null]
+      }
+    }
+
     protected printSubgraph(ast: AST.Subgraph): string {
       return [
-        'subgraph',
-        ast.id ? this.stringify(ast.id) : null,
+        ...this.printSubgraphName(ast),
         ast.body.length === 0
           ? '{}'
           : `{\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
@@ -466,6 +498,17 @@ export namespace AST {
         case 'html':
           return `<${ast.value}>`;
       }
+    }
+
+    protected printPlacesOrTransitions(ast : AST.Places | AST.Transitions) : string { 
+      const indented = 
+       ast.body
+          .map(this.stringify.bind(this))
+          .map(this.indent.bind(this))
+          .join('\n');
+      return `places {
+      ${indented}
+      }`
     }
 
     private isAstNode(object : any): object is AST.ASTNode {

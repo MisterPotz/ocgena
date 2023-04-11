@@ -99,19 +99,56 @@ tasks.named<JavaExec>("run") {
     classpath(tasks.named<Jar>("jvmJar"))
 }
 
-tasks.named("jsProductionExecutableCompileSync") {
-    dependsOn(tasks.named("jsNodeDevelopmentRun"))
-}
+//tasks.named("jsProductionExecutableCompileSync") {
+//    dependsOn(tasks.named("jsNodeDevelopmentRun"))
+//}
+
+
+//tasks.register<Delete>("deleteJsBinaries") {
+//    val dir = layout.projectDirectory.dir("ocgenajs").asFile
+//    if (dir.exists()) {
+//        delete(layout.projectDirectory.dir("ocgenajs"))
+//    }
+//    doLast {
+//        project.mkdir("ocgenajs")
+//    }
+//}
+//
+//
+//tasks.register<Copy>("exportJsBinaries") {
+//    dependsOn("compileProductionExecutableKotlinJs")
+//    dependsOn("deleteJsBinaries")
+//
+//    from(layout.buildDirectory.dir("js/node_modules/ocgena/"))
+//    into(layout.projectDirectory.dir("ocgenajs"))
+//    mustRunAfter("compileProductionExecutableKotlinJs")
+//}
+
 
 tasks.register<Delete>("deleteJsBinaries") {
     val dir = layout.projectDirectory.dir("ocgenajs").asFile
-    if (dir.exists()) {
-        delete(layout.projectDirectory.dir("ocgenajs"))
+
+    val kotlinJs = layout.projectDirectory.dir("ocgenajs/kotlin").asFile
+    val nodeModules = layout.projectDirectory.dir("ocgenajs/node_modules").asFile
+
+    if (kotlinJs.exists()) {
+        delete(kotlinJs)
     }
+    if (nodeModules.exists()) {
+        delete(nodeModules)
+    }
+    val packageJson = layout.projectDirectory.file("ocgenajs/package.json").asFile
+    if (packageJson.exists()) {
+        delete(packageJson)
+    }
+
     doLast {
-        project.mkdir("ocgenajs")
+        if (!dir.exists()) {
+            project.mkdir("ocgenajs")
+        }
     }
 }
+
 
 tasks.register<Copy>("exportJsBinaries") {
     dependsOn("compileProductionExecutableKotlinJs")
@@ -119,6 +156,8 @@ tasks.register<Copy>("exportJsBinaries") {
 
     from(layout.buildDirectory.dir("js/node_modules/ocgena/"))
     into(layout.projectDirectory.dir("ocgenajs"))
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     mustRunAfter("compileProductionExecutableKotlinJs")
+
 }
 

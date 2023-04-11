@@ -26,6 +26,11 @@ var AST;
         Subgraph: 'subgraph',
         Literal: 'literal',
         ClusterStatements: 'cluster_statements',
+        TypeDefinitions: 'type_definitions'
+    });
+    AST.SubgraphSpecialTypes = Object.freeze({
+        Places: 'places',
+        Transitions: 'transitions'
     });
     function isASTBaseNode(value) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,10 +136,20 @@ var AST;
                 .filter((v) => v !== null)
                 .join(' ');
         }
+        checkSubgraphKeyword(ast) {
+            return ast.specialType != null;
+        }
+        printSubgraphName(ast) {
+            if (this.checkSubgraphKeyword(ast)) {
+                return [ast.specialType ?? ""];
+            }
+            else {
+                return ['subgraph', ast.id ? this.stringify(ast.id) : null];
+            }
+        }
         printSubgraph(ast) {
             return [
-                'subgraph',
-                ast.id ? this.stringify(ast.id) : null,
+                ...this.printSubgraphName(ast),
                 ast.body.length === 0
                     ? '{}'
                     : `{\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n}`,
@@ -151,6 +166,15 @@ var AST;
                 case 'html':
                     return `<${ast.value}>`;
             }
+        }
+        printPlacesOrTransitions(ast) {
+            const indented = ast.body
+                .map(this.stringify.bind(this))
+                .map(this.indent.bind(this))
+                .join('\n');
+            return `places {
+      ${indented}
+      }`;
         }
         isAstNode(object) {
             return 'type' in object;

@@ -1,12 +1,18 @@
 @file:JsModule("ocdot-parser/lib/ast")
 @file:JsNonModule
-@file:Suppress("INTERFACE_WITH_SUPERCLASS", "OVERRIDING_FINAL_MEMBER", "RETURN_TYPE_MISMATCH_ON_OVERRIDE", "CONFLICTING_OVERLOADS")
+@file:Suppress(
+    "INTERFACE_WITH_SUPERCLASS",
+    "OVERRIDING_FINAL_MEMBER",
+    "RETURN_TYPE_MISMATCH_ON_OVERRIDE",
+    "CONFLICTING_OVERLOADS"
+)
 @file:JsQualifier("AST") // because AST is exported as namespace
 package ast
 
-import FileRange
+import ClassParts
 import Kind
 import Kind1
+import ParseFunction
 import Readonly
 import kotlin.js.*
 import org.khronos.webgl.*
@@ -22,6 +28,45 @@ import org.w3c.performance.*
 import org.w3c.workers.*
 import org.w3c.xhr.*
 
+external interface FilePosition {
+    var offset: Number
+    var line: Number
+    var column: Number
+}
+
+external interface FileRange {
+    var start: FilePosition
+    var end: FilePosition
+    var source: String
+}
+
+external interface LiteralExpectation {
+    var type: String /* "literal" */
+    var text: String
+    var ignoreCase: Boolean
+}
+
+
+external interface ClassExpectation {
+    var type: String /* "class" */
+    var parts: ClassParts
+    var inverted: Boolean
+    var ignoreCase: Boolean
+}
+
+external interface AnyExpectation {
+    var type: String /* "any" */
+}
+
+external interface EndExpectation {
+    var type: String /* "end" */
+}
+
+external interface OtherExpectation {
+    var type: String /* "other" */
+    var description: String
+}
+
 external interface `T$0` {
     var OcDot: String /* "ocdot" */
     var Comment: String /* "comment" */
@@ -35,8 +80,36 @@ external interface `T$0` {
     var Subgraph: String /* "subgraph" */
     var Literal: String /* "literal" */
     var ClusterStatements: String /* "cluster_statements" */
+    var TypeDefinitions: String /* "type_definitions" */
 }
 
+
+external interface `T$1` {
+    var Places: String /* "places" */
+    var Transitions: String /* "transitions" */
+    var ObjectTypes: String /* "object types" */
+}
+
+external var SubgraphSpecialTypes: `T$1`
+
+external interface ParseOptions {
+    var filename: String?
+        get() = definedExternally
+        set(value) = definedExternally
+    var startRule: String?
+        get() = definedExternally
+        set(value) = definedExternally
+    var tracer: Any?
+        get() = definedExternally
+        set(value) = definedExternally
+    @nativeGetter
+    operator fun get(key: String): Any?
+    @nativeSetter
+    operator fun set(key: String, value: Any)
+}
+
+
+external var parse: ParseFunction
 external var Types: `T$0`
 
 external fun isASTBaseNode(value: Any): Boolean
@@ -50,7 +123,7 @@ external interface ASTBaseParent<STMT : ASTBaseNode> : ASTBaseNode {
     var body: Array<STMT>
 }
 
-external interface Literal<T : String> : ASTBaseNode {
+external interface Literal<T : String?> : ASTBaseNode {
     var value: T
     var quoted: dynamic /* Boolean | "html" */
         get() = definedExternally
@@ -78,6 +151,7 @@ external interface Attribute : ASTBaseNode, KeyValue
 external interface Comment : ASTBaseNode {
     var kind: Kind
     var value: String
+
     interface `T$1` {
         var Block: String /* "block" */
         var Slash: String /* "slash" */
@@ -92,6 +166,7 @@ external interface Comment : ASTBaseNode {
 @Suppress("NESTED_CLASS_IN_EXTERNAL_INTERFACE")
 external interface Attributes : ASTBaseParent<dynamic /* Attribute | Comment */> {
     var kind: Kind1
+
     interface `T$2` {
         var Ocnet: String /* "ocnet" */
         var Edge: String /* "edge" */
@@ -108,7 +183,7 @@ external interface NodeRef : ASTBaseNode {
     var port: Literal__0?
         get() = definedExternally
         set(value) = definedExternally
-    var compass: Literal<String /* "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw" | "c" | "_" */>?
+    var compass: Literal<String? /* "n" | "ne" | "e" | "se" | "s" | "sw" | "w" | "nw" | "c" | "_" */>?
         get() = definedExternally
         set(value) = definedExternally
 }
@@ -139,10 +214,16 @@ external interface Node : ASTBaseParent<Attribute> {
     var id: Literal__0
 }
 
+
 external interface Subgraph : ASTBaseParent<dynamic /* Attribute | Attributes | Edge | Node | Subgraph | Comment */> {
     var id: Literal__0?
         get() = definedExternally
         set(value) = definedExternally
+
+    var specialType: String?
+        get() = definedExternally
+        set(value) = definedExternally
+
 }
 
 external interface ParseOption<T : Any> {
@@ -157,7 +238,10 @@ external fun parse(ocdot: String): OcDot
 
 external fun parse(ocdot: String, options: ParseOption<Any>): dynamic /* OcDot */
 
-external fun parse(ocdot: String, options: ParseOption__0): dynamic /* OcDot | OcNet | Attribute | Attributes | Edge | Node | Subgraph | Comment | Array<dynamic /* Attribute | Attributes | Edge | Node | Subgraph | Comment */> */
+external fun parse(
+    ocdot: String,
+    options: ParseOption__0,
+): dynamic /* OcDot | OcNet | Attribute | Attributes | Edge | Node | Subgraph | Comment | Array<dynamic /* Attribute | Attributes | Edge | Node | Subgraph | Comment */> */
 
 external interface StringifyOption {
     var indentSize: Number?
@@ -181,6 +265,7 @@ external open class Compiler(__0: StringifyOption = definedExternally) {
     open fun printOcNet(ast: OcNet): String
     open fun printSubgraph(ast: Subgraph): String
     open fun printLiteral(ast: Literal__0): String
+
     open var isAstNode: Any
     open fun stringify(ast: Attribute): String
     open fun stringify(ast: Attributes): String

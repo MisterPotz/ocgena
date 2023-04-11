@@ -1,7 +1,17 @@
+@file:OptIn(ExperimentalJsExport::class)
+@file:JsExport
+
 package converter
+
+import kotlin.js.ExperimentalJsExport
+
+
+import kotlin.js.JsExport
+
 
 class DefaultOCNetDeclaration(
     // in form key:"t1" value:"color=\"green\" ... other attributes"
+
     val nodeAttributes: Map<String /* id */, String> = mapOf(),
     val edgeAttributes: Map<String /* id */, String> = mapOf(),
 ) : OCDotDeclaration {
@@ -11,7 +21,7 @@ class DefaultOCNetDeclaration(
         } ?: mapOf()
     }
 
-    private fun getAttributeListFromString(string: String) : Map<String, String> {
+    private fun getAttributeListFromString(string: String): Map<String, String> {
         return string.split(" ")?.map {
             val keyAndValue = it.split("=")
             keyAndValue[0] to keyAndValue[1]
@@ -29,5 +39,4 @@ class DefaultOCNetDeclaration(
             getAttributeListFromString(it)
         } ?: mapOf()
     }
-
 }

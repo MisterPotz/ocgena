@@ -25,8 +25,14 @@ export declare namespace AST {
         readonly Subgraph: "subgraph";
         readonly Literal: "literal";
         readonly ClusterStatements: "cluster_statements";
+        readonly TypeDefinitions: "type_definitions";
     }>;
     export type Types = ValueOf<typeof Types>;
+    export const SubgraphSpecialTypes: Readonly<{
+        readonly Places: "places";
+        readonly Transitions: "transitions";
+    }>;
+    export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>;
     export function isASTBaseNode(value: unknown): value is ASTBaseNode;
     /**
      * AST node.
@@ -56,6 +62,10 @@ export declare namespace AST {
     export interface OcNet extends ASTBaseParent<ClusterStatement> {
         type: typeof Types.Ocnet;
         id?: Literal;
+    }
+    export interface Transitions extends Subgraph {
+    }
+    export interface Places extends Subgraph {
     }
     export interface KeyValue {
         key: Literal;
@@ -130,10 +140,12 @@ export declare namespace AST {
     export interface Subgraph extends ASTBaseParent<ClusterStatement> {
         type: typeof Types.Subgraph;
         id?: Literal;
+        specialType?: SubgraphSpecialTypes;
     }
+    export type TypeDefinition = Node | Comment;
     export type OcDotStatement = OcNet | Comment;
     export type ClusterStatement = Attribute | Attributes | Edge | Node | Subgraph | Comment;
-    export type ASTNode = Attribute | Attributes | Comment | OcDot | Edge | OcNet | Literal | Node | NodeRef | NodeRefGroup | Subgraph;
+    export type ASTNode = Attribute | Attributes | Comment | OcDot | Edge | OcNet | Literal | Node | NodeRef | NodeRefGroup | Subgraph | Transitions | Places;
     export type Rule = typeof Types.OcDot | typeof Types.Ocnet | typeof Types.Node | typeof Types.Edge | typeof Types.Attributes | typeof Types.Subgraph | typeof Types.Attribute | typeof Types.ClusterStatements;
     /**
      * Option interface for {@link parse} function.
@@ -316,8 +328,11 @@ export declare namespace AST {
         protected printNodeRef(ast: AST.NodeRef): string;
         protected printNodeRefGroup(ast: AST.NodeRefGroup): string;
         protected printOcNet(ast: AST.OcNet): string;
+        protected checkSubgraphKeyword(ast: AST.Subgraph): boolean;
+        protected printSubgraphName(ast: AST.Subgraph): (string | null)[];
         protected printSubgraph(ast: AST.Subgraph): string;
         protected printLiteral(ast: AST.Literal): string;
+        protected printPlacesOrTransitions(ast: AST.Places | AST.Transitions): string;
         private isAstNode;
         stringify(ast: AST.ASTNode | EdgeRHSElement): string;
     }
