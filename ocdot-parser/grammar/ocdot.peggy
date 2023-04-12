@@ -132,7 +132,13 @@ _edge_target
   = _edge_subgraph
   / node_ref
 
-_edge_operator = operator:("->" / "=>") { return { type: operator, location: location() }; }
+_op_params = number:_number {
+  return {
+    number
+  }
+}
+
+_edge_operator = op_params:(_op_params)? operator:("->" / "=>") { return { type: operator, params:op_params, location: location() }; }
 
 _edge_rhs
   = _ edgeop:_edge_operator _ id:_edge_target _ rest:_edge_rhs? {
@@ -183,6 +189,14 @@ _compass
         location: location(),
       };
     }
+
+_number = value:NUMBER {
+  return {
+    type: 'number',
+    value,
+    location: location()
+  }
+}
 
 _literal
   = QUOTED_STRING

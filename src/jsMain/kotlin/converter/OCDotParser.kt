@@ -2,19 +2,13 @@ package converter
 
 import ast.*
 import declarations.PeggySyntaxError
-import dsl.OCNetDSLElementsImpl
 import dsl.OCScopeImpl
 import dsl.OCScopeImplCreator
-import dsl.ObjectTypeImpl
-import dsl.PlaceDSL
+import kotlinx.js.Object
 import kotlinx.js.jso
 import model.ErrorLevel
+import kotlin.reflect.KClass
 
-class OCDotPlacesCollector(val ocScopeCreator: OCScopeImpl) {
-    fun collect(rootParsedStructure: OcDot): List<PlaceDSL> {
-
-    }
-}
 
 class ASTVisitorPath(val path: MutableList<ASTBaseNode>) {
     fun push(ast: ASTBaseNode) {
@@ -60,33 +54,56 @@ object Utils {
 }
 
 
-data class SemanticError(
+data class SemanticErrorAST(
     val message: String,
     val relatedAst: ASTBaseNode,
     val level: ErrorLevel,
 )
 
+class SubgraphAssociations() {
+    val namedSubgraphs: MutableMap<String, Subgraph> = mutableMapOf()
+
+    fun rememberSubgraph(subgraph: Subgraph) {
+        subgraph.id?.value?.let {
+            namedSubgraphs[it] = subgraph
+        }
+    }
+
+    fun containsSubgraph(subgraph: Subgraph): Boolean {
+        return subgraph.id?.value in namedSubgraphs
+    }
+}
+
 class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
     private val places: MutableMap<String, Node> = mutableMapOf()
 
-    private val objectTypes : MutableMap<String, Node> = mutableMapOf()
+    private val objectTypes: MutableMap<String, Node> = mutableMapOf()
 
     private val transitions: MutableMap<String, Node> = mutableMapOf()
 
     private val edgeBlocks: MutableList<Edge> = mutableListOf()
 
-    val savedPlaces : Map<String,Node>
+    val subgraphAssociations: SubgraphAssociations = SubgraphAssociations()
+
+    val savedObjectTypes : Map<String, Node>
+        get() = objectTypes
+    val savedPlaces: Map<String, Node>
         get() = places
-    val savedTransitions : Map<String, Node>
+    val savedTransitions: Map<String, Node>
         get() = transitions
 
-    val savedEdgeBlocks : List<Edge>
+    val savedEdgeBlocks: List<Edge>
         get() = edgeBlocks
-    fun rememberPlace(place : Node) {
+
+    fun rememberPlace(place: Node) {
         places[place.id.value] = place
     }
 
-    fun rememberObjectType(objectType : Node) {
+    fun rememberSubgraph(subgraph: Subgraph) {
+        subgraphAssociations.rememberSubgraph(subgraph)
+    }
+
+    fun rememberObjectType(objectType: Node) {
         objectTypes[objectType.id.value] = objectType
     }
 
@@ -100,13 +117,13 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
 }
 
 class SemanticErrorReporterContainer() : SemanticErrorReporter {
-    private val collectedErrors = mutableListOf<SemanticError>()
+    private val collectedErrors = mutableListOf<SemanticErrorAST>()
 
-    fun pushError(error: SemanticError) {
+    fun pushError(error: SemanticErrorAST) {
         collectedErrors.add(error)
     }
 
-    override fun collectReport(): List<SemanticError> {
+    override fun collectReport(): List<SemanticErrorAST> {
         return collectedErrors
     }
 }
@@ -115,7 +132,7 @@ class StructureCheckASTVisitorBFS(
     private val errorReporterContainer: SemanticErrorReporterContainer,
 ) : PathAcceptingASTVisitorBFS(), SemanticErrorReporter by errorReporterContainer {
 
-    fun pushError(error: SemanticError) {
+    fun pushError(error: SemanticErrorAST) {
         errorReporterContainer.pushError(error)
     }
 
@@ -128,7 +145,7 @@ class StructureCheckASTVisitorBFS(
 
         if (ocNets > 1) {
             pushError(
-                SemanticError(
+                SemanticErrorAST(
                     message = "Only 1 ocnet block is allowed",
                     relatedAst = ast,
                     level = ErrorLevel.CRITICAL
@@ -137,7 +154,7 @@ class StructureCheckASTVisitorBFS(
         }
         if (ocNets == 0) {
             pushError(
-                SemanticError(
+                SemanticErrorAST(
                     message = "At least 1 ocnet block must be defined",
                     relatedAst = ast,
                     level = ErrorLevel.WARNING
@@ -159,7 +176,7 @@ class StructureCheckASTVisitorBFS(
 
         if (placesBlockCount == 0 || transitionBlockCount == 0) {
             pushError(
-                SemanticError(
+                SemanticErrorAST(
                     message = "places or transitions blocks are missing",
                     relatedAst = ast,
                     level = ErrorLevel.WARNING
@@ -181,34 +198,8 @@ class StructureCheckASTVisitorBFS(
     }
 }
 
-class EdgeASTVisitorBFS() : OCDotASTVisitorBFS, PathAcceptorVisitorBFS {
-    override fun withPath(astVisitorPath: ASTVisitorPath): OCDotASTVisitorBFS {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitOCDot(ast: OcDot) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitOCNet(ast: OcNet) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitNode(ast: Node) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitEdge(ast: Edge) {
-        TODO("Not yet implemented")
-    }
-
-    override fun visitSubgraph(ast: Subgraph) {
-
-    }
-}
-
 interface SemanticErrorReporter {
-    fun collectReport(): List<SemanticError>
+    fun collectReport(): List<SemanticErrorAST>
 }
 
 val Subgraph.isTransitionsBlock: Boolean
@@ -217,18 +208,33 @@ val Subgraph.isTransitionsBlock: Boolean
 val Subgraph.isPlacesBlock: Boolean
     get() = specialType == SubgraphSpecialTypes.Places
 
+val Subgraph.isSpecial: Boolean
+    get() = specialType != null
+
 class NormalSubgraphHelper(
     val dslElementsContainer: DSLElementsContainer,
-    val errorReporterContainer: SemanticErrorReporterContainer) : SemanticErrorReporter by errorReporterContainer {
+    val errorReporterContainer: SemanticErrorReporterContainer,
+) : SemanticErrorReporter by errorReporterContainer {
 
     fun checkElementCanBeSaved(ast: ASTBaseNode): Boolean {
-        return ast.type == Types.Edge
+        return ast.type == Types.Node || ast.type == Types.Edge
     }
 
-    fun trySaveSubgraphEntities(ast: Subgraph) {
-        for (entity in ast.body) {
-            dslElementsContainer.savedPlaces
+    fun checkNodeIsAcceptable(ast: ASTBaseNode): Boolean {
+        return when (ast.type) {
+            Types.Attribute, Types.Attributes, Types.Edge, Types.Node, Types.Subgraph, Types.Comment -> {
+                true
+            }
+
+            else -> {
+                false
+            }
         }
+    }
+
+    fun trySaveSubgraph(ast: Subgraph) {
+        if (ast.isSpecial) return
+        dslElementsContainer.rememberSubgraph(ast)
     }
 }
 
@@ -236,7 +242,7 @@ class ElementsDeclarationsASTVisitorBFS(
     val dslElementsContainer: DSLElementsContainer,
     private val semanticErrorReporter: SemanticErrorReporterContainer = SemanticErrorReporterContainer(),
 ) : PathAcceptingASTVisitorBFS(), SemanticErrorReporter by semanticErrorReporter {
-
+    private val normalSubgraphHelper = NormalSubgraphHelper(dslElementsContainer, semanticErrorReporter)
     private val specialSubgraphHelper = SpecialSubgraphHelper(dslElementsContainer, semanticErrorReporter)
 
     override fun visitOCDot(ast: OcDot) {}
@@ -248,14 +254,15 @@ class ElementsDeclarationsASTVisitorBFS(
     }
 
     override fun visitEdge(ast: Edge) {
-        TODO("Not yet implemented")
+        dslElementsContainer.rememberEdgeBlock(ast)
     }
 
     override fun visitSubgraph(ast: Subgraph) {
         specialSubgraphHelper.trySaveSubgraphEntities(ast)
+        normalSubgraphHelper.trySaveSubgraph(ast)
     }
 
-    override fun collectReport(): List<SemanticError> {
+    override fun collectReport(): List<SemanticErrorAST> {
         return semanticErrorReporter.collectReport()
     }
 }
@@ -336,71 +343,248 @@ class OCDotTransitionsCollector() {
 
 }
 
-actual class OCDotParser {
+class SemanticParseToDSLConverter(dslElementsContainer: DSLElementsContainer) {
 
-    private val ocScopeImpl = OCScopeImplCreator().createRootOCScope()
-    private val dslElementsContainer = DSLElementsContainer(ocScopeImpl)
-
-    private val placesCollector = OCDotPlacesCollector(ocScopeImpl)
-    private val transitionsCollector = OCDotTransitionsCollector()
-    private val delegateOCDotASTVisitorBFS = DelegateOCDotASTVisitorBFS(
-        listOf(
-
-        )
-    )
+}
 
 
-    actual fun parse(ocDot: String): OCDotParseResult {
+abstract class ChainStage<In : Any, Out : Any>(
+    val inputClass: KClass<In>,
+    val outputClass: KClass<Out>,
+) {
+    @Suppress("UNCHECKED_CAST")
+    fun doPerform(input: Any): ChainResult<Out> {
+        return perform(input as In)
+    }
+
+    protected abstract fun perform(input: In): ChainResult<Out>
+
+
+    companion object {
+        const val LOGGING = true
+    }
+}
+
+data class ChainResult<T>(
+    val success: T? = null,
+    val failure: OCDotParseResult? = null,
+) {
+    val isSuccess
+        get() = success != null
+
+    val isFailure
+        get() = failure != null
+}
+
+class SyntaxParsingStage() : ChainStage<String, Object>(String::class, outputClass = Object::class) {
+    private fun tryParse(ocDot: String): Result<Object> {
         val rule = jso<ParseOption__0> {
             rule = Types.OcDot
         }
         // always start parce from the root
-        val parsedStructure = kotlin.runCatching {
-            ast.parse(ocDot, rule)
+        return kotlin.runCatching {
+            parse(ocDot, rule)
+        }
+    }
+
+    private fun buildPeggyErrorMessage(peggySyntaxError: PeggySyntaxError): String {
+        return PeggySyntaxError.buildMessage(peggySyntaxError.expected, peggySyntaxError.found)
+    }
+
+    private fun processParseFailure(exception: Throwable): OCDotParseResult {
+        // show error
+        val error = exception
+
+        console.log(error)
+        val peggyError = error as PeggySyntaxError
+        console.log(peggyError)
+        val location = peggyError.location
+
+
+        location.source?.let {
+            console.log(it)
         }
 
-        if (parsedStructure.isSuccess) {
-            // start parsing
-            val result = parsedStructure.getOrThrow()
-            console.log(result)
+        val fileRange = JsToCommonMapping.fileRange(peggyError.location)
+        val errorMessage = buildPeggyErrorMessage(peggyError)
 
-            return OCDotParseResult.Success(
-                ocNetDSLElements = OCNetDSLElementsImpl(
-                    mutableMapOf(),
-                    mapOf(),
-                    mutableListOf(),
-                    mapOf(),
-                    ObjectTypeImpl(
-                        id = 0,
-                        label = "stub"
-                    )
-                ),
-                ocDotDeclaration = DefaultOCNetDeclaration()
-            )
+        return OCDotParseResult.SyntaxParseError(message = errorMessage, location = fileRange)
+    }
+
+    override fun perform(input: String): ChainResult<Object> {
+        val parseResult = tryParse(ocDot = input)
+
+        return if (parseResult.isSuccess) {
+            ChainResult(success = parseResult.getOrThrow())
         } else {
-            // show error
-            val error = parsedStructure.exceptionOrNull()
-            console.log(error)
-            val peggyError = error as PeggySyntaxError
-            console.log(peggyError)
-            val casted = error as PeggySyntaxError
-            val location = casted.location
-
-
-            location.source?.let {
-                console.log(it)
-            }
-            val fileRange = JsToCommonMapping.fileRange(casted.location)
-
-            val source = fileRange.source
-            if (source == null) {
-                console.log("source is null")
-            }
-            val bro = fileRange.start.offset
-            val nig: Int = 4 + bro
-
-            return OCDotParseResult.Error(location = fileRange)
+            ChainResult(failure = processParseFailure(parseResult.exceptionOrNull()!!))
         }
+    }
+}
+
+class SemanticParsingStage(
+    private val dslElementsContainer: DSLElementsContainer,
+    private val delegateOCDotASTVisitorBFS: DelegateOCDotASTVisitorBFS,
+) : ChainStage<Object, DSLElementsContainer>(Object::class, DSLElementsContainer::class) {
+    private fun doSemanticASTParse(parsedStructure: Object): Result<Unit> {
+        return kotlin.runCatching {
+            delegateOCDotASTVisitorBFS.visitOCDot(parsedStructure as OcDot)
+        }
+    }
+
+    override fun perform(input: Object): ChainResult<DSLElementsContainer> {
+        val parseResult = doSemanticASTParse(input)
+
+        return if (parseResult.isSuccess) {
+            ChainResult(success = dslElementsContainer)
+        } else {
+            ChainResult(
+                failure = OCDotParseResult.SemanticParseException(
+                    message = "Unknown exception during semantic parse",
+                    originalException = parseResult.exceptionOrNull()
+                )
+            )
+        }
+    }
+}
+
+class SemanticAnalysisPostProcessingStage(
+    private val dslElementsContainer: DSLElementsContainer,
+    private val errorReporterContainer: SemanticErrorReporterContainer,
+) :
+    ChainStage<DSLElementsContainer, DSLElementsContainer>(DSLElementsContainer::class, DSLElementsContainer::class) {
+    private fun hasCriticalErrors(errors: List<SemanticErrorAST>): Boolean {
+        return errors.find { it.level == ErrorLevel.CRITICAL } != null
+    }
+
+    private fun processSemanticAnalysisResult(): ChainResult<DSLElementsContainer> {
+        val errors = errorReporterContainer.collectReport()
+
+
+        return if (hasCriticalErrors(errors)) {
+            ChainResult(
+                failure = OCDotParseResult.SemanticCriticalErrorsFound(
+                    message = "Encountered crititcal semantic errors during analysis",
+                    collectedSemanticErrors = errors.map { it ->
+                        SemanticError(
+                            message = it.message,
+                            relatedAst = ASTTypeLocation(
+                                type = it.relatedAst.type,
+                                location = JsToCommonMapping.fileRange(it.relatedAst.location)
+                            ),
+                            level = it.level
+                        )
+                    }
+                )
+            )
+
+        } else {
+            ChainResult(
+                success = dslElementsContainer
+            )
+        }
+    }
+
+    override fun perform(input: DSLElementsContainer): ChainResult<DSLElementsContainer> {
+        return processSemanticAnalysisResult()
+    }
+}
+
+class DomainConversionStage(
+    private val dslElementsContainer: DSLElementsContainer,
+    private val errorReporterContainer: SemanticErrorReporterContainer,
+) : ChainStage<DSLElementsContainer, OCDotParseResult.Success>(
+    DSLElementsContainer::class,
+    OCDotParseResult.Success::class
+) {
+    override fun perform(input: DSLElementsContainer): ChainResult<OCDotParseResult.Success> {
+        val ocDotToDomainConverter = OCDotToDomainConverter()
+
+        val result = ocDotToDomainConverter.convert(input)
+        console.log(result)
+
+        if (result.hasCriticalErrors) {
+            return ChainResult(failure = OCDotParseResult.DomainCheckCriticalErrorsFound(
+                message = "Domain checks failed for the given net",
+                collectedSemanticErrors = result.errors
+            ))
+        } else {
+            return ChainResult(
+                success = OCDotParseResult.Success
+            )
+        }
+    }
+}
+
+class ParsingChain(
+    private val chainStages: List<ChainStage<*, *>>,
+) {
+
+    private fun checkOutputAndInputTypeConsistency(currentResult: KClass<*>, expectedInput: KClass<*>) {
+        if (expectedInput::class.simpleName != currentResult::class.simpleName) {
+            throw IllegalStateException("input class ${currentResult::class.simpleName} doesn't satisfy parsing stage required class ${expectedInput::class.simpleName}")
+        }
+    }
+
+    fun process(input: Any): OCDotParseResult {
+        var currentResult: Any = input
+
+        for (chainStage in chainStages) {
+            checkOutputAndInputTypeConsistency(currentResult::class, chainStage.inputClass)
+
+            if (LOGGING) {
+                console.log("start stage: pass input $currentResult -> to stage ${chainStage::class.simpleName} ")
+            }
+            val stageResult = chainStage.doPerform(currentResult)
+
+            if (LOGGING) {
+                console.log("finish stage: stage ${chainStage::class.simpleName} produced -> result: $stageResult")
+            }
+            if (stageResult.isSuccess) {
+                currentResult = stageResult.success!!
+            } else {
+                return stageResult.failure!!
+            }
+        }
+
+        return currentResult as OCDotParseResult
+    }
+
+    companion object {
+        const val LOGGING = true
+    }
+}
+
+actual class OCDotParser {
+
+    private val ocScopeImpl = OCScopeImplCreator().createRootOCScope()
+    private val dslElementsContainer = DSLElementsContainer(ocScopeImpl)
+    private val errorReporterContainer = SemanticErrorReporterContainer()
+
+    private val transitionsCollector = OCDotTransitionsCollector()
+    private val structureCheckerVisitor = StructureCheckASTVisitorBFS(errorReporterContainer)
+    private val elementsDeclarationsVisitor =
+        ElementsDeclarationsASTVisitorBFS(dslElementsContainer, errorReporterContainer)
+
+    private val delegateOCDotASTVisitorBFS = DelegateOCDotASTVisitorBFS(
+        listOf(
+            structureCheckerVisitor,
+            elementsDeclarationsVisitor,
+        )
+    )
+
+    actual fun parse(ocDot: String): OCDotParseResult {
+        val parsingChain = ParsingChain(
+            chainStages = listOf(
+                SyntaxParsingStage(),
+                SemanticParsingStage(dslElementsContainer, delegateOCDotASTVisitorBFS),
+                SemanticAnalysisPostProcessingStage(dslElementsContainer, errorReporterContainer),
+                DomainConversionStage(dslElementsContainer, errorReporterContainer)
+            )
+        )
+        val result = parsingChain.process(ocDot)
+
+        return result
     }
 }
 

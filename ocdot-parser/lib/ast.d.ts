@@ -34,6 +34,11 @@ export declare namespace AST {
         readonly ObjectTypes: "object types";
     }>;
     export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>;
+    export const OpTypes: Readonly<{
+        readonly Normal: "->";
+        readonly Variable: "=>";
+    }>;
+    export type OpTypes = ValueOf<typeof OpTypes>;
     export function isASTBaseNode(value: unknown): value is ASTBaseNode;
     /**
      * AST node.

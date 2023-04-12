@@ -14,6 +14,7 @@ import Kind
 import Kind1
 import ParseFunction
 import Readonly
+import declarations.FileRange
 import kotlin.js.*
 import org.khronos.webgl.*
 import org.w3c.dom.*
@@ -32,12 +33,6 @@ external interface FilePosition {
     var offset: Number
     var line: Number
     var column: Number
-}
-
-external interface FileRange {
-    var start: FilePosition
-    var end: FilePosition
-    var source: String
 }
 
 external interface LiteralExpectation {
@@ -76,8 +71,8 @@ external interface `T$0` {
     var Edge: String /* "edge" */
     var Node: String /* "node" */
     var NodeRef: String /* "node_ref" */
-    var NodeRefGroup: String /* "node_ref_group" */
     var Subgraph: String /* "subgraph" */
+    var EdgeSubgraph: String /* "edge_subgraph" */
     var Literal: String /* "literal" */
     var ClusterStatements: String /* "cluster_statements" */
     var TypeDefinitions: String /* "type_definitions" */
@@ -91,6 +86,19 @@ external interface `T$1` {
 }
 
 external var SubgraphSpecialTypes: `T$1`
+
+external interface EdgeSubgraph : ASTBaseParent<dynamic /* Attribute | Attributes | Edge | Node | Subgraph | Comment */> {
+    var id: Literal__0?
+        get() = definedExternally
+        set(value) = definedExternally
+}
+
+external interface `T$2` {
+    var Normal : String  /* "->" */
+    var Variable : String  /* "=>" */
+}
+
+external var OpTypes : `T$2`
 
 external interface ParseOptions {
     var filename: String?
@@ -195,7 +203,7 @@ external interface EdgeOperator : ASTBaseNode {
 }
 
 external interface EdgeRHSElement {
-    var id: dynamic /* NodeRef | NodeRefGroup */
+    var id: dynamic /* NodeRef | EdgeSubgraph */
         get() = definedExternally
         set(value) = definedExternally
     var edgeop: EdgeOperator
@@ -205,9 +213,7 @@ external interface Edge : ASTBaseParent<Attribute> {
     var from: dynamic /* NodeRef | NodeRefGroup */
         get() = definedExternally
         set(value) = definedExternally
-    var targets: dynamic /* JsTuple<to, EdgeRHSElement, Any, Array<EdgeRHSElement>> */
-        get() = definedExternally
-        set(value) = definedExternally
+    var targets: Array<EdgeRHSElement> /* JsTuple<to, EdgeRHSElement, Any, Array<EdgeRHSElement>> */
 }
 
 external interface Node : ASTBaseParent<Attribute> {

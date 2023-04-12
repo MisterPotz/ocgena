@@ -36,29 +36,34 @@ external interface FileRange {
     var source: String?
 }
 
-external interface LiteralExpectation {
+external interface Expectation {
+
+}
+
+
+external interface LiteralExpectation : Expectation {
     var type: String /* "literal" */
     var text: String
     var ignoreCase: Boolean
 }
 
 
-external interface ClassExpectation {
+external interface ClassExpectation : Expectation {
     var type: String /* "class" */
     var parts: ClassParts
     var inverted: Boolean
     var ignoreCase: Boolean
 }
 
-external interface AnyExpectation {
+external interface AnyExpectation : Expectation {
     var type: String /* "any" */
 }
 
-external interface EndExpectation {
+external interface EndExpectation : Expectation {
     var type: String /* "end" */
 }
 
-external interface OtherExpectation {
+external interface OtherExpectation : Expectation {
     var type: String /* "other" */
     var description: String
 }
@@ -84,7 +89,7 @@ external interface ParseOptions {
 
 external class PeggySyntaxError {
     val message: String
-    val expected: dynamic
+    val expected: Array<Expectation>
     val found: String?
     val location: FileRange
     val name: String
@@ -95,6 +100,10 @@ external class PeggySyntaxError {
         text: string;
     }[]*/
     )
+
+    companion object {
+        fun buildMessage(expected : Array<Expectation>, found : String?): String
+    }
 }
 
 external var parse: ParseFunction

@@ -34,6 +34,10 @@ var AST;
         Transitions: 'transitions',
         ObjectTypes: 'object types'
     });
+    AST.OpTypes = Object.freeze({
+        Normal: '->',
+        Variable: '=>'
+    });
     function isASTBaseNode(value) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeof value === 'object' && value !== null && typeof value.type === 'string';

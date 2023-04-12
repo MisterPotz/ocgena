@@ -49,25 +49,42 @@ class SpecialSubgraphHelper(
         val semanticErrorReporterContainer: SemanticErrorReporterContainer,
     ) : SemanticErrorReporter by semanticErrorReporterContainer {
         abstract fun saveNode(ast: ASTBaseNode)
+        private var hasSaved : Boolean = false
 
-        protected fun pushError(error: SemanticError) {
+        protected fun pushError(error: SemanticErrorAST) {
             semanticErrorReporterContainer.pushError(error)
         }
 
+        fun reset() {
+            hasSaved = false
+        }
+
         fun saveNodes(ast: Subgraph) {
+            markHasSaved()
             for (i in ast.body) {
                 saveNode(i)
             }
         }
 
+        fun hasSavedBefore() : Boolean {
+            return hasSaved
+        }
+
+        protected fun markHasSaved() {
+            hasSaved = true
+        }
         private fun checkNodeIsAcceptable(ast: ASTBaseNode): Boolean {
             return ast.type == Types.Node || ast.type == Types.Comment
+        }
+
+        private fun checkNodeCanBeSaved(ast: ASTBaseNode) : Boolean {
+            return ast.type == Types.Node
         }
 
         protected fun checkNodeIsOk(ast: ASTBaseNode) : Boolean {
             if (!checkNodeIsAcceptable(ast)) {
                 pushError(
-                    SemanticError(
+                    SemanticErrorAST(
                         "expected node or comment, but encountered different type: ${ast.type}",
                         relatedAst = ast,
                         level = ErrorLevel.WARNING
@@ -75,14 +92,31 @@ class SpecialSubgraphHelper(
                 )
                 return false
             }
-            return true
+            return checkNodeCanBeSaved(ast)
         }
     }
 
     fun trySaveSubgraphEntities(ast : Subgraph) {
         val specialType = ast.specialType
         if (specialType != null) {
-            elementSavers[specialType]?.saveNodes(ast)
+            val elementSaver = elementSavers[specialType] ?: return
+            if (elementSaver.hasSavedBefore()) {
+                errorReporterContainer.pushError(
+                    SemanticErrorAST(
+                        "has already encountered block of this type: ${ast.specialType}",
+                        relatedAst = ast,
+                        level = ErrorLevel.WARNING
+                    )
+                )
+            } else {
+                elementSavers[specialType]?.saveNodes(ast)
+            }
+        }
+    }
+
+    fun reset() {
+        elementSavers.values.forEach {
+            it.reset()
         }
     }
 }

@@ -40,6 +40,12 @@ export namespace AST {
   } as const)
   export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>
 
+  export const OpTypes = Object.freeze({
+    Normal : '->',
+    Variable : '=>'
+  } as const)
+  export type OpTypes = ValueOf<typeof OpTypes> 
+
   export function isASTBaseNode(value: unknown): value is ASTBaseNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return typeof value === 'object' && value !== null && typeof (value as any).type === 'string';

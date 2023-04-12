@@ -1,33 +1,52 @@
 package converter
 
-import dsl.OCNetDSLElements
 import model.Arc
+import model.ConsistencyCheckError
+import model.ErrorLevel
 import model.NormalArc
 import model.VariableArc
 
 
 interface FilePosition {
-    val offset : Int
-    val line : Int
-    val column : Int
+    val offset: Int
+    val line: Int
+    val column: Int
 }
+
 interface FileRange {
-    val start : FilePosition
-    val end : FilePosition
-    val source : String?
+    val start: FilePosition
+    val end: FilePosition
+    val source: String?
 }
+
+data class ASTTypeLocation(
+    val type: String,
+    val location: FileRange,
+)
+
+data class SemanticError(
+    val message: String,
+    val relatedAst: ASTTypeLocation,
+    val level: ErrorLevel,
+)
 
 sealed class OCDotParseResult {
-    data class Success(
-        val ocNetDSLElements: OCNetDSLElements,
-        val ocDotDeclaration: OCDotDeclaration
+    data class SyntaxParseError(val message: String, val location: FileRange?) : OCDotParseResult()
+
+    data class SemanticParseException(
+        val message: String,
+        val originalException: Throwable?,
     ) : OCDotParseResult()
 
-    data class Error(val location : FileRange) : OCDotParseResult()
+    data class SemanticCriticalErrorsFound(val message: String, val collectedSemanticErrors: List<SemanticError>) :
+        OCDotParseResult()
+
+    data class DomainCheckCriticalErrorsFound(val message: String, val collectedSemanticErrors: List<ConsistencyCheckError>) : OCDotParseResult()
+    object Success : OCDotParseResult()
 }
 
 expect class OCDotParser {
-    fun parse(ocDot: String) : OCDotParseResult
+    fun parse(ocDot: String): OCDotParseResult
 }
 
 class OCGraphvizGenerator(
@@ -42,7 +61,7 @@ class OCGraphvizGenerator(
 
     private fun Arc.toEdgeStatement(): String {
         val tail = tailNode?.label ?: return ""
-        val arrow = arrowNode?.label ?: return ""ч
+        val arrow = arrowNode?.label ?: return ""
         return "$tail -> $arrow"
     }
 
@@ -62,14 +81,16 @@ class OCGraphvizGenerator(
         // TODO: for transitions and places use different shapes and style
         for (place in ocNetElements.places) {
             val nodeAttributeList = originalOCDOtDeclaration.getNodeAttributeList(place.id)
-            stringBuilder.appendLine("""
+            stringBuilder.appendLine(
+                """
                 ${place.label} [ ${nodeAttributeList.toAttributeList()} ];
             """.trimIndent()
             )
         }
         for (transition in ocNetElements.transitions) {
             val nodeAttributeList = originalOCDOtDeclaration.getNodeAttributeList(transition.id)
-            stringBuilder.appendLine("""
+            stringBuilder.appendLine(
+                """
                 ${transition.label} [ ${nodeAttributeList.toAttributeList()} ];
             """.trimIndent()
             )
@@ -87,7 +108,8 @@ class OCGraphvizGenerator(
                     edgeAttributeList["color"] = "\"$finalColor\""
                 }
             }
-            stringBuilder.appendLine("""
+            stringBuilder.appendLine(
+                """
                 ${edge.toEdgeStatement()} [ ${edgeAttributeList.toAttributeList()} ]
             """.trimIndent()
             )

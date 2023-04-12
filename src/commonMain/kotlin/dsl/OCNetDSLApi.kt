@@ -9,6 +9,8 @@ interface OCScope :
     TransitionAcceptor,
     SubgraphConnector {
 
+    fun elementByLabel(label: String) : LinkChainDSL?
+
     fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit)
 
     // creates new or returns already defined

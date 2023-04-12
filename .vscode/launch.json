@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch via NPM",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+            ],
+            "program": "${workspaceFolder}\\build\\js\\packages\\ocgena\\kotlin\\ocgena.js",
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "outputCapture": "std"
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
@@ -15,7 +29,9 @@
             "outFiles": [
                 "${workspaceFolder}/build/js/packages/ocgena/kotlin/**/*.js"
             ],
-            "args": ["--enable-source-maps"]
+            "args": [
+                "--enable-source-maps"
+            ]
         }
     ]
 }

@@ -30,6 +30,14 @@ class OCScopeImpl(
         )
     }
 
+    override fun elementByLabel(label: String): LinkChainDSL? {
+        val place = scopeAccessibleEntities.places[label]
+        if (place != null) {
+            return place
+        }
+        return scopeAccessibleEntities.transitions[label]
+    }
+
     override fun forType(objectTypeDSL: ObjectTypeDSL, block: TypeScope.() -> Unit) {
         val ocScopeImpl = createChildOCSCope(objectTypeDSL)
         ocScopeImpl.block()

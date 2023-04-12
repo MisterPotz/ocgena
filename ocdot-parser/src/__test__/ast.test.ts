@@ -4,20 +4,30 @@ describe('parse', () => {
     test('try parsing', () => { 
         const myOcDot = `
             ocnet { 
-                places { 
-                    p1 p2
+                places { p1 p2 }
+                transitions { t1 }
+                object types { type1 type2 }
+
+                type1 {
+                    p1
                 }
-                transitions {
-                    t1
+
+                type2 {
+                    p2
                 }
-                p1 => t1 -> p2 [ ];
+
+                p1 10=> t1 1-> p2 [  ];
 
                 subgraph kek { 
                     subgraph bro { 
 
                     }
-                } -> t1 -> { p1 p2 }
+                } 3-> t1 2-> { p1 p2 }
                 
+                initial marking { 
+                    p1=2
+                    p2=3
+                }
             }
         `
         const result = AST.parse(myOcDot, {rule: AST.Types.OcDot})
