@@ -83,6 +83,10 @@ external interface `T$1` {
     var Places: String /* "places" */
     var Transitions: String /* "transitions" */
     var ObjectTypes: String /* "object types" */
+    var InitialMarking: String /* "initial marking" */
+    var PlacesForType: String /* "places for" */
+    var Inputs: String /* "inputs" */
+    var Outputs: String /* "outputs" */
 }
 
 external var SubgraphSpecialTypes: `T$1`
@@ -198,8 +202,12 @@ external interface NodeRef : ASTBaseNode {
 
 external interface NodeRefGroup : ASTBaseParent<NodeRef>
 
+external interface OpParams {
+    var number : Number
+}
 external interface EdgeOperator : ASTBaseNode {
     override var type: String /* "->" | "=>" */
+    var params : OpParams?
 }
 
 external interface EdgeRHSElement {
@@ -207,6 +215,7 @@ external interface EdgeRHSElement {
         get() = definedExternally
         set(value) = definedExternally
     var edgeop: EdgeOperator
+
 }
 
 external interface Edge : ASTBaseParent<Attribute> {

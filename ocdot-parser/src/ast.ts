@@ -36,15 +36,19 @@ export namespace AST {
   export const SubgraphSpecialTypes = Object.freeze({
     Places: 'places',
     Transitions: 'transitions',
-    ObjectTypes: 'object types'
+    ObjectTypes: 'object types',
+    InitialMarking: 'initial marking',
+    PlacesForType: 'places for',
+    Inputs: "inputs",
+    Outputs: "outputs"
   } as const)
   export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>
 
   export const OpTypes = Object.freeze({
-    Normal : '->',
-    Variable : '=>'
+    Normal: '->',
+    Variable: '=>'
   } as const)
-  export type OpTypes = ValueOf<typeof OpTypes> 
+  export type OpTypes = ValueOf<typeof OpTypes>
 
   export function isASTBaseNode(value: unknown): value is ASTBaseNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,8 +153,17 @@ export namespace AST {
 
   export type EdgeTarget = NodeRef | EdgeSubgraph;
 
+  export interface NumberLiteral extends ASTBaseNode { 
+    value: number,
+  }
+
+  export interface EdgeOpParams {
+    number: NumberLiteral
+  }
+
   export interface EdgeOperator extends ASTBaseNode {
-    type: "->" | "=>"
+    type: "->" | "=>",
+    params?: EdgeOpParams
   }
 
   export interface EdgeRHSElement {
@@ -431,7 +444,10 @@ export namespace AST {
 
     protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string {
       const edgeOp = edgeRHSElement.edgeop.type
-      return `${edgeOp} ${this.stringify(edgeRHSElement.id)}`
+      const multiplicity = edgeRHSElement.edgeop.params
+        ? `${edgeRHSElement.edgeop.params.number.value}`
+        : ""
+      return `${multiplicity}${edgeOp} ${this.stringify(edgeRHSElement.id)}`
     }
 
     protected printNode(ast: AST.Node): string {
@@ -502,7 +518,7 @@ export namespace AST {
       })
     }
 
-    
+
 
     protected printOcNet(ast: AST.OcNet): string {
 
@@ -532,7 +548,7 @@ export namespace AST {
 
     protected printSubgraphName(ast: AST.Subgraph): (string | null)[] {
       if (this.checkSubgraphKeyword(ast)) {
-        return [ast.specialType ?? ""]
+        return [ast.specialType ?? "", ast.id ? this.stringify(ast.id) : null]
       } else {
         return ['subgraph', ast.id ? this.stringify(ast.id) : null]
       }

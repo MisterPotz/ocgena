@@ -41,7 +41,7 @@ attibutes_item = __ v:_attibutes_item __ { return v; }
 
 comment = __ v:_comment __ { return v; }
 
-cluster_statements = (attribute / attributes / edge / subgraph / node / comment )*
+cluster_statements = (edge / subgraph / attribute / attributes  / node / comment )*
 
 _ocdot
   = c1:comment* graph:ocnet c2:comment* {
@@ -138,7 +138,11 @@ _op_params = number:_number {
   }
 }
 
-_edge_operator = op_params:(_op_params)? operator:("->" / "=>") { return { type: operator, params:op_params, location: location() }; }
+_edge_operator = op_params:(_op_params)? operator:("->" / "=>") { 
+  return op_params
+     ? { type: operator, params:op_params, location: location() } 
+     : { type: operator, location: location() }; 
+}
 
 _edge_rhs
   = _ edgeop:_edge_operator _ id:_edge_target _ rest:_edge_rhs? {
@@ -160,12 +164,51 @@ _port "port"
 
 _subgraph_id = "subgraph"i _ id:_literal? _ { return id; }
 
+// _subgraph
+//   = ((special_type: ( "places for"
+//                 / "places"
+//                 / "transitions"
+//                 / "object types"
+//                 / "initial marking" 
+//                 / "inputs"
+//                 / "outputs" ) _ id:_literal?
+//     )
+//       / ( id:_subgraph_id? )) _  "{" _body:cluster_statements? __ "}" {
+      
+//       const body = _body ?? [];
+//       return id
+//         ? { type: 'subgraph', id, specialType: special_type, body, location: location() }
+//         : { type: 'subgraph', specialType : special_type, body, location: location() };
+//     }
+  
+  
 _subgraph
-  = special_type:("places" / "transitions" / "object types")? _ id:_subgraph_id? _ "{" _body:cluster_statements? __ "}" {
+ = subgraph_keyword:( "places for"
+                / "places"
+                / "transitions"
+                / "object types"
+                / "initial marking"
+                / "inputs"
+                / "outputs" 
+                / "subgraph"i ) _ id:_literal?/* _ id:_subgraph_id? */ _ "{" _body:cluster_statements? __ "}" {
       const body = _body ?? [];
+      let specialType = null;
+      const specialTypes = [
+        "places for",
+        "places",
+        "transitions",
+        "object types",
+        "initial marking", 
+        "inputs",
+        "outputs" 
+      ];
+      if (specialTypes.indexOf(subgraph_keyword) >= 0) { 
+        specialType = subgraph_keyword;
+      }
+
       return id
-        ? { type: 'subgraph', id, specialType: special_type, body, location: location() }
-        : { type: 'subgraph', specialType : special_type, body, location: location() };
+        ? { type: 'subgraph', id, specialType, body, location: location() }
+        : { type: 'subgraph', specialType, body, location: location() };
     }
 
 _compass_keyword

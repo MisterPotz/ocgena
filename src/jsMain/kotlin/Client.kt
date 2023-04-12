@@ -22,11 +22,38 @@ fun probeParse() : dynamic {
         |   places { 
         |       p1
         |       p2
+        |       p3
+        |   }
+        |   
+        |    // seems not necessary
+        |    /* object types { 
+        |       type1 type2
+        |   } */
+        |   
+        |   places for type1 {
+        |       p1
+        |   }
+        |       
+        |   places for type2 {
+        |       p2 p3
         |   }
         | 
-        |   
-        |       
+        |   inputs {
+        |       p1 p3
+        |   }
+        |      
+        |   outputs {
+        |       p2
+        |   }
+        | 
         |   p1 => t1 -> p2
+        |   p3 2-> t1
+        |  
+        |
+        |   initial marking {
+        |       p1=10
+        |       p3=8
+        |   }
         |}
     """.trimMargin()
     val parser = OCDotParser()

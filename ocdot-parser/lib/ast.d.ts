@@ -32,6 +32,10 @@ export declare namespace AST {
         readonly Places: "places";
         readonly Transitions: "transitions";
         readonly ObjectTypes: "object types";
+        readonly InitialMarking: "initial marking";
+        readonly PlacesForType: "places for";
+        readonly Inputs: "inputs";
+        readonly Outputs: "outputs";
     }>;
     export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>;
     export const OpTypes: Readonly<{
@@ -121,8 +125,15 @@ export declare namespace AST {
         id?: Literal;
     }
     export type EdgeTarget = NodeRef | EdgeSubgraph;
+    export interface NumberLiteral extends ASTBaseNode {
+        value: number;
+    }
+    export interface EdgeOpParams {
+        number: NumberLiteral;
+    }
     export interface EdgeOperator extends ASTBaseNode {
         type: "->" | "=>";
+        params?: EdgeOpParams;
     }
     export interface EdgeRHSElement {
         id: EdgeTarget;

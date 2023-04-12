@@ -10,6 +10,7 @@ import ast.OpTypes
 import ast.Types
 import dsl.OCNetFacadeBuilder
 import dsl.OCScope
+import model.PlaceType
 
 class OCDotToDomainConverter() {
     fun convert(dslElementsContainer: DSLElementsContainer): OCNetFacadeBuilder.BuiltOCNet {
@@ -19,8 +20,27 @@ class OCDotToDomainConverter() {
                 objectType(astObjectType.key)
             }
             for (astPlace in dslElementsContainer.savedPlaces) {
+                val placeLabel = astPlace.key
+                console.log("place label $placeLabel")
                 place(astPlace.key) {
-                    // initialize place data
+                    val objectType = dslElementsContainer.recallObjectTypeForPlace(label)
+                    if (objectType != null) {
+                        this.objectType = objectType(objectType)
+                    }
+                    val initMarking = dslElementsContainer.recallInitialTokensForPlace(label)
+                    if (initMarking != null) {
+                        this.initialTokens = initMarking
+                    }
+
+                    val isInput = dslElementsContainer.recallIfPlaceIsInput(placeLabel = label)
+                    val isOutput = dslElementsContainer.recallIfPlaceIsOutput(placeLabel = label)
+
+                    if (isInput) {
+                        this.placeType = PlaceType.INPUT
+                    }
+                    if (isOutput) {
+                        this.placeType = PlaceType.OUTPUT
+                    }
                 }
             }
 
@@ -92,8 +112,13 @@ class OCDotToDomainConverter() {
                     val fromNode = elementByLabel(fromNode) ?: continue
                     for (toNode in allNodesOfTo) {
                         val toNode = elementByLabel(toNode) ?: continue
+                        val number = toFrom.to.edgeop.params?.number?.toInt()
                         when (toFrom.to.edgeop.type) {
-                            OpTypes.Normal -> fromNode.arcTo(toNode)
+                            OpTypes.Normal -> fromNode.arcTo(toNode) {
+                                if (number != null) {
+                                    this.multiplicity = number
+                                }
+                            }
                             OpTypes.Variable -> fromNode.variableArcTo(toNode)
                         }
                     }

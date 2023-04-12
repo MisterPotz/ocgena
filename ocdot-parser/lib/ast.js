@@ -32,7 +32,11 @@ var AST;
     AST.SubgraphSpecialTypes = Object.freeze({
         Places: 'places',
         Transitions: 'transitions',
-        ObjectTypes: 'object types'
+        ObjectTypes: 'object types',
+        InitialMarking: 'initial marking',
+        PlacesForType: 'places for',
+        Inputs: "inputs",
+        Outputs: "outputs"
     });
     AST.OpTypes = Object.freeze({
         Normal: '->',
@@ -108,7 +112,10 @@ var AST;
         }
         printEdgeRHSElement(edgeRHSElement) {
             const edgeOp = edgeRHSElement.edgeop.type;
-            return `${edgeOp} ${this.stringify(edgeRHSElement.id)}`;
+            const multiplicity = edgeRHSElement.edgeop.params
+                ? `${edgeRHSElement.edgeop.params.number.value}`
+                : "";
+            return `${multiplicity}${edgeOp} ${this.stringify(edgeRHSElement.id)}`;
         }
         printNode(ast) {
             return ast.body.length == 0
@@ -193,7 +200,7 @@ var AST;
         }
         printSubgraphName(ast) {
             if (this.checkSubgraphKeyword(ast)) {
-                return [ast.specialType ?? ""];
+                return [ast.specialType ?? "", ast.id ? this.stringify(ast.id) : null];
             }
             else {
                 return ['subgraph', ast.id ? this.stringify(ast.id) : null];
