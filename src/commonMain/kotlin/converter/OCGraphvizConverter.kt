@@ -1,35 +1,49 @@
 package converter
 
+import dsl.OCNetFacadeBuilder
 import model.Arc
 import model.ConsistencyCheckError
 import model.ErrorLevel
 import model.NormalArc
 import model.VariableArc
+import kotlin.js.ExperimentalJsExport
+import kotlin.js.JsExport
 
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 interface FilePosition {
     val offset: Int
     val line: Int
     val column: Int
 }
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 interface FileRange {
     val start: FilePosition
     val end: FilePosition
     val source: String?
 }
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 data class ASTTypeLocation(
     val type: String,
     val location: FileRange,
 )
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 data class SemanticError(
     val message: String,
     val relatedAst: ASTTypeLocation,
     val level: ErrorLevel,
 )
 
+
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 sealed class OCDotParseResult {
     data class SyntaxParseError(val message: String, val location: FileRange?) : OCDotParseResult()
 
@@ -42,7 +56,7 @@ sealed class OCDotParseResult {
         OCDotParseResult()
 
     data class DomainCheckCriticalErrorsFound(val message: String, val collectedSemanticErrors: List<ConsistencyCheckError>) : OCDotParseResult()
-    object Success : OCDotParseResult()
+    data class Success(val buildOCNet: OCNetFacadeBuilder.BuiltOCNet) : OCDotParseResult()
 }
 
 expect class OCDotParser {

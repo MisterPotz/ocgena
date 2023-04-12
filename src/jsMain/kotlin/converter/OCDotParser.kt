@@ -2,6 +2,7 @@ package converter
 
 import ast.*
 import declarations.PeggySyntaxError
+import dsl.OCNetFacadeBuilder
 import dsl.OCScopeImpl
 import dsl.OCScopeImplCreator
 import kotlinx.js.Object
@@ -556,7 +557,7 @@ class DomainConversionStage(
             ))
         } else {
             return ChainResult(
-                success = OCDotParseResult.Success
+                success = OCDotParseResult.Success(result)
             )
         }
     }
@@ -601,6 +602,8 @@ class ParsingChain(
     }
 }
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 actual class OCDotParser {
 
     private val ocScopeImpl = OCScopeImplCreator().createRootOCScope()
@@ -629,6 +632,8 @@ actual class OCDotParser {
             )
         )
         val result = parsingChain.process(ocDot)
+
+//        this.result = (result as? OCDotParseResult.Success)?.buildOCNet
 
         return result
     }
