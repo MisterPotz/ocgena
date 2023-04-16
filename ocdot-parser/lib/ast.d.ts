@@ -333,6 +333,8 @@ export declare namespace AST {
         protected indent(line: string): string;
         protected pad(pad: string): (l: string) => string;
         protected printAttribute(ast: AST.Attribute): string;
+        protected increaseIndent(): void;
+        protected decreaseIndent(): void;
         protected printAttributes(ast: AST.Attributes): string;
         protected printComment(ast: AST.Comment): string;
         protected printOcDot(ast: AST.OcDot): string;
@@ -342,16 +344,16 @@ export declare namespace AST {
         protected printNodeRef(ast: AST.NodeRef): string;
         protected printEdgeSubgraphName(ast: AST.EdgeSubgraph): (string | null)[];
         protected printEdgeSubgraph(ast: AST.EdgeSubgraph): string;
-        protected closingBracket(): string;
         protected withIndentIncrease(block: () => string): string;
         protected withIndentDecrease(block: () => string): string;
         protected closingBracketIndented(): string;
+        protected closingBracket(): string;
         protected printOcNet(ast: AST.OcNet): string;
         protected checkSubgraphKeyword(ast: AST.Subgraph): boolean;
         protected printSubgraphName(ast: AST.Subgraph): (string | null)[];
         protected printSubgraph(ast: AST.Subgraph): string;
         protected printLiteral(ast: AST.Literal): string;
-        private isAstNode;
+        protected isAstNode(object: any): object is AST.ASTNode;
         stringify(ast: AST.ASTNode | EdgeRHSElement): string;
     }
     /**

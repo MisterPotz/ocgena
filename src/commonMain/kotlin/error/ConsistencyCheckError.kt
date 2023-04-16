@@ -1,26 +1,22 @@
-package model
+package error
 
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
+import model.Arc
+import model.PetriAtom
+import model.Place
+import model.Transition
 
-@OptIn(ExperimentalJsExport::class)
-@JsExport
-enum class ErrorLevel {
-    WARNING,
-    CRITICAL
-}
 
 fun <T : Any> List<T>.prettyPrint() : String {
     return joinToString("\n").prependIndent()
 }
 
 sealed class ConsistencyCheckError(
-    val level: ErrorLevel,
+    override val errorLevel: ErrorLevel,
     val debugPath: List<PetriAtom>?,
     val arcs: List<Arc>? = null,
     val transition: Transition? = null,
     val place: Place? = null,
-) {
+) : Error {
 
     // STRUCTURE ---
     class IsolatedSubgraphsDetected(
@@ -28,18 +24,27 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String = "Isolated subgraphs present in the node (not fully reachable graph)"
+        override val errorLevel: ErrorLevel = ErrorLevel.WARNING
     }
 
     object NoInputPlacesDetected : ConsistencyCheckError(ErrorLevel.CRITICAL, null) {
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "No input places present in the net"
     }
 
     object NoOutputPlacesDetected : ConsistencyCheckError(ErrorLevel.CRITICAL, null) {
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "No output places present in the net"
     }
 
     // TRANSITION ---
@@ -50,6 +55,11 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "Transition misses one of the arcs"
+
+
     }
 
     // TODO: what about case, when there is only \mu arc connected to transition?
@@ -60,6 +70,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "Variable arc is the only connected to the node, as output or input"
     }
 
     /**
@@ -78,6 +91,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "Variable arcs inconsistenct: among arcs to the node are both variable and normal for one type"
     }
 
     // PLACE ---
@@ -89,6 +105,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "Multiple arcs from a place to the same transition"
     }
 
     // TODO: can actually be checked when have set of all atoms
@@ -99,6 +118,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "Isolated places subgraphs detected (not connected to other nodes"
     }
 
     class InputPlaceHasInputArcs(
@@ -108,6 +130,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "input place contains prohibited input arcs"
     }
 
     class OutputPlaceHasOutputArcs(
@@ -117,6 +142,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "output place contains prohibited output arcs"
     }
 
     // ARC ---
@@ -127,6 +155,9 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "arc misses one of the connected nodes"
     }
 
     class IsNotBipartite(
@@ -136,6 +167,11 @@ sealed class ConsistencyCheckError(
         override fun label(): String {
             return this::class.simpleName!!
         }
+
+        override val message: String
+            get() = "is not bipartite graph ($debugPath)"
+        override val errorLevel: ErrorLevel
+            get() = ErrorLevel.CRITICAL
     }
 
     class ArcInputEqualsOutput(
@@ -153,6 +189,9 @@ sealed class ConsistencyCheckError(
         override fun toString(): String {
             return "ArcInputEqualsOutput(arc=$arc)"
         }
+
+        override val message: String
+            get() = "arc is linked to the same node it comes from"
     }
 
     abstract fun label(): String
@@ -160,7 +199,7 @@ sealed class ConsistencyCheckError(
     override fun toString(): String {
         return """
             ${label()}(
-                level: $level
+                level: $errorLevel
                 path: ${debugPath?.let { toStringDebugPath(it) }}
                 arcs: $arcs
                 transition: $transition

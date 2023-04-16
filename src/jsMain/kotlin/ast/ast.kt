@@ -35,6 +35,13 @@ external interface FilePosition {
     var column: Number
 }
 
+external interface FileRange {
+    var start: FilePosition
+    var end: FilePosition
+    var source: String
+}
+
+
 external interface LiteralExpectation {
     var type: String /* "literal" */
     var text: String

@@ -1,5 +1,7 @@
 package model
 
+import error.ConsistencyCheckError
+
 class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
@@ -16,9 +18,9 @@ class OCNetChecker(
             return Companion.checkConsistency(lastConsistencyResults)
         }
 
-    fun createConsistentOCNet() : OCNet {
+    fun createConsistentOCNet() : WellFormedOCNet {
         require(isConsistent)
-        return OCNet(
+        return WellFormedOCNet(
             inputPlaces = checkNotNull(inputPlaces),
             outputPlaces = checkNotNull(outputPlaces),
             objectTypes = checkNotNull(objectTypes)// TODO: pass the object types

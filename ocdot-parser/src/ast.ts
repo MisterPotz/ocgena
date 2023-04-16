@@ -395,12 +395,12 @@ export namespace AST {
 
   export class Compiler {
     protected indentSize: number;
-    constructor({ indentSize = 2 }: StringifyOption = {}) {
+    constructor({ indentSize = 0 }: StringifyOption = {}) {
       this.indentSize = indentSize;
     }
 
     protected indent(line: string): string {
-      return ' '.repeat(this.indentSize) + line;
+      return '  '.repeat(this.indentSize) + line;
     }
 
     protected pad(pad: string): (l: string) => string {
@@ -411,10 +411,21 @@ export namespace AST {
       return `${this.stringify(ast.key)} = ${this.stringify(ast.value)};`;
     }
 
+    protected increaseIndent() {
+      this.indentSize += 2;
+    }
+
+    protected decreaseIndent() {
+      this.indentSize -= 2;
+    }
+
     protected printAttributes(ast: AST.Attributes): string {
-      return ast.body.length === 0
+      this.increaseIndent();
+      const value = ast.body.length === 0
         ? `${ast.kind};`
         : `${ast.kind} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
+      this.decreaseIndent();
+      return value;
     }
 
     protected printComment(ast: AST.Comment): string {
@@ -437,9 +448,12 @@ export namespace AST {
       const targets = ast.targets.map(this.stringify.bind(this))/* .join(this.directed ? ' -> ' : ' -- '); */
       const allEdgeTargets = [from, ...targets].join(' ')
 
-      return ast.body.length === 0
+      this.increaseIndent();
+      const value = ast.body.length === 0
         ? `${allEdgeTargets};`
         : `${allEdgeTargets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
+      this.decreaseIndent();
+      return value;
     }
 
     protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string {
@@ -451,18 +465,22 @@ export namespace AST {
     }
 
     protected printNode(ast: AST.Node): string {
-      return ast.body.length == 0
+      this.increaseIndent();
+      const value = ast.body.length == 0
         ? `${this.stringify(ast.id)};`
         : `${this.stringify(ast.id)} [\n${ast.body
           .map(this.stringify.bind(this))
           .map(this.indent.bind(this))
           .join('\n')}\n];`;
+      this.decreaseIndent();
+      return value;
     }
 
     protected printNodeRef(ast: AST.NodeRef): string {
       return [
         this.stringify(ast.id),
-        ast.port ? this.stringify(ast.port) : null,
+        ast.port ? this.stringify(ast.port) 
+        : null,
         ast.compass ? this.stringify(ast.compass) : null,
       ]
         .filter((v) => v !== null)
@@ -494,21 +512,17 @@ export namespace AST {
         .join(' ');
     }
 
-    protected closingBracket(): string {
-      return this.indent('}')
-    }
-
     protected withIndentIncrease(block: () => string): string {
-      this.indentSize += 2;
+      this.increaseIndent();
       const result = block()
-      this.indentSize -= 2;
+      this.decreaseIndent();
       return result;
     }
 
     protected withIndentDecrease(block: () => string): string {
-      this.indentSize -= 2;
+      this.decreaseIndent();
       const result = block();
-      this.indentSize += 2;
+      this.increaseIndent();
       return result;
     }
 
@@ -517,8 +531,6 @@ export namespace AST {
         return this.indent('}')
       })
     }
-
-
 
     protected printOcNet(ast: AST.OcNet): string {
 
@@ -531,7 +543,6 @@ export namespace AST {
             .join('\n')
           }\n${this.closingBracketIndented()}`
       })
-
       return [
         // ast.strict ? 'strict' : null,
         // ast.directed ? 'digraph' : 'graph',
@@ -582,7 +593,7 @@ export namespace AST {
     }
 
 
-    private isAstNode(object: any): object is AST.ASTNode {
+    protected isAstNode(object: any): object is AST.ASTNode {
       return 'type' in object;
     }
 

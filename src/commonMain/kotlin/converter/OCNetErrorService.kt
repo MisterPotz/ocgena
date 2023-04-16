@@ -1,6 +1,6 @@
 package converter
 
-import model.ConsistencyCheckError
+import error.ConsistencyCheckError
 
 interface OCNetErrorService {
     // observed consistency errors for given petri id

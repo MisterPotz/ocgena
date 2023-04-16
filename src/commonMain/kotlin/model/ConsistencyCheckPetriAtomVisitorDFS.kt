@@ -1,5 +1,7 @@
 package model
 
+import error.ConsistencyCheckError
+
 class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,
 ) : AbsPetriAtomVisitorDFS() {

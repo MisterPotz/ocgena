@@ -4,6 +4,7 @@ import dsl.OCNetBuilder
 import dsl.OCScope
 import dsl.ObjectsSearcher
 import dsl.createExampleModel
+import error.ConsistencyCheckError
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

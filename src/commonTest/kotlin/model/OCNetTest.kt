@@ -1,6 +1,7 @@
 package model
 
 import dsl.OCNetFacadeBuilder
+import error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -25,8 +26,8 @@ class OCNetTest {
         )
         requireNotNull(ocNet)
         ocNet.run(
-            executionConditions = OCNet.ConsoleDebugExecutionConditions(),
-            logger = OCNet.DebugLogger()
+            executionConditions = WellFormedOCNet.ConsoleDebugExecutionConditions(),
+            logger = WellFormedOCNet.DebugLogger()
         )
     }
 
@@ -59,8 +60,8 @@ class OCNetTest {
         }
         requireNotNull(ocNet)
         ocNet.run(
-            executionConditions = OCNet.ConsoleDebugExecutionConditions(),
-            logger = OCNet.DebugLogger()
+            executionConditions = WellFormedOCNet.ConsoleDebugExecutionConditions(),
+            logger = WellFormedOCNet.DebugLogger()
         )
     }
 }

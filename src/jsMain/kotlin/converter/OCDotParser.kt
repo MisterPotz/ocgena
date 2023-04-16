@@ -1,13 +1,12 @@
 package converter
 
 import ast.*
-import declarations.PeggySyntaxError
-import dsl.OCNetFacadeBuilder
 import dsl.OCScopeImpl
 import dsl.OCScopeImplCreator
+import error.ErrorLevel
 import kotlinx.js.Object
 import kotlinx.js.jso
-import model.ErrorLevel
+import parse.OCDotParseResult
 import kotlin.reflect.KClass
 
 
@@ -285,51 +284,10 @@ class NormalSubgraphHelper(
     }
 }
 
-class ElementsDeclarationsASTVisitorBFS(
-    val dslElementsContainer: DSLElementsContainer,
-    private val semanticErrorReporter: SemanticErrorReporterContainer = SemanticErrorReporterContainer(),
-) : PathAcceptingASTVisitorBFS(), SemanticErrorReporter by semanticErrorReporter {
-    private val normalSubgraphHelper = NormalSubgraphHelper(dslElementsContainer, semanticErrorReporter)
-    private val specialSubgraphHelper = SpecialSubgraphHelper(dslElementsContainer, semanticErrorReporter)
-
-    override fun visitOCDot(ast: OcDot) {}
-
-    override fun visitOCNet(ast: OcNet) {}
-
-    override fun visitNode(ast: Node) {
-
-    }
-
-    override fun visitEdge(ast: Edge) {
-        dslElementsContainer.rememberEdgeBlock(ast)
-    }
-
-    override fun visitSubgraph(ast: Subgraph) {
-        specialSubgraphHelper.trySaveSubgraphEntities(ast)
-        normalSubgraphHelper.trySaveSubgraph(ast)
-    }
-
-    override fun collectReport(): List<SemanticErrorAST> {
-        return semanticErrorReporter.collectReport()
-    }
-}
-
-interface PathAcceptorVisitorBFS {
-    fun withPath(astVisitorPath: ASTVisitorPath): OCDotASTVisitorBFS
-}
-
-interface OCDotASTVisitorBFS {
-    fun visitOCDot(ast: OcDot)
-    fun visitOCNet(ast: OcNet)
-    fun visitNode(ast: Node)
-    fun visitEdge(ast: Edge)
-    fun visitSubgraph(ast: Subgraph)
-}
-
 class DelegateOCDotASTVisitorBFS(
-    val visitors: List<PathAcceptorVisitorBFS>,
+    private val visitors: List<PathAcceptorVisitorBFS>,
 ) : OCDotASTVisitorBFS {
-    val currentPath = ASTVisitorPath(mutableListOf())
+    private val currentPath = ASTVisitorPath(mutableListOf())
 
     override fun visitOCDot(ast: OcDot) {
         currentPath.push(ast)
@@ -640,19 +598,11 @@ actual class OCDotParser {
 }
 
 object JsToCommonMapping {
-    fun filePosition(filePosition: declarations.FilePosition): FilePosition {
-        return object : FilePosition {
-            override val offset: Int = filePosition.offset.toInt()
-            override val line: Int = filePosition.line.toInt()
-            override val column: Int = filePosition.column.toInt()
-        }
+    fun filePosition(filePosition: FilePosition): FilePosition {
+        return filePosition
     }
 
-    fun fileRange(fileRange: declarations.FileRange): FileRange {
-        return object : FileRange {
-            override val start: FilePosition = filePosition(fileRange.start)
-            override val end: FilePosition = filePosition(fileRange.end)
-            override val source: String? = fileRange.source
-        }
+    fun fileRange(fileRange: FileRange): FileRange {
+        return fileRange
     }
 }

@@ -1,9 +1,12 @@
-import { AST } from '../ast'
+import { AST } from 'ocdot-parser'
+import { OCDotToDOTConverter } from '../converter'
+import * as shelljs from 'shelljs'
+import * as s from '../exts'
+import * as fs from 'fs'
 
-describe('parse', () => {
-
-    test('try parsing', () => { 
-        const myOcDot = `
+describe("convertion from OCDot to plain dot", () => {
+    test("convertion", () => {
+        const myOcDotRaw = `
             ocnet { 
                 places { 
                     p1 p2
@@ -47,9 +50,14 @@ describe('parse', () => {
                 }
             }
         `
-        const result = AST.parse(myOcDot, {rule: AST.Types.OcDot})
-        console.log(JSON.stringify(result))
-        console.log(AST.stringify(result))
-        expect(result).toBeDefined();
+        const myOcDot = s.trimIndent(myOcDotRaw)
+        const result = AST.parse(myOcDot, { rule: AST.Types.OcDot })
+
+        const converter = new OCDotToDOTConverter(result);
+
+        const plainDot = converter.compileDot();
+
+        fs.writeFileSync("./test_artefacts/converter.test.txt", myOcDot + "\n" + plainDot);
+        console.log(plainDot);
     })
-});
+})

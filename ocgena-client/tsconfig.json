@@ -4,16 +4,20 @@
     "allowJs": true,
     "module": "commonjs",
     "skipLibCheck": true,
+    "importHelpers" : true,
     "esModuleInterop": true,
     "noImplicitAny": true,
     "sourceMap": true,
+    "alwaysStrict": true,
     "baseUrl": ".",
     "outDir": "dist",
     "moduleResolution": "node",
+    "declaration": false,
     "resolveJsonModule": true,
     "paths": {
       "*": ["node_modules/*"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts"]
 }

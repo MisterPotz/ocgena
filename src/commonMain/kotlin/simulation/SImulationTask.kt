@@ -1,24 +1,15 @@
-package model
+package simulation
 
 import kotlinx.coroutines.sync.Mutex
+import model.Binding
+import model.EnabledBindingCollectorVisitorDFS
+import model.WellFormedOCNet
+import model.TokenInitializerVisitorDFS
+import error.prettyPrint
 import utils.mprintln
 
-/**
- * the net, formed with passed arguments, must already be consistent
- */
-class OCNet(
-    val inputPlaces: List<Place>,
-    val outputPlaces: List<Place>,
-    val objectTypes: List<ObjectType>,
-) {
+class SimulationTask(val ocNetTemplate : WellFormedOCNet) {
     private val executionLock: Mutex = Mutex()
-
-//    fun allPlaces() : List<Place> {
-//
-//    }
-//    fun collectMarking() : Map<String, Int> {
-//
-//    }
 
     interface Logger {
         val loggingEnabled: Boolean
@@ -58,22 +49,22 @@ class OCNet(
     interface ExecutionConditions {
 
         // for terminate
-        fun checkTerminateConditionSatisfied(ocNet: OCNet): Boolean
+        fun checkTerminateConditionSatisfied(ocNet: WellFormedOCNet): Boolean
 
         // TODO: for debug ability
-        suspend fun checkIfSuspend(ocNet: OCNet, lastExecutionBinding: Binding)
+        suspend fun checkIfSuspend(ocNet: WellFormedOCNet, lastExecutionBinding: Binding)
 
         // TODO: this method can fulfill both interactive mode and automatic
         suspend fun selectBindingToExecute(enabledBindings: List<Binding>): Binding
     }
 
     class ConsoleDebugExecutionConditions() : ExecutionConditions {
-        override fun checkTerminateConditionSatisfied(ocNet: OCNet): Boolean {
+        override fun checkTerminateConditionSatisfied(ocNet: WellFormedOCNet): Boolean {
             // TODO: check for terminate token amounts at place nodes
             return false
         }
 
-        override suspend fun checkIfSuspend(ocNet: OCNet, lastExecutionBinding: Binding) {
+        override suspend fun checkIfSuspend(ocNet: WellFormedOCNet, lastExecutionBinding: Binding) {
             Unit
         }
 
@@ -123,9 +114,5 @@ class OCNet(
         logger.onEnd()
 
         executionLock.unlock()
-    }
-
-    override fun toString(): String {
-        return "OCNet(inputPlaces=$inputPlaces, outputPlaces=$outputPlaces, objectTypes=$objectTypes, executionLock=$executionLock)"
     }
 }

@@ -71,11 +71,11 @@ var AST;
     AST.parse = parse;
     class Compiler {
         indentSize;
-        constructor({ indentSize = 2 } = {}) {
+        constructor({ indentSize = 0 } = {}) {
             this.indentSize = indentSize;
         }
         indent(line) {
-            return ' '.repeat(this.indentSize) + line;
+            return '\t'.repeat(this.indentSize) + line;
         }
         pad(pad) {
             return (l) => pad + l;
@@ -83,10 +83,19 @@ var AST;
         printAttribute(ast) {
             return `${this.stringify(ast.key)} = ${this.stringify(ast.value)};`;
         }
+        increaseIndent() {
+            this.indentSize += 1;
+        }
+        decreaseIndent() {
+            this.indentSize -= 1;
+        }
         printAttributes(ast) {
-            return ast.body.length === 0
+            this.increaseIndent();
+            const value = ast.body.length === 0
                 ? `${ast.kind};`
                 : `${ast.kind} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
+            this.decreaseIndent();
+            return value;
         }
         printComment(ast) {
             switch (ast.kind) {
@@ -106,9 +115,12 @@ var AST;
             const from = this.stringify(ast.from);
             const targets = ast.targets.map(this.stringify.bind(this)); /* .join(this.directed ? ' -> ' : ' -- '); */
             const allEdgeTargets = [from, ...targets].join(' ');
-            return ast.body.length === 0
+            this.increaseIndent();
+            const value = ast.body.length === 0
                 ? `${allEdgeTargets};`
                 : `${allEdgeTargets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
+            this.decreaseIndent();
+            return value;
         }
         printEdgeRHSElement(edgeRHSElement) {
             const edgeOp = edgeRHSElement.edgeop.type;
@@ -118,17 +130,21 @@ var AST;
             return `${multiplicity}${edgeOp} ${this.stringify(edgeRHSElement.id)}`;
         }
         printNode(ast) {
-            return ast.body.length == 0
+            this.increaseIndent();
+            const value = ast.body.length == 0
                 ? `${this.stringify(ast.id)};`
                 : `${this.stringify(ast.id)} [\n${ast.body
                     .map(this.stringify.bind(this))
                     .map(this.indent.bind(this))
                     .join('\n')}\n];`;
+            this.decreaseIndent();
+            return value;
         }
         printNodeRef(ast) {
             return [
                 this.stringify(ast.id),
-                ast.port ? this.stringify(ast.port) : null,
+                ast.port ? this.stringify(ast.port)
+                    : null,
                 ast.compass ? this.stringify(ast.compass) : null,
             ]
                 .filter((v) => v !== null)
@@ -157,25 +173,25 @@ var AST;
                 .filter((v) => v !== null)
                 .join(' ');
         }
-        closingBracket() {
-            return this.indent('}');
-        }
         withIndentIncrease(block) {
-            this.indentSize += 2;
+            this.increaseIndent();
             const result = block();
-            this.indentSize -= 2;
+            this.decreaseIndent();
             return result;
         }
         withIndentDecrease(block) {
-            this.indentSize -= 2;
+            this.indentSize -= 1;
             const result = block();
-            this.indentSize += 2;
+            this.indentSize += 1;
             return result;
         }
         closingBracketIndented() {
             return this.withIndentDecrease(() => {
                 return this.indent('}');
             });
+        }
+        closingBracket() {
+            return '}';
         }
         printOcNet(ast) {
             const body = this.withIndentIncrease(() => {
@@ -184,7 +200,7 @@ var AST;
                     : `ocnet {\n${ast.body
                         .map(this.stringify.bind(this))
                         .map(this.indent.bind(this))
-                        .join('\n')}\n${this.closingBracketIndented()}`;
+                        .join('\n')}\n}`;
             });
             return [
                 // ast.strict ? 'strict' : null,
@@ -211,7 +227,7 @@ var AST;
                 return ast.body.length === 0
                     ? '{}'
                     : `{\n${ast.body.map(this.stringify.bind(this))
-                        .map(this.indent.bind(this)).join('\n')}\n${this.closingBracketIndented()}`;
+                        .map(this.indent.bind(this)).join('\n')}\n}`;
             });
             return [
                 ...this.printSubgraphName(ast),

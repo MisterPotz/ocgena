@@ -6,7 +6,7 @@ import ast.Node
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
-import model.ErrorLevel
+import error.ErrorLevel
 
 class SpecialSubgraphHelper(
     private val dslElementsContainer: DSLElementsContainer,
