@@ -1,21 +1,30 @@
 package parse
 
-import dsl.OCNetFacadeBuilder
+import ast.ASTBaseNode
 import error.ConsistencyCheckError
+import error.Error
+import error.ErrorLevel
 
-@OptIn(ExperimentalJsExport::class)
-@JsExport
-sealed class OCDotParseResult {
-    data class SyntaxParseError(val message: String, val location: FileRange?) : OCDotParseResult()
+data class SemanticParseException(
+    override val message: String,
+    override val errorLevel: ErrorLevel,
+    val originalException: Throwable?,
+) : Error
 
-    data class SemanticParseException(
-        val message: String,
-        val originalException: Throwable?,
-    ) : OCDotParseResult()
+data class SemanticErrors(
+    override val message: String,
+    val collectedSemanticErrors: List<SemanticError>,
+    override val errorLevel: ErrorLevel,
+) : Error
 
-    data class SemanticCriticalErrorsFound(val message: String, val collectedSemanticErrors: List<SemanticError>) :
-        OCDotParseResult()
+data class SemanticError(
+    override val message: String,
+    val relatedAst: ASTBaseNode,
+    override val errorLevel: ErrorLevel,
+): Error
 
-    data class DomainCheckCriticalErrorsFound(val message: String, val collectedSemanticErrors: List<ConsistencyCheckError>) : OCDotParseResult()
-    data class Success(val buildOCNet: OCNetFacadeBuilder.BuiltOCNet) : OCDotParseResult()
-}
+data class DomainModelErrors(
+    override val message: String,
+    val errors: List<ConsistencyCheckError>,
+    override val errorLevel: ErrorLevel,
+) : Error

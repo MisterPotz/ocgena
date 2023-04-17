@@ -1,7 +1,5 @@
 package model
 
-import converter.OCNetElements
-
 class OCNetElementsImpl(
     override val places : List<Place>,
     override val transitions: List<Transition>,

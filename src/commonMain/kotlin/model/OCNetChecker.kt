@@ -1,6 +1,8 @@
 package model
 
 import error.ConsistencyCheckError
+import error.ErrorLevel
+import model.utils.ConsistencyCheckPetriAtomVisitorDFS
 
 class OCNetChecker(
     /**
@@ -18,7 +20,7 @@ class OCNetChecker(
             return Companion.checkConsistency(lastConsistencyResults)
         }
 
-    fun createConsistentOCNet() : WellFormedOCNet {
+    fun createWellFormedOCNet() : WellFormedOCNet {
         require(isConsistent)
         return WellFormedOCNet(
             inputPlaces = checkNotNull(inputPlaces),
@@ -94,7 +96,7 @@ class OCNetChecker(
     companion object {
         fun checkConsistency(conistencyResults: List<ConsistencyCheckError>?) : Boolean {
             return conistencyResults?.let {
-                it.none { it.level == ErrorLevel.CRITICAL }
+                it.none { it.errorLevel == ErrorLevel.CRITICAL }
             } ?: false
         }
     }

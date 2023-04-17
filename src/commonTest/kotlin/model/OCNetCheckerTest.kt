@@ -5,6 +5,7 @@ import dsl.OCScope
 import dsl.ObjectsSearcher
 import dsl.createExampleModel
 import error.ConsistencyCheckError
+import model.utils.OCNetDSLConverter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -42,7 +43,7 @@ class OCNetCheckerTest {
             consistencyResults.isEmpty(),
             "inconsistencies detected:\n" + consistencyResults.joinToString(separator = "\n").prependIndent()
         )
-        val consistentNet = consistencyChecker.createConsistentOCNet()
+        val consistentNet = consistencyChecker.createWellFormedOCNet()
         assertEquals(3, consistentNet.inputPlaces.size)
         assertEquals(3, consistentNet.outputPlaces.size)
         assertEquals(3, consistentNet.objectTypes.size)

@@ -1,10 +1,4 @@
-package converter
-
-import model.Arc
-import model.ObjectType
-import model.PetriNode
-import model.Place
-import model.Transition
+package model
 
 interface OCNetElements {
     val places: List<Place>

@@ -1,4 +1,8 @@
-package model
+package model.utils
+
+import model.AbsPetriAtomVisitorDFS
+import model.Binding
+import model.Transition
 
 class EnabledBindingCollectorVisitorDFS() : AbsPetriAtomVisitorDFS() {
 

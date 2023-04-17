@@ -1,11 +1,11 @@
 package dsl
 
-import converter.OCNetElements
 import error.ConsistencyCheckError
-import model.ErrorLevel
-import model.WellFormedOCNet
+import error.ErrorLevel
 import model.OCNetChecker
-import model.OCNetDSLConverter
+import model.OCNetElements
+import model.WellFormedOCNet
+import model.utils.OCNetDSLConverter
 
 class OCNetFacadeBuilder {
     var definedNetData: DefinedNetData? = null
@@ -20,7 +20,7 @@ class OCNetFacadeBuilder {
         val ocNet: WellFormedOCNet?,
     ) {
         val hasCriticalErrors
-            get() =  errors.find { it.level == ErrorLevel.CRITICAL } != null
+            get() =  errors.find { it.errorLevel == ErrorLevel.CRITICAL } != null
 
         fun requireConsistentOCNet(): WellFormedOCNet {
             return ocNet!!
@@ -34,7 +34,7 @@ class OCNetFacadeBuilder {
         val ocNetChecker = OCNetChecker(convertionResult.allPetriNodes)
 
         val errors = ocNetChecker.checkConsistency()
-        val ocNet = if (ocNetChecker.isConsistent) ocNetChecker.createConsistentOCNet() else null
+        val ocNet = if (ocNetChecker.isConsistent) ocNetChecker.createWellFormedOCNet() else null
 
         val definedNetData = DefinedNetData(
             ocNet = ocNet,

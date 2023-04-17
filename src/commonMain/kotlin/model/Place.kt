@@ -5,19 +5,20 @@ enum class PlaceType {
     INPUT,
     OUTPUT
 }
-class Place(
+
+data class Place(
     override val id: String,
-    override val label : String,
-    val type : ObjectType,
-    val placeType : PlaceType,
+    override val label: String,
+    val type: ObjectType,
+    val placeType: PlaceType,
     override val inputArcs: MutableList<Arc> = mutableListOf(),
-    override val outputArcs: MutableList<Arc> = mutableListOf()
+    override val outputArcs: MutableList<Arc> = mutableListOf(),
+    var terminateTokens: Int? = null,
+    var initialTokens: Int? = null,
+    override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX,
 ) : PetriNode, LabelHolder, ConsistencyCheckable {
 
-    override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
-    var tokens : Int = 0
-    var terminateTokens: Int? = null
-    var initialTokens : Int? = null
+    var tokens: Int = 0
 
     override fun addInputArc(arc: Arc) {
         when (placeType) {
@@ -35,12 +36,20 @@ class Place(
         visitor.visitPlace(this)
     }
 
+    override fun copyWithoutConnections(): PetriNode {
+        return copy(
+            inputArcs = mutableListOf(),
+            outputArcs = mutableListOf(),
+
+        )
+    }
+
     fun consumeTokens(amount: Int) {
         require(tokens >= amount)
         tokens -= amount
     }
 
-    fun consumeAllTokens() : Int {
+    fun consumeAllTokens(): Int {
         return tokens
     }
 
@@ -74,7 +83,7 @@ class Place(
     }
 
     override fun hashCode(): Int {
-        var result = label?.hashCode() ?: 0
+        var result = label.hashCode() ?: 0
         result = 31 * result + type.hashCode()
         result = 31 * result + placeType.hashCode()
         result = 31 * result + inputArcs.hashCode()
@@ -83,6 +92,4 @@ class Place(
         result = 31 * result + tokens
         return result
     }
-
-
 }

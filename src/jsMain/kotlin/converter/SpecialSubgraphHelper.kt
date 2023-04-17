@@ -7,10 +7,11 @@ import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
 import error.ErrorLevel
+import parse.SemanticError
 
 class SpecialSubgraphHelper(
     private val dslElementsContainer: DSLElementsContainer,
-    private val errorReporterContainer: SemanticErrorReporterContainer,
+    private val errorReporterContainer: SemanticDomainErrorReporterContainer,
 ) {
     private val elementSavers: Map<String /* SubgraphSpecialTypes */, SubgraphElementSaver> = buildMap {
         put(SubgraphSpecialTypes.Places, PlaceSaver(dslElementsContainer, errorReporterContainer))
@@ -27,7 +28,7 @@ class SpecialSubgraphHelper(
 
     class InputsForTypeSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) : SubgraphElementSaver(
         SubgraphSpecialTypes.InitialMarking, errorReporterContainer
     ) {
@@ -42,7 +43,7 @@ class SpecialSubgraphHelper(
 
     class OutputsForTypeSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) : SubgraphElementSaver(
         SubgraphSpecialTypes.InitialMarking, errorReporterContainer
     ) {
@@ -57,7 +58,7 @@ class SpecialSubgraphHelper(
 
     class PlacesForTypeSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) : SubgraphElementSaver(
         SubgraphSpecialTypes.InitialMarking, errorReporterContainer
     ) {
@@ -77,7 +78,7 @@ class SpecialSubgraphHelper(
 
     class InitialMarkingSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) : SubgraphElementSaver(
         SubgraphSpecialTypes.InitialMarking, errorReporterContainer
     ) {
@@ -101,10 +102,10 @@ class SpecialSubgraphHelper(
         override fun checkNodeIsOk(ast: ASTBaseNode): Boolean {
             if (!checkNodeIsAcceptable(ast)) {
                 pushError(
-                    SemanticErrorAST(
+                    SemanticError(
                         "expected node or comment, but encountered different type: ${ast.type}",
                         relatedAst = ast,
-                        level = ErrorLevel.WARNING
+                        errorLevel = ErrorLevel.WARNING
                     )
                 )
                 return false
@@ -116,7 +117,7 @@ class SpecialSubgraphHelper(
 
     class PlaceSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) :
         SubgraphElementSaver(SubgraphSpecialTypes.Places, errorReporterContainer) {
         override fun saveNode(ast: ASTBaseNode) {
@@ -128,7 +129,7 @@ class SpecialSubgraphHelper(
 
     class TransitionSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) : SubgraphElementSaver(
         SubgraphSpecialTypes.Transitions, errorReporterContainer
     ) {
@@ -141,7 +142,7 @@ class SpecialSubgraphHelper(
 
     class ObjectTypeSaver(
         private val dslElementsContainer: DSLElementsContainer,
-        errorReporterContainer: SemanticErrorReporterContainer,
+        errorReporterContainer: SemanticDomainErrorReporterContainer,
     ) : SubgraphElementSaver(
         SubgraphSpecialTypes.ObjectTypes, errorReporterContainer
     ) {
@@ -192,12 +193,12 @@ class SpecialSubgraphHelper(
 
     abstract class SubgraphElementSaver(
         val subgraphSpecialType: dynamic, /* SubgraphSpecialTypes */
-        val semanticErrorReporterContainer: SemanticErrorReporterContainer,
-    ) : SemanticErrorReporter by semanticErrorReporterContainer {
+        val semanticErrorReporterContainer: SemanticDomainErrorReporterContainer,
+    ) : ErrorReporterContainer by semanticErrorReporterContainer {
         abstract fun saveNode(ast: ASTBaseNode)
         private var hasSaved: Boolean = false
         protected var subgraphName: String? = null
-        protected fun pushError(error: SemanticErrorAST) {
+        protected fun pushError(error: SemanticError) {
             semanticErrorReporterContainer.pushError(error)
         }
 
@@ -226,10 +227,10 @@ class SpecialSubgraphHelper(
         protected open fun checkNodeIsOk(ast: ASTBaseNode): Boolean {
             if (!checkNodeIsAcceptable(ast)) {
                 pushError(
-                    SemanticErrorAST(
+                    SemanticError(
                         "expected node or comment, but encountered different type: ${ast.type}",
                         relatedAst = ast,
-                        level = ErrorLevel.WARNING
+                        errorLevel = ErrorLevel.WARNING
                     )
                 )
                 return false
@@ -246,10 +247,10 @@ class SpecialSubgraphHelper(
             console.log("checking hits for $fullGraphName")
             if (!subgraphHitCount.canHit(fullGraphName)) {
                 errorReporterContainer.pushError(
-                    SemanticErrorAST(
+                    SemanticError(
                         "has already encountered block of this type: ${ast.specialType}",
                         relatedAst = ast,
-                        level = ErrorLevel.WARNING
+                        errorLevel = ErrorLevel.WARNING
                     )
                 )
             } else {

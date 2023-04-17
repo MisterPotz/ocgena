@@ -9,12 +9,3 @@
 @file:JsQualifier("AST") // because AST is exported as namespace
 package ast
 
-external class PeggySyntaxError {
-    val message: String;
-    val expected: Array<dynamic /* Expectation */ >;
-    val found: String?;
-    val location: FileRange;
-    val name: String
-
-
-}

@@ -3,49 +3,13 @@ package converter
 import ast.*
 import dsl.OCScopeImpl
 import dsl.OCScopeImplCreator
+import error.Error
 import error.ErrorLevel
 import kotlinx.js.Object
 import kotlinx.js.jso
-import parse.OCDotParseResult
+import parse.SemanticError
 import kotlin.reflect.KClass
 
-
-class ASTVisitorPath(val path: MutableList<ASTBaseNode>) {
-    fun push(ast: ASTBaseNode) {
-        path.add(ast)
-    }
-
-    fun pop(ast: ASTBaseNode) {
-        if (path.isEmpty()) return
-        path.removeLast()
-    }
-
-    fun isAtBlockOf(type: dynamic /* Types */): Boolean {
-        return path.last().type == type
-    }
-
-    fun isAtOcNet(): Boolean {
-        return isAtBlockOf(Types.Ocnet)
-    }
-
-    fun isAtSubgraph(): Boolean {
-        return isAtBlockOf(Types.Subgraph)
-    }
-}
-
-abstract class PathAcceptingASTVisitorBFS() : OCDotASTVisitorBFS, PathAcceptorVisitorBFS {
-    protected var path: ASTVisitorPath? = null
-    protected val currentPath: ASTVisitorPath
-        get() = path!!
-
-    val last: ASTBaseNode
-        get() = currentPath.path.last()
-
-    override fun withPath(astVisitorPath: ASTVisitorPath): OCDotASTVisitorBFS {
-        path = astVisitorPath
-        return this
-    }
-}
 
 object Utils {
     fun filterElementsByType(elements: Array<ASTBaseNode>, type: dynamic): List<dynamic> {
@@ -53,12 +17,6 @@ object Utils {
     }
 }
 
-
-data class SemanticErrorAST(
-    val message: String,
-    val relatedAst: ASTBaseNode,
-    val level: ErrorLevel,
-)
 
 class SubgraphAssociations() {
     val namedSubgraphs: MutableMap<String, Subgraph> = mutableMapOf()
@@ -85,12 +43,12 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
 
     val subgraphAssociations: SubgraphAssociations = SubgraphAssociations()
 
-    val placeToInitialMarking : MutableMap<String, Int> = mutableMapOf()
-    val placeToObjectType : MutableMap<String, String> = mutableMapOf()
-    val inputPlaceLabels : MutableList<String> = mutableListOf()
-    val outputPlaceLabels : MutableList<String> = mutableListOf()
+    val placeToInitialMarking: MutableMap<String, Int> = mutableMapOf()
+    val placeToObjectType: MutableMap<String, String> = mutableMapOf()
+    val inputPlaceLabels: MutableList<String> = mutableListOf()
+    val outputPlaceLabels: MutableList<String> = mutableListOf()
 
-    val savedObjectTypes : Map<String, Node>
+    val savedObjectTypes: Map<String, Node>
         get() = objectTypes
     val savedPlaces: Map<String, Node>
         get() = places
@@ -104,7 +62,7 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
         places[place.id.value] = place
     }
 
-    fun rememberInitialMarkingForPlace(placeLabel : String, initialTokens : Int) {
+    fun rememberInitialMarkingForPlace(placeLabel: String, initialTokens: Int) {
         console.log("saving $placeLabel initial tokens $initialTokens")
         placeToInitialMarking[placeLabel] = initialTokens
     }
@@ -114,13 +72,13 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
         inputPlaceLabels.add(placeLabel)
     }
 
-    fun recallIfPlaceIsInput(placeLabel: String) : Boolean {
+    fun recallIfPlaceIsInput(placeLabel: String): Boolean {
         val input = inputPlaceLabels.find { it == placeLabel } != null
         console.log("place $placeLabel is input $input")
         return input
     }
 
-    fun recallIfPlaceIsOutput(placeLabel: String) : Boolean {
+    fun recallIfPlaceIsOutput(placeLabel: String): Boolean {
         val output = outputPlaceLabels.find { it == placeLabel } != null
         console.log("place $placeLabel is output $output")
         return output
@@ -131,7 +89,7 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
         outputPlaceLabels.add(placeLabel)
     }
 
-    fun rememberObjectTypeForPlace(placeLabel : String, objectTypeLabel : String) {
+    fun rememberObjectTypeForPlace(placeLabel: String, objectTypeLabel: String) {
         placeToObjectType[placeLabel] = objectTypeLabel
     }
 
@@ -143,11 +101,11 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
         objectTypes[objectType.id.value] = objectType
     }
 
-    fun recallObjectTypeForPlace(placeLabel: String) : String? {
+    fun recallObjectTypeForPlace(placeLabel: String): String? {
         return placeToObjectType[placeLabel]
     }
 
-    fun recallInitialTokensForPlace(placeLabel: String) : Int? {
+    fun recallInitialTokensForPlace(placeLabel: String): Int? {
         val value = placeToInitialMarking[placeLabel]
         console.log("for place $placeLabel have initial $value")
         return value
@@ -162,224 +120,22 @@ class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
     }
 }
 
-class SemanticErrorReporterContainer() : SemanticErrorReporter {
-    private val collectedErrors = mutableListOf<SemanticErrorAST>()
+class SemanticDomainErrorReporterContainer() : ErrorReporterContainer {
+    private val collectedErrors = mutableListOf<Error>()
 
-    fun pushError(error: SemanticErrorAST) {
+    fun pushError(error: Error) {
         collectedErrors.add(error)
     }
 
-    override fun collectReport(): List<SemanticErrorAST> {
+    override fun collectReport(): List<Error> {
         return collectedErrors
     }
 }
 
-class StructureCheckASTVisitorBFS(
-    private val errorReporterContainer: SemanticErrorReporterContainer,
-) : PathAcceptingASTVisitorBFS(), SemanticErrorReporter by errorReporterContainer {
-
-    fun pushError(error: SemanticErrorAST) {
-        errorReporterContainer.pushError(error)
-    }
-
-    fun countElements(array: Array<ASTBaseNode>, type: dynamic): Int {
-        return array.count { it.type == type }
-    }
-
-    override fun visitOCDot(ast: OcDot) {
-        val ocNets = countElements(ast.body, Types.Ocnet)
-
-        if (ocNets > 1) {
-            pushError(
-                SemanticErrorAST(
-                    message = "Only 1 ocnet block is allowed",
-                    relatedAst = ast,
-                    level = ErrorLevel.CRITICAL
-                )
-            )
-        }
-        if (ocNets == 0) {
-            pushError(
-                SemanticErrorAST(
-                    message = "At least 1 ocnet block must be defined",
-                    relatedAst = ast,
-                    level = ErrorLevel.WARNING
-                )
-            )
-        }
-    }
-
-    override fun visitOCNet(ast: OcNet) {
-        val placesBlockCount = ast.body.count {
-            it.type == Types.Subgraph
-                    && (it as Subgraph).specialType == SubgraphSpecialTypes.Places
-        }
-
-        val transitionBlockCount = ast.body.count {
-            it.type == Types.Subgraph
-                    && (it as Subgraph).specialType == SubgraphSpecialTypes.Transitions
-        }
-
-        if (placesBlockCount == 0 || transitionBlockCount == 0) {
-            pushError(
-                SemanticErrorAST(
-                    message = "places or transitions blocks are missing",
-                    relatedAst = ast,
-                    level = ErrorLevel.WARNING
-                )
-            )
-        }
-    }
-
-    override fun visitNode(ast: Node) {
-
-    }
-
-    override fun visitEdge(ast: Edge) {
-
-    }
-
-    override fun visitSubgraph(ast: Subgraph) {
-
-    }
+interface ErrorReporterContainer {
+    fun collectReport(): List<Error>
 }
 
-interface SemanticErrorReporter {
-    fun collectReport(): List<SemanticErrorAST>
-}
-
-val Subgraph.isTransitionsBlock: Boolean
-    get() = specialType == SubgraphSpecialTypes.Transitions
-
-val Subgraph.isPlacesBlock: Boolean
-    get() = specialType == SubgraphSpecialTypes.Places
-
-val Subgraph.isSpecial: Boolean
-    get() = specialType != null
-
-class NormalSubgraphHelper(
-    val dslElementsContainer: DSLElementsContainer,
-    val errorReporterContainer: SemanticErrorReporterContainer,
-) : SemanticErrorReporter by errorReporterContainer {
-
-    fun checkElementCanBeSaved(ast: ASTBaseNode): Boolean {
-        return ast.type == Types.Node || ast.type == Types.Edge
-    }
-
-    fun checkNodeIsAcceptable(ast: ASTBaseNode): Boolean {
-        return when (ast.type) {
-            Types.Attribute, Types.Attributes, Types.Edge, Types.Node, Types.Subgraph, Types.Comment -> {
-                true
-            }
-
-            else -> {
-                false
-            }
-        }
-    }
-
-    fun trySaveSubgraph(ast: Subgraph) {
-        if (ast.isSpecial) return
-        dslElementsContainer.rememberSubgraph(ast)
-    }
-}
-
-class DelegateOCDotASTVisitorBFS(
-    private val visitors: List<PathAcceptorVisitorBFS>,
-) : OCDotASTVisitorBFS {
-    private val currentPath = ASTVisitorPath(mutableListOf())
-
-    override fun visitOCDot(ast: OcDot) {
-        currentPath.push(ast)
-        for (astNode in ast.body) {
-            val castAstNode = astNode as ASTBaseNode
-            when (castAstNode.type) {
-                Types.Ocnet -> {
-                    doDelegateVisit(castAstNode as OcNet)
-                    visitOCNet(castAstNode)
-                }
-
-                Types.Comment -> {
-                    // skip
-                }
-            }
-        }
-        currentPath.pop(ast)
-    }
-
-    private fun <T : ASTBaseNode> doDelegateVisit(astNode: T) {
-        for (visitor in visitors) {
-            val visitorForPath = visitor.withPath(currentPath)
-
-            with(visitorForPath) {
-                when (astNode.type) {
-                    Types.Ocnet -> visitOCNet(astNode as OcNet)
-                    Types.Attribute -> Unit
-                    Types.Attributes -> Unit
-                    Types.Edge -> visitEdge(astNode as Edge)
-                    Types.Subgraph -> visitSubgraph(astNode as Subgraph)
-                    Types.Node -> visitNode(astNode as Node)
-                    else -> Unit
-                }
-            }
-        }
-    }
-
-    override fun visitOCNet(ast: OcNet) {
-        currentPath.push(ast)
-
-        for (stmt in ast.body) {
-            val castNode = stmt as ASTBaseNode
-            doDelegateVisit(castNode)
-
-        }
-
-        currentPath.pop(ast)
-    }
-
-    override fun visitNode(ast: Node) = Unit
-
-    override fun visitEdge(ast: Edge) = Unit
-
-    override fun visitSubgraph(ast: Subgraph) = Unit
-}
-
-class OCDotTransitionsCollector() {
-
-}
-
-class SemanticParseToDSLConverter(dslElementsContainer: DSLElementsContainer) {
-
-}
-
-
-abstract class ChainStage<In : Any, Out : Any>(
-    val inputClass: KClass<In>,
-    val outputClass: KClass<Out>,
-) {
-    @Suppress("UNCHECKED_CAST")
-    fun doPerform(input: Any): ChainResult<Out> {
-        return perform(input as In)
-    }
-
-    protected abstract fun perform(input: In): ChainResult<Out>
-
-
-    companion object {
-        const val LOGGING = true
-    }
-}
-
-data class ChainResult<T>(
-    val success: T? = null,
-    val failure: OCDotParseResult? = null,
-) {
-    val isSuccess
-        get() = success != null
-
-    val isFailure
-        get() = failure != null
-}
 
 class SyntaxParsingStage() : ChainStage<String, Object>(String::class, outputClass = Object::class) {
     private fun tryParse(ocDot: String): Result<Object> {
@@ -455,7 +211,7 @@ class SemanticParsingStage(
 
 class SemanticAnalysisPostProcessingStage(
     private val dslElementsContainer: DSLElementsContainer,
-    private val errorReporterContainer: SemanticErrorReporterContainer,
+    private val errorReporterContainer: SemanticDomainErrorReporterContainer,
 ) :
     ChainStage<DSLElementsContainer, DSLElementsContainer>(DSLElementsContainer::class, DSLElementsContainer::class) {
     private fun hasCriticalErrors(errors: List<SemanticErrorAST>): Boolean {
@@ -497,7 +253,7 @@ class SemanticAnalysisPostProcessingStage(
 
 class DomainConversionStage(
     private val dslElementsContainer: DSLElementsContainer,
-    private val errorReporterContainer: SemanticErrorReporterContainer,
+    private val errorReporterContainer: SemanticDomainErrorReporterContainer,
 ) : ChainStage<DSLElementsContainer, OCDotParseResult.Success>(
     DSLElementsContainer::class,
     OCDotParseResult.Success::class
@@ -509,10 +265,12 @@ class DomainConversionStage(
         console.log(result)
 
         if (result.hasCriticalErrors) {
-            return ChainResult(failure = OCDotParseResult.DomainCheckCriticalErrorsFound(
-                message = "Domain checks failed for the given net",
-                collectedSemanticErrors = result.errors
-            ))
+            return ChainResult(
+                failure = OCDotParseResult.DomainCheckCriticalErrorsFound(
+                    message = "Domain checks failed for the given net",
+                    collectedSemanticErrors = result.errors
+                )
+            )
         } else {
             return ChainResult(
                 success = OCDotParseResult.Success(result)
@@ -566,7 +324,7 @@ actual class OCDotParser {
 
     private val ocScopeImpl = OCScopeImplCreator().createRootOCScope()
     private val dslElementsContainer = DSLElementsContainer(ocScopeImpl)
-    private val errorReporterContainer = SemanticErrorReporterContainer()
+    private val errorReporterContainer = SemanticDomainErrorReporterContainer()
 
     private val transitionsCollector = OCDotTransitionsCollector()
     private val structureCheckerVisitor = StructureCheckASTVisitorBFS(errorReporterContainer)

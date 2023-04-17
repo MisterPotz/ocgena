@@ -5,13 +5,14 @@ import ast.Node
 import ast.OcDot
 import ast.OcNet
 import ast.Subgraph
+import error.Error
 
 class ElementsDeclarationsASTVisitorBFS(
     val dslElementsContainer: DSLElementsContainer,
-    private val semanticErrorReporter: SemanticErrorReporterContainer = SemanticErrorReporterContainer(),
-) : PathAcceptingASTVisitorBFS(), SemanticErrorReporter by semanticErrorReporter {
-    private val normalSubgraphHelper = NormalSubgraphHelper(dslElementsContainer, semanticErrorReporter)
-    private val specialSubgraphHelper = SpecialSubgraphHelper(dslElementsContainer, semanticErrorReporter)
+    private val errorReporter: SemanticDomainErrorReporterContainer = SemanticDomainErrorReporterContainer(),
+) : PathAcceptingASTVisitorBFS(), ErrorReporterContainer by errorReporter {
+    private val normalSubgraphHelper = NormalSubgraphHelper(dslElementsContainer, errorReporter)
+    private val specialSubgraphHelper = SpecialSubgraphHelper(dslElementsContainer, errorReporter)
 
     override fun visitOCDot(ast: OcDot) {}
 
@@ -30,7 +31,7 @@ class ElementsDeclarationsASTVisitorBFS(
         normalSubgraphHelper.trySaveSubgraph(ast)
     }
 
-    override fun collectReport(): List<SemanticErrorAST> {
-        return semanticErrorReporter.collectReport()
+    override fun collectReport(): List<Error> {
+        return errorReporter.collectReport()
     }
 }

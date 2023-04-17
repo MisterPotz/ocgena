@@ -1,14 +1,12 @@
 package model
 
-class Transition(
+data class Transition(
     override val id: String,
     override val label : String,
     override val inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    override val outputArcs: MutableList<Arc> = mutableListOf<Arc>()
-) : PetriNode, LabelHolder {
-
-
+    override val outputArcs: MutableList<Arc> = mutableListOf<Arc>(),
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
+) : PetriNode, LabelHolder {
 
     val inputPlaces : List<Place>
         get() = inputArcs.mapNotNull { it.tailNode }.filterIsInstance<Place>()
@@ -33,6 +31,13 @@ class Transition(
 
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitTransition(this)
+    }
+
+    override fun copyWithoutConnections(): PetriNode {
+        return copy(
+            inputArcs = mutableListOf(),
+            outputArcs = mutableListOf()
+        )
     }
 
     override fun isSameType(other: PetriNode): Boolean {
@@ -68,6 +73,4 @@ class Transition(
         result = 31 * result + outputPlaces.hashCode()
         return result
     }
-
-
 }

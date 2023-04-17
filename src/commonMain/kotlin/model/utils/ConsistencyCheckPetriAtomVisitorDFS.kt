@@ -1,6 +1,14 @@
-package model
+package model.utils
 
 import error.ConsistencyCheckError
+import model.AbsPetriAtomVisitorDFS
+import model.Arc
+import model.ObjectType
+import model.PetriAtom
+import model.Place
+import model.PlaceType
+import model.Transition
+import model.VariableArc
 
 class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,

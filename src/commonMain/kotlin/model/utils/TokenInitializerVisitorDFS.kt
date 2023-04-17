@@ -1,4 +1,7 @@
-package model
+package model.utils
+
+import model.AbsPetriAtomVisitorDFS
+import model.Place
 
 class TokenInitializerVisitorDFS : AbsPetriAtomVisitorDFS() {
     override fun doForPlaceBeforeDFS(place: Place): Boolean {

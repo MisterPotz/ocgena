@@ -1,4 +1,4 @@
-package model
+package model.utils
 
 import dsl.ArcDSL
 import dsl.NodeDSL
@@ -7,6 +7,13 @@ import dsl.OCNetDSLElements
 import dsl.PlaceDSL
 import dsl.TransitionDSL
 import dsl.VariableArcDSL
+import model.Arc
+import model.NormalArc
+import model.OCNetElementsImpl
+import model.ObjectType
+import model.Place
+import model.Transition
+import model.VariableArc
 
 class OCNetDSLConverter(
     private val ocNetDSLElements: OCNetDSLElements,

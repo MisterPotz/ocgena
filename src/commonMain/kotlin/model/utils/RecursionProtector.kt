@@ -1,4 +1,6 @@
-package model
+package model.utils
+
+import model.PetriAtom
 
 class RecursionProtector() {
     val visitedSet: MutableSet<PetriAtom> = mutableSetOf()
