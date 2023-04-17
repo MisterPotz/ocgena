@@ -35,6 +35,9 @@ export class OCDotToDOTConverter extends AST.Compiler {
 
   protected makeEdgeOpColorAttr(edgeOp: '->' | '=>', color: string | null): string {
     let colorAttr;
+    if (color == null) {
+      color = 'black';
+    }
     switch (edgeOp) {
       case "->":
         colorAttr = `color="${color}"`
@@ -57,7 +60,7 @@ export class OCDotToDOTConverter extends AST.Compiler {
       }
       pairs.push(firstPair)
 
-      for (let i = 1; i < size - 1; i++) {
+      for (let i = 0; i < size - 1; i++) {
         const pair: EdgePair = {
           from: ast.targets[i].id,
           to: ast.targets[i + 1].id,
@@ -66,25 +69,35 @@ export class OCDotToDOTConverter extends AST.Compiler {
         pairs.push(pair);
       }
 
+      return pairs;
     } else {
       return []
     }
   }
 
-  protected printEdgePair(edgePair: EdgePair, originalEdge: AST.Edge): string {
-    const foundColor = this.findColorAttr(originalEdge);
+  protected printEdgePair(edgePair: EdgePair, edge: AST.Edge, originalEdgeAttributes: AST.Attribute[]): string {
+    const foundColor = this.findColorAttr(edge);
     const color = this.makeEdgeOpColorAttr(edgePair.edgeOp, foundColor)
-    this.increaseIndent();
-    const value = `${this.stringify(edgePair.from)
-      } ${edgePair.edgeOp
-      } ${this.stringify(edgePair.to)
-      } [${color}; ${originalEdge.body
+    const from = this.stringify(edgePair.from);
+
+    const value = `${from} -> ${this.stringify(edgePair.to)
+      } [${color}; ${originalEdgeAttributes
         .map(this.stringify, this)
         .join('; ')
       }];`
 
-    this.decreaseIndent();
     return value;
+  }
+
+
+  protected indentAllButFirst(items : string[]) : string[] {
+    if (items.length == 0) return items;
+    let newItems = []
+    newItems.push(items[0]);
+    for (let i = 1; i < items.length; i++) {
+      newItems.push(this.indent(items[i]));
+    }
+    return newItems
   }
 
   protected override printEdge(ast: AST.Edge): string {
@@ -92,10 +105,13 @@ export class OCDotToDOTConverter extends AST.Compiler {
     if (edgePairs.length === 0) {
       return ""
     }
+    const colorFilteredAttrs = ast.body.filter((value) => {
+        return value.key.value !== 'color'
+    }, this)
 
-    return edgePairs.map((edgePair) => {
-      return this.printEdgePair(edgePair, ast);
-    })
+    return this.indentAllButFirst(edgePairs.map((edgePair) => {
+      return this.printEdgePair(edgePair, ast, colorFilteredAttrs);
+    }))
       .join('\n') + "\n";
   }
 
@@ -121,6 +137,15 @@ export class OCDotToDOTConverter extends AST.Compiler {
       return ""
     }
     return `${this.stringify(ast.key)} = ${this.stringify(ast.value)};`;
+  }
+
+  override stringify(ast: AST.EdgeRHSElement | AST.ASTNode): string {
+      const value = super.stringify(ast);
+      console.log(`value is "${value}"`)
+      if (isEmptyOrBlank(value)) { 
+        return "";
+      }
+      return value;
   }
 
   protected printOcNet(ast: AST.OcNet): string {

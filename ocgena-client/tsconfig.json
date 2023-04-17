@@ -12,6 +12,7 @@
     "baseUrl": ".",
     "outDir": "dist",
     "moduleResolution": "node",
+    "strictFunctionTypes": true,
     "declaration": false,
     "resolveJsonModule": true,
     "paths": {

@@ -36,7 +36,7 @@ describe("convertion from OCDot to plain dot", () => {
                     p2
                 }
 
-                p1 10=> t1 1-> p2 [  ];
+                p1 10=> t1 1-> p2 -> p3 [color="orange"];
 
                 subgraph s1 { 
                     subgraph ss1 { 
