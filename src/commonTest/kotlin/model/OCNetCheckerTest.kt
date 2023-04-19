@@ -37,7 +37,7 @@ class OCNetCheckerTest {
         val converter = OCNetDSLConverter(ocScopeImpl)
         val result = converter.convert()
         val places = result.places
-        val consistencyChecker = OCNetChecker(result.allPetriNodes)
+        val consistencyChecker = OCNetChecker(result)
         val consistencyResults = consistencyChecker.checkConsistency()
         assertTrue(
             consistencyResults.isEmpty(),
@@ -53,7 +53,7 @@ class OCNetCheckerTest {
         val ocScope = OCNetBuilder.define(block)
         val converter = OCNetDSLConverter(ocScope)
         val convertionResult = converter.convert()
-        val ocnetChecker = OCNetChecker(convertionResult.allPetriNodes)
+        val ocnetChecker = OCNetChecker(convertionResult)
         return ocnetChecker.checkConsistency()
     }
 
@@ -110,7 +110,7 @@ class OCNetCheckerTest {
         }
         val converter = OCNetDSLConverter(ocScope)
         val convertionResult = converter.convert()
-        val ocnetChecker = OCNetChecker(convertionResult.allPetriNodes)
+        val ocnetChecker = OCNetChecker(convertionResult)
         val errors = ocnetChecker.checkConsistency()
         val objectSearcher = ObjectsSearcher(ocScope)
 

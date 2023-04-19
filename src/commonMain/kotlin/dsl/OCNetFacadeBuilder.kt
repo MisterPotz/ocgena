@@ -31,7 +31,7 @@ class OCNetFacadeBuilder {
         val ocNetDSLElements = OCNetBuilder.define(block)
         val converter = OCNetDSLConverter(ocNetDSLElements)
         val convertionResult = converter.convert()
-        val ocNetChecker = OCNetChecker(convertionResult.allPetriNodes)
+        val ocNetChecker = OCNetChecker(convertionResult)
 
         val errors = ocNetChecker.checkConsistency()
         val ocNet = if (ocNetChecker.isConsistent) ocNetChecker.createWellFormedOCNet() else null
@@ -44,7 +44,7 @@ class OCNetFacadeBuilder {
         return BuiltOCNet(
             ocNetElements = convertionResult,
             errors = errors,
-            ocNet = ocNet
+            ocNet = ocNet,
         )
     }
 }

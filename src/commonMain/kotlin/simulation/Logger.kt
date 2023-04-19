@@ -1,6 +1,6 @@
 package simulation
 
-import model.Binding
+import model.ActiveBinding
 
 interface Logger {
     val loggingEnabled: Boolean
@@ -8,7 +8,7 @@ interface Logger {
     fun onStart()
 
     // TODO: pass in to visitors to log the performance
-    fun logBindingExecution(binding: Binding)
+    fun logBindingExecution(binding: ActiveBinding)
 
     fun onEnd()
     abstract fun onExecutionStep(stepIndex: Int)

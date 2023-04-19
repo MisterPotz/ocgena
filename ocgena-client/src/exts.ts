@@ -61,3 +61,15 @@ export function coerceAtLeast(value: number, minimumValue: number): number {
 export function coerceAtMost(value: number, maximumValue: number): number {
   return Math.min(value, maximumValue);
 }
+
+export function removeEmptyLineSpaces(input: string): string {
+  const lines = input.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === '') {
+      lines[i] = '';
+    } else {
+      lines[i] = lines[i].replace(/\t/g, '').replace(/\s/g, '');
+    }
+  }
+  return lines.join('\n');
+}

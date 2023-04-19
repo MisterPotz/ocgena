@@ -13,8 +13,6 @@ data class Place(
     val placeType: PlaceType,
     override val inputArcs: MutableList<Arc> = mutableListOf(),
     override val outputArcs: MutableList<Arc> = mutableListOf(),
-    var terminateTokens: Int? = null,
-    var initialTokens: Int? = null,
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX,
 ) : PetriNode, LabelHolder, ConsistencyCheckable {
 
@@ -44,18 +42,7 @@ data class Place(
         )
     }
 
-    fun consumeTokens(amount: Int) {
-        require(tokens >= amount)
-        tokens -= amount
-    }
 
-    fun consumeAllTokens(): Int {
-        return tokens
-    }
-
-    fun addTokens(amount: Int) {
-        tokens += amount
-    }
 
     override fun isSameType(other: PetriNode): Boolean {
         return other is Place
@@ -71,11 +58,10 @@ data class Place(
 
         other as Place
 
+        if (id != other.id) return false
         if (label != other.label) return false
         if (type != other.type) return false
         if (placeType != other.placeType) return false
-        if (inputArcs != other.inputArcs) return false
-        if (outputArcs != other.outputArcs) return false
         if (subgraphIndex != other.subgraphIndex) return false
         if (tokens != other.tokens) return false
 
@@ -83,11 +69,10 @@ data class Place(
     }
 
     override fun hashCode(): Int {
-        var result = label.hashCode() ?: 0
+        var result = id.hashCode()
+        result = 31 * result + label.hashCode()
         result = 31 * result + type.hashCode()
         result = 31 * result + placeType.hashCode()
-        result = 31 * result + inputArcs.hashCode()
-        result = 31 * result + outputArcs.hashCode()
         result = 31 * result + subgraphIndex
         result = 31 * result + tokens
         return result

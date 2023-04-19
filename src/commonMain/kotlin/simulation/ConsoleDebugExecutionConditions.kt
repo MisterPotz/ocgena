@@ -1,7 +1,7 @@
 package simulation
 
 import error.prettyPrint
-import model.Binding
+import model.ActiveBinding
 import model.WellFormedOCNet
 import utils.mprintln
 
@@ -11,11 +11,11 @@ class ConsoleDebugExecutionConditions() : ExecutionConditions {
         return false
     }
 
-    override suspend fun checkIfSuspend(ocNet: WellFormedOCNet, lastExecutionBinding: Binding) {
+    override suspend fun checkIfSuspend(ocNet: WellFormedOCNet, lastExecutionBinding: ActiveBinding) {
         Unit
     }
 
-    override suspend fun selectBindingToExecute(enabledBindings: List<Binding>): Binding {
+    override suspend fun selectBindingToExecute(enabledBindings: List<ActiveBinding>): ActiveBinding {
         mprintln("\tenabled bindings: \n${enabledBindings.prettyPrint().prependIndent()}")
         // by default, select the first one
         return enabledBindings.first()

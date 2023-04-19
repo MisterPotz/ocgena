@@ -1,4 +1,4 @@
-package converter
+package converter.visitors
 
 import ast.ASTBaseNode
 import ast.Edge
@@ -7,6 +7,7 @@ import ast.OcDot
 import ast.OcNet
 import ast.Subgraph
 import ast.Types
+import converter.ASTVisitorPath
 
 class DelegateOCDotASTVisitorBFS(
     private val visitors: List<PathAcceptorVisitorBFS>,

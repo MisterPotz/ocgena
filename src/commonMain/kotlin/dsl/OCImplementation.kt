@@ -97,7 +97,6 @@ class PlaceDSLImpl(
     override val label: String
         get() = finalLabel ?: labelFactory()
 
-    override var initialTokens: Int = 0
     override var placeType: PlaceType = PlaceType.NORMAL
 
     override fun toString(): String {

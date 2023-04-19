@@ -1,27 +1,31 @@
 package model
 
-class Binding(
+class ExecutedBinding(
+    private val transition: Transition,
+    private val consumedMap : MutableMap<String, Int>,
+    private val producedMap : MutableMap<String, Int>
+)
+
+interface BindingExecutor(
+    fun executeBinding
+)
+
+class ActiveBinding(
     private val transition: Transition,
 ) {
-
-    var executed : Boolean = false
+    var bindingIndex: Int = UNSET_BINDING_INDEX
+        private set
+    var loggingEnabled: Boolean = false
         private set
 
-    var bindingIndex : Int = UNSET_BINDING_INDEX
-        private set
-    var loggingEnabled : Boolean = false
-        private set
+    private val consumedMap: MutableMap<String, Int> = mutableMapOf()
+    private val producedMap: MutableMap<String, Int> = mutableMapOf()
 
-    private val consumedMap : MutableMap<String, Int> = mutableMapOf()
-    private val producedMap : MutableMap<String, Int> = mutableMapOf()
-
-        // precondition - this binding is enabled
+    // precondition - this binding is enabled
     fun execute(
-        bindingIndex : Int,
-        loggingEnabled : Boolean
+        bindingIndex: Int,
+        loggingEnabled: Boolean,
     ) {
-        // TODO: fix how consumed / produced are calculated
-        require(!executed)
         require(transition.isBindingEnabled())
 
         this.bindingIndex = bindingIndex
@@ -32,11 +36,11 @@ class Binding(
             val tailPlace = inputArc.requireTailPlace()
             when (inputArc) {
                 is VariableArc -> {
-
                     val consumedTokens = tailPlace.consumeAllTokens()
                     consumedMap[tailPlace.label] = consumedTokens
                     typeVariableConsumed[tailPlace.type] = consumedTokens
                 }
+
                 is NormalArc -> {
                     val consumedTokens = inputArc.multiplicity
                     consumedMap[tailPlace.label] = consumedTokens
@@ -53,19 +57,24 @@ class Binding(
                     if (producedTokens == 0 || producedTokens == null) continue
                     arrowPlace.addTokens(producedTokens)
                 }
+
                 is NormalArc -> {
-                    val producedTokens=  outputArc.multiplicity
+                    val producedTokens = outputArc.multiplicity
                     producedMap[arrowPlace.label] = producedTokens
                     arrowPlace.addTokens(producedTokens)
                 }
             }
         }
-        executed = true
+        return ExecutedBinding(
+            transition,
+            consumedMap,
+            producedMap
+        )
     }
 
     private fun logPlaceLabelMap(
-        map: MutableMap<String, Int>
-    ) : String {
+        map: MutableMap<String, Int>,
+    ): String {
         return map.map { (key, value) ->
             "$key ${value}"
         }.joinToString(", ")
@@ -77,12 +86,18 @@ class Binding(
                 index: ${bindingIndex.takeIf { it != UNSET_BINDING_INDEX } ?: "UNSET"} 
                 executed: $executed
                 transition:  $transition
-                ${if (loggingEnabled) { 
-                    "consumed map: [ ${logPlaceLabelMap(consumedMap)} ]" 
-                } else  {
-                    "logging disabled"
-                }}
-                ${if (loggingEnabled) { "produced map: [ ${logPlaceLabelMap(producedMap)} ]" } else "" }
+                ${
+            if (loggingEnabled) {
+                "consumed map: [ ${logPlaceLabelMap(consumedMap)} ]"
+            } else {
+                "logging disabled"
+            }
+        }
+                ${
+            if (loggingEnabled) {
+                "produced map: [ ${logPlaceLabelMap(producedMap)} ]"
+            } else ""
+        }
             )
         """.trimIndent()
     }
@@ -90,11 +105,11 @@ class Binding(
     companion object {
         const val UNSET_BINDING_INDEX = -1
         fun createEnabledBinding(
-            transition: Transition
-        ) : Binding? {
+            transition: Transition,
+        ): ActiveBinding? {
             val bindingEnabled = transition.isBindingEnabled()
             if (!bindingEnabled) return null
-            return Binding(transition)
+            return ActiveBinding(transition)
         }
     }
 }

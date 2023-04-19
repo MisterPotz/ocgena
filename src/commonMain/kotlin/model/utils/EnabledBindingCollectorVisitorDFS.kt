@@ -1,18 +1,22 @@
 package model.utils
 
 import model.AbsPetriAtomVisitorDFS
-import model.Binding
+import model.ActiveBinding
 import model.Transition
 
 class EnabledBindingCollectorVisitorDFS() : AbsPetriAtomVisitorDFS() {
 
-    private val obtainedEnabledBindings: MutableList<Binding> = mutableListOf()
+    private val obtainedEnabledBindings: MutableList<ActiveBinding> = mutableListOf()
 
+    fun fullReset() {
+        clear()
+        cleanStack()
+    }
     fun clear() {
         obtainedEnabledBindings.clear()
     }
 
-    fun getEnabledBindings(): List<Binding> {
+    fun getEnabledBindings(): List<ActiveBinding> {
         return obtainedEnabledBindings.toList()
     }
     override fun doForTransitionBeforeDFS(transition: Transition): Boolean {

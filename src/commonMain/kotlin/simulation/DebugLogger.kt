@@ -1,10 +1,10 @@
 package simulation
 
-import model.Binding
+import model.ActiveBinding
 import utils.mprintln
 
 class DebugLogger : Logger {
-    private val executedBindings: MutableList<Binding> = mutableListOf()
+    private val executedBindings: MutableList<ActiveBinding> = mutableListOf()
     override val loggingEnabled: Boolean
         get() = true
 
@@ -12,7 +12,7 @@ class DebugLogger : Logger {
         mprintln("execution started")
     }
 
-    override fun logBindingExecution(binding: Binding) {
+    override fun logBindingExecution(binding: ActiveBinding) {
         mprintln("\texecute: ${binding.toString().prependIndent()}")
         executedBindings.add(binding)
     }

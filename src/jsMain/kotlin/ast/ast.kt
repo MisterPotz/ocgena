@@ -12,9 +12,7 @@ package ast
 import ClassParts
 import Kind
 import Kind1
-import ParseFunction
 import Readonly
-import declarations.FileRange
 import kotlin.js.*
 import org.khronos.webgl.*
 import org.w3c.dom.*
@@ -128,7 +126,6 @@ external interface ParseOptions {
 }
 
 
-external var parse: ParseFunction
 external var Types: `T$0`
 
 external fun isASTBaseNode(value: Any): Boolean

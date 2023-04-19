@@ -1,6 +1,7 @@
-package converter
+package converter.visitors
 
 import ast.ASTBaseNode
+import converter.ASTVisitorPath
 
 abstract class PathAcceptingASTVisitorBFS() : OCDotASTVisitorBFS, PathAcceptorVisitorBFS {
     protected var path: ASTVisitorPath? = null

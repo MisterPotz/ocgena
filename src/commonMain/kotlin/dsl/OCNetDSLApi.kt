@@ -147,13 +147,10 @@ interface TypeScope : OCScope {
 
 
 interface OCPlaceScope {
-    var initialTokens: Int
     var objectType: ObjectTypeDSL
     val label: String
     var placeType: PlaceType
 }
-
-
 
 interface SubgraphDSL : ArcsAcceptor, TransitionAcceptor {
     val label : String

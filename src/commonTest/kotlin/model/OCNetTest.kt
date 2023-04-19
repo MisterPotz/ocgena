@@ -4,6 +4,11 @@ import dsl.OCNetFacadeBuilder
 import error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import simulation.ConsoleDebugExecutionConditions
+import simulation.DebugLogger
+import simulation.Marking
+import simulation.SimulationCreator
+import simulation.SimulationParams
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
@@ -14,7 +19,6 @@ class OCNetTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
             place {
-                initialTokens = 4
                 placeType = PlaceType.INPUT
             }
                 .arcTo(transition { })
@@ -24,11 +28,16 @@ class OCNetTest {
             ocNet,
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         )
-        requireNotNull(ocNet)
-        ocNet.run(
-            executionConditions = WellFormedOCNet.ConsoleDebugExecutionConditions(),
-            logger = WellFormedOCNet.DebugLogger()
-        )
+        val simulatorCreator = SimulationCreator(
+            ocNet,
+            ConsoleDebugExecutionConditions(),
+            DebugLogger(),
+            SimulationParams(
+                initialMarking = Marking.of {
+                    put("p1", 4)
+                }
+            ))
+        simulatorCreator.createSimulationTask().prepareAndRun()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,12 +47,10 @@ class OCNetTest {
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
 
             place {
-                initialTokens = 2
                 placeType = PlaceType.INPUT
             }.arcTo(transition("t1"))
 
             place {
-                initialTokens = 4
                 placeType = PlaceType.INPUT
             }
                 .arcTo(transition("t1"))
@@ -59,9 +66,14 @@ class OCNetTest {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         }
         requireNotNull(ocNet)
-        ocNet.run(
-            executionConditions = WellFormedOCNet.ConsoleDebugExecutionConditions(),
-            logger = WellFormedOCNet.DebugLogger()
+        val simulatorCreator =
+            SimulationCreator(ocNet, ConsoleDebugExecutionConditions(), DebugLogger(), SimulationParams(
+                initialMarking = Marking.of {
+                    put("p1", 2)
+                    put("p2", 4)
+                }
+            )
         )
+        simulatorCreator.createSimulationTask().prepareAndRun()
     }
 }

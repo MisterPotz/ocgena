@@ -1,4 +1,4 @@
-package converter
+package converter.visitors
 
 import ast.ASTBaseNode
 import ast.Edge
@@ -8,6 +8,8 @@ import ast.OcNet
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
+import converter.ErrorReporterContainer
+import converter.SemanticDomainErrorReporterContainer
 import error.Error
 import error.ErrorLevel
 import parse.SemanticError

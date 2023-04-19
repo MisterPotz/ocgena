@@ -1,4 +1,4 @@
-package converter
+package converter.visitors
 
 import ast.Edge
 import ast.Node

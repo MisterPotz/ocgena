@@ -141,7 +141,6 @@ export class OCDotToDOTConverter extends AST.Compiler {
 
   override stringify(ast: AST.EdgeRHSElement | AST.ASTNode): string {
       const value = super.stringify(ast);
-      console.log(`value is "${value}"`)
       if (isEmptyOrBlank(value)) { 
         return "";
       }

@@ -1,140 +1,18 @@
 package converter
 
 import ast.*
-import dsl.OCScopeImpl
+import converter.visitors.DelegateOCDotASTVisitorBFS
+import converter.visitors.ElementsDeclarationsASTVisitorBFS
+import converter.visitors.StructureCheckASTVisitorBFS
+import declarations.ocdot.PeggySyntaxError
 import dsl.OCScopeImplCreator
 import error.Error
 import error.ErrorLevel
 import kotlinx.js.Object
 import kotlinx.js.jso
+import model.WellFormedOCNet
 import parse.SemanticError
 import kotlin.reflect.KClass
-
-
-object Utils {
-    fun filterElementsByType(elements: Array<ASTBaseNode>, type: dynamic): List<dynamic> {
-        return elements.filter { it.type == type }
-    }
-}
-
-
-class SubgraphAssociations() {
-    val namedSubgraphs: MutableMap<String, Subgraph> = mutableMapOf()
-
-    fun rememberSubgraph(subgraph: Subgraph) {
-        subgraph.id?.value?.let {
-            namedSubgraphs[it] = subgraph
-        }
-    }
-
-    fun containsSubgraph(subgraph: Subgraph): Boolean {
-        return subgraph.id?.value in namedSubgraphs
-    }
-}
-
-class DSLElementsContainer(val ocScopeImpl: OCScopeImpl) {
-    private val places: MutableMap<String, Node> = mutableMapOf()
-
-    private val objectTypes: MutableMap<String, Node> = mutableMapOf()
-
-    private val transitions: MutableMap<String, Node> = mutableMapOf()
-
-    private val edgeBlocks: MutableList<Edge> = mutableListOf()
-
-    val subgraphAssociations: SubgraphAssociations = SubgraphAssociations()
-
-    val placeToInitialMarking: MutableMap<String, Int> = mutableMapOf()
-    val placeToObjectType: MutableMap<String, String> = mutableMapOf()
-    val inputPlaceLabels: MutableList<String> = mutableListOf()
-    val outputPlaceLabels: MutableList<String> = mutableListOf()
-
-    val savedObjectTypes: Map<String, Node>
-        get() = objectTypes
-    val savedPlaces: Map<String, Node>
-        get() = places
-    val savedTransitions: Map<String, Node>
-        get() = transitions
-
-    val savedEdgeBlocks: List<Edge>
-        get() = edgeBlocks
-
-    fun rememberPlace(place: Node) {
-        places[place.id.value] = place
-    }
-
-    fun rememberInitialMarkingForPlace(placeLabel: String, initialTokens: Int) {
-        console.log("saving $placeLabel initial tokens $initialTokens")
-        placeToInitialMarking[placeLabel] = initialTokens
-    }
-
-    fun rememberPlaceIsInput(placeLabel: String) {
-        console.log("remembered input $placeLabel")
-        inputPlaceLabels.add(placeLabel)
-    }
-
-    fun recallIfPlaceIsInput(placeLabel: String): Boolean {
-        val input = inputPlaceLabels.find { it == placeLabel } != null
-        console.log("place $placeLabel is input $input")
-        return input
-    }
-
-    fun recallIfPlaceIsOutput(placeLabel: String): Boolean {
-        val output = outputPlaceLabels.find { it == placeLabel } != null
-        console.log("place $placeLabel is output $output")
-        return output
-    }
-
-    fun rememberPlaceIsOutput(placeLabel: String) {
-        console.log("remembered output $placeLabel")
-        outputPlaceLabels.add(placeLabel)
-    }
-
-    fun rememberObjectTypeForPlace(placeLabel: String, objectTypeLabel: String) {
-        placeToObjectType[placeLabel] = objectTypeLabel
-    }
-
-    fun rememberSubgraph(subgraph: Subgraph) {
-        subgraphAssociations.rememberSubgraph(subgraph)
-    }
-
-    fun rememberObjectType(objectType: Node) {
-        objectTypes[objectType.id.value] = objectType
-    }
-
-    fun recallObjectTypeForPlace(placeLabel: String): String? {
-        return placeToObjectType[placeLabel]
-    }
-
-    fun recallInitialTokensForPlace(placeLabel: String): Int? {
-        val value = placeToInitialMarking[placeLabel]
-        console.log("for place $placeLabel have initial $value")
-        return value
-    }
-
-    fun rememberTransition(transition: Node) {
-        transitions[transition.id.value] = transition
-    }
-
-    fun rememberEdgeBlock(edge: Edge) {
-        edgeBlocks.add(edge)
-    }
-}
-
-class SemanticDomainErrorReporterContainer() : ErrorReporterContainer {
-    private val collectedErrors = mutableListOf<Error>()
-
-    fun pushError(error: Error) {
-        collectedErrors.add(error)
-    }
-
-    override fun collectReport(): List<Error> {
-        return collectedErrors
-    }
-}
-
-interface ErrorReporterContainer {
-    fun collectReport(): List<Error>
-}
 
 
 class SyntaxParsingStage() : ChainStage<String, Object>(String::class, outputClass = Object::class) {
@@ -318,6 +196,16 @@ class ParsingChain(
     }
 }
 
+interface OcDotParseResult {
+    val ocNet: WellFormedOCNet?
+    val errors : List<Error>
+}
+
+class PeggySyntaxErrorWrapper(peggySyntaxError: PeggySyntaxError) : Error {
+    override val message: String = peggySyntaxError.message
+    override val errorLevel: ErrorLevel = ErrorLevel.CRITICAL
+}
+
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 actual class OCDotParser {
@@ -326,7 +214,6 @@ actual class OCDotParser {
     private val dslElementsContainer = DSLElementsContainer(ocScopeImpl)
     private val errorReporterContainer = SemanticDomainErrorReporterContainer()
 
-    private val transitionsCollector = OCDotTransitionsCollector()
     private val structureCheckerVisitor = StructureCheckASTVisitorBFS(errorReporterContainer)
     private val elementsDeclarationsVisitor =
         ElementsDeclarationsASTVisitorBFS(dslElementsContainer, errorReporterContainer)
@@ -338,7 +225,22 @@ actual class OCDotParser {
         )
     )
 
+    private fun tryParse(ocDot: String): Result<Object> {
+        val rule = jso<ParseOption__0> {
+            rule = Types.OcDot
+        }
+        // always start parce from the root
+        return kotlin.runCatching {
+            parse(ocDot, rule)
+        }
+    }
+
     actual fun parse(ocDot: String): OCDotParseResult {
+        val parseResult = tryParse(ocDot)
+
+        if (parseResult.isFailure) {
+            PeggySyntaxErrorWrapper(parseResult.exceptionOrNull())
+        }
         val parsingChain = ParsingChain(
             chainStages = listOf(
                 SyntaxParsingStage(),
@@ -352,15 +254,5 @@ actual class OCDotParser {
 //        this.result = (result as? OCDotParseResult.Success)?.buildOCNet
 
         return result
-    }
-}
-
-object JsToCommonMapping {
-    fun filePosition(filePosition: FilePosition): FilePosition {
-        return filePosition
-    }
-
-    fun fileRange(fileRange: FileRange): FileRange {
-        return fileRange
     }
 }

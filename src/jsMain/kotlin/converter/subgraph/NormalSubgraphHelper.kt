@@ -1,9 +1,12 @@
-package converter
+package converter.subgraph
 
 import ast.ASTBaseNode
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
+import converter.DSLElementsContainer
+import converter.ErrorReporterContainer
+import converter.SemanticDomainErrorReporterContainer
 
 class NormalSubgraphHelper(
     val dslElementsContainer: DSLElementsContainer,

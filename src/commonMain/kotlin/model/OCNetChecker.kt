@@ -8,7 +8,7 @@ class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
-    private val allPetriNodes : List<PetriNode>,
+    private val ocNetElements: OCNetElements
 ) {
     private var lastConsistencyResults : List<ConsistencyCheckError>? = null
     private var inputPlaces : List<Place>? = null
@@ -25,7 +25,11 @@ class OCNetChecker(
         return WellFormedOCNet(
             inputPlaces = checkNotNull(inputPlaces),
             outputPlaces = checkNotNull(outputPlaces),
-            objectTypes = checkNotNull(objectTypes)// TODO: pass the object types
+            objectTypes = checkNotNull(objectTypes),
+            places = ocNetElements.places,
+            transitions = ocNetElements.transitions,
+            arcs = ocNetElements.arcs,
+            allPetriNodes = ocNetElements.allPetriNodes
         )
     }
 
@@ -37,7 +41,7 @@ class OCNetChecker(
 
         var maxSubgraphIndex = -1
         // case 1 - parse and check for isolated subgraphs
-        for (petriNode in allPetriNodes) {
+        for (petriNode in ocNetElements.allPetriNodes) {
             if (petriNode.subgraphIndex in 0..maxSubgraphIndex) {
                 // the subgraph of this place was already visited
             } else {

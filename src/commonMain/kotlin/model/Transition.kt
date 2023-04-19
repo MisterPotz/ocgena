@@ -21,8 +21,8 @@ data class Transition(
         outputArcs.add(arc)
     }
 
-    fun getEnabledBinding() : Binding? {
-        return Binding.createEnabledBinding(this)
+    fun getEnabledBinding() : ActiveBinding? {
+        return ActiveBinding.createEnabledBinding(this)
     }
 
     fun isBindingEnabled(): Boolean {
@@ -54,23 +54,17 @@ data class Transition(
 
         other as Transition
 
+        if (id != other.id) return false
         if (label != other.label) return false
-        if (inputArcs != other.inputArcs) return false
-        if (outputArcs != other.outputArcs) return false
         if (subgraphIndex != other.subgraphIndex) return false
-        if (inputPlaces != other.inputPlaces) return false
-        if (outputPlaces != other.outputPlaces) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = label?.hashCode() ?: 0
-        result = 31 * result + inputArcs.hashCode()
-        result = 31 * result + outputArcs.hashCode()
+        var result = id.hashCode()
+        result = 31 * result + label.hashCode()
         result = 31 * result + subgraphIndex
-        result = 31 * result + inputPlaces.hashCode()
-        result = 31 * result + outputPlaces.hashCode()
         return result
     }
 }

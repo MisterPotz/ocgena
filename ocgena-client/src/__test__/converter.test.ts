@@ -59,5 +59,13 @@ describe("convertion from OCDot to plain dot", () => {
 
         fs.writeFileSync("./test_artefacts/converter.test.txt", myOcDot + "\n" + plainDot);
         console.log(plainDot);
+        var expected = fs.readFileSync("./test_artefacts/ocdot_dot_ex1.txt")
+        
+        expect(s.removeEmptyLineSpaces(plainDot.trim()))
+            .toEqual(s.removeEmptyLineSpaces(expected.toString().trim()))
+    })
+
+    test('test string equality', () => {
+        expect('biba').toEqual("biba")
     })
 })

@@ -9,6 +9,10 @@ class CachedPetriNodes() {
         return labelToNode.keys.toList()
     }
 
+    fun allNodes() : List<PetriNode> {
+        return labelToNode.values.toList()
+    }
+
     fun has(petriNode: PetriNode): Boolean {
         return labelToNode.contains(petriNode.label)
     }
