@@ -1,49 +1,45 @@
 package simulation
 
 import kotlinx.coroutines.sync.Mutex
-import model.ActiveBinding
-import model.BindingExecutor
-import model.WellFormedOCNet
-import model.utils.EnabledBindingCollectorVisitorDFS
-
-class SimulationParams(
-    val initialMarking: Marking,
-)
+import simulation.binding.ActiveTransitionFinisherImpl
+import simulation.binding.InputToOutputPlaceResolverFactory
 
 class SimulationTask(
-    private val ocNet: WellFormedOCNet,
+    private val ocNet: SimulatableComposedOcNet<*>,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
-    private val simulationParams: SimulationParams,
-    private val bindingExecutor: BindingExecutor
+    private val randomBindingSelector: RandomBindingSelector,
 ) {
+    val state = ocNet.createInitialState()
+    private val runningSimulatableOcNet = RunningSimulatableOcNet(ocNet, state)
     private val executionLock: Mutex = Mutex()
+    private val stepExecutor = SimulationTaskStepExecutor(
+        ocNet,
+        state,
+        randomBindingSelector,
+        transitionFinisher = ActiveTransitionFinisherImpl(
+            state.pMarking,
+            inputToOutputPlaceResolver = InputToOutputPlaceResolverFactory(
+                arcMultiplicity = ocNet.arcMultiplicity,
+                arcs = ocNet.coreOcNet.arcs
+            ).create(),
+            logger
+        ),
+        logger = logger
+    )
 
     private fun prepare() {
-        ocNet.strictSetMarking(simulationParams.initialMarking)
+        ocNet.initialize()
     }
 
     private suspend fun run() {
-        val enabledBindingCollectorVisitor = EnabledBindingCollectorVisitorDFS()
-
         var stepIndex: Int = 0
 
-        while (!executionConditions.checkTerminateConditionSatisfied(ocNet)) {
+        while (!executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)) {
             logger.onExecutionStep(stepIndex)
-            // find enabled bindings throughout all the graph
-            for (inputPlace in ocNet.inputPlaces) {
-                inputPlace.acceptVisitor(enabledBindingCollectorVisitor)
-            }
-            val collectedEnabledBindings = enabledBindingCollectorVisitor.getEnabledBindings()
-            enabledBindingCollectorVisitor.fullReset()
-            if (collectedEnabledBindings.isEmpty()) {
-                break
-            }
-
-            val selectedBinding: ActiveBinding = executionConditions.selectBindingToExecute(collectedEnabledBindings)
-            selectedBinding.execute(stepIndex++, logger.loggingEnabled)
-            logger.logBindingExecution(selectedBinding)
-            executionConditions.checkIfSuspend(ocNet, lastExecutionBinding = selectedBinding)
+            stepExecutor.executeStep()
+//            logger.logBindingExecution(selectedBinding)
+//            executionConditions.checkIfSuspend()
         }
     }
 

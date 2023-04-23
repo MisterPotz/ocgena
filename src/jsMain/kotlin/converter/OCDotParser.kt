@@ -10,7 +10,7 @@ import error.Error
 import error.ErrorLevel
 import kotlinx.js.Object
 import kotlinx.js.jso
-import model.WellFormedOCNet
+import model.StaticCoreOcNet
 import parse.SemanticError
 import kotlin.reflect.KClass
 
@@ -197,7 +197,7 @@ class ParsingChain(
 }
 
 interface OcDotParseResult {
-    val ocNet: WellFormedOCNet?
+    val ocNet: StaticCoreOcNet?
     val errors : List<Error>
 }
 

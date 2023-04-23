@@ -1,15 +1,17 @@
 package simulation
 
-import model.ActiveBinding
+import model.ActiveFiringTransition
+import model.ExecutedBinding
 
 interface Logger {
     val loggingEnabled: Boolean
 
     fun onStart()
 
-    // TODO: pass in to visitors to log the performance
-    fun logBindingExecution(binding: ActiveBinding)
-
     fun onEnd()
     abstract fun onExecutionStep(stepIndex: Int)
+
+    fun onTransitionEnded(executedBinding: ExecutedBinding)
+
+    fun onTransitionStart(transition: ActiveFiringTransition)
 }

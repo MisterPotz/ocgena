@@ -7,13 +7,7 @@ import dsl.OCNetDSLElements
 import dsl.PlaceDSL
 import dsl.TransitionDSL
 import dsl.VariableArcDSL
-import model.Arc
-import model.NormalArc
-import model.OCNetElementsImpl
-import model.ObjectType
-import model.Place
-import model.Transition
-import model.VariableArc
+import model.*
 
 class OCNetDSLConverter(
     private val ocNetDSLElements: OCNetDSLElements,
@@ -133,10 +127,10 @@ class OCNetDSLConverter(
             getOrCreateTransition(transitionDSL)
         }
         return OCNetElementsImpl(
-            places = createdPlaces,
-            transitions = createdTransitions,
-            arcs = createdArcs,
-            objectTypes =  foundObjectTypes.values.toList()
+            places = Places(createdPlaces),
+            transitions = Transitions(createdTransitions),
+            arcs = Arcs(),
+            objectTypes =  ObjectTypes(foundObjectTypes.values.toList())
         )
     }
 }

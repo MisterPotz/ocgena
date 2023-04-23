@@ -2,19 +2,21 @@ package model
 
 import model.utils.NodesCacherVisitorDFS
 import model.utils.PetriNodesCopyTask
-import simulation.Marking
+
 
 /**
  * the net, formed with passed arguments, must already be consistent
  */
-data class WellFormedOCNet(
-    val inputPlaces: List<Place>,
-    val outputPlaces: List<Place>,
-    override val places: List<Place>,
-    override val transitions: List<Transition>,
-    override val objectTypes: List<ObjectType>,
-    override val arcs: List<Arc>,
+class StaticCoreOcNet(
+    val inputPlaces: Places,
+    val outputPlaces: Places,
+    override val places: Places,
+    override val transitions: Transitions,
+    override val objectTypes: ObjectTypes,
+    override val arcs: Arcs,
     override val allPetriNodes: List<PetriNode>,
+    override val labelsActivities: LabelsActivities,
+    override val placeTyping: PlaceTyping,
 ) : OCNetElements {
 
     override fun toString(): String {
@@ -23,23 +25,7 @@ data class WellFormedOCNet(
 
     private val labelToNode: MutableMap<String, PetriNode> = mutableMapOf()
 
-    fun strictSetMarking(marking: Marking) {
-        for (i in places) {
-            val tokens = marking.getStrictMarkingFor(i.label)
-            i.tokens = tokens
-        }
-    }
-
-    fun weakSetMarking(marking: Marking) {
-        for (i in places) {
-            val tokens = marking.getWeakMarkingFor(i.label)
-            if (tokens != null) {
-                i.tokens = tokens
-            }
-        }
-    }
-
-    fun fullCopy(): WellFormedOCNet {
+    fun fullCopy(): StaticCoreOcNet {
         val allNodesCacher = NodesCacherVisitorDFS()
         allNodesCacher.collectAllNodes(this)
         val cachedNodes = allNodesCacher.getCachedNodes()
@@ -52,14 +38,17 @@ data class WellFormedOCNet(
         val createdOutputPlaces = outputPlaces.map {
             copied.getCachedFor(it) as Place
         }
-        return WellFormedOCNet(
-            createdInputPlaces,
-            createdOutputPlaces,
-            places = copied.allNodes().filterIsInstance<Place>(),
-            transitions = copied.allNodes().filterIsInstance<Transition>(),
+        return StaticCoreOcNet(
+            inputPlaces = Places(places = createdInputPlaces),
+            outputPlaces = Places(createdOutputPlaces),
+            places = Places(copied.allNodes().filterIsInstance<Place>()),
+            transitions = Transitions(copied.allNodes().filterIsInstance<Transition>()),
             objectTypes = objectTypes,
             arcs = arcs,
-            allPetriNodes = allPetriNodes
+            allPetriNodes = allPetriNodes,
+            labelsActivities = labelsActivities,
+            placeTyping = placeTyping,
         )
     }
 }
+

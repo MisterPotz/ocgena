@@ -15,8 +15,13 @@ data class Place(
     override val outputArcs: MutableList<Arc> = mutableListOf(),
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX,
 ) : PetriNode, LabelHolder, ConsistencyCheckable {
+    private val transitionToArc : MutableMap<Transition, Arc> = mutableMapOf()
 
     var tokens: Int = 0
+
+    fun getArcForTransition(transition: Transition) : Arc? {
+        return transitionToArc[transition]
+    }
 
     override fun addInputArc(arc: Arc) {
         when (placeType) {
@@ -34,6 +39,15 @@ data class Place(
         visitor.visitPlace(this)
     }
 
+    override fun reindexArcs() {
+        for (inputArc in inputArcs) {
+            transitionToArc[inputArc.tailNode as Transition] = inputArc
+        }
+        for (outputArc in outputArcs) {
+            transitionToArc[outputArc.arrowNode as Transition] = outputArc
+        }
+    }
+
     override fun copyWithoutConnections(): PetriNode {
         return copy(
             inputArcs = mutableListOf(),
@@ -41,8 +55,6 @@ data class Place(
 
         )
     }
-
-
 
     override fun isSameType(other: PetriNode): Boolean {
         return other is Place

@@ -4,7 +4,7 @@ import error.ConsistencyCheckError
 import error.ErrorLevel
 import model.OCNetChecker
 import model.OCNetElements
-import model.WellFormedOCNet
+import model.StaticCoreOcNet
 import model.utils.OCNetDSLConverter
 
 class OCNetFacadeBuilder {
@@ -17,12 +17,12 @@ class OCNetFacadeBuilder {
     class BuiltOCNet(
         val ocNetElements: OCNetElements,
         val errors: List<ConsistencyCheckError>,
-        val ocNet: WellFormedOCNet?,
+        val ocNet: StaticCoreOcNet?,
     ) {
         val hasCriticalErrors
             get() =  errors.find { it.errorLevel == ErrorLevel.CRITICAL } != null
 
-        fun requireConsistentOCNet(): WellFormedOCNet {
+        fun requireConsistentOCNet(): StaticCoreOcNet {
             return ocNet!!
         }
     }
@@ -50,6 +50,6 @@ class OCNetFacadeBuilder {
 }
 
 class DefinedNetData(
-    val ocNet: WellFormedOCNet?,
+    val ocNet: StaticCoreOcNet?,
     val errors: List<ConsistencyCheckError>,
 )

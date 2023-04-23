@@ -7,6 +7,7 @@ data class Transition(
     override val outputArcs: MutableList<Arc> = mutableListOf<Arc>(),
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
 ) : PetriNode, LabelHolder {
+    val placesToArcs = mutableMapOf<Place, Arc>()
 
     val inputPlaces : List<Place>
         get() = inputArcs.mapNotNull { it.tailNode }.filterIsInstance<Place>()
@@ -21,8 +22,12 @@ data class Transition(
         outputArcs.add(arc)
     }
 
-    fun getEnabledBinding() : ActiveBinding? {
-        return ActiveBinding.createEnabledBinding(this)
+    fun getArcForPlace(place: Place) : Arc? {
+        return placesToArcs[place]
+    }
+
+    fun getEnabledBinding() : EnabledSimpleBinding? {
+        return EnabledSimpleBinding.createEnabledBinding(this)
     }
 
     fun isBindingEnabled(): Boolean {
@@ -38,6 +43,15 @@ data class Transition(
             inputArcs = mutableListOf(),
             outputArcs = mutableListOf()
         )
+    }
+
+    override fun reindexArcs() {
+        for (inputArc in inputArcs) {
+            placesToArcs[inputArc.tailNode as Place] = inputArc
+        }
+        for (outputArc in outputArcs) {
+            placesToArcs[outputArc.arrowNode as Place] = outputArc
+        }
     }
 
     override fun isSameType(other: PetriNode): Boolean {

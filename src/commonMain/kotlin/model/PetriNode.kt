@@ -11,6 +11,8 @@ interface PetriNode: ConsistencyCheckable, PetriAtom {
     fun isSameType(other : PetriNode) : Boolean
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS)
 
+    fun reindexArcs()
+
     fun copyWithoutConnections() : PetriNode
     companion object {
         val EMPTY = emptyList<Arc>()

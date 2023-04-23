@@ -8,32 +8,34 @@ class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
-    private val ocNetElements: OCNetElements
+    private val ocNetElements: OCNetElements,
 ) {
-    private var lastConsistencyResults : List<ConsistencyCheckError>? = null
-    private var inputPlaces : List<Place>? = null
-    private var outputPlaces : List<Place>? = null
-    private var objectTypes : List<ObjectType>? = null
+    private var lastConsistencyResults: List<ConsistencyCheckError>? = null
+    private var inputPlaces: List<Place>? = null
+    private var outputPlaces: List<Place>? = null
+    private var objectTypes: List<ObjectType>? = null
 
-    val isConsistent : Boolean
+    val isConsistent: Boolean
         get() {
             return Companion.checkConsistency(lastConsistencyResults)
         }
 
-    fun createWellFormedOCNet() : WellFormedOCNet {
+    fun createWellFormedOCNet(): StaticCoreOcNet {
         require(isConsistent)
-        return WellFormedOCNet(
-            inputPlaces = checkNotNull(inputPlaces),
-            outputPlaces = checkNotNull(outputPlaces),
-            objectTypes = checkNotNull(objectTypes),
+        return StaticCoreOcNet(
+            inputPlaces = Places(checkNotNull(inputPlaces)),
+            outputPlaces = Places(checkNotNull(outputPlaces)),
+            objectTypes = ObjectTypes(checkNotNull(objectTypes)),
             places = ocNetElements.places,
             transitions = ocNetElements.transitions,
             arcs = ocNetElements.arcs,
-            allPetriNodes = ocNetElements.allPetriNodes
+            allPetriNodes = ocNetElements.allPetriNodes,
+            labelsActivities = LabelsActivities.createFromTransitions(ocNetElements.transitions),
+            placeTyping = PlaceTyping()
         )
     }
 
-    fun checkConsistency() : List<ConsistencyCheckError> {
+    fun checkConsistency(): List<ConsistencyCheckError> {
         val inconsistencies = mutableListOf<ConsistencyCheckError>()
 
         val createdCheckVisitors = mutableListOf<ConsistencyCheckPetriAtomVisitorDFS>()
@@ -98,7 +100,7 @@ class OCNetChecker(
     }
 
     companion object {
-        fun checkConsistency(conistencyResults: List<ConsistencyCheckError>?) : Boolean {
+        fun checkConsistency(conistencyResults: List<ConsistencyCheckError>?): Boolean {
             return conistencyResults?.let {
                 it.none { it.errorLevel == ErrorLevel.CRITICAL }
             } ?: false

@@ -3,13 +3,13 @@ package model.utils
 import model.AbsPetriAtomVisitorDFS
 import model.Place
 import model.Transition
-import model.WellFormedOCNet
+import model.StaticCoreOcNet
 
 class NodesCacherVisitorDFS(
     private val cachedPetriNodes: CachedPetriNodes = CachedPetriNodes(),
 ) : AbsPetriAtomVisitorDFS() {
 
-    fun collectAllNodes(wellFormedOCNet: WellFormedOCNet) {
+    fun collectAllNodes(wellFormedOCNet: StaticCoreOcNet) {
         for (i in wellFormedOCNet.inputPlaces) {
             visitPlace(i)
         }
