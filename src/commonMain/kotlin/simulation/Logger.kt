@@ -11,7 +11,7 @@ interface Logger {
     fun onEnd()
     fun onTimeout()
 
-    abstract fun onExecutionStep(stepIndex: Int)
+    abstract fun onExecutionStepStart(stepIndex: Int, state: SimulatableComposedOcNet.State)
 
     fun onTransitionEndSectionStart()
 

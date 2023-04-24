@@ -104,18 +104,11 @@ data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, Mut
 
     private var stringBuilder = StringBuilder()
     override fun toString(): String {
-        stringBuilder.clear()
-        placesToObjectTokens.forEach { entry ->
-            val place = entry.key
-            val objectTokens = entry.value
-            stringBuilder.append("""${place.id}: ${
-                objectTokens.joinToString(separator = " ") { it.name }
-            }
-            """.trimMargin())
-            stringBuilder.append("\n")
-        }
-        return stringBuilder.toString().also {
-            stringBuilder.clear()
+        return placesToObjectTokens.keys.joinToString(separator = "\n") { place ->
+            val objectTokens = placesToObjectTokens[place]!!
+
+            val objectTokensString = objectTokens.joinToString(separator = " ") { it.name }
+            """${place.id}: $objectTokensString"""
         }
     }
 

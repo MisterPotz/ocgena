@@ -14,6 +14,10 @@ class ActiveFiringTransitions {
         }
     }
 
+    fun prettyPrintState(): String {
+        return tMarkingValues.joinToString(separator = "\n") { it.prettyPrintState() }
+    }
+
     override fun toString(): String {
         return tMarkingValues.joinToString(separator = "\n") { it.toString() }
     }

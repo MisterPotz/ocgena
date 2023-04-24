@@ -2,19 +2,15 @@ package simulation
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import utils.indent
+import utils.indentMargin
 import utils.mprintln
 
-class DebugLogger : Logger {
+class DebugLogger(
+    val logCurrentState: Boolean = false,
+) : Logger {
     override val loggingEnabled: Boolean
         get() = true
-
-    fun String.indent(times: Int): String {
-        return this.prependIndent(
-            (0 until times).fold("") { accum, ind ->
-                accum + "\t"
-            }
-        )
-    }
 
     override fun onTimeout() {
         mprintln("execution timeout")
@@ -28,8 +24,10 @@ class DebugLogger : Logger {
         mprintln("execution ended")
     }
 
-    override fun onExecutionStep(stepIndex: Int) {
+    override fun onExecutionStepStart(stepIndex: Int, state: SimulatableComposedOcNet.State) {
         mprintln("execution step: $stepIndex".indent(1))
+        mprintln("""current state: """.indent(2, prefix = ""))
+        mprintln(state.toString().indentMargin(3, margin = "*"))
     }
 
     override fun onTransitionEndSectionStart() {
@@ -41,10 +39,10 @@ class DebugLogger : Logger {
     }
 
     override fun onTransitionEnded(executedBinding: ExecutedBinding) {
-        mprintln(executedBinding.toString().indent(3))
+        mprintln(executedBinding.prettyPrintExecuted().indentMargin(3, margin = "x"))
     }
 
     override fun onTransitionStart(transition: ActiveFiringTransition) {
-        mprintln(transition.toString().trimMargin().indent(3))
+        mprintln(transition.prettyPrintStarted().trimMargin().indentMargin(3))
     }
 }

@@ -40,7 +40,7 @@ class OCNetTest {
         val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
             .withInitialMarking(
                 PlainMarking.of {
-                    put(places["p1"], 1)
+                    put(places["p1"], 10)
                 }
             )
             .withTimeIntervals(

@@ -3,7 +3,6 @@ package simulation
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
-import model.ObjectMarking
 import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.InputToOutputPlaceResolverFactory
 import kotlin.time.DurationUnit
@@ -59,7 +58,7 @@ class SimulationTask(
 
                 simulationState.onNewStep()
 
-                logger.onExecutionStep(stepIndex)
+                logger.onExecutionStepStart(stepIndex, state)
 
                 stepExecutor.executeStep()
 

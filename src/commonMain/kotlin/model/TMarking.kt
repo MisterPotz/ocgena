@@ -1,6 +1,7 @@
 package model
 
 
+
 class TMarking {
     private val transitionsToTMarkingValue = mutableMapOf<Transition, ActiveFiringTransitions>()
     operator fun get(transition: model.Transition): ActiveFiringTransitions? {
@@ -58,66 +59,8 @@ class TMarking {
     override fun toString(): String {
         return transitionsToTMarkingValue.keys.joinToString("\n") {
             val tMarkings = transitionsToTMarkingValue[it]
-            """${it.id}
-                |${tMarkings.toString().prependIndent("\t")}
-            """.trimMargin()
+            """${tMarkings?.prettyPrintState()/*?.prependIndent("\t")*/}""".trimMargin()
         }
     }
 }
 
-data class ActiveFiringTransition(
-    val transition: Transition,
-    val lockTimeByLatestObjectToken: Time,
-    val relativeTimePassedSinceLock: Time,
-    val duration: Int,
-    val lockedObjectTokens: ObjectMarking,
-) {
-
-    fun timeLeftUntilFinish(): Time {
-        return (duration - relativeTimePassedSinceLock).coerceAtLeast(0)
-    }
-
-    fun prettyPrint(): String {
-        return "$transition ${lockedObjectTokens.prettyPrint()}"
-    }
-
-    override fun toString(): String {
-        return """active transition $transition | 
-            |   locked:
-            |${lockedObjectTokens.toString().prependIndent("\t\t")}
-        """.trimMargin()
-    }
-
-    fun checkConsistency() {
-        require(
-            lockTimeByLatestObjectToken == lockedObjectTokens.allTokens().maxBy { it.lastUpdateTime }.lastUpdateTime
-        ) {
-            "the time of start of active firing transition must be calculated by time of latest update of " +
-                    "incoming tokens"
-        }
-    }
-
-    companion object {
-        fun create(
-            transition: Transition,
-            lockedObjectTokens: ObjectMarking,
-            duration: Time,
-        ): ActiveFiringTransition {
-            val nonEmptyPlaces = lockedObjectTokens.nonEmptyPlaces()
-            require(nonEmptyPlaces.isNotEmpty())
-            val allTokens = lockedObjectTokens.allTokens()
-
-            val lockTimeByLatestObjectToken = allTokens.maxBy { it.lastUpdateTime }.lastUpdateTime
-            val activeFiringTransition = ActiveFiringTransition(
-                transition = transition,
-                lockTimeByLatestObjectToken = lockTimeByLatestObjectToken,
-                relativeTimePassedSinceLock = 0,
-                lockedObjectTokens = lockedObjectTokens,
-                duration = duration
-            )
-            return activeFiringTransition.also {
-                it.checkConsistency()
-            }
-        }
-    }
-}
