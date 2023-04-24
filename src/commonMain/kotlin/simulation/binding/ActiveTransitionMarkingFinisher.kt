@@ -20,6 +20,8 @@ class ActiveTransitionFinisherImpl(
     override fun finishActiveTransition(activeFiringTransition: ActiveFiringTransition) {
         val markingForOutputPlaces = getMarkingForOutputPlaces(activeFiringTransition)
 
+        markingForOutputPlaces.shiftTokenTime(tokenTimeDelta = activeFiringTransition.duration)
+
         pMarking += markingForOutputPlaces
 
         val executedBinding = ExecutedBinding(

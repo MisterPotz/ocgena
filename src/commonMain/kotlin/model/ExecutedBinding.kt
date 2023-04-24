@@ -7,8 +7,10 @@ const val ANSI_BLACK = "\u001B[30m"
 const val ANSI_RED = "\u001B[31m"
 const val ANSI_GREEN = "\u001B[32m"
 const val ANSI_YELLOW = "\u001B[33m"
+const val ANSI_ORANGE = "\u001B[38;5;221m"
 const val ANSI_BLUE = "\u001B[34m"
 const val ANSI_PURPLE = "\u001B[35m"
+const val ANSI_PINK = "\u001B[38;5;225m"
 const val ANSI_CYAN = "\u001B[36m"
 const val ANSI_WHITE = "\u001B[37m"
 
@@ -28,7 +30,7 @@ data class ExecutedBinding(
     fun prettyPrintExecuted(): String {
         return """$ANSI_PURPLE> executed ${finishedTransition.transition.id} [${
             finishedTransition.timeLeftUntilFinish().print()
-        }, ${finishedTransition.duration.print()}]
+        }, ${finishedTransition.duration.print()}, synchr.time: ${finishedTransition.tokenSynchronizationTime.print()}]
             |${"\t$ANSI_RED"}- consumed:
             |${ANSI_RED}${consumedMap.toString().prependIndent("\t- ")}
             |$ANSI_GREEN${"\t"}+ produced:

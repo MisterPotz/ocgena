@@ -15,6 +15,7 @@ class SimulationTask(
     private val randomBindingSelector: RandomBindingSelector,
 ) {
     private val ocNet = simulationParams.templateOcNet
+    private val simulationTime = SimulationTime()
     private val initialMarking = simulationParams.initialMarking
     private val duration = simulationParams.timeoutSec.toDuration(DurationUnit.SECONDS)
     private val state = ocNet.createInitialState()
@@ -35,6 +36,7 @@ class SimulationTask(
             logger
         ),
         simulationState = simulationState,
+        simulationTime = simulationTime,
         logger = logger
     )
 
@@ -58,7 +60,7 @@ class SimulationTask(
 
                 simulationState.onNewStep()
 
-                logger.onExecutionStepStart(stepIndex, state)
+                logger.onExecutionStepStart(stepIndex, state, simulationTime)
 
                 stepExecutor.executeStep()
 

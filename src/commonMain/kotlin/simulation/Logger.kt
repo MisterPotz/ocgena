@@ -2,6 +2,7 @@ package simulation
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import model.Time
 
 interface Logger {
     val loggingEnabled: Boolean
@@ -11,7 +12,12 @@ interface Logger {
     fun onEnd()
     fun onTimeout()
 
-    abstract fun onExecutionStepStart(stepIndex: Int, state: SimulatableComposedOcNet.State)
+    fun onTimeShift(delta: Time)
+
+    abstract fun onExecutionStepStart(
+        stepIndex: Int,
+        state: SimulatableComposedOcNet.State,
+        simulationTime: SimulationTime)
 
     fun onTransitionEndSectionStart()
 

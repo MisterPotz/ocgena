@@ -1,10 +1,14 @@
 package simulation
 
+import model.ANSI_PINK
+import model.ANSI_ORANGE
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import model.Time
 import utils.indent
 import utils.indentMargin
 import utils.mprintln
+import utils.print
 
 class DebugLogger(
     val logCurrentState: Boolean = false,
@@ -24,8 +28,17 @@ class DebugLogger(
         mprintln("execution ended")
     }
 
-    override fun onExecutionStepStart(stepIndex: Int, state: SimulatableComposedOcNet.State) {
+    override fun onTimeShift(delta: Time) {
+        mprintln("${ANSI_PINK}on time shift +${delta.print()}".indent(2))
+    }
+
+    override fun onExecutionStepStart(
+        stepIndex: Int,
+        state: SimulatableComposedOcNet.State,
+        simulationTime: SimulationTime,
+    ) {
         mprintln("execution step: $stepIndex".indent(1))
+        mprintln("""${ANSI_ORANGE}time: $simulationTime""".indent(2))
         mprintln("""current state: """.indent(2, prefix = ""))
         mprintln(state.toString().indentMargin(3, margin = "*"))
     }

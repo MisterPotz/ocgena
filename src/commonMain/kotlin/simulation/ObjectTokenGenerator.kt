@@ -34,7 +34,6 @@ class SingleTypeObjectTokenGenerator(
             name = idIssuer.newLabelId(),
             type = type,
             ovmap = EmptyObjectValuesMap,
-            lastUpdateTime = 0
         )
     }
 }

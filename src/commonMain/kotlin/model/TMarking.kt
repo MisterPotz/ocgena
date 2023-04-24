@@ -1,7 +1,5 @@
 package model
 
-
-
 class TMarking {
     private val transitionsToTMarkingValue = mutableMapOf<Transition, ActiveFiringTransitions>()
     operator fun get(transition: model.Transition): ActiveFiringTransitions? {
@@ -15,7 +13,9 @@ class TMarking {
     }
 
     fun getActiveTransitionWithEarliestFinish(): ActiveFiringTransition? {
-        val transitionEntry = transitionsToTMarkingValue.minByOrNull { entry ->
+        val transitionEntry = transitionsToTMarkingValue.filter {
+            it.value.hasTransitions()
+        }.minByOrNull { entry ->
             val activeFiringTransitions = entry.value
             val timeLeftUntilFinish = activeFiringTransitions
                 .getWithEarliestFinishTime()

@@ -6,6 +6,7 @@ import simulation.binding.ActiveTransitionMarkingFinisher
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
+import utils.print
 
 
 class SimulationState() {
@@ -40,14 +41,26 @@ class SimulationState() {
     )
 }
 
+class SimulationTime(var globalTime : Time = 0) {
+    fun shiftByDelta(delta : Time) {
+        globalTime += delta
+    }
+
+    override fun toString(): String {
+        return globalTime.print()
+    }
+}
+
 class SimulationTaskStepExecutor(
     private val ocNet: SimulatableComposedOcNet<*>,
     private val state: SimulatableComposedOcNet.State,
     private val randomBindingSelector: RandomBindingSelector,
     private val transitionFinisher: ActiveTransitionMarkingFinisher,
     private val logger: Logger,
+    private val simulationTime: SimulationTime,
     private val simulationState: SimulationState,
 ) {
+
     private val pMarkingProvider = StatePMarkingProvider(state = state)
     private val enabledBindingResolverFactory: EnabledBindingResolverFactory = EnabledBindingResolverFactory(
         ocNet.arcMultiplicity,
@@ -109,7 +122,9 @@ class SimulationTaskStepExecutor(
         )
 
         if (timeUntilNextFinish != null) {
+            shiftGlobalTime(timeUntilNextFinish)
             shiftActiveTransitionsByTime(timeUntilNextFinish)
+            logger.onTimeShift(timeUntilNextFinish)
         }
     }
 
@@ -122,6 +137,11 @@ class SimulationTaskStepExecutor(
     private fun shiftActiveTransitionsByTime(time: Time) {
         val tMarking = state.tMarking
         tMarking.shiftByTime(time)
+
+    }
+
+    private fun shiftGlobalTime(time: Time) {
+        simulationTime.shiftByDelta(time)
     }
 
     class StatePMarkingProvider(val state: SimulatableComposedOcNet.State) : PMarkingProvider {

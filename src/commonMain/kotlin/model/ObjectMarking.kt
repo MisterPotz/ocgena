@@ -1,8 +1,16 @@
 package model
 
+import utils.print
+
 data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
     operator fun get(place: Place): Set<ObjectToken>? {
         return placesToObjectTokens[place]
+    }
+
+    fun shiftTokenTime(tokenTimeDelta: Time) {
+        allTokens().forEach {
+            it.ownPathTime += tokenTimeDelta
+        }
     }
 
     operator fun set(place: Place, set: Set<ObjectToken>) {
@@ -107,7 +115,7 @@ data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, Mut
         return placesToObjectTokens.keys.joinToString(separator = "\n") { place ->
             val objectTokens = placesToObjectTokens[place]!!
 
-            val objectTokensString = objectTokens.joinToString(separator = " ") { it.name }
+            val objectTokensString = objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
             """${place.id}: $objectTokensString"""
         }
     }

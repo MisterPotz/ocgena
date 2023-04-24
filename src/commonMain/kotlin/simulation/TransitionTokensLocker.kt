@@ -23,7 +23,8 @@ class TransitionTokensLocker(
         val tMarkingValue = ActiveFiringTransition.create(
             enabledBindingWithTokens.transition,
             enabledBindingWithTokens.involvedObjectTokens,
-            duration = randomSelectedDuration
+            duration = randomSelectedDuration,
+            tokenSynchronizationTime = enabledBindingWithTokens.synchronizationTime
         )
 
         tMarking.pushTMarking(tMarkingValue)
