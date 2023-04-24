@@ -3,7 +3,7 @@ package model
 import utils.print
 
 data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
-    operator fun get(place: Place): Set<ObjectToken>? {
+    operator fun get(place: Place): MutableSet<ObjectToken>? {
         return placesToObjectTokens[place]
     }
 

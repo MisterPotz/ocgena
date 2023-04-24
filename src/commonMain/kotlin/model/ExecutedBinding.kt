@@ -1,18 +1,11 @@
 package model
 
+import utils.ANSI_GREEN
+import utils.ANSI_PURPLE
+import utils.ANSI_RED
 import utils.print
 
-const val ANSI_RESET = "\u001B[0m"
-const val ANSI_BLACK = "\u001B[30m"
-const val ANSI_RED = "\u001B[31m"
-const val ANSI_GREEN = "\u001B[32m"
-const val ANSI_YELLOW = "\u001B[33m"
-const val ANSI_ORANGE = "\u001B[38;5;221m"
-const val ANSI_BLUE = "\u001B[34m"
-const val ANSI_PURPLE = "\u001B[35m"
-const val ANSI_PINK = "\u001B[38;5;225m"
-const val ANSI_CYAN = "\u001B[36m"
-const val ANSI_WHITE = "\u001B[37m"
+
 
 data class ExecutedBinding(
     val finishedTransition: ActiveFiringTransition,
@@ -32,9 +25,9 @@ data class ExecutedBinding(
             finishedTransition.timeLeftUntilFinish().print()
         }, ${finishedTransition.duration.print()}, synchr.time: ${finishedTransition.tokenSynchronizationTime.print()}]
             |${"\t$ANSI_RED"}- consumed:
-            |${ANSI_RED}${consumedMap.toString().prependIndent("\t- ")}
+            |${ANSI_RED}${consumedMap.toString().prependIndent("\t- ${ANSI_RED}")}
             |$ANSI_GREEN${"\t"}+ produced:
-            |$ANSI_GREEN${producedMap.toString().prependIndent("\t+ ")}
+            |$ANSI_GREEN${producedMap.toString().prependIndent("\t+ $ANSI_GREEN")}
         """.trimMargin()
     }
 

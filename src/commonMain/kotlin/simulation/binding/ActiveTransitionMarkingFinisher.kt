@@ -33,17 +33,6 @@ class ActiveTransitionFinisherImpl(
     }
 
     private fun getMarkingForOutputPlaces(activeFiringTransition: ActiveFiringTransition) : ObjectMarking {
-        val transition = activeFiringTransition.transition
-        val inputPlaces = transition.inputPlaces
-        val tokens = activeFiringTransition.lockedObjectTokens
-
-        val newMarking = ObjectMarking()
-        for (inputPlace in inputPlaces) {
-            val outputPlaceForInput =
-                inputToOutputPlaceResolver.getOutputPlaceForInput(transition, inputPlace)
-
-            newMarking[outputPlaceForInput] = tokens[inputPlace]!!
-        }
-        return newMarking
+        return inputToOutputPlaceResolver.createOutputMarking(activeFiringTransition)
     }
 }

@@ -11,6 +11,18 @@ fun mprintln(string: Any? = null) {
 
 expect fun spprintln()
 
+const val ANSI_RESET = "\u001B[0m"
+const val ANSI_BLACK = "\u001B[30m"
+const val ANSI_RED = "\u001B[31m"
+const val ANSI_GREEN = "\u001B[32m"
+const val ANSI_YELLOW = "\u001B[33m"
+const val ANSI_ORANGE = "\u001B[38;5;221m"
+const val ANSI_BLUE = "\u001B[34m"
+const val ANSI_PURPLE = "\u001B[35m"
+const val ANSI_PINK = "\u001B[38;5;225m"
+const val ANSI_CYAN = "\u001B[36m"
+const val ANSI_WHITE = "\u001B[37m"
+
 fun Time.print() : String {
     return "${this}t"
 }

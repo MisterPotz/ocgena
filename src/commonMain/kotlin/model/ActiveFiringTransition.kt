@@ -1,5 +1,7 @@
 package model
 
+import utils.ANSI_CYAN
+import utils.ANSI_YELLOW
 import utils.print
 
 data class ActiveFiringTransition(
@@ -18,14 +20,14 @@ data class ActiveFiringTransition(
     fun prettyPrintState(): String {
         return """${ANSI_CYAN}ongoing ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]: 
             |   $ANSI_YELLOW[locked]:
-            |$ANSI_YELLOW${lockedObjectTokens.toString().prependIndent("\t")}
+            |$ANSI_YELLOW${lockedObjectTokens.toString().prependIndent("\t$ANSI_YELLOW")}
         """.trimMargin()
     }
 
     fun prettyPrintStarted() : String {
         return """${ANSI_CYAN}started ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]: 
             |   $ANSI_YELLOW[locked]:
-            |$ANSI_YELLOW${lockedObjectTokens.toString().prependIndent("\t")}
+            |$ANSI_YELLOW${lockedObjectTokens.toString().prependIndent("\t$ANSI_YELLOW")}
         """.trimMargin()
     }
 

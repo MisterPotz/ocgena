@@ -1,10 +1,10 @@
 package simulation
 
-import model.ANSI_PINK
-import model.ANSI_ORANGE
 import model.ActiveFiringTransition
 import model.ExecutedBinding
 import model.Time
+import utils.ANSI_ORANGE
+import utils.ANSI_PINK
 import utils.indent
 import utils.indentMargin
 import utils.mprintln

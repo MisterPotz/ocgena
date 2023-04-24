@@ -70,19 +70,23 @@ class OCNetTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
 
-            place {
+            place("p1") {
                 placeType = PlaceType.INPUT
             }.arcTo(transition("t1"))
 
-            place {
+            place("p2") {
                 placeType = PlaceType.INPUT
             }
                 .arcTo(transition("t1"))
-                .arcTo(place { })
+                .arcTo(place("p3") { }) {
+                    multiplicity = 2
+                }
                 .arcTo(transition { }) {
                     multiplicity = 2
                 }
-                .arcTo(place { placeType = PlaceType.OUTPUT }) {
+                .arcTo(place("p4") {
+                    placeType = PlaceType.OUTPUT
+                }) {
                     multiplicity = 3
                 }
         }.requireConsistentOCNet()
@@ -90,14 +94,35 @@ class OCNetTest {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         }
         requireNotNull(ocNet)
-//        val simulatorCreator =
-//            SimulationCreator(ocNet, ConsoleDebugExecutionConditions(), DebugLogger(), SimulationParams(
-//                initialMarking = PlainMarking.of {
-//                    put("p1", 2)
-//                    put("p2", 4)
-//                }
-//            )
-//            )
-//        simulatorCreator.createSimulationTask().prepareAndRun()
+
+        val places = ocNet.places
+        val transitions = ocNet.transitions
+        val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+            .withInitialMarking(
+                PlainMarking.of {
+                    put(places["p1"], 10)
+                    put(places["p2"], 4)
+                }
+            )
+            .withTimeIntervals(
+                IntervalFunction.create {
+                    put(
+                        transitions["t1"], FiringTimePair(
+                            earlyFiringTime = 10,
+                            latestFiringTime = 15
+                        )
+                    )
+                    put(transitions["t2"], FiringTimePair(earlyFiringTime = 0, latestFiringTime = 5))
+                }
+            )
+
+        val simulatorCreator = SimulationCreator(
+            simulationParams = simulationParamsTypeABuilder.build(),
+            executionConditions = ConsoleDebugExecutionConditions(),
+            logger = DebugLogger()
+        )
+        simulatorCreator
+            .createSimulationTask()
+            .prepareAndRun()
     }
 }

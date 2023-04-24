@@ -8,9 +8,9 @@ class State : SimulatableComposedOcNet.State {
     override val pMarking: ObjectMarking = ObjectMarking()
 
     override fun toString(): String {
-        return """places:
+        return """place marking:
             |${pMarking.toString().prependIndent("\t")}
-            |transitions:
+            |transition timed marking:
             |${tMarking.toString().prependIndent("\t")}
         """.trimMargin()
     }
