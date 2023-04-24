@@ -14,6 +14,10 @@ class ActiveFiringTransitions {
         }
     }
 
+    override fun toString(): String {
+        return tMarkingValues.joinToString(separator = "\n") { it.toString() }
+    }
+
     fun add(tMarkingValue: ActiveFiringTransition) {
         tMarkingValues.add(tMarkingValue)
     }
@@ -36,6 +40,22 @@ class ActiveFiringTransitions {
                 )
             }
         }
+    }
+
+    fun getAndPopEndedTransitions() : List<ActiveFiringTransition> {
+        val mutableList = mutableListOf<ActiveFiringTransition>()
+        for (i in tMarkingValues.indices.reversed()) {
+            val weTakeThis = tMarkingValues[i].timeLeftUntilFinish() <= 0
+            if (weTakeThis) {
+                mutableList.add(tMarkingValues[i])
+                tMarkingValues.removeAt(i)
+            }
+        }
+        return mutableList
+    }
+
+    fun hasTransitions() : Boolean {
+        return tMarkingValues.isNotEmpty()
     }
 
     fun getEndedTransitions() : List<ActiveFiringTransition> {

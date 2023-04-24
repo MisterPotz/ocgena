@@ -7,24 +7,26 @@ class TMarking {
         return transitionsToTMarkingValue[transition]
     }
 
-    fun shiftByTime(time : Time) {
+    fun shiftByTime(time: Time) {
         transitionsToTMarkingValue.forEach { entry ->
             entry.value.shiftByTime(time)
         }
     }
 
-    fun getActiveTransitionWithEarliestFinish() : ActiveFiringTransition {
-        return transitionsToTMarkingValue.minBy { entry ->
+    fun getActiveTransitionWithEarliestFinish(): ActiveFiringTransition? {
+        val transitionEntry = transitionsToTMarkingValue.minByOrNull { entry ->
             val activeFiringTransitions = entry.value
             val timeLeftUntilFinish = activeFiringTransitions
                 .getWithEarliestFinishTime()
                 .timeLeftUntilFinish()
 
-            return@minBy timeLeftUntilFinish
-        }.value.getWithEarliestFinishTime()
+            return@minByOrNull timeLeftUntilFinish
+        }
+
+        return transitionEntry?.value?.getWithEarliestFinishTime()
     }
 
-    fun getEndedTransitions() : Collection<ActiveFiringTransition> {
+    fun getEndedTransitions(): Collection<ActiveFiringTransition> {
         return transitionsToTMarkingValue.values.fold(mutableListOf<ActiveFiringTransition>()) { accum, transitions ->
             val endedTransitions = transitions.getEndedTransitions()
             accum.addAll(endedTransitions)
@@ -32,12 +34,34 @@ class TMarking {
         }
     }
 
+    fun getAndPopEndedTransitions(): Collection<ActiveFiringTransition> {
+        val mutableList = mutableListOf<ActiveFiringTransition>()
+        for (key in transitionsToTMarkingValue.keys.toList()) {
+            val value = transitionsToTMarkingValue[key]!!
+            val endedTransitions = value.getAndPopEndedTransitions()
+            mutableList.addAll(endedTransitions)
+            if (value.hasTransitions().not()) {
+                transitionsToTMarkingValue.remove(key)
+            }
+        }
+        return mutableList
+    }
+
     fun pushTMarking(tMarkingValue: ActiveFiringTransition) {
         val transition = tMarkingValue.transition
-        val current = transitionsToTMarkingValue.getOrElse(transition) {
+        val current = transitionsToTMarkingValue.getOrPut(transition) {
             ActiveFiringTransitions()
         }
         current.add(tMarkingValue)
+    }
+
+    override fun toString(): String {
+        return transitionsToTMarkingValue.keys.joinToString("\n") {
+            val tMarkings = transitionsToTMarkingValue[it]
+            """${it.id}
+                |${tMarkings.toString().prependIndent("\t")}
+            """.trimMargin()
+        }
     }
 }
 
@@ -49,8 +73,19 @@ data class ActiveFiringTransition(
     val lockedObjectTokens: ObjectMarking,
 ) {
 
-    fun timeLeftUntilFinish() : Time {
+    fun timeLeftUntilFinish(): Time {
         return (duration - relativeTimePassedSinceLock).coerceAtLeast(0)
+    }
+
+    fun prettyPrint(): String {
+        return "$transition ${lockedObjectTokens.prettyPrint()}"
+    }
+
+    override fun toString(): String {
+        return """active transition $transition | 
+            |   locked:
+            |${lockedObjectTokens.toString().prependIndent("\t\t")}
+        """.trimMargin()
     }
 
     fun checkConsistency() {
@@ -66,7 +101,7 @@ data class ActiveFiringTransition(
         fun create(
             transition: Transition,
             lockedObjectTokens: ObjectMarking,
-            duration : Time
+            duration: Time,
         ): ActiveFiringTransition {
             val nonEmptyPlaces = lockedObjectTokens.nonEmptyPlaces()
             require(nonEmptyPlaces.isNotEmpty())

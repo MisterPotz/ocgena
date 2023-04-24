@@ -1,6 +1,6 @@
 package model
 
-class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
+data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
     operator fun get(place: Place): Set<ObjectToken>? {
         return placesToObjectTokens[place]
     }
@@ -42,9 +42,7 @@ class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableS
             val added = objectMarking[place] ?: setOf()
 
             val newSet = current + added
-            if (newSet.isNotEmpty()) {
-                placesToObjectTokens[place] = newSet.toMutableSet()
-            }
+            placesToObjectTokens[place] = newSet.toMutableSet()
         }
     }
 
@@ -56,9 +54,7 @@ class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableS
             val subtracted = objectMarking[place] ?: setOf()
 
             val newSet = current - subtracted
-            if (newSet.isNotEmpty()) {
-                placesToObjectTokens[place] = newSet.toMutableSet()
-            }
+            placesToObjectTokens[place] = newSet.toMutableSet()
         }
     }
 
@@ -72,9 +68,7 @@ class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableS
             val subtracted = objectMarking[place] ?: setOf()
 
             val newSet = current - subtracted
-            if (newSet.isNotEmpty()) {
-                newMap[place] = newSet.toMutableSet()
-            }
+            newMap[place] = newSet.toMutableSet()
         }
 
         return ObjectMarking(newMap)
@@ -90,11 +84,47 @@ class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableS
             val added = objectMarking[place] ?: setOf()
 
             val newSet = current + added
-            if (newSet.isNotEmpty()) {
-                newMap[place] = newSet.toMutableSet()
-            }
+            newMap[place] = newSet.toMutableSet()
         }
 
         return ObjectMarking(newMap)
+    }
+
+    fun prettyPrint() : String {
+        return placesToObjectTokens.entries.fold(StringBuilder()) { accum, line ->
+            accum.append(line.key)
+            accum.append(" |\n")
+            accum.append(line.value.joinToString(separator = "\n") {
+                it.name
+            }.prependIndent(" "))
+            accum.append('\n')
+            accum
+        }.toString()
+    }
+
+    private var stringBuilder = StringBuilder()
+    override fun toString(): String {
+        stringBuilder.clear()
+        placesToObjectTokens.forEach { entry ->
+            val place = entry.key
+            val objectTokens = entry.value
+            stringBuilder.append("""${place.id}: ${
+                objectTokens.joinToString(separator = " ") { it.name }
+            }
+            """.trimMargin())
+            stringBuilder.append("\n")
+        }
+        return stringBuilder.toString().also {
+            stringBuilder.clear()
+        }
+    }
+
+    companion object {
+        fun build(block: MutableMap<Place, MutableSet<ObjectToken>>.() -> Unit) : ObjectMarking {
+            val map = mutableMapOf<Place, MutableSet<ObjectToken>>()
+            map.block()
+            val newObjectMarking = ObjectMarking(map)
+            return newObjectMarking
+        }
     }
 }

@@ -15,7 +15,6 @@ class OCNetFacadeBuilder {
         get() = definedNetData?.errors
 
     class BuiltOCNet(
-        val ocNetElements: OCNetElements,
         val errors: List<ConsistencyCheckError>,
         val ocNet: StaticCoreOcNet?,
     ) {
@@ -42,7 +41,6 @@ class OCNetFacadeBuilder {
         )
         this.definedNetData = definedNetData
         return BuiltOCNet(
-            ocNetElements = convertionResult,
             errors = errors,
             ocNet = ocNet,
         )

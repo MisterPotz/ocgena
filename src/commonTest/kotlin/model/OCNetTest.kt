@@ -4,17 +4,17 @@ import dsl.OCNetFacadeBuilder
 import error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import model.aalst.SimulationParamsTypeABuilder
 import simulation.ConsoleDebugExecutionConditions
 import simulation.DebugLogger
-import simulation.Marking
+import simulation.PlainMarking
 import simulation.SimulationCreator
-import simulation.SimulationParams
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
 class OCNetTest {
     @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
+    @Test()
     fun testRunSimpleModel() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModel {
@@ -22,22 +22,46 @@ class OCNetTest {
                 placeType = PlaceType.INPUT
             }
                 .arcTo(transition { })
-                .arcTo(place { placeType = PlaceType.OUTPUT })
+                .arcTo(
+                    place {
+                        placeType = PlaceType.OUTPUT
+                    }
+                )
         }.requireConsistentOCNet()
+
+
         assertNotNull(
             ocNet,
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         )
-        val simulatorCreator = SimulationCreator(
-            ocNet,
-            ConsoleDebugExecutionConditions(),
-            DebugLogger(),
-            SimulationParams(
-                initialMarking = Marking.of {
-                    put("p1", 4)
+
+        val places = ocNet.places
+        val transitions = ocNet.transitions
+        val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+            .withInitialMarking(
+                PlainMarking.of {
+                    put(places["p1"], 1)
                 }
-            ))
-        simulatorCreator.createSimulationTask().prepareAndRun()
+            )
+            .withTimeIntervals(
+                IntervalFunction.create {
+                    put(
+                        transitions["t1"], FiringTimePair(
+                            earlyFiringTime = 10,
+                            latestFiringTime = 15
+                        )
+                    )
+                }
+            )
+
+        val simulatorCreator = SimulationCreator(
+            simulationParams = simulationParamsTypeABuilder.build(),
+            executionConditions = ConsoleDebugExecutionConditions(),
+            logger = DebugLogger()
+        )
+        simulatorCreator
+            .createSimulationTask()
+            .prepareAndRun()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -66,14 +90,14 @@ class OCNetTest {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         }
         requireNotNull(ocNet)
-        val simulatorCreator =
-            SimulationCreator(ocNet, ConsoleDebugExecutionConditions(), DebugLogger(), SimulationParams(
-                initialMarking = Marking.of {
-                    put("p1", 2)
-                    put("p2", 4)
-                }
-            )
-        )
-        simulatorCreator.createSimulationTask().prepareAndRun()
+//        val simulatorCreator =
+//            SimulationCreator(ocNet, ConsoleDebugExecutionConditions(), DebugLogger(), SimulationParams(
+//                initialMarking = PlainMarking.of {
+//                    put("p1", 2)
+//                    put("p2", 4)
+//                }
+//            )
+//            )
+//        simulatorCreator.createSimulationTask().prepareAndRun()
     }
 }

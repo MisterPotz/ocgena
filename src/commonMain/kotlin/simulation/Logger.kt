@@ -9,7 +9,13 @@ interface Logger {
     fun onStart()
 
     fun onEnd()
+    fun onTimeout()
+
     abstract fun onExecutionStep(stepIndex: Int)
+
+    fun onTransitionEndSectionStart()
+
+    fun onTransitionStartSectionStart()
 
     fun onTransitionEnded(executedBinding: ExecutedBinding)
 

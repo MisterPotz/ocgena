@@ -1,13 +1,13 @@
-package simulation.aalst
+package simulation.typea
 
 import model.Arcs
 import model.Place
 import model.Transition
-import model.aalst.StaticArcMultiplicity
+import model.aalst.ArcMultiplicityTypeA
 import simulation.binding.InputToOutputPlaceResolver
 
 class InputToOutputPlacePlainResolver(
-    private val arcMultiplicity: StaticArcMultiplicity,
+    private val arcMultiplicity: ArcMultiplicityTypeA,
     val arcs : Arcs,
 ) : InputToOutputPlaceResolver {
     override fun getOutputPlaceForInput(transition: Transition, inputPlace: Place): Place {

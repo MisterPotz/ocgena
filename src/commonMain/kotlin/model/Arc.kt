@@ -34,7 +34,6 @@ abstract class Arc : ConsistencyCheckable, PetriAtom {
         }
     }
 
-    abstract fun tailPlaceHasEnoughTokens(): Boolean
     abstract fun isSameArcType(other: Arc): Boolean
 
     abstract fun copyWithTailAndArrow(
@@ -49,9 +48,6 @@ data class NormalArc(
     override var tailNode: PetriNode?,
     val multiplicity: Int = 1,
 ) : Arc() {
-    override fun tailPlaceHasEnoughTokens(): Boolean {
-        return (tailNode!! as Place).tokens >= multiplicity
-    }
 
     override fun isSameArcType(other: Arc): Boolean {
         return other is NormalArc
@@ -65,7 +61,7 @@ data class NormalArc(
     }
 
     override fun toString(): String {
-        return "->"
+        return "[ ${tailNode?.id} ] -> [ ${arrowNode?.id} ]"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -91,19 +87,13 @@ data class NormalArc(
     }
 }
 
-data class VariableArc(
+data class VariableArcTypeA(
     override val id: String,
     override var arrowNode: PetriNode?,
     override var tailNode: PetriNode?,
     // TODO: sets up the allowed multiplicity dynamically, probably needs some parameters
 //    private val _multiplicity : () -> Int,
 ) : Arc() {
-    //    override val multiplicity : Int
-//        get() = _multiplicity()
-    override fun tailPlaceHasEnoughTokens(): Boolean {
-//        val multiplicity = _multiplicity()
-        return (tailNode!! as Place).tokens >= 1
-    }
 
     override fun copyWithTailAndArrow(newTail: PetriNode, newArrow: PetriNode): Arc {
         return copy(
@@ -113,18 +103,18 @@ data class VariableArc(
     }
 
     override fun isSameArcType(other: Arc): Boolean {
-        return other is VariableArc
+        return other is VariableArcTypeA
     }
 
     override fun toString(): String {
-        return "=>"
+        return "[ ${tailNode?.id} ] => [ ${arrowNode?.id} ]"
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as VariableArc
+        other as VariableArcTypeA
 
         if (id != other.id) return false
         if (arrowNode?.id != other.arrowNode?.id) return false
@@ -138,5 +128,27 @@ data class VariableArc(
         result = 31 * result + (arrowNode?.id?.hashCode() ?: 0)
         result = 31 * result + (tailNode?.id?.hashCode() ?: 0)
         return result
+    }
+}
+
+data class VariableArcTypeL(
+    override val id : String,
+    override var arrowNode: PetriNode?,
+    override var tailNode: PetriNode?
+): Arc() {
+
+    override fun copyWithTailAndArrow(newTail: PetriNode, newArrow: PetriNode): Arc {
+        return copy(
+            tailNode = newTail,
+            arrowNode = newArrow
+        )
+    }
+
+    override fun isSameArcType(other: Arc): Boolean {
+        return other is VariableArcTypeL
+    }
+
+    override fun toString(): String {
+        return "v=>"
     }
 }

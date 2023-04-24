@@ -85,7 +85,7 @@ class OCNetDSLConverter(
         val arcId = elementsIdCreator.createArcId(arcDSL)
         val arc = when (arcDSL) {
             is VariableArcDSL -> {
-                VariableArc(
+                VariableArcTypeA(
                     arrowNode = arrowNode,
                     tailNode = tailNode,
                     id = arcId

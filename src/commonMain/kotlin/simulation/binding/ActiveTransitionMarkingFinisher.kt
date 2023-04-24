@@ -5,16 +5,18 @@ import model.ExecutedBinding
 import model.ObjectMarking
 import simulation.Logger
 
-interface ActiveTransitionFinisher {
+interface ActiveTransitionMarkingFinisher {
+    val pMarking: ObjectMarking
+
     fun finishActiveTransition(activeFiringTransition: ActiveFiringTransition)
 }
 
 
 class ActiveTransitionFinisherImpl(
-    private val pMarking: ObjectMarking,
+    override val pMarking: ObjectMarking,
     private val inputToOutputPlaceResolver: InputToOutputPlaceResolver,
-    private val logger: Logger
-): ActiveTransitionFinisher {
+    private val logger: Logger,
+): ActiveTransitionMarkingFinisher {
     override fun finishActiveTransition(activeFiringTransition: ActiveFiringTransition) {
         val markingForOutputPlaces = getMarkingForOutputPlaces(activeFiringTransition)
 

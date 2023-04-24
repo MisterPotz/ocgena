@@ -1,15 +1,24 @@
 package simulation
 
+import model.ObjectMarking
+import kotlin.time.Duration
+
+data class SimulationParams(
+    val templateOcNet: SimulatableComposedOcNet<*>,
+    val initialMarking: ObjectMarking,
+    val timeoutSec: Long
+)
+
 class SimulationCreator(
-    private val templateOcNet: SimulatableComposedOcNet<*>,
+    private val simulationParams: SimulationParams,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
 ) {
     fun createSimulationTask(): SimulationTask {
-        val copy = templateOcNet.fullCopy()
+        val copy = simulationParams.templateOcNet.fullCopy()
 
         return SimulationTask(
-            copy,
+            simulationParams.copy(templateOcNet = copy),
             executionConditions,
             logger,
             randomBindingSelector = RandomBindingSelector(),

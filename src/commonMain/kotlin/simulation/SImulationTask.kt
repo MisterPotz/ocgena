@@ -1,18 +1,28 @@
 package simulation
 
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
+import model.ObjectMarking
 import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.InputToOutputPlaceResolverFactory
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class SimulationTask(
-    private val ocNet: SimulatableComposedOcNet<*>,
+    private val simulationParams: SimulationParams,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
     private val randomBindingSelector: RandomBindingSelector,
 ) {
-    val state = ocNet.createInitialState()
+    private val ocNet = simulationParams.templateOcNet
+    private val initialMarking = simulationParams.initialMarking
+    private val duration = simulationParams.timeoutSec.toDuration(DurationUnit.SECONDS)
+    private val state = ocNet.createInitialState()
+
     private val runningSimulatableOcNet = RunningSimulatableOcNet(ocNet, state)
     private val executionLock: Mutex = Mutex()
+    private val simulationState = SimulationState()
     private val stepExecutor = SimulationTaskStepExecutor(
         ocNet,
         state,
@@ -25,22 +35,45 @@ class SimulationTask(
             ).create(),
             logger
         ),
+        simulationState = simulationState,
         logger = logger
     )
 
     private fun prepare() {
         ocNet.initialize()
+
+        state.pMarking += initialMarking
     }
 
     private suspend fun run() {
         var stepIndex: Int = 0
 
-        while (!executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)) {
-            logger.onExecutionStep(stepIndex)
-            stepExecutor.executeStep()
+        simulationState.onStart()
+
+        withTimeout(duration) {
+            while (
+                !executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
+                && !simulationState.isFinished()
+                && isActive
+            ) {
+
+                simulationState.onNewStep()
+
+                logger.onExecutionStep(stepIndex)
+
+                stepExecutor.executeStep()
+
+                stepIndex++
+
 //            logger.logBindingExecution(selectedBinding)
 //            executionConditions.checkIfSuspend()
+            }
+
+            if (!this.isActive) {
+                logger.onTimeout()
+            }
         }
+
     }
 
     suspend fun prepareAndRun() {

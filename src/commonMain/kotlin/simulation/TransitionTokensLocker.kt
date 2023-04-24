@@ -27,6 +27,7 @@ class TransitionTokensLocker(
         )
 
         tMarking.pushTMarking(tMarkingValue)
+        logger.onTransitionStartSectionStart()
         logger.onTransitionStart(transition = tMarkingValue)
     }
 
@@ -34,7 +35,7 @@ class TransitionTokensLocker(
         pMarkingProvider.pMarking -= enabledBindingWithTokens.involvedObjectTokens
     }
 
-    fun lockEnabledBindingTokens(enabledBindingWithTokens: EnabledBindingWithTokens) {
+    fun lockTokensAndRecordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
         lockTokensInPMarking(enabledBindingWithTokens)
         recordActiveTransition(enabledBindingWithTokens)
     }

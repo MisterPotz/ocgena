@@ -1,22 +1,22 @@
-package simulation.aalst
+package simulation.typea
 
 import model.IntervalFunction
 import model.StaticCoreOcNet
-import model.aalst.StaticArcMultiplicity
+import model.aalst.ArcMultiplicityTypeA
 import simulation.SimulatableComposedOcNet
 import simulation.State
 
-class SimulatableAalstOcNet(
+class SimulatableOcNetTypeA(
     override val coreOcNet: StaticCoreOcNet,
-    override val arcMultiplicity: StaticArcMultiplicity,
+    override val arcMultiplicity: ArcMultiplicityTypeA,
     override val intervalFunction: IntervalFunction,
-) : SimulatableComposedOcNet<SimulatableAalstOcNet> {
+) : SimulatableComposedOcNet<SimulatableOcNetTypeA> {
     override fun createInitialState(): SimulatableComposedOcNet.State {
         return State()
     }
 
-    override fun fullCopy(): SimulatableAalstOcNet {
-        return SimulatableAalstOcNet(
+    override fun fullCopy(): SimulatableOcNetTypeA {
+        return SimulatableOcNetTypeA(
             coreOcNet = coreOcNet,
             arcMultiplicity = arcMultiplicity,
             intervalFunction = intervalFunction,

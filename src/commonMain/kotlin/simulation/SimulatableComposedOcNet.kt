@@ -14,6 +14,7 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
 
     fun initialize() {
         coreOcNet.places.reindexArcs()
+        coreOcNet.transitions.reindexArcs()
     }
 
     fun fullCopy() : T

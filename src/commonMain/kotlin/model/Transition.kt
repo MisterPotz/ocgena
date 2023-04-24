@@ -26,14 +26,6 @@ data class Transition(
         return placesToArcs[place]
     }
 
-    fun getEnabledBinding() : EnabledSimpleBinding? {
-        return EnabledSimpleBinding.createEnabledBinding(this)
-    }
-
-    fun isBindingEnabled(): Boolean {
-        return inputArcs.all { it.tailPlaceHasEnoughTokens() }
-    }
-
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitTransition(this)
     }

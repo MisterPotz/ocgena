@@ -2,17 +2,51 @@ package simulation
 
 import model.ObjectMarking
 import model.Time
-import simulation.binding.ActiveTransitionFinisher
+import simulation.binding.ActiveTransitionMarkingFinisher
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
+
+
+class SimulationState() {
+    private var current: BySteps? = null
+
+    fun onStart() {
+        current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false)
+    }
+
+    fun onNewStep() {
+        current = BySteps()
+    }
+
+    fun onHasEnabledTransitions(hasEnabledTransitions: Boolean) {
+        require(current != null && current?.noEnabledTransitions == null)
+        current!!.noEnabledTransitions = !hasEnabledTransitions
+    }
+
+    fun onHasPlannedTransitions(hasPlannedTransitions: Boolean) {
+        require(current != null && current?.noPlannedTransitions == null)
+        current!!.noPlannedTransitions = !hasPlannedTransitions
+    }
+
+    fun isFinished(): Boolean {
+        require(current != null)
+        return current!!.noPlannedTransitions!! && current!!.noEnabledTransitions!!
+    }
+
+    private class BySteps(
+        var noEnabledTransitions: Boolean? = null,
+        var noPlannedTransitions: Boolean? = null,
+    )
+}
 
 class SimulationTaskStepExecutor(
     private val ocNet: SimulatableComposedOcNet<*>,
     private val state: SimulatableComposedOcNet.State,
     private val randomBindingSelector: RandomBindingSelector,
-    private val transitionFinisher: ActiveTransitionFinisher,
-    private val logger: Logger
+    private val transitionFinisher: ActiveTransitionMarkingFinisher,
+    private val logger: Logger,
+    private val simulationState: SimulationState,
 ) {
     private val pMarkingProvider = StatePMarkingProvider(state = state)
     private val enabledBindingResolverFactory: EnabledBindingResolverFactory = EnabledBindingResolverFactory(
@@ -30,6 +64,7 @@ class SimulationTaskStepExecutor(
         transitions = ocNet.coreOcNet.transitions,
         enabledBindingResolverFactory = enabledBindingResolverFactory
     )
+    private var lastStepWasFinal = false
 
     fun executeStep() {
         findAndFinishEndedTransitions()
@@ -40,38 +75,48 @@ class SimulationTaskStepExecutor(
     }
 
     private fun findAndStartEnabledTransitions() {
-        var enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
+        val enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
 
-        while (enabledBindings.isNotEmpty()) {
-            val selectedBinding = randomBindingSelector.selectBinding(enabledBindings)
-
-            val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
-
-            transitionTokensLocker.lockEnabledBindingTokens(bindingWithTokens)
-
-            enabledBindings = bindingsCollector.findEnabledBindings()
+        if (enabledBindings.isEmpty()) {
+            simulationState.onHasEnabledTransitions(hasEnabledTransitions = false)
+            return
         }
+
+        val selectedBinding = randomBindingSelector.selectBinding(enabledBindings)
+
+        val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
+
+        transitionTokensLocker.lockTokensAndRecordActiveTransition(bindingWithTokens)
+
+        simulationState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
     }
 
     private fun findAndFinishEndedTransitions() {
         val tMarking = state.tMarking
-        val endedTransitions = tMarking.getEndedTransitions()
+        val endedTransitions = tMarking.getAndPopEndedTransitions()
 
+        logger.onTransitionEndSectionStart()
         for (transition in endedTransitions) {
             transitionFinisher.finishActiveTransition(transition)
         }
     }
 
-
     private fun shiftTimeToClosestTransitionFinish() {
         val timeUntilNextFinish = resolveTimeUntilNextTransitionFinish()
-        shiftActiveTransitionsByTime(timeUntilNextFinish)
+
+        simulationState.onHasPlannedTransitions(
+            hasPlannedTransitions = timeUntilNextFinish != null
+        )
+
+        if (timeUntilNextFinish != null) {
+            shiftActiveTransitionsByTime(timeUntilNextFinish)
+        }
     }
 
-    private fun resolveTimeUntilNextTransitionFinish(): Time {
+    private fun resolveTimeUntilNextTransitionFinish(): Time? {
         val tMarking = state.tMarking
         val earliestFinishActiveTransition = tMarking.getActiveTransitionWithEarliestFinish()
-        return earliestFinishActiveTransition.timeLeftUntilFinish()
+        return earliestFinishActiveTransition?.timeLeftUntilFinish()
     }
 
     private fun shiftActiveTransitionsByTime(time: Time) {

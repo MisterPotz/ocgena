@@ -1,27 +1,50 @@
 package simulation
 
-import model.EnabledSimpleBinding
+import model.ActiveFiringTransition
+import model.ExecutedBinding
 import utils.mprintln
 
 class DebugLogger : Logger {
-    private val executedBindings: MutableList<EnabledSimpleBinding> = mutableListOf()
     override val loggingEnabled: Boolean
         get() = true
+
+    fun String.indent(times: Int): String {
+        return this.prependIndent(
+            (0 until times).fold("") { accum, ind ->
+                accum + "\t"
+            }
+        )
+    }
+
+    override fun onTimeout() {
+        mprintln("execution timeout")
+    }
 
     override fun onStart() {
         mprintln("execution started")
     }
 
-    override fun logBindingExecution(binding: EnabledSimpleBinding) {
-        mprintln("\texecute: ${binding.toString().prependIndent()}")
-        executedBindings.add(binding)
-    }
-
     override fun onEnd() {
-        mprintln("execution ended, executed bindings: ${executedBindings.size}")
+        mprintln("execution ended")
     }
 
     override fun onExecutionStep(stepIndex: Int) {
-        mprintln("Execution step: $stepIndex")
+        mprintln("execution step: $stepIndex".indent(1))
+    }
+
+    override fun onTransitionEndSectionStart() {
+        mprintln("""ending transitions:""".indent(2))
+    }
+
+    override fun onTransitionStartSectionStart() {
+        mprintln("""starting transitions:""".indent(2))
+    }
+
+    override fun onTransitionEnded(executedBinding: ExecutedBinding) {
+        mprintln(executedBinding.toString().indent(3))
+    }
+
+    override fun onTransitionStart(transition: ActiveFiringTransition) {
+        mprintln(transition.toString().trimMargin().indent(3))
     }
 }

@@ -1,9 +1,9 @@
-package simulation.aalst
+package simulation.typea
 
 import model.Arcs
 import model.Place
 import model.Transition
-import model.aalst.StaticArcMultiplicity
+import model.aalst.ArcMultiplicityTypeA
 import simulation.binding.EnabledBindingResolver
 import model.ObjectMarking
 import model.ObjectToken
@@ -14,7 +14,7 @@ import simulation.binding.EnabledBindingWithTokens
 
 class EnabledBindingPlainResolver(
     private val pMarkingProvider : PMarkingProvider,
-    private val arcMultiplicity: StaticArcMultiplicity,
+    private val arcMultiplicity: ArcMultiplicityTypeA,
     val arcs: Arcs,
 ) : EnabledBindingResolver {
 
@@ -26,13 +26,13 @@ class EnabledBindingPlainResolver(
         val arc = arcs[transition][place]!!
         val requiredTokens = arcMultiplicity.getMultiplicity(arc)
 
-        return arcMultiplicity.isVariable(arc) && (marking?.size ?: 0) >= requiredTokens
+        return !arcMultiplicity.isVariable(arc) && (marking?.size ?: 0) >= requiredTokens
     }
 
     private fun isVariableArcAndEnoughTokens(place: Place, transition: Transition): Boolean {
         val marking = pMarking[place]
         val arc = arcs[transition][place]!!
-        return arcMultiplicity.isVariable(arc) && (marking?.size ?: 0) > 0
+        return arcMultiplicity.isVariable(arc) && (marking?.size ?: 0) > 1
     }
 
     private fun getObjectTokens(
@@ -64,11 +64,11 @@ class EnabledBindingPlainResolver(
             return null
         }
 
-        val placeToObjectTokenMap = buildMap {
-            placesWithEnoughTokens.forEach { place ->
-                put(place, getObjectTokens(transition, place).toMutableSet())
-            }
-        }
+//        val placeToObjectTokenMap = buildMap {
+//            placesWithEnoughTokens.forEach { place ->
+//                put(place, getObjectTokens(transition, place).toMutableSet())
+//            }
+//        }
         return EnabledBinding(
             transition = transition,
         )

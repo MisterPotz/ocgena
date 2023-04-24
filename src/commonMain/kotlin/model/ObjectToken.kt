@@ -2,6 +2,12 @@ package model
 
 interface ObjectValuesMap
 
+object EmptyObjectValuesMap : ObjectValuesMap {
+    override fun toString(): String {
+        return "[ ]"
+    }
+}
+
 typealias Time = Int
 
 data class ObjectToken(

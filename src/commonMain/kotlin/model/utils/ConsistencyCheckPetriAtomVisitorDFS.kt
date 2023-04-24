@@ -8,7 +8,7 @@ import model.PetriAtom
 import model.Place
 import model.PlaceType
 import model.Transition
-import model.VariableArc
+import model.VariableArcTypeA
 
 class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,
@@ -172,7 +172,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         // case 4 - only variability arc serves as input or output arc
         if (transition.inputArcs.size == 1) {
             val firstArc = transition.inputArcs.first()
-            if (firstArc is VariableArc) {
+            if (firstArc is VariableArcTypeA) {
                 inconsistenciesSet.add(
                     ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                         transition = transition,
@@ -183,7 +183,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         }
         if (transition.outputArcs.size == 1) {
             val firstArc = transition.outputArcs.first()
-            if (firstArc is VariableArc) {
+            if (firstArc is VariableArcTypeA) {
                 inconsistenciesSet.add(
                     ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                         transition = transition,

@@ -2,10 +2,10 @@ package simulation.binding
 
 import model.ArcMultiplicity
 import model.Arcs
-import model.aalst.StaticArcMultiplicity
+import model.aalst.ArcMultiplicityTypeA
 import model.lomazova.ExpressionArcMultiplicity
 import simulation.PMarkingProvider
-import simulation.aalst.EnabledBindingPlainResolver
+import simulation.typea.EnabledBindingPlainResolver
 
 class EnabledBindingResolverFactory(
     private val arcMultiplicity: ArcMultiplicity,
@@ -14,7 +14,7 @@ class EnabledBindingResolverFactory(
 ) {
     fun create() : EnabledBindingResolver {
         return when (arcMultiplicity) {
-            is StaticArcMultiplicity -> EnabledBindingPlainResolver(pMarkingProvider, arcMultiplicity, arcs = arcs)
+            is ArcMultiplicityTypeA -> EnabledBindingPlainResolver(pMarkingProvider, arcMultiplicity, arcs = arcs)
             is ExpressionArcMultiplicity -> TODO("I.A.Lomazova specification is yet to be done")
             else -> throw IllegalArgumentException("type ${arcMultiplicity::class.simpleName} is not supported")
         }
