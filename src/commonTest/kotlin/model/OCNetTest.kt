@@ -5,10 +5,12 @@ import error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import model.aalst.SimulationParamsTypeABuilder
+import model.time.IntervalFunction
 import simulation.ConsoleDebugExecutionConditions
 import simulation.DebugLogger
 import simulation.PlainMarking
 import simulation.SimulationCreator
+import model.time.TransitionTimes
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
@@ -46,9 +48,9 @@ class OCNetTest {
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
-                        transitions["t1"], FiringTimePair(
-                            earlyFiringTime = 10,
-                            latestFiringTime = 15
+                        transitions["t1"], TransitionTimes(
+                            duration = 10..15,
+                            pauseBeforeNextOccurence = 0..0
                         )
                     )
                 }
@@ -107,12 +109,17 @@ class OCNetTest {
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
-                        transitions["t1"], FiringTimePair(
-                            earlyFiringTime = 10,
-                            latestFiringTime = 15
+                        transitions["t1"], TransitionTimes(
+                            duration = 10..15,
+                            pauseBeforeNextOccurence = 10..10
                         )
                     )
-                    put(transitions["t2"], FiringTimePair(earlyFiringTime = 0, latestFiringTime = 5))
+                    put(
+                        transitions["t2"], TransitionTimes(
+                            duration = 0..5,
+                            pauseBeforeNextOccurence = 0..0
+                        )
+                    )
                 }
             )
             .withRandomSeed(randomSeed = 42L)

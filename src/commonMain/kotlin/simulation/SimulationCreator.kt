@@ -4,6 +4,7 @@ import model.ObjectMarking
 import simulation.random.BindingSelector
 import simulation.random.RandomFactory
 import simulation.random.TokenSelector
+import simulation.time.NextTransitionOccurenceAllowedTimeSelector
 
 data class SimulationParams(
     val templateOcNet: SimulatableComposedOcNet<*>,
@@ -27,7 +28,11 @@ class SimulationCreator(
             executionConditions,
             logger,
             bindingSelector = BindingSelector(random),
-            tokenSelector = TokenSelector(random)
+            tokenSelector = TokenSelector(random),
+            nextTransitionOccurenceAllowedTimeSelector = NextTransitionOccurenceAllowedTimeSelector(
+                random,
+                intervalFunction = copy.intervalFunction
+            )
         )
     }
 }

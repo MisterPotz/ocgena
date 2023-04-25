@@ -7,6 +7,7 @@ import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.InputToOutputPlaceResolverFactory
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
+import simulation.time.NextTransitionOccurenceAllowedTimeSelector
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -16,6 +17,7 @@ class SimulationTask(
     private val logger: Logger,
     private val bindingSelector: BindingSelector,
     private val tokenSelector : TokenSelector,
+    private val nextTransitionOccurenceAllowedTimeSelector: NextTransitionOccurenceAllowedTimeSelector,
 ) {
     private val ocNet = simulationParams.templateOcNet
     private val simulationTime = SimulationTime()
@@ -42,25 +44,32 @@ class SimulationTask(
         simulationState = simulationState,
         simulationTime = simulationTime,
         logger = logger,
-        tokenSelector = tokenSelector
+        tokenSelector = tokenSelector,
+        nextTransitionOccurenceTimeSelector = nextTransitionOccurenceAllowedTimeSelector
     )
 
     private fun prepare() {
         ocNet.initialize()
 
         state.pMarking += initialMarking
+
+        for (transition in ocNet.coreOcNet.transitions) {
+            val nextAllowedTime = nextTransitionOccurenceAllowedTimeSelector.getNewNextOccurrenceTime(transition)
+            state.tTimes.setNextAllowedTime(transition, nextAllowedTime)
+        }
     }
 
     private suspend fun run() {
         var stepIndex: Int = 0
 
         simulationState.onStart()
-
+        val maxSteps = 10000
         withTimeout(duration) {
             while (
                 !executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
                 && !simulationState.isFinished()
                 && isActive
+                && stepIndex < maxSteps
             ) {
 
                 simulationState.onNewStep()

@@ -12,13 +12,15 @@ import simulation.PMarkingProvider
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingWithTokens
 import simulation.random.TokenSelector
+import simulation.time.TransitionOccurrenceAllowedTimes
 
 
 class EnabledBindingPlainResolver(
-    private val pMarkingProvider : PMarkingProvider,
+    private val pMarkingProvider: PMarkingProvider,
     private val arcMultiplicity: ArcMultiplicityTypeA,
     val arcs: Arcs,
     private val tokenSelector: TokenSelector,
+    private val tTimes: TransitionOccurrenceAllowedTimes
 ) : EnabledBindingResolver {
 
     private val pMarking : ObjectMarking
@@ -55,6 +57,10 @@ class EnabledBindingPlainResolver(
     }
 
     override fun tryGetEnabledBinding(transition: Transition): EnabledBinding? {
+        val canBeEnabled = tTimes.isAllowedToBeEnabled(transition)
+        if (!canBeEnabled)
+            return null
+
         val inputPlaces = transition.inputPlaces
 
         val placesWithEnoughTokens = inputPlaces.filter { place ->

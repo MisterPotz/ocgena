@@ -1,5 +1,6 @@
 package simulation
 
+import simulation.time.NextTransitionOccurenceAllowedTimeSelector
 import model.ObjectMarking
 import model.Time
 import simulation.binding.ActiveTransitionMarkingFinisher
@@ -8,56 +9,14 @@ import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
-import utils.print
 
-
-class SimulationState() {
-    private var current: BySteps? = null
-
-    fun onStart() {
-        current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false)
-    }
-
-    fun onNewStep() {
-        current = BySteps()
-    }
-
-    fun onHasEnabledTransitions(hasEnabledTransitions: Boolean) {
-        require(current != null && current?.noEnabledTransitions == null)
-        current!!.noEnabledTransitions = !hasEnabledTransitions
-    }
-
-    fun onHasPlannedTransitions(hasPlannedTransitions: Boolean) {
-        require(current != null && current?.noPlannedTransitions == null)
-        current!!.noPlannedTransitions = !hasPlannedTransitions
-    }
-
-    fun isFinished(): Boolean {
-        require(current != null)
-        return current!!.noPlannedTransitions!! && current!!.noEnabledTransitions!!
-    }
-
-    private class BySteps(
-        var noEnabledTransitions: Boolean? = null,
-        var noPlannedTransitions: Boolean? = null,
-    )
-}
-
-class SimulationTime(var globalTime : Time = 0) {
-    fun shiftByDelta(delta : Time) {
-        globalTime += delta
-    }
-
-    override fun toString(): String {
-        return globalTime.print()
-    }
-}
 
 class SimulationTaskStepExecutor(
     private val ocNet: SimulatableComposedOcNet<*>,
     private val state: SimulatableComposedOcNet.State,
     private val bindingSelector: BindingSelector,
-    private val tokenSelector : TokenSelector,
+    private val tokenSelector: TokenSelector,
+    private val nextTransitionOccurenceTimeSelector: NextTransitionOccurenceAllowedTimeSelector,
     private val transitionFinisher: ActiveTransitionMarkingFinisher,
     private val logger: Logger,
     private val simulationTime: SimulationTime,
@@ -69,43 +28,50 @@ class SimulationTaskStepExecutor(
         ocNet.arcMultiplicity,
         arcs = ocNet.coreOcNet.arcs,
         pMarkingProvider = pMarkingProvider,
-        tokenSelector = tokenSelector
+        tokenSelector = tokenSelector,
+        tTimes = state.tTimes
     )
     private val transitionTokensLocker = TransitionTokensLocker(
         pMarkingProvider,
         state.tMarking,
-        ocNet.intervalFunction,
-        logger
+        intervalFunction = ocNet.intervalFunction,
+        logger = logger,
+        tTimes = state.tTimes,
+        nextTransitionOccurenceAllowedTimeSelector = nextTransitionOccurenceTimeSelector,
     )
     private val bindingsCollector = EnabledBindingsCollector(
         transitions = ocNet.coreOcNet.transitions,
         enabledBindingResolverFactory = enabledBindingResolverFactory
     )
-    private var lastStepWasFinal = false
 
     fun executeStep() {
         findAndFinishEndedTransitions()
 
         findAndStartEnabledTransitions()
 
-        shiftTimeToClosestTransitionFinish()
+        shiftByMinimalSomethingChangingTime()
     }
 
     private fun findAndStartEnabledTransitions() {
-        val enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
+        var enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
+
+        logger.onTransitionStartSectionStart()
 
         if (enabledBindings.isEmpty()) {
             simulationState.onHasEnabledTransitions(hasEnabledTransitions = false)
             return
         }
-
-        val selectedBinding = bindingSelector.selectBinding(enabledBindings)
-
-        val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
-
-        transitionTokensLocker.lockTokensAndRecordActiveTransition(bindingWithTokens)
-
         simulationState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
+
+        while (enabledBindings.isNotEmpty()) {
+            val selectedBinding = bindingSelector.selectBinding(enabledBindings)
+
+            val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
+
+            transitionTokensLocker.lockTokensAndRecordActiveTransition(bindingWithTokens)
+
+            enabledBindings = bindingsCollector.findEnabledBindings()
+        }
     }
 
     private fun findAndFinishEndedTransitions() {
@@ -118,17 +84,20 @@ class SimulationTaskStepExecutor(
         }
     }
 
-    private fun shiftTimeToClosestTransitionFinish() {
-        val timeUntilNextFinish = resolveTimeUntilNextTransitionFinish()
+    private fun shiftByMinimalSomethingChangingTime() {
+        val timeUntilNextFinishA = resolveTimeUntilNextTransitionFinish()
+        val shiftingTime = timeUntilNextFinishA ?: resolveTimeUntilATransitionIsEnabled()
+
 
         simulationState.onHasPlannedTransitions(
-            hasPlannedTransitions = timeUntilNextFinish != null
+            hasPlannedTransitions = shiftingTime != null
         )
 
-        if (timeUntilNextFinish != null) {
-            shiftGlobalTime(timeUntilNextFinish)
-            shiftActiveTransitionsByTime(timeUntilNextFinish)
-            logger.onTimeShift(timeUntilNextFinish)
+        if (shiftingTime != null) {
+            shiftGlobalTime(shiftingTime)
+            shiftActiveTransitionsByTime(shiftingTime)
+            shiftTransitionAllowedTime(shiftingTime)
+            logger.onTimeShift(shiftingTime)
         }
     }
 
@@ -138,10 +107,21 @@ class SimulationTaskStepExecutor(
         return earliestFinishActiveTransition?.timeLeftUntilFinish()
     }
 
+    private fun resolveTimeUntilATransitionIsEnabled() : Time? {
+        val tTimes = state.tTimes
+
+        val earliestTransitionEnablingTime = tTimes.earliestNonZeroTime()
+        return earliestTransitionEnablingTime
+    }
+
     private fun shiftActiveTransitionsByTime(time: Time) {
         val tMarking = state.tMarking
         tMarking.shiftByTime(time)
+    }
 
+    private fun shiftTransitionAllowedTime(time: Time) {
+        val tTimes = state.tTimes
+        tTimes.shiftByTime(time)
     }
 
     private fun shiftGlobalTime(time: Time) {

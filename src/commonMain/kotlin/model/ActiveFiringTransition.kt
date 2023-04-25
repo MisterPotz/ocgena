@@ -3,8 +3,6 @@ package model
 import utils.ANSI_CYAN
 import utils.ANSI_RESET
 import utils.ANSI_YELLOW
-import utils.DARK_BLUE
-import utils.DARK_YELLOW
 import utils.font
 import utils.print
 

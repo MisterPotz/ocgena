@@ -1,19 +1,24 @@
 package simulation
 
 import model.ActiveFiringTransition
-import model.IntervalFunction
-import model.TMarking
+import model.time.IntervalFunction
+import model.ActiveTransitionMarking
 import simulation.binding.EnabledBindingWithTokens
+import simulation.time.NextTransitionOccurenceAllowedTimeSelector
+import simulation.time.TransitionOccurrenceAllowedTimes
 import kotlin.random.Random
 
 class TransitionTokensLocker(
     private val pMarkingProvider: PMarkingProvider,
-    private val tMarking: TMarking,
+    private val tMarking: ActiveTransitionMarking,
+    private val nextTransitionOccurenceAllowedTimeSelector: NextTransitionOccurenceAllowedTimeSelector,
+    private val tTimes : TransitionOccurrenceAllowedTimes,
     private val intervalFunction: IntervalFunction,
     private val logger: Logger
 ) {
     private fun recordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
-        val interval = intervalFunction[enabledBindingWithTokens.transition]
+        val transition = enabledBindingWithTokens.transition
+        val interval = intervalFunction[transition]
 
         val randomSelectedDuration = Random.nextInt(
             from = interval.earlyFiringTime,
@@ -21,14 +26,19 @@ class TransitionTokensLocker(
         )
 
         val tMarkingValue = ActiveFiringTransition.create(
-            enabledBindingWithTokens.transition,
-            enabledBindingWithTokens.involvedObjectTokens,
+            transition = transition,
+            lockedObjectTokens = enabledBindingWithTokens.involvedObjectTokens,
             duration = randomSelectedDuration,
             tokenSynchronizationTime = enabledBindingWithTokens.synchronizationTime
         )
 
         tMarking.pushTMarking(tMarkingValue)
-        logger.onTransitionStartSectionStart()
+        val newNextAllowedTime = nextTransitionOccurenceAllowedTimeSelector.getNewNextOccurrenceTime(transition)
+
+        tTimes.setNextAllowedTime(
+            transition = transition,
+            time = newNextAllowedTime
+        )
         logger.onTransitionStart(transition = tMarkingValue)
     }
 

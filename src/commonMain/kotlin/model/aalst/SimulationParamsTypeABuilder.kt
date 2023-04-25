@@ -1,6 +1,6 @@
 package model.aalst
 
-import model.IntervalFunction
+import model.time.IntervalFunction
 import model.ObjectMarking
 import model.PlaceTyping
 import model.StaticCoreOcNet

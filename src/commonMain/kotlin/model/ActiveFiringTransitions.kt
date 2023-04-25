@@ -1,6 +1,6 @@
 package model
 
-class ActiveFiringTransitions {
+class ActiveFiringTransitions() {
     private val tMarkingValues: MutableList<ActiveFiringTransition> = mutableListOf()
 
     fun checkConsistency() {

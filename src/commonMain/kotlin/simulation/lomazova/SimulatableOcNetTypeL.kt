@@ -1,21 +1,21 @@
 package simulation.lomazova
 
-import model.IntervalFunction
+import model.time.IntervalFunction
 import model.StaticCoreOcNet
 import model.lomazova.ExpressionArcMultiplicity
 import simulation.SimulatableComposedOcNet
 
-class SimulatableLomazovaOcNet(
+class SimulatableOcNetTypeL(
     override val coreOcNet: StaticCoreOcNet,
     override val arcMultiplicity: ExpressionArcMultiplicity,
     override val intervalFunction: IntervalFunction,
-) : SimulatableComposedOcNet<SimulatableLomazovaOcNet> {
+) : SimulatableComposedOcNet<SimulatableOcNetTypeL> {
     override fun createInitialState(): SimulatableComposedOcNet.State {
         TODO("Not yet implemented")
     }
 
-    override fun fullCopy(): SimulatableLomazovaOcNet {
-        return SimulatableLomazovaOcNet(
+    override fun fullCopy(): SimulatableOcNetTypeL {
+        return SimulatableOcNetTypeL(
             coreOcNet = coreOcNet,
             arcMultiplicity = arcMultiplicity,
             intervalFunction = intervalFunction

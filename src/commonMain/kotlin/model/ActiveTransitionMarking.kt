@@ -1,7 +1,9 @@
 package model
 
-class TMarking {
+
+class ActiveTransitionMarking() {
     private val transitionsToTMarkingValue = mutableMapOf<Transition, ActiveFiringTransitions>()
+
     operator fun get(transition: model.Transition): ActiveFiringTransitions? {
         return transitionsToTMarkingValue[transition]
     }

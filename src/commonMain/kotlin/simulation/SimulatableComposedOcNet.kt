@@ -1,10 +1,11 @@
 package simulation
 
 import model.ArcMultiplicity
-import model.IntervalFunction
+import model.time.IntervalFunction
 import model.ObjectMarking
 import model.StaticCoreOcNet
-import model.TMarking
+import model.ActiveTransitionMarking
+import simulation.time.TransitionOccurrenceAllowedTimes
 
 interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     val coreOcNet: StaticCoreOcNet
@@ -20,7 +21,8 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     fun fullCopy() : T
 
     interface State {
-        val tMarking: TMarking
+        val tMarking: ActiveTransitionMarking
         val pMarking: ObjectMarking
+        val tTimes: TransitionOccurrenceAllowedTimes
     }
 }
