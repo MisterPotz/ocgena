@@ -2,6 +2,7 @@ package simulation
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import model.ObjectMarking
 import model.Time
 
 interface Logger {
@@ -9,6 +10,8 @@ interface Logger {
 
     fun onStart()
 
+    fun onInitialMarking(marking: ObjectMarking)
+    fun onFinalMarking(marking: ObjectMarking)
     fun onEnd()
     fun onTimeout()
 

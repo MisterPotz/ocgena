@@ -2,6 +2,7 @@ package simulation.typea
 
 import model.ActiveFiringTransition
 import model.Arcs
+import model.ImmutableObjectMarking
 import model.ObjectMarking
 import model.ObjectToken
 import model.ObjectType
@@ -22,10 +23,11 @@ class OutputMarkingFiller(
     private val inputTotalByType = getTokenAmountForTypeToPlaces(inputPlacesByType)
     private val outputTotalByType = getTokenAmountForTypeToPlaces(outputPlacesByType)
     val transitionArcs = arcs[transition]
-    val outputMarking = ObjectMarking()
-    val inputMarking = activeFiringTransition.lockedObjectTokens
+    private val outputMarking = ObjectMarking()
+    private val inputMarking = activeFiringTransition.lockedObjectTokens.toMutableObjectMarking()
 
-    fun fill() : ObjectMarking {
+
+    fun fill() : ImmutableObjectMarking {
         checkOtOfInputAndOutput(inputTotalByType.keys, outputTotalByType.keys)
         checkTransferAmountsMatch(inputTotalByType, outputTotalByType)
 
@@ -69,8 +71,7 @@ class OutputMarkingFiller(
         outputMarking[outputPlace] = consumedTokens
     }
 
-    private fun fillOutputMarking() : ObjectMarking {
-        val outputMarking = ObjectMarking()
+    private fun fillOutputMarking() : ImmutableObjectMarking {
         val transitionArcs = arcs[transition]
 
         for (otype in outputPlacesByType.keys) {
@@ -90,7 +91,7 @@ class OutputMarkingFiller(
                 }
             }
         }
-        return outputMarking
+        return ImmutableObjectMarking.createFromObjectMarking(outputMarking)
     }
 
     private fun getTypeToPlaces(places : List<Place>) : MutableMap<ObjectType, MutableList<Place>> {

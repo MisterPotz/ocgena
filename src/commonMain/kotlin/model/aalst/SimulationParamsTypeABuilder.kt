@@ -14,6 +14,7 @@ class SimulationParamsTypeABuilder(
 ) {
     private var initialMarking : ObjectMarking? = null
     private var timeIntervalFunction : IntervalFunction? = null
+    private var randomSeed : Long? = null
     fun withInitialMarking(plainMarking: PlainMarking): SimulationParamsTypeABuilder {
         val plainToObjectTokenGenerator = ObjectMarkingFromPlainCreator(
             plainMarking = plainMarking,
@@ -29,6 +30,11 @@ class SimulationParamsTypeABuilder(
         return this
     }
 
+    fun withRandomSeed(randomSeed : Long?) : SimulationParamsTypeABuilder {
+        this.randomSeed = randomSeed
+        return this
+    }
+
     fun build() : SimulationParams {
         val ocNet = SimulatableOcNetTypeA(
             coreOcNet = ocNet,
@@ -38,7 +44,8 @@ class SimulationParamsTypeABuilder(
         return SimulationParams(
             templateOcNet = ocNet,
             initialMarking = initialMarking!!,
-            timeoutSec = 3L
+            timeoutSec = null,
+            randomSeed = randomSeed
         )
     }
 }

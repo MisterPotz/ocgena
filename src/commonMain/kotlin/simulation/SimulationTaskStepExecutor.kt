@@ -6,6 +6,8 @@ import simulation.binding.ActiveTransitionMarkingFinisher
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
+import simulation.random.BindingSelector
+import simulation.random.TokenSelector
 import utils.print
 
 
@@ -54,7 +56,8 @@ class SimulationTime(var globalTime : Time = 0) {
 class SimulationTaskStepExecutor(
     private val ocNet: SimulatableComposedOcNet<*>,
     private val state: SimulatableComposedOcNet.State,
-    private val randomBindingSelector: RandomBindingSelector,
+    private val bindingSelector: BindingSelector,
+    private val tokenSelector : TokenSelector,
     private val transitionFinisher: ActiveTransitionMarkingFinisher,
     private val logger: Logger,
     private val simulationTime: SimulationTime,
@@ -65,7 +68,8 @@ class SimulationTaskStepExecutor(
     private val enabledBindingResolverFactory: EnabledBindingResolverFactory = EnabledBindingResolverFactory(
         ocNet.arcMultiplicity,
         arcs = ocNet.coreOcNet.arcs,
-        pMarkingProvider = pMarkingProvider
+        pMarkingProvider = pMarkingProvider,
+        tokenSelector = tokenSelector
     )
     private val transitionTokensLocker = TransitionTokensLocker(
         pMarkingProvider,
@@ -95,7 +99,7 @@ class SimulationTaskStepExecutor(
             return
         }
 
-        val selectedBinding = randomBindingSelector.selectBinding(enabledBindings)
+        val selectedBinding = bindingSelector.selectBinding(enabledBindings)
 
         val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
 

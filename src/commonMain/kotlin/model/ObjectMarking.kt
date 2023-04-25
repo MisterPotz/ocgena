@@ -2,7 +2,8 @@ package model
 
 import utils.print
 
-data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
+
+class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
     operator fun get(place: Place): MutableSet<ObjectToken>? {
         return placesToObjectTokens[place]
     }
@@ -21,10 +22,6 @@ data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, Mut
         placesToObjectTokens[place] = placesToObjectTokens[place].let {
             it?.apply { addAll(tokens) } ?: mutableSetOf<ObjectToken>().apply { addAll(tokens) }
         }
-    }
-
-    fun nonEmptyPlaces() : Collection<Place> {
-        return placesToObjectTokens.keys
     }
 
     fun allTokens() : Collection<ObjectToken> {
@@ -54,7 +51,31 @@ data class ObjectMarking(private val placesToObjectTokens: MutableMap<Place, Mut
         }
     }
 
+    operator fun plusAssign(objectMarking: ImmutableObjectMarking) {
+        val addedKeys = objectMarking.placesToObjectTokens.keys
+
+        for (place in addedKeys) {
+            val current = placesToObjectTokens[place] ?: setOf()
+            val added = objectMarking[place] ?: setOf()
+
+            val newSet = current + added
+            placesToObjectTokens[place] = newSet.toMutableSet()
+        }
+    }
+
     operator fun minusAssign(objectMarking: ObjectMarking) {
+        val subtractedKeys = objectMarking.placesToObjectTokens.keys
+
+        for (place in subtractedKeys) {
+            val current = placesToObjectTokens[place] ?: setOf()
+            val subtracted = objectMarking[place] ?: setOf()
+
+            val newSet = current - subtracted
+            placesToObjectTokens[place] = newSet.toMutableSet()
+        }
+    }
+
+    operator fun minusAssign(objectMarking: ImmutableObjectMarking) {
         val subtractedKeys = objectMarking.placesToObjectTokens.keys
 
         for (place in subtractedKeys) {

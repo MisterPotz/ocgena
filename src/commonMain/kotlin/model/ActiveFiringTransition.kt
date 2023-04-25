@@ -1,7 +1,11 @@
 package model
 
 import utils.ANSI_CYAN
+import utils.ANSI_RESET
 import utils.ANSI_YELLOW
+import utils.DARK_BLUE
+import utils.DARK_YELLOW
+import utils.font
 import utils.print
 
 data class ActiveFiringTransition(
@@ -10,7 +14,7 @@ data class ActiveFiringTransition(
     val relativeTimePassedSinceLock: Time,
     val duration: Int,
     val tokenSynchronizationTime: Time,
-    val lockedObjectTokens: ObjectMarking,
+    val lockedObjectTokens: ImmutableObjectMarking,
 ) {
 
     fun timeLeftUntilFinish(): Time {
@@ -18,16 +22,16 @@ data class ActiveFiringTransition(
     }
 
     fun prettyPrintState(): String {
-        return """${ANSI_CYAN}ongoing ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]: 
-            |   $ANSI_YELLOW[locked]:
-            |$ANSI_YELLOW${lockedObjectTokens.toString().prependIndent("\t$ANSI_YELLOW")}
+        return """${font(ANSI_CYAN)}ongoing ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]: 
+            |   ${font(ANSI_YELLOW)}[locked]:$ANSI_RESET
+            |${lockedObjectTokens.toString().prependIndent("\t${font(ANSI_YELLOW)}")}
         """.trimMargin()
     }
 
     fun prettyPrintStarted() : String {
-        return """${ANSI_CYAN}started ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]: 
-            |   $ANSI_YELLOW[locked]:
-            |$ANSI_YELLOW${lockedObjectTokens.toString().prependIndent("\t$ANSI_YELLOW")}
+        return """${font(ANSI_CYAN)}started ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]:$ANSI_RESET 
+            |   ${font(ANSI_YELLOW)}[locked]:$ANSI_RESET
+            |${lockedObjectTokens.toString().prependIndent("\t${font(ANSI_YELLOW)}")}
         """.trimMargin()
     }
 
@@ -51,7 +55,7 @@ data class ActiveFiringTransition(
     companion object {
         fun create(
             transition: Transition,
-            lockedObjectTokens: ObjectMarking,
+            lockedObjectTokens: ImmutableObjectMarking,
             duration: Time,
             tokenSynchronizationTime : Time,
         ): ActiveFiringTransition {

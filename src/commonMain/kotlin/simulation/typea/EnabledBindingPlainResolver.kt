@@ -1,6 +1,7 @@
 package simulation.typea
 
 import model.Arcs
+import model.ImmutableObjectMarking
 import model.Place
 import model.Transition
 import model.aalst.ArcMultiplicityTypeA
@@ -10,12 +11,14 @@ import model.ObjectToken
 import simulation.PMarkingProvider
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingWithTokens
+import simulation.random.TokenSelector
 
 
 class EnabledBindingPlainResolver(
     private val pMarkingProvider : PMarkingProvider,
     private val arcMultiplicity: ArcMultiplicityTypeA,
     val arcs: Arcs,
+    private val tokenSelector: TokenSelector,
 ) : EnabledBindingResolver {
 
     private val pMarking : ObjectMarking
@@ -44,9 +47,8 @@ class EnabledBindingPlainResolver(
         val arc = arcs[transition][place]!!
         val marking = pMarking[place]!!
         val requiredNormal = arcMultiplicity.getMultiplicity(arc) ?: 1
-        val requiredVariable = marking.size
         return if (arcMultiplicity.isVariable(arc).not()) {
-            marking.shuffled().take(requiredNormal).toSet()
+            tokenSelector.getTokensFromSet(marking, requiredNormal)
         } else {
             marking
         }
@@ -64,11 +66,6 @@ class EnabledBindingPlainResolver(
             return null
         }
 
-//        val placeToObjectTokenMap = buildMap {
-//            placesWithEnoughTokens.forEach { place ->
-//                put(place, getObjectTokens(transition, place).toMutableSet())
-//            }
-//        }
         return EnabledBinding(
             transition = transition,
         )
@@ -94,7 +91,7 @@ class EnabledBindingPlainResolver(
         }
         return EnabledBindingWithTokens(
             transition = transition,
-            ObjectMarking(placeToObjectTokenMap.toMutableMap())
+            ImmutableObjectMarking(placeToObjectTokenMap.toMutableMap())
         )
     }
 

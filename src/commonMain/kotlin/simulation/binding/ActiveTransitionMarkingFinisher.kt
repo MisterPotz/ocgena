@@ -2,6 +2,7 @@ package simulation.binding
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import model.ImmutableObjectMarking
 import model.ObjectMarking
 import simulation.Logger
 
@@ -32,7 +33,7 @@ class ActiveTransitionFinisherImpl(
         logger.onTransitionEnded(executedBinding)
     }
 
-    private fun getMarkingForOutputPlaces(activeFiringTransition: ActiveFiringTransition) : ObjectMarking {
+    private fun getMarkingForOutputPlaces(activeFiringTransition: ActiveFiringTransition) : ImmutableObjectMarking {
         return inputToOutputPlaceResolver.createOutputMarking(activeFiringTransition)
     }
 }

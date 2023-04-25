@@ -2,13 +2,9 @@ package simulation
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import model.ObjectMarking
 import model.Time
-import utils.ANSI_ORANGE
-import utils.ANSI_PINK
-import utils.indent
-import utils.indentMargin
-import utils.mprintln
-import utils.print
+import utils.*
 
 class DebugLogger(
     val logCurrentState: Boolean = false,
@@ -24,12 +20,24 @@ class DebugLogger(
         mprintln("execution started")
     }
 
+    override fun onFinalMarking(marking: ObjectMarking) {
+        mprintln("""${background("125")}final marking:$ANSI_RESET""".indent(1))
+        mprintln(marking.toString().indentMargin(2, "${
+            background("125")}#$ANSI_RESET"))
+    }
+
+    override fun onInitialMarking(marking: ObjectMarking) {
+        mprintln("""${
+            background("23")}initial marking:$ANSI_RESET""".indent(1))
+        mprintln(marking.toString().indentMargin(2, "#"))
+    }
+
     override fun onEnd() {
         mprintln("execution ended")
     }
 
     override fun onTimeShift(delta: Time) {
-        mprintln("${ANSI_PINK}on time shift +${delta.print()}".indent(2))
+        mprintln("${font(ANSI_PINK)}on time shift ${background("128")}+${ delta.print()}$ANSI_RESET".indent(2))
     }
 
     override fun onExecutionStepStart(
@@ -37,8 +45,8 @@ class DebugLogger(
         state: SimulatableComposedOcNet.State,
         simulationTime: SimulationTime,
     ) {
-        mprintln("execution step: $stepIndex".indent(1))
-        mprintln("""${ANSI_ORANGE}time: $simulationTime""".indent(2))
+        mprintln("${background("24")}${font("51")}execution step: $stepIndex$ANSI_RESET".indent(1))
+        mprintln("""${font(ANSI_ORANGE)}time: ${background("57")}$simulationTime$ANSI_RESET""".indent(2))
         mprintln("""current state: """.indent(2, prefix = ""))
         mprintln(state.toString().indentMargin(3, margin = "*"))
     }

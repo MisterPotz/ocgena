@@ -87,7 +87,7 @@ class OCNetTest {
                 .arcTo(place("p4") {
                     placeType = PlaceType.OUTPUT
                 }) {
-                    multiplicity = 3
+                    multiplicity = 2
                 }
         }.requireConsistentOCNet()
         assertNotNull(ocNet) {
@@ -115,6 +115,7 @@ class OCNetTest {
                     put(transitions["t2"], FiringTimePair(earlyFiringTime = 0, latestFiringTime = 5))
                 }
             )
+            .withRandomSeed(randomSeed = 42L)
 
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsTypeABuilder.build(),

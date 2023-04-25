@@ -1,5 +1,6 @@
 package simulation.binding
 
+import model.ImmutableObjectMarking
 import model.ObjectMarking
 import model.Time
 import model.Transition
@@ -7,7 +8,7 @@ import kotlin.math.abs
 
 class EnabledBindingWithTokens(
     val transition: Transition,
-    val involvedObjectTokens: ObjectMarking,
+    val involvedObjectTokens: ImmutableObjectMarking,
 ) {
     val synchronizationTime = calculateSynchronizationTime()
 

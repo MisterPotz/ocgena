@@ -5,6 +5,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.InputToOutputPlaceResolverFactory
+import simulation.random.BindingSelector
+import simulation.random.TokenSelector
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -12,13 +14,15 @@ class SimulationTask(
     private val simulationParams: SimulationParams,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
-    private val randomBindingSelector: RandomBindingSelector,
+    private val bindingSelector: BindingSelector,
+    private val tokenSelector : TokenSelector,
 ) {
     private val ocNet = simulationParams.templateOcNet
     private val simulationTime = SimulationTime()
     private val initialMarking = simulationParams.initialMarking
-    private val duration = simulationParams.timeoutSec.toDuration(DurationUnit.SECONDS)
+    private val duration = (simulationParams.timeoutSec ?: 30L).toDuration(DurationUnit.SECONDS)
     private val state = ocNet.createInitialState()
+
 
     private val runningSimulatableOcNet = RunningSimulatableOcNet(ocNet, state)
     private val executionLock: Mutex = Mutex()
@@ -26,7 +30,7 @@ class SimulationTask(
     private val stepExecutor = SimulationTaskStepExecutor(
         ocNet,
         state,
-        randomBindingSelector,
+        bindingSelector,
         transitionFinisher = ActiveTransitionFinisherImpl(
             state.pMarking,
             inputToOutputPlaceResolver = InputToOutputPlaceResolverFactory(
@@ -37,7 +41,8 @@ class SimulationTask(
         ),
         simulationState = simulationState,
         simulationTime = simulationTime,
-        logger = logger
+        logger = logger,
+        tokenSelector = tokenSelector
     )
 
     private fun prepare() {
@@ -82,7 +87,9 @@ class SimulationTask(
         executionLock.lock()
         logger.onStart()
         prepare()
+        logger.onInitialMarking(state.pMarking)
         run()
+        logger.onFinalMarking(state.pMarking)
         logger.onEnd()
         executionLock.unlock()
     }

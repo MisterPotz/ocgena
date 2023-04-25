@@ -1,10 +1,8 @@
 package simulation.binding
 
 import model.ActiveFiringTransition
-import model.ObjectMarking
-import model.Place
-import model.Transition
+import model.ImmutableObjectMarking
 
 interface InputToOutputPlaceResolver {
-    fun createOutputMarking(activeFiringTransition : ActiveFiringTransition) : ObjectMarking
+    fun createOutputMarking(activeFiringTransition : ActiveFiringTransition) : ImmutableObjectMarking
 }

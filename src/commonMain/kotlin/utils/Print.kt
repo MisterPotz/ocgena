@@ -11,17 +11,31 @@ fun mprintln(string: Any? = null) {
 
 expect fun spprintln()
 
+fun background(background : String): String {
+    return "\u001B[48;5;${background}m"
+}
+
+fun font(color: String) : String {
+    return "\u001B[38;5;${color}m"
+}
+
 const val ANSI_RESET = "\u001B[0m"
-const val ANSI_BLACK = "\u001B[30m"
-const val ANSI_RED = "\u001B[31m"
-const val ANSI_GREEN = "\u001B[32m"
-const val ANSI_YELLOW = "\u001B[33m"
-const val ANSI_ORANGE = "\u001B[38;5;221m"
-const val ANSI_BLUE = "\u001B[34m"
-const val ANSI_PURPLE = "\u001B[35m"
-const val ANSI_PINK = "\u001B[38;5;225m"
-const val ANSI_CYAN = "\u001B[36m"
-const val ANSI_WHITE = "\u001B[37m"
+const val ANSI_BLACK = "0"
+const val ANSI_RED = "1"
+const val DARK_RED = "88"
+const val DARK_BLUE = "17"
+const val DARK_YELLOW = "136"
+const val BACKGROUND = "\u001B[48;5;221m"
+const val ANSI_GREEN = "2"
+const val DARK_GREEN = "22"
+const val ANSI_YELLOW = "3"
+const val ANSI_ORANGE = "221"
+const val ANSI_BLUE = "4"
+const val ANSI_PURPLE = "54"
+const val PURPLE_LIGHT ="147"
+const val ANSI_PINK = "225"
+const val ANSI_CYAN = "36"
+const val ANSI_WHITE = "7"
 
 fun Time.print() : String {
     return "${this}t"
