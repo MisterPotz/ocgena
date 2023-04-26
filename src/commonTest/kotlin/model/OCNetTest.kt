@@ -120,6 +120,72 @@ class OCNetTest {
                 }
             )
             .withRandomSeed(randomSeed = 42L)
+            .useRandom(true)
+
+        val simulatorCreator = SimulationCreator(
+            simulationParams = simulationParamsTypeABuilder.build(),
+            executionConditions = ConsoleDebugExecutionConditions(),
+            logger = LoggerFactoryDefault
+        )
+        simulatorCreator
+            .createSimulationTask()
+            .prepareAndRun()
+    }
+
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun testAnotherModelVariable() = runTest {
+        val ocNetFacadeBuilder = OCNetFacadeBuilder()
+        val ocNet = ocNetFacadeBuilder.tryBuildModel {
+
+            place("p1") {
+                placeType = PlaceType.INPUT
+            }.arcTo(transition("t1"))
+
+            place("p2") {
+                placeType = PlaceType.INPUT
+            }
+                .arcTo(transition("t1"))
+                .arcTo(place("p3") { }) {
+                    multiplicity = 2
+                }
+                .variableArcTo(transition { })
+                .variableArcTo(place("p4") {
+                    placeType = PlaceType.OUTPUT
+                })
+        }.requireConsistentOCNet()
+        assertNotNull(ocNet) {
+            "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
+        }
+        requireNotNull(ocNet)
+
+        val places = ocNet.places
+        val transitions = ocNet.transitions
+        val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+            .withInitialMarking(
+                PlainMarking.of {
+                    put(places["p1"], 10)
+                    put(places["p2"], 4)
+                }
+            )
+            .withTimeIntervals(
+                IntervalFunction.create {
+                    put(
+                        transitions["t1"], TransitionTimes(
+                            duration = 10..15,
+                            pauseBeforeNextOccurence = 10..10
+                        )
+                    )
+                    put(
+                        transitions["t2"], TransitionTimes(
+                            duration = 0..5,
+                            pauseBeforeNextOccurence = 0..0
+                        )
+                    )
+                }
+            )
+            .withRandomSeed(randomSeed = 42L)
             .useRandom(false)
 
         val simulatorCreator = SimulationCreator(

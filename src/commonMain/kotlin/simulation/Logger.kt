@@ -15,7 +15,15 @@ object LoggerFactoryDefault : LoggerFactory {
             logCurrentState = true
         )
     }
+}
 
+object LoggerFactoryFileDefault : LoggerFactory {
+    override fun create(labelsActivities: LabelsActivities): Logger {
+        return DebugTracingFileLogger(
+            labelsActivities = labelsActivities,
+            logCurrentState = true
+        )
+    }
 }
 
 interface Logger {
