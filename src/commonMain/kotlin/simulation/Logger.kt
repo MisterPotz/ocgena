@@ -1,9 +1,22 @@
 package simulation
 
-import model.ActiveFiringTransition
-import model.ExecutedBinding
-import model.ObjectMarking
-import model.Time
+import model.*
+
+interface LoggerFactory {
+    fun create(
+        labelsActivities: LabelsActivities
+    ): Logger
+}
+
+object LoggerFactoryDefault : LoggerFactory {
+    override fun create(labelsActivities: LabelsActivities): Logger {
+        return DebugTracingLogger(
+            labelsActivities = labelsActivities,
+            logCurrentState = true
+        )
+    }
+
+}
 
 interface Logger {
     val loggingEnabled: Boolean
@@ -20,7 +33,8 @@ interface Logger {
     abstract fun onExecutionStepStart(
         stepIndex: Int,
         state: SimulatableComposedOcNet.State,
-        simulationTime: SimulationTime)
+        simulationTime: SimulationTime
+    )
 
     fun onTransitionEndSectionStart()
 

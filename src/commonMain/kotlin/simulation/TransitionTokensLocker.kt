@@ -1,28 +1,25 @@
 package simulation
 
 import model.ActiveFiringTransition
-import model.time.IntervalFunction
 import model.ActiveTransitionMarking
 import simulation.binding.EnabledBindingWithTokens
-import simulation.time.NextTransitionOccurenceAllowedTimeSelector
+import simulation.time.TransitionDurationSelector
+import simulation.time.TransitionInstanceOccurenceDeltaSelector
 import simulation.time.TransitionOccurrenceAllowedTimes
-import kotlin.random.Random
 
 class TransitionTokensLocker(
     private val pMarkingProvider: PMarkingProvider,
     private val tMarking: ActiveTransitionMarking,
-    private val nextTransitionOccurenceAllowedTimeSelector: NextTransitionOccurenceAllowedTimeSelector,
-    private val tTimes : TransitionOccurrenceAllowedTimes,
-    private val intervalFunction: IntervalFunction,
+    private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
+    private val transitionDurationSelector: TransitionDurationSelector,
+    private val tTimes: TransitionOccurrenceAllowedTimes,
     private val logger: Logger
 ) {
     private fun recordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
         val transition = enabledBindingWithTokens.transition
-        val interval = intervalFunction[transition]
 
-        val randomSelectedDuration = Random.nextInt(
-            from = interval.earlyFiringTime,
-            until = interval.latestFiringTime + 1
+        val randomSelectedDuration = transitionDurationSelector.newDuration(
+            transition
         )
 
         val tMarkingValue = ActiveFiringTransition.create(
@@ -33,7 +30,7 @@ class TransitionTokensLocker(
         )
 
         tMarking.pushTMarking(tMarkingValue)
-        val newNextAllowedTime = nextTransitionOccurenceAllowedTimeSelector.getNewNextOccurrenceTime(transition)
+        val newNextAllowedTime = transitionInstanceOccurenceDeltaSelector.getNewNextOccurrenceTime(transition)
 
         tTimes.setNextAllowedTime(
             transition = transition,

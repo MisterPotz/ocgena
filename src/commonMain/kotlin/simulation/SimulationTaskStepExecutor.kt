@@ -1,6 +1,6 @@
 package simulation
 
-import simulation.time.NextTransitionOccurenceAllowedTimeSelector
+import simulation.time.TransitionInstanceOccurenceDeltaSelector
 import model.ObjectMarking
 import model.Time
 import simulation.binding.ActiveTransitionMarkingFinisher
@@ -9,6 +9,7 @@ import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
+import simulation.time.TransitionDurationSelector
 
 
 class SimulationTaskStepExecutor(
@@ -16,7 +17,8 @@ class SimulationTaskStepExecutor(
     private val state: SimulatableComposedOcNet.State,
     private val bindingSelector: BindingSelector,
     private val tokenSelector: TokenSelector,
-    private val nextTransitionOccurenceTimeSelector: NextTransitionOccurenceAllowedTimeSelector,
+    private  val transitionDurationSelector: TransitionDurationSelector,
+    private val nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
     private val transitionFinisher: ActiveTransitionMarkingFinisher,
     private val logger: Logger,
     private val simulationTime: SimulationTime,
@@ -34,10 +36,10 @@ class SimulationTaskStepExecutor(
     private val transitionTokensLocker = TransitionTokensLocker(
         pMarkingProvider,
         state.tMarking,
-        intervalFunction = ocNet.intervalFunction,
         logger = logger,
         tTimes = state.tTimes,
-        nextTransitionOccurenceAllowedTimeSelector = nextTransitionOccurenceTimeSelector,
+        transitionDurationSelector = transitionDurationSelector,
+        transitionInstanceOccurenceDeltaSelector = nextTransitionOccurenceTimeSelector,
     )
     private val bindingsCollector = EnabledBindingsCollector(
         transitions = ocNet.coreOcNet.transitions,

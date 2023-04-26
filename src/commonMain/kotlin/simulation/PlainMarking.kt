@@ -1,13 +1,6 @@
 package simulation
 
 import model.Place
-import model.StaticCoreOcNet
-
-
-typealias ObjectsMap = List<ObjectTokenReference>
-typealias ObjectTokenReference = String
-typealias ValuesMap = Map<String, Any>
-typealias Timestamp = String
 
 class PlainMarking {
     private val placesToTokens: MutableMap<Place, Int> = mutableMapOf()

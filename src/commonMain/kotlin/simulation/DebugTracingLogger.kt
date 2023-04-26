@@ -1,14 +1,18 @@
 package simulation
 
-import model.ActiveFiringTransition
-import model.ExecutedBinding
-import model.ObjectMarking
-import model.Time
+import eventlog.EventLog
+import eventlog.ModelToEventLogConverter
+import model.*
 import utils.*
 
-class DebugLogger(
+class DebugTracingLogger(
     val logCurrentState: Boolean = false,
+    private val labelsActivities: LabelsActivities,
 ) : Logger {
+    private val eventLog = EventLog()
+    private val modelToEventLogConverter = ModelToEventLogConverter(
+        labelsActivities = labelsActivities,
+    )
     override val loggingEnabled: Boolean
         get() = true
 
@@ -33,7 +37,7 @@ class DebugLogger(
     }
 
     override fun onEnd() {
-        mprintln("execution ended")
+        mprintln("execution ended, have recorded ${eventLog.events.size} events")
     }
 
     override fun onTimeShift(delta: Time) {
@@ -60,6 +64,8 @@ class DebugLogger(
     }
 
     override fun onTransitionEnded(executedBinding: ExecutedBinding) {
+        val event = modelToEventLogConverter.executedToEvent(executedBinding)
+        eventLog.recordEvent(event)
         mprintln(executedBinding.prettyPrintExecuted().indentMargin(3, margin = "x"))
     }
 

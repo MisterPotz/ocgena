@@ -6,11 +6,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import model.aalst.SimulationParamsTypeABuilder
 import model.time.IntervalFunction
-import simulation.ConsoleDebugExecutionConditions
-import simulation.DebugLogger
-import simulation.PlainMarking
-import simulation.SimulationCreator
 import model.time.TransitionTimes
+import simulation.*
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 
@@ -59,7 +56,7 @@ class OCNetTest {
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsTypeABuilder.build(),
             executionConditions = ConsoleDebugExecutionConditions(),
-            logger = DebugLogger()
+            logger = LoggerFactoryDefault
         )
         simulatorCreator
             .createSimulationTask()
@@ -123,11 +120,12 @@ class OCNetTest {
                 }
             )
             .withRandomSeed(randomSeed = 42L)
+            .useRandom(false)
 
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsTypeABuilder.build(),
             executionConditions = ConsoleDebugExecutionConditions(),
-            logger = DebugLogger()
+            logger = LoggerFactoryDefault
         )
         simulatorCreator
             .createSimulationTask()

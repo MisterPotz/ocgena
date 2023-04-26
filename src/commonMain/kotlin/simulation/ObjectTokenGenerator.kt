@@ -31,7 +31,8 @@ class SingleTypeObjectTokenGenerator(
 
     fun generate(): ObjectToken {
         return ObjectToken(
-            name = idIssuer.newLabelId(),
+            id = idIssuer.newIntId(),
+            name = idIssuer.lastLabelId,
             type = type,
             ovmap = EmptyObjectValuesMap,
         )

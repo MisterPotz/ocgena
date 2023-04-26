@@ -7,7 +7,8 @@ import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.InputToOutputPlaceResolverFactory
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
-import simulation.time.NextTransitionOccurenceAllowedTimeSelector
+import simulation.time.TransitionDurationSelector
+import simulation.time.TransitionInstanceOccurenceDeltaSelector
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -17,7 +18,8 @@ class SimulationTask(
     private val logger: Logger,
     private val bindingSelector: BindingSelector,
     private val tokenSelector : TokenSelector,
-    private val nextTransitionOccurenceAllowedTimeSelector: NextTransitionOccurenceAllowedTimeSelector,
+    private val transitionDurationSelector : TransitionDurationSelector,
+    private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
 ) {
     private val ocNet = simulationParams.templateOcNet
     private val simulationTime = SimulationTime()
@@ -39,13 +41,15 @@ class SimulationTask(
                 arcMultiplicity = ocNet.arcMultiplicity,
                 arcs = ocNet.coreOcNet.arcs
             ).create(),
-            logger
+            logger,
+            simulationTime
         ),
         simulationState = simulationState,
         simulationTime = simulationTime,
         logger = logger,
         tokenSelector = tokenSelector,
-        nextTransitionOccurenceTimeSelector = nextTransitionOccurenceAllowedTimeSelector
+        transitionDurationSelector = transitionDurationSelector,
+        nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector
     )
 
     private fun prepare() {
@@ -54,7 +58,7 @@ class SimulationTask(
         state.pMarking += initialMarking
 
         for (transition in ocNet.coreOcNet.transitions) {
-            val nextAllowedTime = nextTransitionOccurenceAllowedTimeSelector.getNewNextOccurrenceTime(transition)
+            val nextAllowedTime = transitionInstanceOccurenceDeltaSelector.getNewNextOccurrenceTime(transition)
             state.tTimes.setNextAllowedTime(transition, nextAllowedTime)
         }
     }

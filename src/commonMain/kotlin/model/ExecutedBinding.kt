@@ -1,10 +1,12 @@
 package model
 
+import eventlog.Timestamp
 import utils.*
 
 
 data class ExecutedBinding(
     val finishedTransition: ActiveFiringTransition,
+    val finishedTime: Int,
     val consumedMap: ImmutableObjectMarking,
     val producedMap: ImmutableObjectMarking,
 ) {
