@@ -63,7 +63,7 @@ interface ArcsAcceptor {
 }
 
 interface ObjectTypeDSL {
-    val id: Int
+    val id: String
     val label: String
 }
 
@@ -147,9 +147,9 @@ interface TypeScope : OCScope {
 
 
 interface OCPlaceScope {
-    var objectType: ObjectTypeDSL
+//    var objectType: ObjectTypeDSL
     val label: String
-    var placeType: PlaceType
+//    var placeType: PlaceType
 }
 
 interface SubgraphDSL : ArcsAcceptor, TransitionAcceptor {

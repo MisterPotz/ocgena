@@ -1,12 +1,13 @@
 package model.time
 
 import model.Transition
+import model.TransitionId
 
 class IntervalFunction(
-    private val transitionToFiringTime: MutableMap<Transition, TransitionTimes> = mutableMapOf<Transition, TransitionTimes>(),
+    private val transitionToFiringTime: MutableMap<TransitionId, TransitionTimes> = mutableMapOf(),
 ) {
     operator fun get(transition: Transition): TransitionTimes {
-        return transitionToFiringTime[transition]!!
+        return transitionToFiringTime[transition.id]!!
     }
 
     companion object {
@@ -14,7 +15,10 @@ class IntervalFunction(
             return IntervalFunction(
                 buildMap {
                     block()
-                }.toMutableMap()
+                }.toList().fold(mutableMapOf()) { accum, entry ->
+                    accum[entry.first.id] = entry.second
+                    accum
+                }
             )
         }
     }

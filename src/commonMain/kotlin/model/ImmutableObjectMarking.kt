@@ -2,7 +2,7 @@ package model
 
 import utils.print
 
-class ImmutableObjectMarking(val placesToObjectTokens: Map<Place, Set<ObjectToken>>) {
+class ImmutableObjectMarking(val placesToObjectTokens: Map<PlaceId, Set<ObjectToken>>) {
     fun toMutableObjectMarking() : ObjectMarking {
         return ObjectMarking(
             buildMap {
@@ -13,7 +13,7 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<Place, Set<ObjectToke
         )
     }
 
-    operator fun get(place: Place): Set<ObjectToken>? {
+    operator fun get(place: PlaceId): Set<ObjectToken>? {
         return placesToObjectTokens[place]
     }
     fun shiftTokenTime(tokenTimeDelta: Time) {
@@ -22,7 +22,7 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<Place, Set<ObjectToke
         }
     }
 
-    fun nonEmptyPlaces() : Collection<Place> {
+    fun nonEmptyPlaces() : Collection<PlaceId> {
         return placesToObjectTokens.keys
     }
 
@@ -36,7 +36,7 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<Place, Set<ObjectToke
     operator fun minus(objectMarking: ObjectMarking): ObjectMarking {
         val subtractedKeys = objectMarking.placesToObjectTokens.keys
 
-        val newMap = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        val newMap = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
 
         for (place in subtractedKeys) {
             val current = placesToObjectTokens[place] ?: setOf()
@@ -54,14 +54,14 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<Place, Set<ObjectToke
             val objectTokens = placesToObjectTokens[place]!!
 
             val objectTokensString = objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
-            """${place.id}: $objectTokensString"""
+            """${place}: $objectTokensString"""
         }
     }
 
     operator fun plus(objectMarking: ObjectMarking): ObjectMarking {
         val addedKeys = objectMarking.placesToObjectTokens.keys
 
-        val newMap = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        val newMap = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
 
         for (place in addedKeys) {
             val current = placesToObjectTokens[place] ?: setOf()

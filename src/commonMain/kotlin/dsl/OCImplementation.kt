@@ -49,13 +49,9 @@ class HasLastImpl(override val lastElement: NodeDSL) : HasLast
 class HasFirstImpl(override val firstElement: NodeDSL) : HasFirst
 
 class ObjectTypeImpl(
-    override val id: Int,
+    override val id: String,
     override val label: String,
 ) : ObjectTypeDSL {
-
-    override fun toString(): String {
-        return label
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -64,15 +60,17 @@ class ObjectTypeImpl(
         other as ObjectTypeImpl
 
         if (id != other.id) return false
-        if (label != other.label) return false
-
-        return true
+        return label == other.label
     }
 
     override fun hashCode(): Int {
-        var result = id
+        var result = id.hashCode()
         result = 31 * result + label.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "ObjectTypeImpl(id='$id', label='$label')"
     }
 }
 
@@ -87,20 +85,18 @@ class PlaceDSLImpl(
         get() = this
     override val lastElement: NodeDSL
         get() = this
-    override var objectType: ObjectTypeDSL = objectType
-        set(value) {
-            onAssignNewObjectType(value)
-            field = value
-        }
+//    override var objectType: ObjectTypeDSL = objectType
+//        set(value) {
+//            onAssignNewObjectType(value)
+//            field = value
+//        }
 
     var finalLabel : String? = null
     override val label: String
         get() = finalLabel ?: labelFactory()
 
-    override var placeType: PlaceType = PlaceType.NORMAL
-
     override fun toString(): String {
-        return "place [$label [ $objectType ]]"
+        return "place [$label ]"
     }
 }
 

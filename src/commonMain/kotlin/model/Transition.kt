@@ -1,7 +1,9 @@
 package model
 
+typealias TransitionId = String
+
 data class Transition(
-    override val id: String,
+    override val id: TransitionId,
     override val label : String,
     override val inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
     override val outputArcs: MutableList<Arc> = mutableListOf<Arc>(),

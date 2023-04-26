@@ -1,18 +1,13 @@
 package simulation.typea
 
-import model.ActiveFiringTransition
-import model.Arcs
-import model.ImmutableObjectMarking
-import model.ObjectMarking
-import model.ObjectToken
-import model.ObjectType
-import model.Place
+import model.*
 import model.aalst.ArcMultiplicityTypeA
 
-class OutputMarkingFiller(
+class OutputMarkingFillerTypeA(
     private val activeFiringTransition: ActiveFiringTransition,
     private val arcs: Arcs,
-    private val arcMultiplicity: ArcMultiplicityTypeA
+    private val arcMultiplicity: ArcMultiplicityTypeA,
+    private val placeTyping: PlaceTyping
 ) {
     val transition = activeFiringTransition.transition
     private val inputPlaces = transition.inputPlaces
@@ -96,7 +91,7 @@ class OutputMarkingFiller(
 
     private fun getTypeToPlaces(places : List<Place>) : MutableMap<ObjectType, MutableList<Place>> {
         return places.fold(mutableMapOf()) { accum, item ->
-            accum.getOrPut(item.type) { mutableListOf() }.add(item)
+            accum.getOrPut(placeTyping[item.id]) { mutableListOf() }.add(item)
             accum
         }
     }

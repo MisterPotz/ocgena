@@ -37,19 +37,19 @@ class OCNetDSLElementsImpl(
 
 class ObjectsSearcher(private val ocNetDSLElements: OCNetDSLElements) {
 
-    fun withoutDefaultObjectTypeIfPossible(): Map<String, ObjectTypeDSL> {
-        return if (ocNetDSLElements.objectTypes.size == 1) {
-            ocNetDSLElements.objectTypes
-        } else {
-            ocNetDSLElements.objectTypes.toMutableMap().apply {
-                if (!defaultObjectTypeWasUsed(ocNetDSLElements.defaultObjectTypeDSL, ocNetDSLElements)) {
-                    remove(ocNetDSLElements.defaultObjectTypeDSL.label)
-                }
-            }
-        }
-    }
+//    fun withoutDefaultObjectTypeIfPossible(): Map<String, ObjectTypeDSL> {
+//        return if (ocNetDSLElements.objectTypes.size == 1) {
+//            ocNetDSLElements.objectTypes
+//        } else {
+//            ocNetDSLElements.objectTypes.toMutableMap().apply {
+//                if (!defaultObjectTypeWasUsed(ocNetDSLElements.defaultObjectTypeDSL, ocNetDSLElements)) {
+//                    remove(ocNetDSLElements.defaultObjectTypeDSL.label)
+//                }
+//            }
+//        }
+//    }
 
-    private fun defaultObjectTypeWasUsed(defaultObjectTypeDSL: ObjectTypeDSL, placeContainer: PlacesContainer): Boolean {
-        return placeContainer.places.values.find { it.objectType == defaultObjectTypeDSL } != null
-    }
+//    private fun defaultObjectTypeWasUsed(defaultObjectTypeDSL: ObjectTypeDSL, placeContainer: PlacesContainer): Boolean {
+//        return placeContainer.places.values.find { it.objectType == defaultObjectTypeDSL } != null
+//    }
 }

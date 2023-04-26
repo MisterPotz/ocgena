@@ -7,10 +7,9 @@ enum class PlaceType {
 }
 
 data class Place(
-    override val id: String,
+    override val id: PlaceId,
     override val label: String,
-    val type: ObjectType,
-    val placeType: PlaceType,
+//    val type: ObjectType,
     override val inputArcs: MutableList<Arc> = mutableListOf(),
     override val outputArcs: MutableList<Arc> = mutableListOf(),
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX,
@@ -24,15 +23,11 @@ data class Place(
     }
 
     override fun addInputArc(arc: Arc) {
-        when (placeType) {
-            PlaceType.NORMAL, PlaceType.OUTPUT, PlaceType.INPUT -> inputArcs.add(arc)
-        }
+        inputArcs.add(arc)
     }
 
     override fun addOutputArc(arc: Arc) {
-        when (placeType) {
-            PlaceType.NORMAL, PlaceType.INPUT, PlaceType.OUTPUT -> outputArcs.add(arc)
-        }
+        outputArcs.add(arc)
     }
 
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
@@ -61,7 +56,7 @@ data class Place(
     }
 
     override fun toString(): String {
-        return "place [$label [ $type ]]"
+        return "place [$label]"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -72,8 +67,6 @@ data class Place(
 
         if (id != other.id) return false
         if (label != other.label) return false
-        if (type != other.type) return false
-        if (placeType != other.placeType) return false
         if (subgraphIndex != other.subgraphIndex) return false
         if (tokens != other.tokens) return false
 
@@ -83,8 +76,6 @@ data class Place(
     override fun hashCode(): Int {
         var result = id.hashCode()
         result = 31 * result + label.hashCode()
-        result = 31 * result + type.hashCode()
-        result = 31 * result + placeType.hashCode()
         result = 31 * result + subgraphIndex
         result = 31 * result + tokens
         return result

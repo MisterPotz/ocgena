@@ -1,26 +1,32 @@
 package model.aalst
 
+import model.*
 import model.time.IntervalFunction
-import model.ObjectMarking
-import model.PlaceTyping
-import model.StaticCoreOcNet
 import simulation.ObjectMarkingFromPlainCreator
 import simulation.PlainMarking
+import simulation.SimulationCreator
 import simulation.SimulationParams
 import simulation.typea.SimulatableOcNetTypeA
 
 class SimulationParamsTypeABuilder(
     private val ocNet: StaticCoreOcNet
 ) {
+    private var inputOutputPlaces: InputOutputPlaces? = null
     private var initialMarking : ObjectMarking? = null
     private var timeIntervalFunction : IntervalFunction? = null
     private var randomSeed : Long? = null
     private var useRandom : Boolean = true
+    private var placeTyping : PlaceTyping? = null
+
+    fun withPlaceTyping(placeTyping: PlaceTyping): SimulationParamsTypeABuilder {
+        this.placeTyping = placeTyping
+        return this
+    }
 
     fun withInitialMarking(plainMarking: PlainMarking): SimulationParamsTypeABuilder {
         val plainToObjectTokenGenerator = ObjectMarkingFromPlainCreator(
             plainMarking = plainMarking,
-            placeTyping = PlaceTyping(),
+            placeTyping = this.placeTyping!!,
             objectTypes = ocNet.objectTypes
         )
         initialMarking = plainToObjectTokenGenerator.create()
@@ -55,5 +61,10 @@ class SimulationParamsTypeABuilder(
             randomSeed = randomSeed,
             useRandom = useRandom
         )
+    }
+
+    fun withInputOutput(build: InputOutputPlaces): SimulationParamsTypeABuilder {
+        this.inputOutputPlaces = build
+        return this
     }
 }

@@ -9,6 +9,7 @@ import simulation.typea.InputToOutputPlaceTypeAResolver
 class InputToOutputPlaceResolverFactory(
     private val arcMultiplicity: ArcMultiplicity,
     private val arcs : Arcs,
+
 ) {
     fun create() : InputToOutputPlaceResolver {
         return when (arcMultiplicity) {

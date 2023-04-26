@@ -16,18 +16,20 @@ class OCNetTest {
     @Test()
     fun testRunSimpleModel() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel {
-            place {
-                placeType = PlaceType.INPUT
-            }
-                .arcTo(transition { })
-                .arcTo(
-                    place {
-                        placeType = PlaceType.OUTPUT
-                    }
-                )
-        }.requireConsistentOCNet()
+        val inputOutputPlaces = InputOutputPlaces.build {
+            put(PlaceType.INPUT, listOf("p1"))
+            put(PlaceType.OUTPUT, listOf("p2"))
+        }
+        val placeTyping = PlaceTyping.build()
 
+        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+            placeTyping = placeTyping,
+            inputOutputPlaces = inputOutputPlaces
+        ) {
+            place { }
+                .arcTo(transition { })
+                .arcTo(place { })
+        }.requireConsistentOCNet()
 
         assertNotNull(
             ocNet,
@@ -37,9 +39,16 @@ class OCNetTest {
         val places = ocNet.places
         val transitions = ocNet.transitions
         val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+            .withPlaceTyping(PlaceTyping.build())
             .withInitialMarking(
                 PlainMarking.of {
                     put(places["p1"], 10)
+                }
+            )
+            .withInputOutput(
+                InputOutputPlaces.build {
+                    put(PlaceType.INPUT, listOf("p1"))
+                    put(PlaceType.OUTPUT, listOf("p2"))
                 }
             )
             .withTimeIntervals(
@@ -67,15 +76,21 @@ class OCNetTest {
     @Test
     fun testAnotherModel() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel {
 
-            place("p1") {
-                placeType = PlaceType.INPUT
-            }.arcTo(transition("t1"))
+        val inputOutputPlaces =  InputOutputPlaces.build {
+            put(PlaceType.INPUT, listOf("p1", "p2"))
+            put(PlaceType.OUTPUT, listOf("p4"))
+        }
+        val placeTyping = PlaceTyping.build()
 
-            place("p2") {
-                placeType = PlaceType.INPUT
-            }
+        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+            placeTyping = placeTyping,
+            inputOutputPlaces = inputOutputPlaces
+        ) {
+
+            place("p1") {}.arcTo(transition("t1"))
+
+            place("p2") { }
                 .arcTo(transition("t1"))
                 .arcTo(place("p3") { }) {
                     multiplicity = 2
@@ -83,9 +98,7 @@ class OCNetTest {
                 .arcTo(transition { }) {
                     multiplicity = 2
                 }
-                .arcTo(place("p4") {
-                    placeType = PlaceType.OUTPUT
-                }) {
+                .arcTo(place("p4") {}) {
                     multiplicity = 2
                 }
         }.requireConsistentOCNet()
@@ -97,6 +110,8 @@ class OCNetTest {
         val places = ocNet.places
         val transitions = ocNet.transitions
         val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+            .withPlaceTyping(placeTyping = placeTyping)
+            .withInputOutput(inputOutputPlaces)
             .withInitialMarking(
                 PlainMarking.of {
                     put(places["p1"], 10)
@@ -137,23 +152,24 @@ class OCNetTest {
     @Test
     fun testAnotherModelVariable() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel {
+        val inputOutputPlaces =  InputOutputPlaces.build {
+            put(PlaceType.INPUT, listOf("p1", "p2"))
+            put(PlaceType.OUTPUT, listOf("p4"))
+        }
+        val placeTyping = PlaceTyping.build()
 
-            place("p1") {
-                placeType = PlaceType.INPUT
-            }.arcTo(transition("t1"))
-
-            place("p2") {
-                placeType = PlaceType.INPUT
-            }
+        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+            placeTyping = placeTyping,
+            inputOutputPlaces = inputOutputPlaces
+        ) {
+            place("p1") { }.arcTo(transition("t1"))
+            place("p2") { }
                 .arcTo(transition("t1"))
                 .arcTo(place("p3") { }) {
                     multiplicity = 2
                 }
                 .variableArcTo(transition { })
-                .variableArcTo(place("p4") {
-                    placeType = PlaceType.OUTPUT
-                })
+                .variableArcTo(place("p4") { })
         }.requireConsistentOCNet()
         assertNotNull(ocNet) {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
@@ -163,12 +179,14 @@ class OCNetTest {
         val places = ocNet.places
         val transitions = ocNet.transitions
         val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+            .withPlaceTyping(placeTyping)
             .withInitialMarking(
                 PlainMarking.of {
                     put(places["p1"], 10)
                     put(places["p2"], 4)
                 }
             )
+            .withInputOutput(inputOutputPlaces)
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(

@@ -3,9 +3,13 @@ package model
 import utils.print
 
 
-class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
-    operator fun get(place: Place): MutableSet<ObjectToken>? {
+class ObjectMarking(val placesToObjectTokens: MutableMap<PlaceId, MutableSet<ObjectToken>> = mutableMapOf()) {
+    operator fun get(place: PlaceId): MutableSet<ObjectToken>? {
         return placesToObjectTokens[place]
+    }
+
+    operator fun get(place: Place): MutableSet<ObjectToken>? {
+        return placesToObjectTokens[place.id]
     }
 
     fun shiftTokenTime(tokenTimeDelta: Time) {
@@ -14,11 +18,15 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
         }
     }
 
-    operator fun set(place: Place, set: Set<ObjectToken>) {
+    operator fun set(place: PlaceId, set: Set<ObjectToken>) {
         placesToObjectTokens[place] = set.toMutableSet()
     }
 
-    fun setTokens(place: Place, tokens: Collection<ObjectToken>) {
+    operator fun set(place: Place, set: Set<ObjectToken>) {
+        placesToObjectTokens[place.id] = set.toMutableSet()
+    }
+
+    fun setTokens(place: PlaceId, tokens: Collection<ObjectToken>) {
         placesToObjectTokens[place] = placesToObjectTokens[place].let {
             it?.apply { addAll(tokens) } ?: mutableSetOf<ObjectToken>().apply { addAll(tokens) }
         }
@@ -90,7 +98,7 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
     operator fun minus(objectMarking: ObjectMarking): ObjectMarking {
         val subtractedKeys = objectMarking.placesToObjectTokens.keys
 
-        val newMap = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        val newMap = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
 
         for (place in subtractedKeys) {
             val current = placesToObjectTokens[place] ?: setOf()
@@ -106,7 +114,7 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
     operator fun plus(objectMarking: ObjectMarking): ObjectMarking {
         val addedKeys = objectMarking.placesToObjectTokens.keys
 
-        val newMap = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        val newMap = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
 
         for (place in addedKeys) {
             val current = placesToObjectTokens[place] ?: setOf()
@@ -137,13 +145,13 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
             val objectTokens = placesToObjectTokens[place]!!
 
             val objectTokensString = objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
-            """${place.id}: $objectTokensString"""
+            """${place}: $objectTokensString"""
         }
     }
 
     companion object {
-        fun build(block: MutableMap<Place, MutableSet<ObjectToken>>.() -> Unit) : ObjectMarking {
-            val map = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        fun build(block: MutableMap<PlaceId, MutableSet<ObjectToken>>.() -> Unit) : ObjectMarking {
+            val map = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
             map.block()
             val newObjectMarking = ObjectMarking(map)
             return newObjectMarking
