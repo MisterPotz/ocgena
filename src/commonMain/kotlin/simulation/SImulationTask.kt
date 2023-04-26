@@ -39,7 +39,8 @@ class SimulationTask(
             state.pMarking,
             inputToOutputPlaceResolver = InputToOutputPlaceResolverFactory(
                 arcMultiplicity = ocNet.arcMultiplicity,
-                arcs = ocNet.coreOcNet.arcs
+                arcs = ocNet.coreOcNet.arcs,
+                placeTyping = ocNet.coreOcNet.placeTyping
             ).create(),
             logger,
             simulationTime

@@ -2,6 +2,10 @@ package utils
 
 import model.Time
 
+fun String.toIds() : Collection<String> {
+    return split(" ")
+}
+
 fun mprintln(string: Any? = null) {
     if (string != null) {
         print(string)

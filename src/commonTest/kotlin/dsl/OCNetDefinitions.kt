@@ -1,21 +1,21 @@
 package dsl
 
 import model.InputOutputPlaces
-import model.PlaceType
 import model.PlaceTyping
+import utils.toIds
 
 fun createExamplePlaceTyping() : PlaceTyping {
     return PlaceTyping.build {
-        put("order", "o1 o2 o3 o4 o5".split(" "))
-        put("item", "i1 i2 i3 i4 i5 i6".split(" "))
-        put("route", "r1 r2 r3".split(" "))
+        objectType("order", "o1 o2 o3 o4 o5")
+        objectType("item", "i1 i2 i3 i4 i5 i6")
+        objectType("route", "r1 r2 r3")
     }
 }
 
 fun createExampleInputOutputPlaces() : InputOutputPlaces {
     return InputOutputPlaces.build {
-        put(PlaceType.INPUT, "o1 i1 r1".split(" "))
-        put(PlaceType.OUTPUT, "o5 i6 r3".split(" "))
+        inputPlaces("o1 i1 r1".toIds())
+        outputPlaces("o5 i6 r3".toIds())
     }
 }
 

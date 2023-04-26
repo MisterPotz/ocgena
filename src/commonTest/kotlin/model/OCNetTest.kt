@@ -17,8 +17,8 @@ class OCNetTest {
     fun testRunSimpleModel() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val inputOutputPlaces = InputOutputPlaces.build {
-            put(PlaceType.INPUT, listOf("p1"))
-            put(PlaceType.OUTPUT, listOf("p2"))
+            inputPlaces("p1")
+            outputPlaces("p2")
         }
         val placeTyping = PlaceTyping.build()
 
@@ -47,8 +47,8 @@ class OCNetTest {
             )
             .withInputOutput(
                 InputOutputPlaces.build {
-                    put(PlaceType.INPUT, listOf("p1"))
-                    put(PlaceType.OUTPUT, listOf("p2"))
+                    inputPlaces("p1")
+                    outputPlaces("p2")
                 }
             )
             .withTimeIntervals(
@@ -78,8 +78,8 @@ class OCNetTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
 
         val inputOutputPlaces =  InputOutputPlaces.build {
-            put(PlaceType.INPUT, listOf("p1", "p2"))
-            put(PlaceType.OUTPUT, listOf("p4"))
+            inputPlaces("p1 p2")
+            outputPlaces("p4")
         }
         val placeTyping = PlaceTyping.build()
 
@@ -153,8 +153,8 @@ class OCNetTest {
     fun testAnotherModelVariable() = runTest {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val inputOutputPlaces =  InputOutputPlaces.build {
-            put(PlaceType.INPUT, listOf("p1", "p2"))
-            put(PlaceType.OUTPUT, listOf("p4"))
+            inputPlaces("p1 p2")
+            outputPlaces("p4")
         }
         val placeTyping = PlaceTyping.build()
 

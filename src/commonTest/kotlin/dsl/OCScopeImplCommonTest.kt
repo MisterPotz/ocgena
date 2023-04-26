@@ -121,7 +121,7 @@ class OCScopeImplCommonTest {
             }
         ocNetDSLElements.places.values
             .filter {
-                it.label.matches(Regex("""item_\d+"""))
+                it.label.matches(Regex("""i\d+"""))
             }.let {
                 assertEquals(6, it.size)
                 assertTrue(it.all {
@@ -177,18 +177,18 @@ class OCScopeImplCommonTest {
                 arcs.forEach {
                     mprintln(it)
                 }
-                outputArcFor(place("item_1"))
-                outputArcFor(place("item_2"))
-                outputArcFor(place("item_3"))
-                outputArcFor(place("item_4"))
-                outputArcFor(place("item_5"))
+                outputArcFor(place("i1"))
+                outputArcFor(place("i2"))
+                outputArcFor(place("i3"))
+                outputArcFor(place("i4"))
+                outputArcFor(place("i5"))
 
 
-                inputArcFor(place("item_2"))
-                inputArcFor(place("item_3"))
-                inputArcFor(place("item_4"))
-                inputArcFor(place("item_5"))
-                inputArcFor(place("item_6"))
+                inputArcFor(place("i2"))
+                inputArcFor(place("i3"))
+                inputArcFor(place("i4"))
+                inputArcFor(place("i5"))
+                inputArcFor(place("i6"))
             }
         }
     }

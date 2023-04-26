@@ -11,6 +11,7 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     val coreOcNet: StaticCoreOcNet
     val arcMultiplicity: ArcMultiplicity
     val intervalFunction: IntervalFunction
+
     fun createInitialState(): State
 
     fun initialize() {

@@ -92,7 +92,7 @@ class EnabledBindingPlainResolver(
 
         val placeToObjectTokenMap = buildMap {
             placesWithEnoughTokens.forEach { place ->
-                put(place, getObjectTokens(transition, place).toMutableSet())
+                put(place.id, getObjectTokens(transition, place).toMutableSet())
             }
         }
         return EnabledBindingWithTokens(
