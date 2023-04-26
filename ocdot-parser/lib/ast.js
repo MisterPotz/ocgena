@@ -32,11 +32,6 @@ var AST;
     AST.SubgraphSpecialTypes = Object.freeze({
         Places: 'places',
         Transitions: 'transitions',
-        ObjectTypes: 'object types',
-        InitialMarking: 'initial marking',
-        PlacesForType: 'places for',
-        Inputs: "inputs",
-        Outputs: "outputs"
     });
     AST.OpTypes = Object.freeze({
         Normal: '->',
@@ -75,7 +70,7 @@ var AST;
             this.indentSize = indentSize;
         }
         indent(line) {
-            return '\t'.repeat(this.indentSize) + line;
+            return '  '.repeat(this.indentSize) + line;
         }
         pad(pad) {
             return (l) => pad + l;
@@ -84,10 +79,10 @@ var AST;
             return `${this.stringify(ast.key)} = ${this.stringify(ast.value)};`;
         }
         increaseIndent() {
-            this.indentSize += 1;
+            this.indentSize += 2;
         }
         decreaseIndent() {
-            this.indentSize -= 1;
+            this.indentSize -= 2;
         }
         printAttributes(ast) {
             this.increaseIndent();
@@ -180,18 +175,15 @@ var AST;
             return result;
         }
         withIndentDecrease(block) {
-            this.indentSize -= 1;
+            this.decreaseIndent();
             const result = block();
-            this.indentSize += 1;
+            this.increaseIndent();
             return result;
         }
         closingBracketIndented() {
             return this.withIndentDecrease(() => {
                 return this.indent('}');
             });
-        }
-        closingBracket() {
-            return '}';
         }
         printOcNet(ast) {
             const body = this.withIndentIncrease(() => {
@@ -200,7 +192,7 @@ var AST;
                     : `ocnet {\n${ast.body
                         .map(this.stringify.bind(this))
                         .map(this.indent.bind(this))
-                        .join('\n')}\n}`;
+                        .join('\n')}\n${this.closingBracketIndented()}`;
             });
             return [
                 // ast.strict ? 'strict' : null,
@@ -227,7 +219,7 @@ var AST;
                 return ast.body.length === 0
                     ? '{}'
                     : `{\n${ast.body.map(this.stringify.bind(this))
-                        .map(this.indent.bind(this)).join('\n')}\n}`;
+                        .map(this.indent.bind(this)).join('\n')}\n${this.closingBracketIndented()}`;
             });
             return [
                 ...this.printSubgraphName(ast),

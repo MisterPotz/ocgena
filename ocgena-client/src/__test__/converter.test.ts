@@ -9,31 +9,11 @@ describe("convertion from OCDot to plain dot", () => {
         const myOcDotRaw = `
             ocnet { 
                 places { 
-                    p1 p2
+                    p1 [ label= "place 1" ] p2
                 }
 
                 transitions { 
                     t1
-                }
-                
-                object types {
-                     type1 type2
-                }
-
-                inputs {
-                     p1 
-                }
-
-                outputs { 
-                    p2
-                }
-
-                places for type1 {
-                    p1
-                }
-
-                places for type2 {
-                    p2
                 }
 
                 p1 10=> t1 1-> p2 -> p3 [color="orange"];
@@ -43,11 +23,6 @@ describe("convertion from OCDot to plain dot", () => {
 
                     }
                 } 3-> t1 2-> { p1 p2 }
-                
-                initial marking { 
-                    p1=2
-                    p2=3
-                }
             }
         `
         const myOcDot = s.trimIndent(myOcDotRaw)

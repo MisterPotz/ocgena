@@ -3,12 +3,12 @@ package converter.subgraph
 import ast.ASTBaseNode
 import ast.Node
 import ast.SubgraphSpecialTypes
-import converter.DSLElementsContainer
-import converter.SemanticDomainErrorReporterContainer
+import converter.StructureContainer
+import converter.ErrorReporterContainer
 
 class TransitionSaver(
-    private val dslElementsContainer: DSLElementsContainer,
-    errorReporterContainer: SemanticDomainErrorReporterContainer,
+    private val dslElementsContainer: StructureContainer,
+    errorReporterContainer: ErrorReporterContainer,
 ) : SubgraphElementSaver(
     SubgraphSpecialTypes.Transitions, errorReporterContainer
 ) {

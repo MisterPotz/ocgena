@@ -183,24 +183,18 @@ _subgraph_id = "subgraph"i _ id:_literal? _ { return id; }
   
   
 _subgraph
- = subgraph_keyword:( "places for"
-                / "places"
+ = subgraph_keyword:("places"
                 / "transitions"
-                / "object types"
-                / "initial marking"
-                / "inputs"
-                / "outputs" 
+                // / "object types"
+                // / "initial marking"
+                // / "inputs"
+                // / "outputs" 
                 / "subgraph"i ) _ id:_literal?/* _ id:_subgraph_id? */ _ "{" _body:cluster_statements? __ "}" {
       const body = _body ?? [];
       let specialType = null;
       const specialTypes = [
-        "places for",
         "places",
         "transitions",
-        "object types",
-        "initial marking", 
-        "inputs",
-        "outputs" 
       ];
       if (specialTypes.indexOf(subgraph_keyword) >= 0) { 
         specialType = subgraph_keyword;

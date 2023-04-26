@@ -1,5 +1,5 @@
 import { AST } from 'ocdot-parser'
-import { isEmptyOrBlank } from './exts';
+import { isEmptyOrBlank, prependIndent } from 'ocdot-parser/lib/exts';
 
 interface EdgePair {
   from: AST.EdgeTarget
@@ -21,11 +21,18 @@ export class OCDotToDOTConverter extends AST.Compiler {
     return this.stringify(this.ocDot)
   }
 
+  protected printSpecialSubgraph(ast: AST.Subgraph): string {
+    return ast.body.filter((value) => {
+      return value.type === AST.Types.Node
+    }, this).map(this.stringify, this)
+      .join("\n")
+  }
+
   protected printSubgraph(ast: AST.Subgraph): string {
     if (ast.specialType == null) {
       return super.printSubgraph(ast);
     } else {
-      return ""
+      return this.printSpecialSubgraph(ast);
     }
   }
 
@@ -90,7 +97,7 @@ export class OCDotToDOTConverter extends AST.Compiler {
   }
 
 
-  protected indentAllButFirst(items : string[]) : string[] {
+  protected indentAllButFirst(items: string[]): string[] {
     if (items.length == 0) return items;
     let newItems = []
     newItems.push(items[0]);
@@ -106,7 +113,7 @@ export class OCDotToDOTConverter extends AST.Compiler {
       return ""
     }
     const colorFilteredAttrs = ast.body.filter((value) => {
-        return value.key.value !== 'color'
+      return value.key.value !== 'color'
     }, this)
 
     return this.indentAllButFirst(edgePairs.map((edgePair) => {
@@ -116,7 +123,6 @@ export class OCDotToDOTConverter extends AST.Compiler {
   }
 
   protected override printNode(ast: AST.Node): string {
-    this.increaseIndent();
     const value = ast.body.length == 0
       ? `${this.stringify(ast.id)};`
       : `${this.stringify(ast.id)} [\n${ast.body
@@ -124,7 +130,7 @@ export class OCDotToDOTConverter extends AST.Compiler {
         .filter((str) => !isEmptyOrBlank(str))
         .map(this.indent.bind(this))
         .join('\n')}\n];`;
-    this.decreaseIndent();
+
     return value;
   }
 
@@ -140,22 +146,28 @@ export class OCDotToDOTConverter extends AST.Compiler {
   }
 
   override stringify(ast: AST.EdgeRHSElement | AST.ASTNode): string {
-      const value = super.stringify(ast);
-      if (isEmptyOrBlank(value)) { 
-        return "";
-      }
-      return value;
+    const value = super.stringify(ast);
+    if (isEmptyOrBlank(value)) {
+      return "";
+    }
+    return value;
   }
 
   protected printOcNet(ast: AST.OcNet): string {
+    if (ast.body.length === 0) return "digraph {}"
+
+    var body = "digraph {\n"
+    body += prependIndent(ast.body
+          .map(this.stringify, this)
+          .filter((v) => !isEmptyOrBlank(v), this)
+          .join('\n'),
+          this.increaseIndent()
+    )
+
     const body = this.withIndentIncrease(() => {
       return ast.body.length === 0
         ? 'digraph {}'
-        : `digraph {\n${ast.body
-          .map(this.stringify, this)
-          .filter((v) => !isEmptyOrBlank(v), this)
-          .map(this.indent.bind(this))
-          .join('\n')
+        : `digraph {\n${
         }\n${this.closingBracketIndented()}`
     })
 

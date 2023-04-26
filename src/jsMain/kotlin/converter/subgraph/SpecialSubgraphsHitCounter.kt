@@ -17,18 +17,10 @@ class SpecialSubgraphsHitCounter {
     fun canHit(specialSubgraphType: String): Boolean {
         val current = hitsFor(specialSubgraphType)
         return when (specialSubgraphType) {
-            SubgraphSpecialTypes.ObjectTypes,
             SubgraphSpecialTypes.Places,
-            SubgraphSpecialTypes.Transitions,
-            SubgraphSpecialTypes.InitialMarking,
-            SubgraphSpecialTypes.Inputs,
-            SubgraphSpecialTypes.Outputs -> current == 0
+            SubgraphSpecialTypes.Transitions -> current == 0
             else -> {
-                if (specialSubgraphType.startsWith(SubgraphSpecialTypes.PlacesForType)) {
-                    current == 0
-                } else {
-                    false
-                }
+                false
             }
         }
     }

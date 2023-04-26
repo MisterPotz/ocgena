@@ -6,42 +6,28 @@ import ast.OpTypes
 import ast.Types
 import dsl.OCNetFacadeBuilder
 import dsl.OCScope
+import model.InputOutputPlaces
 import model.ObjectMarking
 import model.PlaceType
+import model.PlaceTyping
 
-class OCDotToDomainConverter() {
-
+class OCDotToDomainConverter(
+    private val placeTyping: PlaceTyping,
+    private val inputOutputPlaces: InputOutputPlaces,
+    val dslElementsContainer: StructureContainer,
+) {
     private val initialMarking = ObjectMarking()
 
-    fun convert(dslElementsContainer: DSLElementsContainer): OCNetFacadeBuilder.BuiltOCNet {
+    fun convert(): OCNetFacadeBuilder.BuiltOCNet {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val resultOfBuildAttempt = ocNetFacadeBuilder.tryBuildModel {
-            for (astObjectType in dslElementsContainer.savedObjectTypes) {
-                objectType(astObjectType.key)
-            }
+        val resultOfBuildAttempt = ocNetFacadeBuilder.tryBuildModel(
+            placeTyping = placeTyping,
+            inputOutputPlaces = inputOutputPlaces
+        ) {
             for (astPlace in dslElementsContainer.savedPlaces) {
                 val placeLabel = astPlace.key
                 console.log("place label $placeLabel")
-                val place = place(astPlace.key) {
-                    val objectType = dslElementsContainer.recallObjectTypeForPlace(label)
-                    if (objectType != null) {
-                        this.objectType = objectType(objectType)
-                    }
-                    val initMarking = dslElementsContainer.recallInitialTokensForPlace(label)
-                    if (initMarking != null) {
-                        this.initialTokens = initMarking
-                    }
-
-                    val isInput = dslElementsContainer.recallIfPlaceIsInput(placeLabel = label)
-                    val isOutput = dslElementsContainer.recallIfPlaceIsOutput(placeLabel = label)
-
-                    if (isInput) {
-                        this.placeType = PlaceType.INPUT
-                    }
-                    if (isOutput) {
-                        this.placeType = PlaceType.OUTPUT
-                    }
-                }
+                place(astPlace.key)
             }
 
             for (astTransition in dslElementsContainer.savedTransitions) {

@@ -2,24 +2,18 @@ package converter.subgraph
 
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
-import converter.DSLElementsContainer
-import converter.visitors.InitialMarkingSaver
-import converter.SemanticDomainErrorReporterContainer
+import converter.StructureContainer
+import converter.ErrorReporterContainer
 import error.ErrorLevel
 import parse.SemanticError
 
 class SpecialSubgraphHelper(
-    private val dslElementsContainer: DSLElementsContainer,
-    private val errorReporterContainer: SemanticDomainErrorReporterContainer,
+    private val dslElementsContainer: StructureContainer,
+    private val errorReporterContainer: ErrorReporterContainer,
 ) {
     private val elementSavers: Map<String /* SubgraphSpecialTypes */, SubgraphElementSaver> = buildMap {
         put(SubgraphSpecialTypes.Places, PlaceSaver(dslElementsContainer, errorReporterContainer))
         put(SubgraphSpecialTypes.Transitions, TransitionSaver(dslElementsContainer, errorReporterContainer))
-        put(SubgraphSpecialTypes.ObjectTypes, ObjectTypeSaver(dslElementsContainer, errorReporterContainer))
-        put(SubgraphSpecialTypes.InitialMarking, InitialMarkingSaver(dslElementsContainer, errorReporterContainer))
-        put(SubgraphSpecialTypes.PlacesForType, PlacesForTypeSaver(dslElementsContainer, errorReporterContainer))
-        put(SubgraphSpecialTypes.Inputs, InputsForTypeSaver(dslElementsContainer, errorReporterContainer))
-        put(SubgraphSpecialTypes.Outputs, OutputsForTypeSaver(dslElementsContainer, errorReporterContainer))
     }
 
     private val subgraphHitCount = SpecialSubgraphsHitCounter()

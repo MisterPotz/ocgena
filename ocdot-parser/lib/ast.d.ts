@@ -31,11 +31,6 @@ export declare namespace AST {
     export const SubgraphSpecialTypes: Readonly<{
         readonly Places: "places";
         readonly Transitions: "transitions";
-        readonly ObjectTypes: "object types";
-        readonly InitialMarking: "initial marking";
-        readonly PlacesForType: "places for";
-        readonly Inputs: "inputs";
-        readonly Outputs: "outputs";
     }>;
     export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>;
     export const OpTypes: Readonly<{
@@ -347,7 +342,6 @@ export declare namespace AST {
         protected withIndentIncrease(block: () => string): string;
         protected withIndentDecrease(block: () => string): string;
         protected closingBracketIndented(): string;
-        protected closingBracket(): string;
         protected printOcNet(ast: AST.OcNet): string;
         protected checkSubgraphKeyword(ast: AST.Subgraph): boolean;
         protected printSubgraphName(ast: AST.Subgraph): (string | null)[];

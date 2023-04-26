@@ -2,10 +2,10 @@ package converter
 
 import error.Error
 
-class SemanticDomainErrorReporterContainer() : ErrorReporterContainer {
+class DefaultErrorReporterContainer() : ErrorReporterContainer {
     private val collectedErrors = mutableListOf<Error>()
 
-    fun pushError(error: Error) {
+    override fun pushError(error: Error) {
         collectedErrors.add(error)
     }
 

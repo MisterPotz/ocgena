@@ -43,16 +43,16 @@ class Connector(private val edge: Edge) {
     fun OCScope.tryConnectAll() {
         val iterable = createToFromIterator()
 
-        for (toFrom in iterable) {
-            val allNodesOfFrom = getAllNodeRefsFromEdgeFromOrTo(toFrom.from)
-            val allNodesOfTo = getAllNodeRefsFromEdgeFromOrTo(toFrom.to)
+        for (edgeFromAndEdgeTarget in iterable) {
+            val allNodesOfFrom = getAllNodeRefsFromEdgeFromOrTo(edgeFromAndEdgeTarget.from)
+            val allNodesOfTo = getAllNodeRefsFromEdgeFromOrTo(edgeFromAndEdgeTarget.to)
 
             for (fromNode in allNodesOfFrom) {
                 val fromNode = elementByLabel(fromNode) ?: continue
                 for (toNode in allNodesOfTo) {
                     val toNode = elementByLabel(toNode) ?: continue
-                    val number = toFrom.to.edgeop.params?.number?.toInt()
-                    when (toFrom.to.edgeop.type) {
+                    val number = edgeFromAndEdgeTarget.to.edgeop.params?.number?.toInt()
+                    when (edgeFromAndEdgeTarget.to.edgeop.type) {
                         OpTypes.Normal -> fromNode.arcTo(toNode) {
                             if (number != null) {
                                 this.multiplicity = number

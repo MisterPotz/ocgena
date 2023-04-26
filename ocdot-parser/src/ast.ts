@@ -1,5 +1,6 @@
 import { Compass } from 'ts-graphviz';
 import { parse as _parse, FileRange as _FileRange } from './ocdot.peggy';
+import { prependIndent } from './exts';
 
 /**
  * The `AST` module provides the ability to handle the AST as a result of parsing the ocdot language
@@ -36,11 +37,6 @@ export namespace AST {
   export const SubgraphSpecialTypes = Object.freeze({
     Places: 'places',
     Transitions: 'transitions',
-    ObjectTypes: 'object types',
-    InitialMarking: 'initial marking',
-    PlacesForType: 'places for',
-    Inputs: "inputs",
-    Outputs: "outputs"
   } as const)
   export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>
 
@@ -153,7 +149,7 @@ export namespace AST {
 
   export type EdgeTarget = NodeRef | EdgeSubgraph;
 
-  export interface NumberLiteral extends ASTBaseNode { 
+  export interface NumberLiteral extends ASTBaseNode {
     value: number,
   }
 
@@ -403,6 +399,20 @@ export namespace AST {
       return '  '.repeat(this.indentSize) + line;
     }
 
+    protected buildIndent(): string {
+      return '  '.repeat(this.indentSize)
+    }
+
+    protected withIndentIncrease(multiline: string): string {
+      // this.increaseIndent()
+      const saved = this.indentSize
+      this.indentSize = 2
+      const value = prependIndent(multiline, this.buildIndent())
+      // this.decreaseIndent()
+      this.indentSize = saved;
+      return value
+    }
+
     protected pad(pad: string): (l: string) => string {
       return (l: string) => pad + l;
     }
@@ -420,11 +430,9 @@ export namespace AST {
     }
 
     protected printAttributes(ast: AST.Attributes): string {
-      this.increaseIndent();
       const value = ast.body.length === 0
         ? `${ast.kind};`
-        : `${ast.kind} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
-      this.decreaseIndent();
+        : `${ast.kind} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this).join('\n'))}\n];`;
       return value;
     }
 
@@ -448,12 +456,13 @@ export namespace AST {
       const targets = ast.targets.map(this.stringify.bind(this))/* .join(this.directed ? ' -> ' : ' -- '); */
       const allEdgeTargets = [from, ...targets].join(' ')
 
-      this.increaseIndent();
-      const value = ast.body.length === 0
-        ? `${allEdgeTargets};`
-        : `${allEdgeTargets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
-      this.decreaseIndent();
-      return value;
+      if (ast.body.length === 0) {
+        return allEdgeTargets + ";"
+      }
+
+      return `${allEdgeTargets} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this)
+        .join('\n'))
+        }\n]`
     }
 
     protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string {
@@ -465,22 +474,19 @@ export namespace AST {
     }
 
     protected printNode(ast: AST.Node): string {
-      this.increaseIndent();
-      const value = ast.body.length == 0
-        ? `${this.stringify(ast.id)};`
-        : `${this.stringify(ast.id)} [\n${ast.body
-          .map(this.stringify.bind(this))
-          .map(this.indent.bind(this))
-          .join('\n')}\n];`;
-      this.decreaseIndent();
-      return value;
+      if (ast.body.length === 0) {
+        return this.stringify(ast.id)
+      }
+      return `${this.stringify(ast.id)} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this)
+        .join('\n'))
+        }\n];`
     }
 
     protected printNodeRef(ast: AST.NodeRef): string {
       return [
         this.stringify(ast.id),
-        ast.port ? this.stringify(ast.port) 
-        : null,
+        ast.port ? this.stringify(ast.port)
+          : null,
         ast.compass ? this.stringify(ast.compass) : null,
       ]
         .filter((v) => v !== null)
@@ -496,13 +502,11 @@ export namespace AST {
     }
 
     protected printEdgeSubgraph(ast: AST.EdgeSubgraph): string {
-      const body = this.withIndentIncrease(() => {
-        return ast.body.length === 0
-          ? '{}'
-          : `{\n${ast.body.map(this.stringify.bind(this))
-            .map(this.indent.bind(this))
-            .join('\n')}\n${this.closingBracketIndented()}`;
-      })
+      if (ast.body.length === 0) {
+        return "{}"
+      }
+      const body = `{\n${this.withIndentIncrease(ast.body.map(this.stringify, this).join('\n'))
+        }\n}`
 
       return [
         ...this.printEdgeSubgraphName(ast),
@@ -512,37 +516,18 @@ export namespace AST {
         .join(' ');
     }
 
-    protected withIndentIncrease(block: () => string): string {
-      this.increaseIndent();
-      const result = block()
-      this.decreaseIndent();
-      return result;
-    }
-
-    protected withIndentDecrease(block: () => string): string {
-      this.decreaseIndent();
-      const result = block();
-      this.increaseIndent();
-      return result;
-    }
-
-    protected closingBracketIndented(): string {
-      return this.withIndentDecrease(() => {
-        return this.indent('}')
-      })
-    }
-
     protected printOcNet(ast: AST.OcNet): string {
+      var body = "ocnet {"
+      if (ast.body.length === 0) {
+        body += "}"
+        return body
+      }
+      body += "\n"
+      body += this.withIndentIncrease(ast.body
+        .map(this.stringify.bind(this))
+        .join('\n'))
+      body += "\n}"
 
-      const body = this.withIndentIncrease(() => {
-        return ast.body.length === 0
-          ? 'ocnet {}'
-          : `ocnet {\n${ast.body
-            .map(this.stringify.bind(this))
-            .map(this.indent.bind(this))
-            .join('\n')
-          }\n${this.closingBracketIndented()}`
-      })
       return [
         // ast.strict ? 'strict' : null,
         // ast.directed ? 'digraph' : 'graph',
@@ -566,13 +551,17 @@ export namespace AST {
     }
 
     protected printSubgraph(ast: AST.Subgraph): string {
-      const body = this.withIndentIncrease(() => {
-        return ast.body.length === 0
-          ? '{}'
-          : `{\n${ast.body.map(this.stringify.bind(this))
-            .map(this.indent.bind(this)).join('\n')}\n${this.closingBracketIndented()
-          }`
-      })
+      var body = "{"
+      if (ast.body.length === 0) {
+        body += "}"
+        return body
+      }
+      body += "\n"
+      body += this.withIndentIncrease(
+        ast.body.map(this.stringify.bind(this)).join('\n')
+      )
+      body += "\n}"
+
       return [
         ...this.printSubgraphName(ast),
         body

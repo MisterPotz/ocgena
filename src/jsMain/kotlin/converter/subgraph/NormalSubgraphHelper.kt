@@ -4,13 +4,12 @@ import ast.ASTBaseNode
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
-import converter.DSLElementsContainer
+import converter.StructureContainer
 import converter.ErrorReporterContainer
-import converter.SemanticDomainErrorReporterContainer
 
 class NormalSubgraphHelper(
-    val dslElementsContainer: DSLElementsContainer,
-    val errorReporterContainer: SemanticDomainErrorReporterContainer,
+    val dslElementsContainer: StructureContainer,
+    val errorReporterContainer: ErrorReporterContainer,
 ) : ErrorReporterContainer by errorReporterContainer {
 
     fun checkElementCanBeSaved(ast: ASTBaseNode): Boolean {

@@ -87,11 +87,6 @@ external interface `T$0` {
 external interface `T$1` {
     var Places: String /* "places" */
     var Transitions: String /* "transitions" */
-    var ObjectTypes: String /* "object types" */
-    var InitialMarking: String /* "initial marking" */
-    var PlacesForType: String /* "places for" */
-    var Inputs: String /* "inputs" */
-    var Outputs: String /* "outputs" */
 }
 
 external var SubgraphSpecialTypes: `T$1`
