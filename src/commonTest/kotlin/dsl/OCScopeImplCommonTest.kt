@@ -11,27 +11,23 @@ import kotlin.test.assertTrue
 
 class OCScopeImplCommonTest {
 
-    private var _ocScopeImpl: OCScopeImpl? = null
-    val ocScopeImpl
-        get() = _ocScopeImpl!!
+    private val ocNetDSLElements = createExampleModel()
+    private val objectSearcher = ObjectsSearcher(ocNetDSLElements)
 
-    init {
-        _ocScopeImpl = createExampleModel()
-    }
 
     @Test
     fun testPlacesPerTypeAmount() {
-        val order = ocScopeImpl.objectType("order")
-        val item = ocScopeImpl.objectType("item")
-        val route = ocScopeImpl.objectType("route")
+        val order = ocNetDSLElements.objectType("order")
+        val item = ocNetDSLElements.objectType("item")
+        val route = ocNetDSLElements.objectType("route")
 
-        val orderPlaces = ocScopeImpl.places
+        val orderPlaces = ocNetDSLElements.places
             .values
             .filter { it.objectType == order }
-        val itemPlaces = ocScopeImpl.places
+        val itemPlaces = ocNetDSLElements.places
             .values
             .filter { it.objectType == item }
-        val routePlaces = ocScopeImpl.places
+        val routePlaces = ocNetDSLElements.places
             .values
             .filter { it.objectType == route }
 
@@ -42,7 +38,7 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testTransitionPresence() {
-        ocScopeImpl.apply {
+        ocNetDSLElements.apply {
             assertNotNull(
                 transitions.values.find { it.label == "place order" }
             )
@@ -73,45 +69,45 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testObjectTypesAmount() {
-        assertEquals(ocScopeImpl.getFilteredObjectTypes().size, 3)
+        assertEquals(objectSearcher.withoutDefaultObjectTypeIfPossible().size, 3)
     }
 
     @Test
     fun testTransitionsAmount() {
-        assertEquals(ocScopeImpl.transitions.size, 8)
+        assertEquals(ocNetDSLElements.transitions.size, 8)
     }
 
     @Test
     fun testPlaceTypes() {
         assertEquals(
             3,
-            ocScopeImpl.places.values.filter { it.placeType == PlaceType.INPUT }.size
+            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.INPUT }.size
         )
         assertEquals(
             3,
-            ocScopeImpl.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
+            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
         )
         assertEquals(
             3,
-            ocScopeImpl.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
+            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
         )
         // totally 14 places
-        assertEquals(14, ocScopeImpl.places.size)
+        assertEquals(14, ocNetDSLElements.places.size)
     }
 
     @Test
     fun testArcsAmount() {
-        assertEquals(24, ocScopeImpl.arcs.size)
+        assertEquals(24, ocNetDSLElements.arcs.size)
 
-        assertEquals(8, ocScopeImpl.arcs.filterIsInstance<VariableArcDSL>().size)
+        assertEquals(8, ocNetDSLElements.arcs.filterIsInstance<VariableArcDSL>().size)
 
-        assertEquals(16, ocScopeImpl.arcs.filterIsInstance<NormalArcDSL>().size)
+        assertEquals(16, ocNetDSLElements.arcs.filterIsInstance<NormalArcDSL>().size)
     }
 
     @Test
     fun testPlaceNaming() {
         val indexRegex = Regex("""\d+""")
-        ocScopeImpl.places.values
+        ocNetDSLElements.places.values
             .filter {
                 it.label.matches(Regex("""o\d+"""))
             }.let {
@@ -121,7 +117,7 @@ class OCScopeImplCommonTest {
                     match != null && match.groupValues.first().toInt() in 1..5
                 })
             }
-        ocScopeImpl.places.values
+        ocNetDSLElements.places.values
             .filter {
                 it.label.matches(Regex("""item_\d+"""))
             }.let {
@@ -131,7 +127,7 @@ class OCScopeImplCommonTest {
                     match != null && match.groupValues.first().toInt() in 1..6
                 })
             }
-        ocScopeImpl.places.values
+        ocNetDSLElements.places.values
             .filter {
                 it.label.matches(Regex("""r\d+"""))
             }.let {
@@ -145,120 +141,130 @@ class OCScopeImplCommonTest {
 
     @Test
     fun testAccessToNodesAndConnectedArcsForOrder() {
-        with(ocScopeImpl) {
-            arcs.forEach {
-                mprintln(it)
+        val arcSearcher = ArcSearcher(ocNetDSLElements)
+        with(arcSearcher) {
+            with(ocNetDSLElements) {
+                arcs.forEach {
+                    mprintln(it)
+                }
+                outputArcFor(place("o1"))
+                outputArcFor(place("o2"))
+                outputArcFor(place("o3"))
+                outputArcFor(place("o4"))
+                assertFails { outputArcFor(place("o5")) }
+
+                assertEquals(2, outputArcsFor(place("o3")).size)
+                assertEquals(2, inputArcsFor(place("o3")).size)
+
+
+                assertFails { inputArcFor(place("o1")) }
+                inputArcFor(place("o2"))
+                inputArcFor(place("o3"))
+                inputArcFor(place("o4"))
+                inputArcFor(place("o5"))
             }
-            outputArcFor(place("o1"))
-            outputArcFor(place("o2"))
-            outputArcFor(place("o3"))
-            outputArcFor(place("o4"))
-            assertFails {  outputArcFor(place("o5"))   }
-
-            assertEquals(2, outputArcsFor(place("o3")).size)
-            assertEquals(2, inputArcsFor(place("o3")).size)
-
-
-            assertFails { inputArcFor(place("o1")) }
-            inputArcFor(place("o2"))
-            inputArcFor(place("o3"))
-            inputArcFor(place("o4"))
-            inputArcFor(place("o5"))
         }
     }
 
     @Test
     fun testAccessToNodesAndConnectedArcsForItem() {
-        with(ocScopeImpl) {
-            arcs.forEach {
-                mprintln(it)
+        val arcSearcher = ArcSearcher(ocNetDSLElements)
+
+        with(arcSearcher) {
+            with(ocNetDSLElements) {
+                arcs.forEach {
+                    mprintln(it)
+                }
+                outputArcFor(place("item_1"))
+                outputArcFor(place("item_2"))
+                outputArcFor(place("item_3"))
+                outputArcFor(place("item_4"))
+                outputArcFor(place("item_5"))
+
+
+                inputArcFor(place("item_2"))
+                inputArcFor(place("item_3"))
+                inputArcFor(place("item_4"))
+                inputArcFor(place("item_5"))
+                inputArcFor(place("item_6"))
             }
-            outputArcFor(place("item_1"))
-            outputArcFor(place("item_2"))
-            outputArcFor(place("item_3"))
-            outputArcFor(place("item_4"))
-            outputArcFor(place("item_5"))
-
-
-            inputArcFor(place("item_2"))
-            inputArcFor(place("item_3"))
-            inputArcFor(place("item_4"))
-            inputArcFor(place("item_5"))
-            inputArcFor(place("item_6"))
         }
     }
 
     @Test
     fun testTransitionArcs() {
-        with(ocScopeImpl) {
-            // output
-            outputArcsFor(transition("place order")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
-            outputArcsFor(transition("send invoice")).let {
-                assertEquals(1, it.size)
-                assertTrue(it.first() is NormalArcDSL)
-            }
-            outputArcsFor(transition("send reminder")).let {
-                assertEquals(1, it.size)
-            }
-            outputArcsFor(transition("pay order")).let {
-                assertEquals(1, it.size)
-            }
-            outputArcsFor(transition("mark as completed")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
-            outputArcsFor(transition("pick item")).let {
-                assertEquals(1, it.size)
-            }
-            outputArcsFor(transition("start route")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
-            outputArcsFor(transition("end route")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
+        val arcSearcher = ArcSearcher(ocNetDSLElements)
+        with(arcSearcher) {
+            with(ocNetDSLElements) {
+                // output
+                outputArcsFor(transition("place order")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
+                outputArcsFor(transition("send invoice")).let {
+                    assertEquals(1, it.size)
+                    assertTrue(it.first() is NormalArcDSL)
+                }
+                outputArcsFor(transition("send reminder")).let {
+                    assertEquals(1, it.size)
+                }
+                outputArcsFor(transition("pay order")).let {
+                    assertEquals(1, it.size)
+                }
+                outputArcsFor(transition("mark as completed")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
+                outputArcsFor(transition("pick item")).let {
+                    assertEquals(1, it.size)
+                }
+                outputArcsFor(transition("start route")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
+                outputArcsFor(transition("end route")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
 
-            // input
-            inputArcsFor(transition("place order")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
-            inputArcsFor(transition("send invoice")).let {
-                assertEquals(1, it.size)
-                assertTrue(it.first() is NormalArcDSL)
-            }
-            inputArcsFor(transition("send reminder")).let {
-                assertEquals(1, it.size)
-            }
-            inputArcsFor(transition("pay order")).let {
-                assertEquals(1, it.size)
-            }
-            inputArcsFor(transition("mark as completed")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
-            inputArcsFor(transition("pick item")).let {
-                assertEquals(1, it.size)
-            }
-            inputArcsFor(transition("start route")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
-            }
-            inputArcsFor(transition("end route")).let {
-                assertEquals(2, it.size)
-                assertNotNull(it.find { it is VariableArcDSL })
-                assertNotNull(it.find { it is NormalArcDSL })
+                // input
+                inputArcsFor(transition("place order")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
+                inputArcsFor(transition("send invoice")).let {
+                    assertEquals(1, it.size)
+                    assertTrue(it.first() is NormalArcDSL)
+                }
+                inputArcsFor(transition("send reminder")).let {
+                    assertEquals(1, it.size)
+                }
+                inputArcsFor(transition("pay order")).let {
+                    assertEquals(1, it.size)
+                }
+                inputArcsFor(transition("mark as completed")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
+                inputArcsFor(transition("pick item")).let {
+                    assertEquals(1, it.size)
+                }
+                inputArcsFor(transition("start route")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
+                inputArcsFor(transition("end route")).let {
+                    assertEquals(2, it.size)
+                    assertNotNull(it.find { it is VariableArcDSL })
+                    assertNotNull(it.find { it is NormalArcDSL })
+                }
             }
         }
     }

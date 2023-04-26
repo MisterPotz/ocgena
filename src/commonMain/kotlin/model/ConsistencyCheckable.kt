@@ -1,5 +1,7 @@
 package model
 
+import model.utils.RecursionProtector
+
 interface PetriAtomVisitorDFS {
 
     fun visitArc(arc: Arc)

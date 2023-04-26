@@ -5,8 +5,8 @@ import model.PlaceType
 /**
  * @see <img src="src/jvmTest/resources/img.png" >
  */
-fun createExampleModel() : OCScopeImpl {
-    return OCScopeImpl().apply {
+fun createExampleModel(): OCNetDSLElements {
+    val ocNet = OCNetBuilder.define {
         val order = objectType("order") {
             "o$it"
         }
@@ -21,13 +21,15 @@ fun createExampleModel() : OCScopeImpl {
             }.arcTo(transition("place order"))
                 .arcTo(place { })
                 .arcTo(transition("send invoice"))
-                .arcTo(subgraph {
-                    setAsInputOutput(place { })
-
-                    input.arcTo(transition("send reminder"))
-                    transition("send reminder").arcTo(input)
+                .connectTo(subgraph {
+                    val place = place { }
+                    inNode
+                        .arcTo(place)
+                        .arcTo(transition("send reminder"))
+                        .arcTo(place)
+                        .arcTo(outNode)
                 })
-                .arcTo(transition("pay order"))
+                .connectTo(transition("pay order"))
                 .arcTo(place { })
                 .arcTo(transition("mark as completed"))
                 .arcTo(place {
@@ -43,7 +45,7 @@ fun createExampleModel() : OCScopeImpl {
                 .variableArcTo(place { })
                 .arcTo(transition("pick item"))
                 .arcTo(place { })
-                .variableArcTo( transition("start route"))
+                .variableArcTo(transition("start route"))
                 .variableArcTo(place { })
                 .variableArcTo(transition("end route"))
                 .variableArcTo(place { })
@@ -64,4 +66,5 @@ fun createExampleModel() : OCScopeImpl {
                 })
         }
     }
+    return ocNet
 }

@@ -1,0 +1,39 @@
+{
+	"name": "monaco-editor-samples",
+	"version": "0.0.1",
+	"private": true,
+	"description": "Copied from samples for ocgena",
+	"main": "./main.js",
+	"scripts": {
+		"build": "node ./node_modules/webpack/bin/webpack.js --progress",
+		"execute": "node ./node_modules/electron/cli.js ."
+	},
+	"author": "Microsoft Corporation",
+	"license": "MIT",
+	"devDependencies": {
+		"css-loader": "^5.2.7",
+		"electron": "^19.1.8",
+		"file-loader": "^6.2.0",
+		"glob": "^7.2.0",
+		"html-webpack-plugin": "^5.5.0",
+		"monaco-editor": "^0.32.1",
+		"monaco-editor-webpack-plugin": "^7.0.1",
+		"style-loader": "^3.3.1",
+		"terser-webpack-plugin": "^5.3.1",
+		"ts-loader": "^9.2.6",
+		"typescript": "^5.0.2",
+		"webpack": "^5.76.0",
+		"webpack-cli": "^4.9.2",
+		"webpack-dev-server": "^4.7.4",
+		"yaserver": "^0.4.0"
+	},
+	"overrides": {
+		"@electron/get": "2.0.0"
+	},
+	"dependencies": {
+		"@hpcc-js/wasm": "^2.10.0",
+		"d3": "^7.8.4",
+		"d3-graphviz": "^5.0.2",
+		"ocgena": "file:../ocgenajs"
+	}
+}

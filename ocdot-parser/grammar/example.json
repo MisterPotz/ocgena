@@ -1,0 +1,215 @@
+{
+    "type": "ocdot",
+    "body": [
+        {
+            "type": "ocnet",
+            "body": [
+                {
+                    "type": "node",
+                    "id": {
+                        "type": "literal",
+                        "value": "p1",
+                        "quoted": false,
+                        "location": {
+                            "start": {
+                                "offset": 38,
+                                "line": 3,
+                                "column": 17
+                            },
+                            "end": {
+                                "offset": 40,
+                                "line": 3,
+                                "column": 19
+                            }
+                        }
+                    },
+                    "body": [],
+                    "location": {
+                        "start": {
+                            "offset": 38,
+                            "line": 3,
+                            "column": 17
+                        },
+                        "end": {
+                            "offset": 40,
+                            "line": 3,
+                            "column": 19
+                        }
+                    }
+                },
+                {
+                    "type": "edge",
+                    "body": [],
+                    "from": {
+                        "type": "node_ref",
+                        "id": {
+                            "type": "literal",
+                            "value": "p1",
+                            "quoted": false,
+                            "location": {
+                                "start": {
+                                    "offset": 74,
+                                    "line": 5,
+                                    "column": 17
+                                },
+                                "end": {
+                                    "offset": 76,
+                                    "line": 5,
+                                    "column": 19
+                                }
+                            }
+                        },
+                        "location": {
+                            "start": {
+                                "offset": 74,
+                                "line": 5,
+                                "column": 17
+                            },
+                            "end": {
+                                "offset": 76,
+                                "line": 5,
+                                "column": 19
+                            }
+                        }
+                    },
+                    "targets": [
+                        {
+                            "id": {
+                                "type": "node_ref",
+                                "id": {
+                                    "type": "literal",
+                                    "value": "t1",
+                                    "quoted": false,
+                                    "location": {
+                                        "start": {
+                                            "offset": 80,
+                                            "line": 5,
+                                            "column": 23
+                                        },
+                                        "end": {
+                                            "offset": 82,
+                                            "line": 5,
+                                            "column": 25
+                                        }
+                                    }
+                                },
+                                "location": {
+                                    "start": {
+                                        "offset": 80,
+                                        "line": 5,
+                                        "column": 23
+                                    },
+                                    "end": {
+                                        "offset": 82,
+                                        "line": 5,
+                                        "column": 25
+                                    }
+                                }
+                            },
+                            "edgeop": {
+                                "type": "=>",
+                                "location": {
+                                    "start": {
+                                        "offset": 77,
+                                        "line": 5,
+                                        "column": 20
+                                    },
+                                    "end": {
+                                        "offset": 79,
+                                        "line": 5,
+                                        "column": 22
+                                    }
+                                }
+                            }
+                        },
+                        {
+                            "id": {
+                                "type": "node_ref",
+                                "id": {
+                                    "type": "literal",
+                                    "value": "p2",
+                                    "quoted": false,
+                                    "location": {
+                                        "start": {
+                                            "offset": 86,
+                                            "line": 5,
+                                            "column": 29
+                                        },
+                                        "end": {
+                                            "offset": 88,
+                                            "line": 5,
+                                            "column": 31
+                                        }
+                                    }
+                                },
+                                "location": {
+                                    "start": {
+                                        "offset": 86,
+                                        "line": 5,
+                                        "column": 29
+                                    },
+                                    "end": {
+                                        "offset": 88,
+                                        "line": 5,
+                                        "column": 31
+                                    }
+                                }
+                            },
+                            "edgeop": {
+                                "type": "->",
+                                "location": {
+                                    "start": {
+                                        "offset": 83,
+                                        "line": 5,
+                                        "column": 26
+                                    },
+                                    "end": {
+                                        "offset": 85,
+                                        "line": 5,
+                                        "column": 28
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "location": {
+                        "start": {
+                            "offset": 74,
+                            "line": 5,
+                            "column": 17
+                        },
+                        "end": {
+                            "offset": 101,
+                            "line": 6,
+                            "column": 13
+                        }
+                    }
+                }
+            ],
+            "location": {
+                "start": {
+                    "offset": 13,
+                    "line": 2,
+                    "column": 13
+                },
+                "end": {
+                    "offset": 102,
+                    "line": 6,
+                    "column": 14
+                }
+            }
+        }
+    ],
+    "location": {
+        "start": {
+            "offset": 13,
+            "line": 2,
+            "column": 13
+        },
+        "end": {
+            "offset": 111,
+            "line": 7,
+            "column": 9
+        }
+    }
+}

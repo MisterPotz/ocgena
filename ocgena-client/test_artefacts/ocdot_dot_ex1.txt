@@ -1,0 +1,14 @@
+digraph {
+	p1 -> t1 [color="orange:white:orange"; ];
+	t1 -> p2 [color="orange"; ];
+	p2 -> p3 [color="orange"; ];
+
+	subgraph s1 {
+		subgraph ss1 {}
+	} -> t1 [color="black"; ];
+	t1 -> {
+		p1;
+		p2;
+	} [color="black"; ];
+
+}

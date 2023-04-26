@@ -1,5 +1,6 @@
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 
 class AppTest {
     @Test
@@ -9,6 +10,8 @@ class AppTest {
 
     @Test
     fun thingsShouldBreak() {
-        assertEquals(listOf(1,2,3).reversed(), listOf(1,2,3))
+        assertFails {
+            assertEquals(listOf(1,2,3).reversed(), listOf(1,2,3))
+        }
     }
 }

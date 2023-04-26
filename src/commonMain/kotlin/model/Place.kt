@@ -5,18 +5,23 @@ enum class PlaceType {
     INPUT,
     OUTPUT
 }
-class Place(
-    override val label : String,
-    val type : ObjectType,
-    val placeType : PlaceType,
-    override val inputArcs: MutableList<Arc> = mutableListOf(),
-    override val outputArcs: MutableList<Arc> = mutableListOf()
-) : PetriNode, LabelHolder, ConsistencyCheckable {
 
-    override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
-    var tokens : Int = 0
-    var terminateTokens: Int? = null
-    var initialTokens : Int? = null
+data class Place(
+    override val id: String,
+    override val label: String,
+    val type: ObjectType,
+    val placeType: PlaceType,
+    override val inputArcs: MutableList<Arc> = mutableListOf(),
+    override val outputArcs: MutableList<Arc> = mutableListOf(),
+    override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX,
+) : PetriNode, LabelHolder, ConsistencyCheckable {
+    private val transitionToArc : MutableMap<Transition, Arc> = mutableMapOf()
+
+    var tokens: Int = 0
+
+    fun getArcForTransition(transition: Transition) : Arc? {
+        return transitionToArc[transition]
+    }
 
     override fun addInputArc(arc: Arc) {
         when (placeType) {
@@ -34,17 +39,21 @@ class Place(
         visitor.visitPlace(this)
     }
 
-    fun consumeTokens(amount: Int) {
-        require(tokens >= amount)
-        tokens -= amount
+    override fun reindexArcs() {
+        for (inputArc in inputArcs) {
+            transitionToArc[inputArc.tailNode as Transition] = inputArc
+        }
+        for (outputArc in outputArcs) {
+            transitionToArc[outputArc.arrowNode as Transition] = outputArc
+        }
     }
 
-    fun consumeAllTokens() : Int {
-        return tokens
-    }
+    override fun copyWithoutConnections(): PetriNode {
+        return copy(
+            inputArcs = mutableListOf(),
+            outputArcs = mutableListOf(),
 
-    fun addTokens(amount: Int) {
-        tokens += amount
+        )
     }
 
     override fun isSameType(other: PetriNode): Boolean {
@@ -61,11 +70,10 @@ class Place(
 
         other as Place
 
+        if (id != other.id) return false
         if (label != other.label) return false
         if (type != other.type) return false
         if (placeType != other.placeType) return false
-        if (inputArcs != other.inputArcs) return false
-        if (outputArcs != other.outputArcs) return false
         if (subgraphIndex != other.subgraphIndex) return false
         if (tokens != other.tokens) return false
 
@@ -73,15 +81,12 @@ class Place(
     }
 
     override fun hashCode(): Int {
-        var result = label?.hashCode() ?: 0
+        var result = id.hashCode()
+        result = 31 * result + label.hashCode()
         result = 31 * result + type.hashCode()
         result = 31 * result + placeType.hashCode()
-        result = 31 * result + inputArcs.hashCode()
-        result = 31 * result + outputArcs.hashCode()
         result = 31 * result + subgraphIndex
         result = 31 * result + tokens
         return result
     }
-
-
 }

@@ -9,11 +9,17 @@ class LinkChainDSLImpl(
 
 class VariableArcDSLImpl(
     override var tailAtom: NodeDSL,
+    override var arcIndexForTailAtom: Int,
     override var arrowAtom: NodeDSL,
 ) : VariableArcDSL {
     override fun isInputFor(nodeDSL: NodeDSL): Boolean {
         return arrowAtom == nodeDSL
     }
+
+    override fun isOutputFor(nodeDSL: NodeDSL): Boolean {
+        return tailAtom == nodeDSL
+    }
+
     override fun toString(): String {
         return "var arc [ $tailAtom => $arrowAtom ]"
     }
@@ -22,10 +28,16 @@ class VariableArcDSLImpl(
 class NormalArcDSLImpl(
     override var multiplicity: Int,
     override var tailAtom: NodeDSL,
+    override var arcIndexForTailAtom: Int,
     override var arrowAtom: NodeDSL,
 ) : NormalArcDSL {
+
     override fun isInputFor(nodeDSL: NodeDSL): Boolean {
         return arrowAtom == nodeDSL
+    }
+
+    override fun isOutputFor(nodeDSL: NodeDSL): Boolean {
+        return tailAtom == nodeDSL
     }
 
     override fun toString(): String {
@@ -65,7 +77,7 @@ class ObjectTypeImpl(
 }
 
 class PlaceDSLImpl(
-    override var indexForType: Int,
+    override var objectTypeId: Int,
 //    private val defaultLabelFactory: () -> String,
     private val onAssignNewObjectType: (ObjectTypeDSL) -> Unit,
     private val labelFactory: () -> String,
@@ -81,11 +93,10 @@ class PlaceDSLImpl(
             field = value
         }
 
-    var finalValue : String? = null
+    var finalLabel : String? = null
     override val label: String
-        get() = finalValue ?: labelFactory()
+        get() = finalLabel ?: labelFactory()
 
-    override var initialTokens: Int = 0
     override var placeType: PlaceType = PlaceType.NORMAL
 
     override fun toString(): String {

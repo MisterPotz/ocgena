@@ -1,6 +1,7 @@
 package model
 
 interface PetriAtom {
+    val id : String
     fun acceptVisitor(visitor: PetriAtomVisitorDFS)
     var subgraphIndex : Int
 

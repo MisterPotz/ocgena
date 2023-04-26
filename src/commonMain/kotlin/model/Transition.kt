@@ -1,13 +1,13 @@
 package model
 
-class Transition(
-    override val label : String? = null,
+data class Transition(
+    override val id: String,
+    override val label : String,
     override val inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    override val outputArcs: MutableList<Arc> = mutableListOf<Arc>()
-) : PetriNode, LabelHolder {
-
-
+    override val outputArcs: MutableList<Arc> = mutableListOf<Arc>(),
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
+) : PetriNode, LabelHolder {
+    val placesToArcs = mutableMapOf<Place, Arc>()
 
     val inputPlaces : List<Place>
         get() = inputArcs.mapNotNull { it.tailNode }.filterIsInstance<Place>()
@@ -22,16 +22,28 @@ class Transition(
         outputArcs.add(arc)
     }
 
-    fun getEnabledBinding() : Binding? {
-        return Binding.createEnabledBinding(this)
-    }
-
-    fun isBindingEnabled(): Boolean {
-        return inputArcs.all { it.tailPlaceHasEnoughTokens() }
+    fun getArcForPlace(place: Place) : Arc? {
+        return placesToArcs[place]
     }
 
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitTransition(this)
+    }
+
+    override fun copyWithoutConnections(): PetriNode {
+        return copy(
+            inputArcs = mutableListOf(),
+            outputArcs = mutableListOf()
+        )
+    }
+
+    override fun reindexArcs() {
+        for (inputArc in inputArcs) {
+            placesToArcs[inputArc.tailNode as Place] = inputArc
+        }
+        for (outputArc in outputArcs) {
+            placesToArcs[outputArc.arrowNode as Place] = outputArc
+        }
     }
 
     override fun isSameType(other: PetriNode): Boolean {
@@ -48,25 +60,17 @@ class Transition(
 
         other as Transition
 
+        if (id != other.id) return false
         if (label != other.label) return false
-        if (inputArcs != other.inputArcs) return false
-        if (outputArcs != other.outputArcs) return false
         if (subgraphIndex != other.subgraphIndex) return false
-        if (inputPlaces != other.inputPlaces) return false
-        if (outputPlaces != other.outputPlaces) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = label?.hashCode() ?: 0
-        result = 31 * result + inputArcs.hashCode()
-        result = 31 * result + outputArcs.hashCode()
+        var result = id.hashCode()
+        result = 31 * result + label.hashCode()
         result = 31 * result + subgraphIndex
-        result = 31 * result + inputPlaces.hashCode()
-        result = 31 * result + outputPlaces.hashCode()
         return result
     }
-
-
 }
