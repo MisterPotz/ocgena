@@ -1,7 +1,7 @@
 import { AST } from 'ocdot-parser'
 import { OCDotToDOTConverter } from '../converter'
 import * as shelljs from 'shelljs'
-import * as s from '../exts'
+import * as s from 'ocdot-parser/lib/exts'
 import * as fs from 'fs'
 
 describe("convertion from OCDot to plain dot", () => {

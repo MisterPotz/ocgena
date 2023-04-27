@@ -1,4 +1,4 @@
-import { Compass } from 'ts-graphviz';
+import { Compass, Int } from 'ts-graphviz';
 import { parse as _parse, FileRange as _FileRange } from './ocdot.peggy';
 import { prependIndent } from './exts';
 
@@ -399,8 +399,12 @@ export namespace AST {
       return '  '.repeat(this.indentSize) + line;
     }
 
+    protected indentForSize(size : number) : string {
+      return '  '.repeat(size);
+    }
+
     protected buildIndent(): string {
-      return '  '.repeat(this.indentSize)
+      return this.indentForSize(this.indentSize)
     }
 
     protected withIndentIncrease(multiline: string): string {

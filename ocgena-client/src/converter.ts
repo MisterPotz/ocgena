@@ -1,5 +1,5 @@
 import { AST } from 'ocdot-parser'
-import { isEmptyOrBlank, prependIndent } from 'ocdot-parser/lib/exts';
+import { isEmpty, isEmptyOrBlank, prependIndent } from 'ocdot-parser/lib/exts';
 
 interface EdgePair {
   from: AST.EdgeTarget
@@ -22,17 +22,17 @@ export class OCDotToDOTConverter extends AST.Compiler {
   }
 
   protected printSpecialSubgraph(ast: AST.Subgraph): string {
-    return ast.body.filter((value) => {
-      return value.type === AST.Types.Node
-    }, this).map(this.stringify, this)
-      .join("\n")
+    return ast.body.filter((value) => value.type === AST.Types.Node, this)
+      .map(this.stringify, this)
+      .join('\n')
   }
 
   protected printSubgraph(ast: AST.Subgraph): string {
     if (ast.specialType == null) {
       return super.printSubgraph(ast);
     } else {
-      return this.printSpecialSubgraph(ast);
+      const subgraphString = this.printSpecialSubgraph(ast);
+      return subgraphString;
     }
   }
 
@@ -101,9 +101,12 @@ export class OCDotToDOTConverter extends AST.Compiler {
     if (items.length == 0) return items;
     let newItems = []
     newItems.push(items[0]);
+    if (items.length == 1) return newItems
+
     for (let i = 1; i < items.length; i++) {
-      newItems.push(this.indent(items[i]));
+      newItems.push(prependIndent(items[i], this.indentForSize(2)));
     }
+
     return newItems
   }
 
@@ -116,20 +119,19 @@ export class OCDotToDOTConverter extends AST.Compiler {
       return value.key.value !== 'color'
     }, this)
 
-    return this.indentAllButFirst(edgePairs.map((edgePair) => {
+    return edgePairs.map((edgePair) => {
       return this.printEdgePair(edgePair, ast, colorFilteredAttrs);
-    }))
+    })
       .join('\n') + "\n";
   }
 
   protected override printNode(ast: AST.Node): string {
     const value = ast.body.length == 0
       ? `${this.stringify(ast.id)};`
-      : `${this.stringify(ast.id)} [\n${ast.body
+      : `${this.stringify(ast.id)} [\n${this.withIndentIncrease(ast.body
         .map(this.printFilteredAttribute, this)
         .filter((str) => !isEmptyOrBlank(str))
-        .map(this.indent.bind(this))
-        .join('\n')}\n];`;
+        .join('\n'))}\n];`;
 
     return value;
   }
@@ -156,20 +158,22 @@ export class OCDotToDOTConverter extends AST.Compiler {
   protected printOcNet(ast: AST.OcNet): string {
     if (ast.body.length === 0) return "digraph {}"
 
-    var body = "digraph {\n"
-    body += prependIndent(ast.body
-          .map(this.stringify, this)
-          .filter((v) => !isEmptyOrBlank(v), this)
-          .join('\n'),
-          this.increaseIndent()
-    )
+    var strings = []
+    for(var i = 0; i < ast.body.length; i++) {
+      var newString = this.stringify(ast.body[i])
+      if (!isEmptyOrBlank(newString)) {
+        strings.push(newString)
+      }
+    }
+    var result = this.withIndentIncrease(strings.join('\n'))
 
-    const body = this.withIndentIncrease(() => {
-      return ast.body.length === 0
-        ? 'digraph {}'
-        : `digraph {\n${
-        }\n${this.closingBracketIndented()}`
-    })
+    // const bodyValue = this.withIndentIncrease(ast.body.map(this.stringify, this).filter((v) => {
+    //   return !isEmptyOrBlank(v)
+    // }, this)
+    //   .join('\n')
+    // );
+
+    const body = `digraph {\n${result}\n}`
 
     return [
       // ast.strict ? 'strict' : null,

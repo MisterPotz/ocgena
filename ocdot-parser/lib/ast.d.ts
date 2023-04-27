@@ -326,6 +326,9 @@ export declare namespace AST {
         protected indentSize: number;
         constructor({ indentSize }?: StringifyOption);
         protected indent(line: string): string;
+        protected indentForSize(size: number): string;
+        protected buildIndent(): string;
+        protected withIndentIncrease(multiline: string): string;
         protected pad(pad: string): (l: string) => string;
         protected printAttribute(ast: AST.Attribute): string;
         protected increaseIndent(): void;
@@ -339,9 +342,6 @@ export declare namespace AST {
         protected printNodeRef(ast: AST.NodeRef): string;
         protected printEdgeSubgraphName(ast: AST.EdgeSubgraph): (string | null)[];
         protected printEdgeSubgraph(ast: AST.EdgeSubgraph): string;
-        protected withIndentIncrease(block: () => string): string;
-        protected withIndentDecrease(block: () => string): string;
-        protected closingBracketIndented(): string;
         protected printOcNet(ast: AST.OcNet): string;
         protected checkSubgraphKeyword(ast: AST.Subgraph): boolean;
         protected printSubgraphName(ast: AST.Subgraph): (string | null)[];
