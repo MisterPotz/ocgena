@@ -14,9 +14,9 @@ class ConfigToDomainConverter(
         )
     }
 
-    fun getPlaceTyping(): PlaceTyping {
-        val placeTypingConfig = simulationConfig.getConfig(ConfigEnum.PLACE_TYPING) as PlaceTypingConfig
-        placeTypingConfig
+    private fun getPlaceTyping(): PlaceTyping {
+        val placeTypingConfig = simulationConfig.getConfig(ConfigEnum.PLACE_TYPING) as? PlaceTypingConfig
+            ?: return PlaceTyping.build {  }
 
         val allObjectTypes = placeTypingConfig.objectTypes()
         return PlaceTyping.build {
@@ -26,13 +26,17 @@ class ConfigToDomainConverter(
         }
     }
 
-    fun getInputOutputPlaces() : InputOutputPlaces {
-        val inputPlaces = simulationConfig.getConfig(ConfigEnum.INPUT_PLACES)!! as InputPlacesConfig
-        val outputPlaces = simulationConfig.getConfig(ConfigEnum.OUTPUT_PLACES)!! as OutputPlacesConfig
+    private fun getInputOutputPlaces() : InputOutputPlaces {
+        val inputPlaces = simulationConfig.getConfig(ConfigEnum.INPUT_PLACES) as? InputPlacesConfig
+        val outputPlaces = simulationConfig.getConfig(ConfigEnum.OUTPUT_PLACES) as? OutputPlacesConfig
 
         return InputOutputPlaces.build {
-            inputPlaces(inputPlaces.inputPlaces)
-            outputPlaces(outputPlaces.outputPlaces)
+            if (inputPlaces != null) {
+                inputPlaces(inputPlaces.inputPlaces)
+            }
+            if (outputPlaces != null) {
+                outputPlaces(outputPlaces.outputPlaces)
+            }
         }
     }
 }

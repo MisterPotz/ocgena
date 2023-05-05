@@ -104,6 +104,38 @@ external interface `T$2` {
 
 external var OpTypes : `T$2`
 
+external interface `T$3` {
+    var Expression: String /* "expression" */
+    var Number: String /* "number" */
+}
+
+external var OpParamsTypes: `T$3`
+
+external interface Variable {
+    var variable: String
+}
+
+external interface ExpressionOp {
+    var op: String /* "*" | "+" | "-" | "/" */
+    var target: Expression
+}
+
+external interface Expression {
+    var head: dynamic
+    var tail: Array<ExpressionOp>
+}
+
+external interface RootExpression : EdgeOpParams, Expression {
+    override var type: String
+}
+
+external interface EdgeOpParams : ASTBaseNode
+
+external interface OpParamsNumber : EdgeOpParams {
+    override var type: String
+    var value: Number
+}
+
 external interface ParseOptions {
     var filename: String?
         get() = definedExternally

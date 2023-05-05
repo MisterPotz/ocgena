@@ -27,9 +27,11 @@ class ConversionTest {
             simulationConfig
         )
 
-        val inputOutputPlaces = configToDomainConverter.getInputOutputPlaces()
+        val processResult = configToDomainConverter.processAll()
 
-        val placetyping = configToDomainConverter.getPlaceTyping()
+        val inputOutputPlaces = processResult.inputOutputPlaces
+
+        val placetyping = processResult.placeTyping
 
         assertEquals(inputOutputPlaces["p1"], PlaceType.INPUT)
         assertEquals(inputOutputPlaces["p2"], PlaceType.INPUT)
@@ -70,11 +72,11 @@ class ConversionTest {
         """.trimMargin()
 
         val fullModelBuilder = FullModelBuilder()
-        fullModelBuilder.accept(ocDot)
-        fullModelBuilder.accept(simulationConfig)
+        fullModelBuilder.with(ocDot)
+        fullModelBuilder.with(simulationConfig)
 
-        val processingResult = fullModelBuilder.process()
-        assertNotNull(processingResult?.ocNet)
+        val processingResult = fullModelBuilder.tryBuildTask()!!.process()
+        assertNotNull(processingResult.ocNet)
         println(processingResult)
     }
 }

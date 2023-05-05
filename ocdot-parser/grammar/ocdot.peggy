@@ -132,9 +132,9 @@ _edge_target
   = _edge_subgraph
   / node_ref
 
-_op_params = number:_number {
+_op_params = expression:( RootExpression / _number) {
   return {
-    number
+    ...expression
   }
 }
 
@@ -234,6 +234,57 @@ _number = value:NUMBER {
     location: location()
   }
 }
+
+RootExpression = "(" _  expression:Expression _ ")" { 
+  return { 
+    type : "expression",
+    ...expression,
+    location : location(),
+  }
+}
+
+Expression
+  = head:Term tail:(ExpressionOp)* {
+  	return { 
+    	head,
+      tail
+    }
+ }
+    
+ExpressionOp 
+	= _ op:("+" / "-") _ target:Term {
+    return  { 
+       op,
+       target
+    }
+}
+
+TermOp 
+	= _ op:("*" / "/") _ target:Factor { 
+	return { 
+      op,
+      target
+    };
+}
+
+Term
+  = head:Factor tail:(TermOp)* {
+  	return { 
+    	head,
+      tail
+    }
+}
+
+Factor
+  = "(" _ expr:Expression _ ")" { return expr; }
+  / Integer 
+  / Variable
+
+Integer "integer"
+  = _ [0-9]+ { return parseInt(text(), 10); }
+  
+Variable "variable"
+ = _ [a-zA-Z]+ { return { variable: text()}; }
 
 _literal
   = QUOTED_STRING

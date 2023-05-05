@@ -38,6 +38,11 @@ export declare namespace AST {
         readonly Variable: "=>";
     }>;
     export type OpTypes = ValueOf<typeof OpTypes>;
+    export const OpParamsTypes: Readonly<{
+        Expression: "expression";
+        Number: "number";
+    }>;
+    export type OpParamsTypes = ValueOf<typeof OpParamsTypes>;
     export function isASTBaseNode(value: unknown): value is ASTBaseNode;
     /**
      * AST node.
@@ -123,8 +128,26 @@ export declare namespace AST {
     export interface NumberLiteral extends ASTBaseNode {
         value: number;
     }
-    export interface EdgeOpParams {
-        number: NumberLiteral;
+    export interface Variable {
+        variable: string;
+    }
+    export interface ExpressionOp {
+        op: "*" | "+" | "-" | "/";
+        target: Expression;
+    }
+    export interface Expression {
+        head: Expression | number | Variable;
+        tail: ExpressionOp[];
+    }
+    export interface RootExpression extends EdgeOpParams, Expression {
+        type: typeof OpParamsTypes.Expression;
+    }
+    export interface EdgeOpParams extends ASTBaseNode {
+        type: OpParamsTypes;
+    }
+    export interface OpParamsNumber extends EdgeOpParams {
+        type: typeof OpParamsTypes.Number;
+        value: number;
     }
     export interface EdgeOperator extends ASTBaseNode {
         type: "->" | "=>";
@@ -337,6 +360,14 @@ export declare namespace AST {
         protected printComment(ast: AST.Comment): string;
         protected printOcDot(ast: AST.OcDot): string;
         protected printEdge(ast: AST.Edge): string;
+        protected isEdgeOpParamsExpression(edgeOpParams: EdgeOpParams): edgeOpParams is RootExpression;
+        protected isEdgeOpParamsNumber(edgeOpParams: EdgeOpParams): edgeOpParams is OpParamsNumber;
+        protected isExpression(item: any): item is Expression;
+        protected isVariable(object: any): object is Variable;
+        protected stringifyExpressionElement(head: Expression | number | Variable): string;
+        protected stringifyExpressionOp(expressionOp: ExpressionOp): string;
+        protected stringifyExpression(expression: Expression): string;
+        protected printEdgeOpParams(edgeOpParams: EdgeOpParams): string;
         protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string;
         protected printNode(ast: AST.Node): string;
         protected printNodeRef(ast: AST.NodeRef): string;

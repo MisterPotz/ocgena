@@ -38,6 +38,10 @@ var AST;
         Normal: '->',
         Variable: '=>'
     });
+    AST.OpParamsTypes = Object.freeze({
+        Expression: "expression",
+        Number: "number"
+    });
     function isASTBaseNode(value) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return typeof value === 'object' && value !== null && typeof value.type === 'string';
@@ -130,10 +134,66 @@ var AST;
             return `${allEdgeTargets} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this)
                 .join('\n'))}\n]`;
         }
+        isEdgeOpParamsExpression(edgeOpParams) {
+            return edgeOpParams.type == AST.OpParamsTypes.Expression;
+        }
+        isEdgeOpParamsNumber(edgeOpParams) {
+            return edgeOpParams.type == AST.OpParamsTypes.Number;
+        }
+        isExpression(item) {
+            if (typeof item !== "object") {
+                return false;
+            }
+            return "head" in item;
+        }
+        isVariable(object) {
+            if (typeof object !== "object") {
+                return false;
+            }
+            return "variable" in object;
+        }
+        stringifyExpressionElement(head) {
+            if (this.isExpression(head)) {
+                return this.stringifyExpression(head);
+            }
+            else if (this.isVariable(head)) {
+                return head.variable;
+            }
+            else {
+                return head.toString();
+            }
+        }
+        stringifyExpressionOp(expressionOp) {
+            let op = expressionOp.op;
+            let expression = this.stringifyExpressionElement(expressionOp.target);
+            return `${op} ${expression}`;
+        }
+        stringifyExpression(expression) {
+            let arr = [];
+            if (expression.tail.length == 0 && !this.isExpression(expression.head)) {
+                return this.stringifyExpressionElement(expression.head);
+            }
+            arr.push(this.stringifyExpressionElement(expression.head));
+            for (let i = 0; i < expression.tail.length; i++) {
+                arr.push(this.stringifyExpressionOp(expression.tail[i]));
+            }
+            return "(" + arr.join(' ') + ")";
+        }
+        printEdgeOpParams(edgeOpParams) {
+            if (this.isEdgeOpParamsExpression(edgeOpParams)) {
+                return this.stringifyExpression(edgeOpParams);
+            }
+            else if (this.isEdgeOpParamsNumber(edgeOpParams)) {
+                return edgeOpParams.value.toString();
+            }
+            else {
+                return "UNKNOWN_EDGE_OP_PARAM";
+            }
+        }
         printEdgeRHSElement(edgeRHSElement) {
             const edgeOp = edgeRHSElement.edgeop.type;
             const multiplicity = edgeRHSElement.edgeop.params
-                ? `${edgeRHSElement.edgeop.params.number.value}`
+                ? this.printEdgeOpParams(edgeRHSElement.edgeop.params)
                 : "";
             return `${multiplicity}${edgeOp} ${this.stringify(edgeRHSElement.id)}`;
         }
@@ -232,6 +292,9 @@ var AST;
             }
         }
         isAstNode(object) {
+            if (typeof object !== "object") {
+                return false;
+            }
             return 'type' in object;
         }
         stringify(ast) {
