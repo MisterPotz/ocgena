@@ -2,7 +2,7 @@ package simulation.typea
 
 import model.time.IntervalFunction
 import model.StaticCoreOcNet
-import model.aalst.ArcMultiplicityTypeA
+import model.typea.ArcMultiplicityTypeA
 import simulation.SimulatableComposedOcNet
 import simulation.State
 

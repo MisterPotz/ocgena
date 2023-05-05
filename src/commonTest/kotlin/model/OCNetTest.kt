@@ -4,7 +4,7 @@ import dsl.OCNetFacadeBuilder
 import error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import model.aalst.SimulationParamsTypeABuilder
+import model.typea.SimulationParamsTypeABuilder
 import model.time.IntervalFunction
 import model.time.TransitionTimes
 import simulation.*

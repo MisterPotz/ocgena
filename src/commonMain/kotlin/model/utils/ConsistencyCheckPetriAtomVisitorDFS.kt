@@ -2,6 +2,7 @@ package model.utils
 
 import error.ConsistencyCheckError
 import model.*
+import model.typea.VariableArcTypeA
 
 class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,

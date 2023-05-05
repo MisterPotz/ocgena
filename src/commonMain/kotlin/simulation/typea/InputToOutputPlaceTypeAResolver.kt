@@ -4,7 +4,7 @@ import model.ActiveFiringTransition
 import model.Arcs
 import model.ImmutableObjectMarking
 import model.PlaceTyping
-import model.aalst.ArcMultiplicityTypeA
+import model.typea.ArcMultiplicityTypeA
 import simulation.binding.InputToOutputPlaceResolver
 
 class InputToOutputPlaceTypeAResolver(

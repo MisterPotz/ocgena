@@ -1,7 +1,5 @@
 package model
 
-import kotlin.js.JsExport
-
 class Places(val places: List<Place>) : List<Place> by places {
 
     operator fun get(placeId : String) : Place {

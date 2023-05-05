@@ -1,10 +1,9 @@
-package model.aalst
+package model.typea
 
 import model.*
 import model.time.IntervalFunction
 import simulation.ObjectMarkingFromPlainCreator
 import simulation.PlainMarking
-import simulation.SimulationCreator
 import simulation.SimulationParams
 import simulation.typea.SimulatableOcNetTypeA
 

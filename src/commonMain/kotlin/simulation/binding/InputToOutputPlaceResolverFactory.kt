@@ -3,8 +3,8 @@ package simulation.binding
 import model.ArcMultiplicity
 import model.Arcs
 import model.PlaceTyping
-import model.aalst.ArcMultiplicityTypeA
-import model.lomazova.ExpressionArcMultiplicity
+import model.typea.ArcMultiplicityTypeA
+import model.typel.ExpressionArcMultiplicity
 import simulation.typea.InputToOutputPlaceTypeAResolver
 
 class InputToOutputPlaceResolverFactory(

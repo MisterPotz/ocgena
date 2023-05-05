@@ -2,7 +2,7 @@ package simulation.lomazova
 
 import model.time.IntervalFunction
 import model.StaticCoreOcNet
-import model.lomazova.ExpressionArcMultiplicity
+import model.typel.ExpressionArcMultiplicity
 import simulation.SimulatableComposedOcNet
 
 class SimulatableOcNetTypeL(

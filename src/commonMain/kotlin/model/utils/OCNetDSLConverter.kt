@@ -8,6 +8,7 @@ import dsl.PlaceDSL
 import dsl.TransitionDSL
 import dsl.VariableArcDSL
 import model.*
+import model.typea.VariableArcTypeA
 
 class OCNetDSLConverter(
     private val ocNetDSLElements: OCNetDSLElements,

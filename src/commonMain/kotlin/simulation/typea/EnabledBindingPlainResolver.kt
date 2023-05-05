@@ -4,7 +4,7 @@ import model.Arcs
 import model.ImmutableObjectMarking
 import model.Place
 import model.Transition
-import model.aalst.ArcMultiplicityTypeA
+import model.typea.ArcMultiplicityTypeA
 import simulation.binding.EnabledBindingResolver
 import model.ObjectMarking
 import model.ObjectToken

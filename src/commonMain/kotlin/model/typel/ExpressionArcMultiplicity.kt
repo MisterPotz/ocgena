@@ -1,4 +1,4 @@
-package model.lomazova
+package model.typel
 
 import model.Arc
 import model.ArcMultiplicity

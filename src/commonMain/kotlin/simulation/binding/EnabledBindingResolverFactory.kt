@@ -2,8 +2,8 @@ package simulation.binding
 
 import model.ArcMultiplicity
 import model.Arcs
-import model.aalst.ArcMultiplicityTypeA
-import model.lomazova.ExpressionArcMultiplicity
+import model.typea.ArcMultiplicityTypeA
+import model.typel.ExpressionArcMultiplicity
 import simulation.PMarkingProvider
 import simulation.random.TokenSelector
 import simulation.time.TransitionOccurrenceAllowedTimes

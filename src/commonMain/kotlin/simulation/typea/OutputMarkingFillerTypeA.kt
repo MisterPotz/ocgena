@@ -1,7 +1,7 @@
 package simulation.typea
 
 import model.*
-import model.aalst.ArcMultiplicityTypeA
+import model.typea.ArcMultiplicityTypeA
 
 class OutputMarkingFillerTypeA(
     private val activeFiringTransition: ActiveFiringTransition,

@@ -1,10 +1,9 @@
-package model.aalst
+package model.typea
 
 import model.Arc
 import model.ArcMultiplicity
 import model.Arcs
 import model.NormalArc
-import model.VariableArcTypeA
 
 class ArcMultiplicityTypeA(val arcs: Arcs) : ArcMultiplicity {
     fun getMultiplicity(arc: Arc) : Int {
