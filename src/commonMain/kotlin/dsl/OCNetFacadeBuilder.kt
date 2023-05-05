@@ -24,7 +24,7 @@ class OCNetFacadeBuilder {
         }
     }
 
-    fun tryBuildModel(
+    fun tryBuildModelFromDSl(
         placeTyping: PlaceTyping,
         inputOutputPlaces: InputOutputPlaces,
         block: OCScope.() -> Unit): BuiltOCNet {
@@ -44,6 +44,22 @@ class OCNetFacadeBuilder {
         return BuiltOCNet(
             errors = errors,
             ocNet = ocNet,
+        )
+    }
+
+    fun tryBuildModelFromOcNetElements(
+        placeTyping: PlaceTyping,
+        inputOutputPlaces: InputOutputPlaces,
+        ocNetElements: OCNetElements
+    ) : BuiltOCNet {
+        val ocNetChecker = OCNetChecker(ocNetElements, placeTyping, inputOutputPlaces)
+        val errors = ocNetChecker.checkConsistency()
+        val ocNet = if (ocNetChecker.isConsistent) ocNetChecker.createWellFormedOCNet() else null
+        val definedNetData = DefinedNetData(ocNet = ocNet, errors = errors)
+        this.definedNetData = definedNetData
+        return BuiltOCNet(
+            errors = errors,
+            ocNet = ocNet
         )
     }
 }

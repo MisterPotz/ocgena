@@ -1,6 +1,7 @@
 import config.*
 import converter.FullModelBuilder
 import kotlinx.js.jso
+import model.OcNetType
 import model.PlaceType
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,7 +58,8 @@ class ConversionTest {
                     jso {
                         ot1 = "p1 p2 p3"
                     }
-                )
+                ),
+                OCNetTypeConfig(OcNetType.TYPE_A.ordinal)
             )
         )
         val ocDot = """ocnet {

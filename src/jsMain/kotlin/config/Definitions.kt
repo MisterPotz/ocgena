@@ -3,6 +3,7 @@ package config
 
 import kotlinx.js.Object
 import model.ObjectTypeId
+import model.OcNetType
 import model.TransitionId
 
 enum class ConfigEnum {
@@ -12,13 +13,19 @@ enum class ConfigEnum {
     LABEL_MAPPING,
     //    OBJECT_TYPES,
     INITIAL_MARKING,
-    TRANSITIONS
+    TRANSITIONS,
+    OC_TYPE
 }
 
 
 @JsExport
 abstract class Config() {
     abstract val type : Int
+}
+
+@JsExport
+class OCNetTypeConfig(val ocNetType : Int/* OcNetType */) : Config() {
+    override val type : Int = ConfigEnum.OC_TYPE.ordinal
 }
 
 @JsExport

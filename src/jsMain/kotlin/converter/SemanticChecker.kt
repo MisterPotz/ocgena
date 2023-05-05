@@ -7,7 +7,6 @@ import error.ErrorLevel
 import kotlinx.js.Object
 
 class SemanticChecker (
-    private val dslElementsContainer: StructureContainer,
     private val delegateOCDotASTVisitorBFS: DelegateOCDotASTVisitorBFS,
     private val errorReporterContainer: ErrorReporterContainer,
 ) {

@@ -7,12 +7,17 @@ class FullModelBuildingTask(
     val ocDot : String,
     val processedConfig : ConfigProcessingResult
 ) {
-    fun process() : OcDotParseResult {
+    fun process(): OcDotParseResult {
         val ocdot = ocDot
-        val ocDotParseProcessor = OcDotParseProcessor(processedConfig.placeTyping, processedConfig.inputOutputPlaces)
-        val processingResult = ocDotParseProcessor.process(ocdot)
+        val ocDotParseProcessor = OcDotParseProcessor(
+            parseProcessorParams = ParseProcessorParams(
+                placeTyping = processedConfig.placeTyping,
+                inputOutputPlaces = processedConfig.inputOutputPlaces,
+                netType = processedConfig.type
+            )
+        )
 
-        return processingResult
+        return ocDotParseProcessor.process(ocdot)
     }
 }
 

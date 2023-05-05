@@ -69,6 +69,28 @@ var AST;
         });
     }
     AST.parse = parse;
+    function isEdgeOpParamsExpression(edgeOpParams) {
+        return edgeOpParams.type == AST.OpParamsTypes.Expression;
+    }
+    AST.isEdgeOpParamsExpression = isEdgeOpParamsExpression;
+    function isEdgeOpParamsNumber(edgeOpParams) {
+        return edgeOpParams.type == AST.OpParamsTypes.Number;
+    }
+    AST.isEdgeOpParamsNumber = isEdgeOpParamsNumber;
+    function isExpression(item) {
+        if (typeof item !== "object") {
+            return false;
+        }
+        return "head" in item;
+    }
+    AST.isExpression = isExpression;
+    function isVariable(object) {
+        if (typeof object !== "object") {
+            return false;
+        }
+        return "variable" in object;
+    }
+    AST.isVariable = isVariable;
     class Compiler {
         indentSize;
         constructor({ indentSize = 0 } = {}) {
@@ -134,29 +156,11 @@ var AST;
             return `${allEdgeTargets} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this)
                 .join('\n'))}\n]`;
         }
-        isEdgeOpParamsExpression(edgeOpParams) {
-            return edgeOpParams.type == AST.OpParamsTypes.Expression;
-        }
-        isEdgeOpParamsNumber(edgeOpParams) {
-            return edgeOpParams.type == AST.OpParamsTypes.Number;
-        }
-        isExpression(item) {
-            if (typeof item !== "object") {
-                return false;
-            }
-            return "head" in item;
-        }
-        isVariable(object) {
-            if (typeof object !== "object") {
-                return false;
-            }
-            return "variable" in object;
-        }
         stringifyExpressionElement(head) {
-            if (this.isExpression(head)) {
+            if (isExpression(head)) {
                 return this.stringifyExpression(head);
             }
-            else if (this.isVariable(head)) {
+            else if (isVariable(head)) {
                 return head.variable;
             }
             else {
@@ -170,7 +174,7 @@ var AST;
         }
         stringifyExpression(expression) {
             let arr = [];
-            if (expression.tail.length == 0 && !this.isExpression(expression.head)) {
+            if (expression.tail.length == 0 && !isExpression(expression.head)) {
                 return this.stringifyExpressionElement(expression.head);
             }
             arr.push(this.stringifyExpressionElement(expression.head));
@@ -180,10 +184,10 @@ var AST;
             return "(" + arr.join(' ') + ")";
         }
         printEdgeOpParams(edgeOpParams) {
-            if (this.isEdgeOpParamsExpression(edgeOpParams)) {
+            if (isEdgeOpParamsExpression(edgeOpParams)) {
                 return this.stringifyExpression(edgeOpParams);
             }
-            else if (this.isEdgeOpParamsNumber(edgeOpParams)) {
+            else if (isEdgeOpParamsNumber(edgeOpParams)) {
                 return edgeOpParams.value.toString();
             }
             else {

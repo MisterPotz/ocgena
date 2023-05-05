@@ -345,6 +345,10 @@ export declare namespace AST {
     export interface StringifyOption {
         indentSize?: number;
     }
+    export function isEdgeOpParamsExpression(edgeOpParams: EdgeOpParams): edgeOpParams is RootExpression;
+    export function isEdgeOpParamsNumber(edgeOpParams: EdgeOpParams): edgeOpParams is OpParamsNumber;
+    export function isExpression(item: any): item is Expression;
+    export function isVariable(object: any): object is Variable;
     export class Compiler {
         protected indentSize: number;
         constructor({ indentSize }?: StringifyOption);
@@ -360,13 +364,9 @@ export declare namespace AST {
         protected printComment(ast: AST.Comment): string;
         protected printOcDot(ast: AST.OcDot): string;
         protected printEdge(ast: AST.Edge): string;
-        protected isEdgeOpParamsExpression(edgeOpParams: EdgeOpParams): edgeOpParams is RootExpression;
-        protected isEdgeOpParamsNumber(edgeOpParams: EdgeOpParams): edgeOpParams is OpParamsNumber;
-        protected isExpression(item: any): item is Expression;
-        protected isVariable(object: any): object is Variable;
         protected stringifyExpressionElement(head: Expression | number | Variable): string;
         protected stringifyExpressionOp(expressionOp: ExpressionOp): string;
-        protected stringifyExpression(expression: Expression): string;
+        stringifyExpression(expression: Expression): string;
         protected printEdgeOpParams(edgeOpParams: EdgeOpParams): string;
         protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string;
         protected printNode(ast: AST.Node): string;

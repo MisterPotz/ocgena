@@ -418,6 +418,29 @@ export namespace AST {
     indentSize?: number;
   }
 
+  
+  export function isEdgeOpParamsExpression(edgeOpParams : EdgeOpParams): edgeOpParams is RootExpression { 
+    return edgeOpParams.type == OpParamsTypes.Expression
+  }
+
+  export function isEdgeOpParamsNumber(edgeOpParams : EdgeOpParams) : edgeOpParams is OpParamsNumber {
+    return edgeOpParams.type == OpParamsTypes.Number
+  }
+
+  export function isExpression(item : any) : item is Expression {
+    if (typeof item !== "object") {
+      return false
+    }
+    return "head" in item
+  }
+
+  export function isVariable(object : any) : object is Variable { 
+    if (typeof object !== "object") {
+      return false
+    }
+    return "variable" in object
+  }
+
   export class Compiler {
     protected indentSize: number;
     constructor({ indentSize = 0 }: StringifyOption = {}) {
@@ -498,32 +521,10 @@ export namespace AST {
         }\n]`
     }
 
-    protected isEdgeOpParamsExpression(edgeOpParams : EdgeOpParams): edgeOpParams is RootExpression { 
-      return edgeOpParams.type == OpParamsTypes.Expression
-    }
-
-    protected isEdgeOpParamsNumber(edgeOpParams : EdgeOpParams) : edgeOpParams is OpParamsNumber {
-      return edgeOpParams.type == OpParamsTypes.Number
-    }
-
-    protected isExpression(item : any) : item is Expression {
-      if (typeof item !== "object") {
-        return false
-      }
-      return "head" in item
-    }
-
-    protected isVariable(object : any) : object is Variable { 
-      if (typeof object !== "object") {
-        return false
-      }
-      return "variable" in object
-    }
-
     protected stringifyExpressionElement(head : Expression | number | Variable) : string {
-      if (this.isExpression(head)) {
+      if (isExpression(head)) {
         return this.stringifyExpression(head);
-      } else if (this.isVariable(head)) {
+      } else if (isVariable(head)) {
         return head.variable
       } else {
         return head.toString()
@@ -536,9 +537,9 @@ export namespace AST {
       return `${op} ${expression}`
     }
 
-    protected stringifyExpression(expression : Expression) : string {
+    public stringifyExpression(expression : Expression) : string {
       let arr = [ ]
-      if (expression.tail.length == 0 && !this.isExpression(expression.head)) {
+      if (expression.tail.length == 0 && !isExpression(expression.head)) {
         return this.stringifyExpressionElement(expression.head);
       }
       arr.push(this.stringifyExpressionElement(expression.head))
@@ -549,9 +550,9 @@ export namespace AST {
     }
 
     protected printEdgeOpParams(edgeOpParams : EdgeOpParams) : string {
-      if (this.isEdgeOpParamsExpression(edgeOpParams)) {
+      if (isEdgeOpParamsExpression(edgeOpParams)) {
         return this.stringifyExpression(edgeOpParams)
-      } else if (this.isEdgeOpParamsNumber(edgeOpParams))  {
+      } else if (isEdgeOpParamsNumber(edgeOpParams))  {
         return edgeOpParams.value.toString()
       } else {
         return "UNKNOWN_EDGE_OP_PARAM"

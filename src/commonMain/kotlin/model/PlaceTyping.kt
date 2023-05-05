@@ -1,6 +1,5 @@
 package model
 
-import eventlog.ObjectTypes
 import utils.toIds
 
 class InputOutputPlaces(private val entries: Map<PlaceId, PlaceType>) {
@@ -80,6 +79,9 @@ class PlaceTyping(
     private val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
 ) {
 
+    fun toObjectTypes() : ObjectTypes {
+        return ObjectTypes(allObjectTypes().toList())
+    }
     fun allObjectTypes(): Set<ObjectType> {
         return placeIdToObjectType.values.toMutableSet().apply {
             if (isEmpty()) add(defaultObjectType)

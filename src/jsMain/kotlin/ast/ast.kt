@@ -27,6 +27,15 @@ import org.w3c.performance.*
 import org.w3c.workers.*
 import org.w3c.xhr.*
 
+
+external fun isEdgeOpParamsExpression(edgeOpParams: EdgeOpParams): Boolean
+
+external fun isEdgeOpParamsNumber(edgeOpParams: EdgeOpParams): Boolean
+
+external fun isExpression(item: Any): Boolean
+
+external fun isVariable(item: Any): Boolean
+
 external interface FilePosition {
     var offset: Number
     var line: Number
@@ -91,18 +100,19 @@ external interface `T$1` {
 
 external var SubgraphSpecialTypes: `T$1`
 
-external interface EdgeSubgraph : ASTBaseParent<dynamic /* Attribute | Attributes | Edge | Node | Subgraph | Comment */> {
+external interface EdgeSubgraph :
+    ASTBaseParent<dynamic /* Attribute | Attributes | Edge | Node | Subgraph | Comment */> {
     var id: Literal__0?
         get() = definedExternally
         set(value) = definedExternally
 }
 
 external interface `T$2` {
-    var Normal : String  /* "->" */
-    var Variable : String  /* "=>" */
+    var Normal: String  /* "->" */
+    var Variable: String  /* "=>" */
 }
 
-external var OpTypes : `T$2`
+external var OpTypes: `T$2`
 
 external interface `T$3` {
     var Expression: String /* "expression" */
@@ -125,11 +135,11 @@ external interface Expression {
     var tail: Array<ExpressionOp>
 }
 
+external interface EdgeOpParams : ASTBaseNode
+
 external interface RootExpression : EdgeOpParams, Expression {
     override var type: String
 }
-
-external interface EdgeOpParams : ASTBaseNode
 
 external interface OpParamsNumber : EdgeOpParams {
     override var type: String
@@ -146,8 +156,10 @@ external interface ParseOptions {
     var tracer: Any?
         get() = definedExternally
         set(value) = definedExternally
+
     @nativeGetter
     operator fun get(key: String): Any?
+
     @nativeSetter
     operator fun set(key: String, value: Any)
 }
@@ -233,12 +245,10 @@ external interface NodeRef : ASTBaseNode {
 
 external interface NodeRefGroup : ASTBaseParent<NodeRef>
 
-external interface OpParams {
-    var number : Number
-}
+
 external interface EdgeOperator : ASTBaseNode {
     override var type: String /* "->" | "=>" */
-    var params : OpParams?
+    var params: EdgeOpParams?
 }
 
 external interface EdgeRHSElement {
@@ -310,6 +320,8 @@ external open class Compiler(__0: StringifyOption = definedExternally) {
     open fun printNodeRefGroup(ast: NodeRefGroup): String
     open fun printOcNet(ast: OcNet): String
     open fun printSubgraph(ast: Subgraph): String
+    open fun stringifyExpression(expression: Expression): String
+
     open fun printLiteral(ast: Literal__0): String
 
     open var isAstNode: Any

@@ -3,12 +3,9 @@ package converter
 import converter.visitors.DelegateOCDotASTVisitorBFS
 import converter.visitors.ElementsDeclarationsASTVisitorBFS
 import converter.visitors.StructureCheckASTVisitorBFS
-import model.InputOutputPlaces
-import model.PlaceTyping
 
 class ParseProcessingTask(
-    private val placeTyping: PlaceTyping,
-    private val inputOutputPlaces: InputOutputPlaces,
+    private val parseProcessorParams: ParseProcessorParams,
     private val ocDotParserV2: OcDotParserV2,
     private val errorReporterContainer: ErrorReporterContainer,
     private val ocDot: String,
@@ -32,7 +29,6 @@ class ParseProcessingTask(
             return createErrorResult()
         }
         val semanticChecker = SemanticChecker(
-            structureContainer,
             delegateOCDotASTVisitorBFS,
             errorReporterContainer
         )
@@ -41,9 +37,12 @@ class ParseProcessingTask(
         }
 
         val ocDotToDomainConverter = OCDotToDomainConverter(
-            placeTyping,
-            inputOutputPlaces,
-            structureContainer
+            ConversionParams(
+                placeTyping = parseProcessorParams.placeTyping,
+                inputOutputPlaces = parseProcessorParams.inputOutputPlaces,
+                dslElementsContainer = structureContainer,
+                useType = parseProcessorParams.netType
+            )
         )
         val builtOcNet = ocDotToDomainConverter.convert()
         builtOcNet.errors.forEach {

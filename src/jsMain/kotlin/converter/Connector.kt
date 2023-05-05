@@ -1,9 +1,12 @@
 package converter
 
 import ast.*
-import dsl.OCScope
 
-class Connector(private val edge: Edge) {
+class Connector(
+    private val edge: Edge,
+    val conversionEntitiesCreator: ConversionEntitiesCreator,
+    val arcConversionCreator: ArcConversionCreator
+) {
 
     private fun createToFromIterator(): Iterator<ToFrom> {
         return EdgeToFromIterator(edge)
@@ -40,7 +43,7 @@ class Connector(private val edge: Edge) {
         return listOf()
     }
 
-    fun OCScope.tryConnectAll() {
+    fun tryConnectAll() {
         val iterable = createToFromIterator()
 
         for (edgeFromAndEdgeTarget in iterable) {
@@ -48,22 +51,16 @@ class Connector(private val edge: Edge) {
             val allNodesOfTo = getAllNodeRefsFromEdgeFromOrTo(edgeFromAndEdgeTarget.to)
 
             for (fromNode in allNodesOfFrom) {
-                val fromNode = elementByLabel(fromNode) ?: continue
                 for (toNode in allNodesOfTo) {
-                    val toNode = elementByLabel(toNode) ?: continue
-                    val number = edgeFromAndEdgeTarget.to.edgeop.params?.number?.toInt()
-                    when (edgeFromAndEdgeTarget.to.edgeop.type) {
-                        OpTypes.Normal -> fromNode.arcTo(toNode) {
-                            if (number != null) {
-                                this.multiplicity = number
-                            }
-                        }
-                        OpTypes.Variable -> fromNode.variableArcTo(toNode)
-                    }
+                    val newArc  = arcConversionCreator.createArc(
+                        fromNode,
+                        toNode,
+                        edgeFromAndEdgeTarget.to
+                    )
+                    conversionEntitiesCreator.recordArc(newArc)
                 }
             }
         }
-
     }
 
     class ToFrom(val from: dynamic, val to: EdgeRHSElement) {
@@ -72,3 +69,4 @@ class Connector(private val edge: Edge) {
         }
     }
 }
+

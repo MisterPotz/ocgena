@@ -17,7 +17,7 @@ class NodeCacherVisitorDFSTest {
     fun checkSimpleNetIsCached() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val placeTyping = PlaceTyping.build()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
             placeTyping,
             inputOutputPlaces = defaultInputOutputPlaces
         ) {
@@ -40,7 +40,7 @@ class NodeCacherVisitorDFSTest {
     @Test
     fun checkComplexOcNetCacher() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
             defaultPlaceTyping,
             InputOutputPlaces.build {
                 outputPlaces("p3")
@@ -73,7 +73,7 @@ class NodeCacherVisitorDFSTest {
     @Test
     fun checkComplexOcNetCacherObjectTypes() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
             placeTyping = PlaceTyping.build {
                 objectType("ob1", "ob11")
                 objectType("ob2", "ob21 ob22")

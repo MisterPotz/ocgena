@@ -22,7 +22,7 @@ class OCNetTest {
         }
         val placeTyping = PlaceTyping.build()
 
-        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
             placeTyping = placeTyping,
             inputOutputPlaces = inputOutputPlaces
         ) {
@@ -83,7 +83,7 @@ class OCNetTest {
         }
         val placeTyping = PlaceTyping.build()
 
-        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
             placeTyping = placeTyping,
             inputOutputPlaces = inputOutputPlaces
         ) {
@@ -158,7 +158,7 @@ class OCNetTest {
         }
         val placeTyping = PlaceTyping.build()
 
-        val ocNet = ocNetFacadeBuilder.tryBuildModel(
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
             placeTyping = placeTyping,
             inputOutputPlaces = inputOutputPlaces
         ) {

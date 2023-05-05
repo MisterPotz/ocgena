@@ -2,21 +2,23 @@ package config
 
 import converter.ConfigProcessingResult
 import model.InputOutputPlaces
+import model.OcNetType
 import model.PlaceTyping
 
 class ConfigToDomainConverter(
     private val simulationConfig: SimulationConfig
 ) {
-    fun processAll() : ConfigProcessingResult {
+    fun processAll(): ConfigProcessingResult {
         return ConfigProcessingResult(
             placeTyping = getPlaceTyping(),
-            inputOutputPlaces = getInputOutputPlaces()
+            inputOutputPlaces = getInputOutputPlaces(),
+            type = getOcNetType()
         )
     }
 
     private fun getPlaceTyping(): PlaceTyping {
         val placeTypingConfig = simulationConfig.getConfig(ConfigEnum.PLACE_TYPING) as? PlaceTypingConfig
-            ?: return PlaceTyping.build {  }
+            ?: return PlaceTyping.build { }
 
         val allObjectTypes = placeTypingConfig.objectTypes()
         return PlaceTyping.build {
@@ -26,7 +28,7 @@ class ConfigToDomainConverter(
         }
     }
 
-    private fun getInputOutputPlaces() : InputOutputPlaces {
+    private fun getInputOutputPlaces(): InputOutputPlaces {
         val inputPlaces = simulationConfig.getConfig(ConfigEnum.INPUT_PLACES) as? InputPlacesConfig
         val outputPlaces = simulationConfig.getConfig(ConfigEnum.OUTPUT_PLACES) as? OutputPlacesConfig
 
@@ -37,6 +39,12 @@ class ConfigToDomainConverter(
             if (outputPlaces != null) {
                 outputPlaces(outputPlaces.outputPlaces)
             }
+        }
+    }
+
+    private fun getOcNetType(): OcNetType {
+        return simulationConfig.getConfig(ConfigEnum.OC_TYPE)!!.type.let {
+            OcNetType.values()[it]
         }
     }
 }

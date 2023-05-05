@@ -1,8 +1,8 @@
 package model.typel
 
 abstract class Expression(
-    override val variable: String,
-    val stringExpr: String
+    override val variable: String?,
+    val stringExpr: String?
 ) : ArcExpression {
     abstract override fun substitute(variableValue: Int): Int
     override fun equals(other: Any?): Boolean {
@@ -22,6 +22,6 @@ abstract class Expression(
     }
 
     override fun toString(): String {
-        return stringExpr
+        return stringExpr ?: "no expr"
     }
 }

@@ -27,4 +27,8 @@ class ElementsIdCreator() {
         val toId = createNodeId(nodeDSL = arcDSL.arrowAtom)
         return "${fromId}_${toId}_${arcDSL.arcIndexForTailAtom}"
     }
+
+    fun createArcFromIds(fromId : String, toId: String) : String {
+        return "${fromId}_${toId}"
+    }
 }

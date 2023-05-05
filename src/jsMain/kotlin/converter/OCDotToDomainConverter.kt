@@ -5,49 +5,61 @@ import ast.EdgeRHSElement
 import ast.OpTypes
 import ast.Types
 import dsl.OCNetFacadeBuilder
-import dsl.OCScope
-import model.InputOutputPlaces
-import model.ObjectMarking
-import model.PlaceType
-import model.PlaceTyping
+import model.*
+
+
+data class ConversionParams(
+    val placeTyping: PlaceTyping,
+    val inputOutputPlaces: InputOutputPlaces,
+    val dslElementsContainer: StructureContainer,
+    val useType: OcNetType
+)
 
 class OCDotToDomainConverter(
-    private val placeTyping: PlaceTyping,
-    private val inputOutputPlaces: InputOutputPlaces,
-    val dslElementsContainer: StructureContainer,
+    private val conversionParams: ConversionParams,
 ) {
     private val initialMarking = ObjectMarking()
+    val conversionContainer = ConversionEntitiesCreator(
+        conversionParams.placeTyping
+    )
+    val arcConversionCreator = ArcConversionCreator(conversionContainer)
 
     fun convert(): OCNetFacadeBuilder.BuiltOCNet {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val resultOfBuildAttempt = ocNetFacadeBuilder.tryBuildModel(
-            placeTyping = placeTyping,
-            inputOutputPlaces = inputOutputPlaces
-        ) {
-            for (astPlace in dslElementsContainer.savedPlaces) {
-                val placeLabel = astPlace.key
-                console.log("place label $placeLabel")
-                place(astPlace.key)
-            }
+        val placeTyping = conversionParams.placeTyping
+        val inputOutputPlaces = conversionParams.inputOutputPlaces
+        val dslElementsContainer = conversionParams.dslElementsContainer
 
-            for (astTransition in dslElementsContainer.savedTransitions) {
-                transition(astTransition.key) {
-                    // initialize transition data
-                }
-            }
 
-            for (edge in dslElementsContainer.savedEdgeBlocks) {
-                processEdge(edge)
-            }
+        for (astPlace in dslElementsContainer.savedPlaces) {
+            val placeLabel = astPlace.key
+            console.log("place label $placeLabel")
+            conversionContainer.recordPlace(astPlace.key)
         }
+
+        for (astTransition in dslElementsContainer.savedTransitions) {
+            conversionContainer.recordTransition(astTransition.key)
+        }
+
+        for (edge in dslElementsContainer.savedEdgeBlocks) {
+            processEdge(edge)
+        }
+
+        val resultOfBuildAttempt = ocNetFacadeBuilder.tryBuildModelFromOcNetElements(
+            placeTyping = placeTyping,
+            inputOutputPlaces = inputOutputPlaces,
+            ocNetElements = conversionContainer.buildOcNetElements()
+        )
         return resultOfBuildAttempt
     }
 
-    fun OCScope.processEdge(edge: Edge) {
-        val connector = Connector(edge)
-        with(connector) {
-            tryConnectAll()
-        }
+    private fun processEdge(edge: Edge) {
+        val connector = Connector(
+            edge = edge,
+            conversionEntitiesCreator = conversionContainer,
+            arcConversionCreator = arcConversionCreator
+        )
+        connector.tryConnectAll()
     }
 
     companion object {
