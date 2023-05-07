@@ -1,22 +1,28 @@
 package config
 
-import converter.ConfigProcessingResult
 import kotlinx.js.Object
 import model.*
 import model.time.IntervalFunction
 import model.time.TransitionTimes
 import simulation.PlainMarking
+import simulation.ProcessedSimulationConfig
+
+fun processConfig(simulationConfig: SimulationConfig) : ProcessedSimulationConfig {
+    val converter = ConfigToDomainConverter(simulationConfig)
+    return converter.processAll()
+}
 
 class ConfigToDomainConverter(
     private val simulationConfig: SimulationConfig
 ) {
-    fun processAll(): ConfigProcessingResult {
-        return ConfigProcessingResult(
+    fun processAll(): ProcessedSimulationConfig {
+        return ProcessedSimulationConfig(
             placeTyping = getPlaceTyping(),
             inputOutputPlaces = getInputOutputPlaces(),
             type = getOcNetType(),
             initialPlainMarking = getInitialMarking(),
-            intervalFunction = getIntervalFunction()
+            intervalFunction = getIntervalFunction(),
+            labelMapping = getLabelMapping()
         )
     }
 
@@ -68,6 +74,21 @@ class ConfigToDomainConverter(
         return plainMarking
     }
 
+    private fun getLabelMapping() : LabelMapping {
+        val labelMappingConfig = (simulationConfig.getConfig(ConfigEnum.LABEL_MAPPING) as? LabelMappingConfig)
+        val labels = labelMappingConfig?.placeIdToLabel
+
+        return LabelMapping.create {
+            if (labels != null) {
+                for (id in Object.keys(labels as Any)) {
+                    val label = labels[id]
+
+                    put(id, label.toString())
+                }
+            }
+        }
+    }
+
     private fun getIntervalFunction(): IntervalFunction {
         val transitionIntervalConfig = (simulationConfig.getConfig(ConfigEnum.TRANSITIONS) as? TransitionsConfig)
 
@@ -75,7 +96,7 @@ class ConfigToDomainConverter(
             return IntervalFunction(
                 defaultTransitionTimes = if (transitionIntervalConfig.defaultTransitionInterval != null) {
                     mapTransitionIntervalToDomain(transitionIntervalConfig.defaultTransitionInterval)
-                } else null,
+                } else  TransitionTimes(duration = 0..0, pauseBeforeNextOccurence = 0..0),
 
                 buildMap {
                     val transitionsToIntervals = transitionIntervalConfig.transitionsToIntervals

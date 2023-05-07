@@ -37,8 +37,8 @@ class OCNetTest {
         )
 
         val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
-            .withPlaceTyping(PlaceTyping.build())
-            .withInitialMarking(
+            .withPlaceTypingAndInitialMarking(
+                placeTyping = PlaceTyping.build(),
                 PlainMarking.of {
                     put("p1", 10)
                 }
@@ -106,9 +106,9 @@ class OCNetTest {
         requireNotNull(ocNet)
 
         val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
-            .withPlaceTyping(placeTyping = placeTyping)
             .withInputOutput(inputOutputPlaces)
-            .withInitialMarking(
+            .withPlaceTypingAndInitialMarking(
+                placeTyping = placeTyping,
                 PlainMarking.of {
                     put("p1", 10)
                     put("p2", 4)
@@ -173,8 +173,8 @@ class OCNetTest {
         requireNotNull(ocNet)
 
         val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
-            .withPlaceTyping(placeTyping)
-            .withInitialMarking(
+            .withPlaceTypingAndInitialMarking(
+                placeTyping = placeTyping,
                 PlainMarking.of {
                     put("p1", 10)
                     put("p2", 4)

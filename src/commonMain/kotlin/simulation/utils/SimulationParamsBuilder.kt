@@ -5,7 +5,21 @@ import model.time.IntervalFunction
 import model.utils.OcNetCreator
 import simulation.*
 
-class SimulationParamsBuilder(
+fun createParams(ocNet: StaticCoreOcNet, config: ProcessedSimulationConfig) : SimulationParams {
+    val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
+
+    simulationParamsBuilder
+        .withPlaceTypingAndInitialMarking(config.placeTyping, config.initialPlainMarking)
+        .withInputOutput(config.inputOutputPlaces)
+        .withLabelMapping(config.labelMapping)
+        .withOcNetType(config.type)
+        .withTimeIntervals(config.intervalFunction)
+        .withRandomSeed(42L)
+        .useRandom(false)
+    return simulationParamsBuilder.build()
+}
+
+open class SimulationParamsBuilder(
     private val ocNet: StaticCoreOcNet
 ) {
     private var inputOutputPlaces: InputOutputPlaces? = null
@@ -33,14 +47,15 @@ class SimulationParamsBuilder(
         return this
     }
 
-    fun withInitialMarking(plainMarking: PlainMarking): SimulationParamsBuilder {
+    fun withPlaceTypingAndInitialMarking(placeTyping: PlaceTyping, plainMarking: PlainMarking): SimulationParamsBuilder {
+        this.placeTyping = placeTyping
         val plainToObjectTokenGenerator = ObjectMarkingFromPlainCreator(
             plainMarking = plainMarking,
-            placeTyping = this.placeTyping!!,
+            placeTyping = placeTyping,
             generator = objectTokenGenerator
         )
         initialMarking = plainToObjectTokenGenerator.create()
-        return this
+        return this@SimulationParamsBuilder
     }
 
     fun withTimeIntervals(timeIntervalFunction: IntervalFunction): SimulationParamsBuilder {

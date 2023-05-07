@@ -2,10 +2,11 @@ package converter
 
 import config.ConfigToDomainConverter
 import config.SimulationConfig
+import simulation.ProcessedSimulationConfig
 
 class SimulationConfigStore {
     private var lastSimulationConfig: SimulationConfig? = null
-    private var lastProcessingResult: ConfigProcessingResult? = null
+    private var lastProcessingResult: ProcessedSimulationConfig? = null
 
     fun isEmpty(): Boolean {
         return lastProcessingResult == null
@@ -15,7 +16,7 @@ class SimulationConfigStore {
         return requireNotNull(lastSimulationConfig)
     }
 
-    fun requireProcessingResult(): ConfigProcessingResult {
+    fun requireProcessingResult(): ProcessedSimulationConfig {
         return requireNotNull(lastProcessingResult)
     }
 

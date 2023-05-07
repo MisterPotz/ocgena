@@ -8,7 +8,15 @@ class LabelMapping(private val transitionsToActivity: MutableMap<NodeId, Label> 
         return transitionsToActivity[node] ?: node
     }
 
-    operator fun get(petriNode: PetriNode) : Label {
+    operator fun get(petriNode: PetriNode): Label {
         return transitionsToActivity[petriNode.id] ?: petriNode.id
+    }
+
+    companion object {
+        fun create(block: MutableMap<NodeId, Label>.() -> Unit): LabelMapping {
+            return LabelMapping(buildMap {
+                block()
+            }.toMutableMap())
+        }
     }
 }

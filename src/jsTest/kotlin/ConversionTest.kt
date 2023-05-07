@@ -1,8 +1,13 @@
 import config.*
 import converter.FullModelBuilder
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import kotlinx.js.jso
 import model.OcNetType
 import model.PlaceType
+import simulation.ConsoleDebugExecutionConditions
+import simulation.SimulationCreator
+import simulation.utils.createParams
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -62,6 +67,8 @@ class ConversionTest {
                 OCNetTypeConfig(OcNetType.TYPE_A.ordinal)
             )
         )
+        val processedSimulationConfig = processConfig(simulationConfig)
+
         val ocDot = """ocnet {
             |   places { 
             |       p1 p2 p3
@@ -75,10 +82,65 @@ class ConversionTest {
 
         val fullModelBuilder = FullModelBuilder()
         fullModelBuilder.with(ocDot)
-        fullModelBuilder.with(simulationConfig)
+        fullModelBuilder.with(processedSimulationConfig)
 
-        val processingResult = fullModelBuilder.tryBuildTask()!!.process()
+        val processingResult = fullModelBuilder.newTask().process()
         println(processingResult)
         assertNotNull(processingResult.ocNet)
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun checkSimulation() = runTest {
+        val simulationConfig = createConfig(
+            inputPlacesConfig = InputPlacesConfig("p1"),
+            outputPlacesConfig = OutputPlacesConfig("p3"),
+            ocNetTypeConfig =  OCNetTypeConfig.from(OcNetType.TYPE_A),
+            labelMappingConfig = LabelMappingConfig(
+                jso {
+                    t1 = "Initialization"
+                    t2 = "Execution"
+                }
+            ),
+            initialMarkingConfig = InitialMarkingConfig(
+                jso {
+                    p1 = 4
+                }
+            ),
+            // place type config
+            // transition config
+        )
+        val processedSimulationConfig = processConfig(simulationConfig)
+
+        val ocDot = """ocnet {
+            |   places { 
+            |       p1 p2 p3
+            |   }
+            |   transitions {
+            |       t1 t2
+            |   }
+            |   p1 -> t1 -> p2 -> t2 -> p3
+            |}
+        """.trimMargin()
+
+        val fullModelBuilder = FullModelBuilder().apply {
+            with(ocDot)
+            with(processedSimulationConfig)
+        }
+
+        val model = fullModelBuilder.newTask().process()
+
+        println(model)
+        val ocNet = model.ocNet!!
+
+        val simulationParams = createParams(ocNet, processedSimulationConfig)
+
+        val simulationCreator = SimulationCreator(
+            simulationParams = simulationParams,
+            executionConditions = ConsoleDebugExecutionConditions(),
+        )
+        val simulationTask = simulationCreator.createSimulationTask()
+
+        simulationTask.prepareAndRun()
     }
 }

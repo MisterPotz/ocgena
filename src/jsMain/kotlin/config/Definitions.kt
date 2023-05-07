@@ -2,9 +2,12 @@
 
 package config
 
+import csstype.array
 import kotlinx.js.Object
 import model.ObjectTypeId
+import model.OcNetType
 import model.TransitionId
+import simulation.PlainMarking
 
 enum class ConfigEnum {
     INPUT_PLACES,
@@ -25,11 +28,6 @@ abstract class Config() {
 }
 
 @JsExport
-class OCNetTypeConfig(val ocNetType: Int/* OcNetType */) : Config() {
-    override val type: Int = ConfigEnum.OC_TYPE.ordinal
-}
-
-@JsExport
 class InputPlacesConfig(val inputPlaces: String) : Config() {
     override val type: Int = ConfigEnum.INPUT_PLACES.ordinal
 }
@@ -40,9 +38,15 @@ class OutputPlacesConfig(val outputPlaces: String) : Config() {
 }
 
 @JsExport
-class LabelMapping(val placeIdToLabel: dynamic) : Config() {
-    override val type: Int = ConfigEnum.LABEL_MAPPING.ordinal
+class OCNetTypeConfig(val ocNetType: Int/* OcNetType */) : Config() {
+    override val type: Int = ConfigEnum.OC_TYPE.ordinal
+    companion object {
+        fun from(ocNetType: OcNetType) : OCNetTypeConfig {
+            return OCNetTypeConfig(ocNetType.ordinal)
+        }
+    }
 }
+
 
 @JsExport
 class PlaceTypingConfig(val objectTypeIdToPlaceId: dynamic) : Config() {
@@ -57,6 +61,10 @@ class PlaceTypingConfig(val objectTypeIdToPlaceId: dynamic) : Config() {
     override val type: Int = ConfigEnum.PLACE_TYPING.ordinal
 }
 
+@JsExport
+class LabelMappingConfig(val placeIdToLabel: dynamic) : Config() {
+    override val type: Int = ConfigEnum.LABEL_MAPPING.ordinal
+}
 
 @JsExport
 class InitialMarkingConfig(
@@ -102,3 +110,28 @@ class SimulationConfig(val configs: Array<Config>) {
         return value
     }
 }
+
+fun createConfig(
+    ocNetTypeConfig: OCNetTypeConfig,
+    inputPlacesConfig: InputPlacesConfig,
+    outputPlacesConfig: OutputPlacesConfig,
+    initialMarkingConfig: InitialMarkingConfig,
+    transitionIntervalsConfig : TransitionsConfig? = null,
+    labelMappingConfig: LabelMappingConfig? = null
+): SimulationConfig {
+    return SimulationConfig(
+        buildList {
+            add(ocNetTypeConfig)
+            add(inputPlacesConfig)
+            add(outputPlacesConfig)
+            add(initialMarkingConfig)
+            if (transitionIntervalsConfig != null) {
+                add(transitionIntervalsConfig)
+            }
+            if (labelMappingConfig != null) {
+                add(labelMappingConfig)
+            }
+        }.toTypedArray()
+    )
+}
+

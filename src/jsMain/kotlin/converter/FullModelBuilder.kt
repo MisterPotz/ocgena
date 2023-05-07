@@ -1,11 +1,10 @@
 package converter
 
-import config.ConfigToDomainConverter
-import config.SimulationConfig
+import simulation.ProcessedSimulationConfig
 
 class FullModelBuildingTask(
     val ocDot : String,
-    val processedConfig : ConfigProcessingResult
+    val processedConfig : ProcessedSimulationConfig
 ) {
     fun process(): OcDotParseResult {
         val ocdot = ocDot
@@ -22,10 +21,10 @@ class FullModelBuildingTask(
 }
 
 class FullModelBuilder {
-    private var simulationConfig : SimulationConfig? = null
+    private var simulationConfig : ProcessedSimulationConfig? = null
     private var ocDot: String? = null
 
-    fun with(simulationConfig: SimulationConfig) {
+    fun with(simulationConfig: ProcessedSimulationConfig) {
         this.simulationConfig = simulationConfig
     }
 
@@ -33,12 +32,10 @@ class FullModelBuilder {
         this.ocDot = ocdot
     }
 
-    fun tryBuildTask() : FullModelBuildingTask? {
-        val simulationConfig = ConfigToDomainConverter(simulationConfig = simulationConfig ?: return null).processAll()
-
+    fun newTask() : FullModelBuildingTask {
         return FullModelBuildingTask(
-             ocDot = ocDot ?: return null,
-            processedConfig = simulationConfig
+             ocDot = ocDot!!,
+            processedConfig = simulationConfig!!
         )
     }
 }
