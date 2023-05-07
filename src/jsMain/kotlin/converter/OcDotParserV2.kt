@@ -3,28 +3,30 @@ package converter
 import ast.ParseOption__0
 import ast.Types
 import declarations.ocdot.PeggySyntaxError
-import dsl.OCScopeImplCreator
 import error.ErrorLevel
 import kotlinx.js.Object
 import kotlinx.js.jso
 
-class OcDotParserV2(
+class ObjectHolderJS(
+    val obj: Object
+) : ObjectHolder
+
+actual class OcDotParserV2 actual constructor(
     private val errorReporterContainer: ErrorReporterContainer,
 ) {
-    private val ocScopeImpl = OCScopeImplCreator().createRootOCScope()
-
-
-    private fun tryParse(ocDot: String): Result<Object> {
+    private fun tryParse(ocDot: String): Result<ObjectHolderJS> {
         val rule = jso<ParseOption__0> {
             rule = Types.OcDot
         }
         // always start parce from the root
         return kotlin.runCatching {
-            ast.parse(ocDot, rule)
+            ObjectHolderJS(
+                ast.parse(ocDot, rule)
+            )
         }
     }
 
-    fun parse(ocDot: String): Result<Object> {
+    actual fun parse(ocDot: String): Result<ObjectHolder> {
         val parseResult = tryParse(ocDot)
 
         val error = if (parseResult.isFailure) {

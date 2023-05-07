@@ -1,20 +1,15 @@
 package converter.visitors
 
-import ast.Edge
-import ast.Node
-import ast.OcDot
-import ast.OcNet
-import ast.Subgraph
-import converter.StructureContainer
+import ast.*
 import converter.ErrorReporterContainer
+import converter.StructureContainer
 import converter.subgraph.NormalSubgraphHelper
-import converter.DefaultErrorReporterContainer
 import converter.subgraph.SpecialSubgraphHelper
 import error.Error
 
 class ElementsDeclarationsASTVisitorBFS(
-    val dslElementsContainer: StructureContainer,
-    private val errorReporter: ErrorReporterContainer = DefaultErrorReporterContainer(),
+    private val dslElementsContainer: StructureContainer,
+    private val errorReporter: ErrorReporterContainer,
 ) : PathAcceptingASTVisitorBFS(), ErrorReporterContainer by errorReporter {
     private val normalSubgraphHelper = NormalSubgraphHelper(dslElementsContainer, errorReporter)
     private val specialSubgraphHelper = SpecialSubgraphHelper(dslElementsContainer, errorReporter)

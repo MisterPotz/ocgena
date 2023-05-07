@@ -6,18 +6,19 @@ import error.Error
 import error.ErrorLevel
 import kotlinx.js.Object
 
-class SemanticChecker (
+class SemanticCheckerImpl(
     private val delegateOCDotASTVisitorBFS: DelegateOCDotASTVisitorBFS,
     private val errorReporterContainer: ErrorReporterContainer,
-) {
+) : SemanticChecker {
     private fun doSemanticASTParse(parsedStructure: Object): Result<Unit> {
         return kotlin.runCatching {
             delegateOCDotASTVisitorBFS.visitOCDot(parsedStructure as OcDot)
         }
     }
 
-    fun checkErrors(input: Object): Boolean {
-        val parseResult = doSemanticASTParse(input)
+    override fun checkErrors(objectHolder: ObjectHolder): Boolean {
+        val obj = (objectHolder as ObjectHolderJS).obj
+        val parseResult = doSemanticASTParse(obj)
 
         val errors = errorReporterContainer.collectReport()
         if (hasCriticalErrors(errors)) {

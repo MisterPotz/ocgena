@@ -5,8 +5,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.js.jso
 import model.OcNetType
 import model.PlaceType
-import simulation.ConsoleDebugExecutionConditions
+import simulation.SimpleExecutionConditions
 import simulation.SimulationCreator
+import simulation.config.SimulationConfig
 import simulation.utils.createParams
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,11 +30,11 @@ class ConversionTest {
                 )
             )
         )
-        val configToDomainConverter = ConfigToDomainConverter(
+        val configToDomainConverter = SimulationConfigProcessor(
             simulationConfig
         )
 
-        val processResult = configToDomainConverter.processAll()
+        val processResult = configToDomainConverter.createProcessedConfig()
 
         val inputOutputPlaces = processResult.inputOutputPlaces
 
@@ -81,8 +82,8 @@ class ConversionTest {
         """.trimMargin()
 
         val fullModelBuilder = FullModelBuilder()
-        fullModelBuilder.with(ocDot)
-        fullModelBuilder.with(processedSimulationConfig)
+        fullModelBuilder.withOcDot(ocDot)
+        fullModelBuilder.withConfig(processedSimulationConfig)
 
         val processingResult = fullModelBuilder.newTask().process()
         println(processingResult)
@@ -124,8 +125,8 @@ class ConversionTest {
         """.trimMargin()
 
         val fullModelBuilder = FullModelBuilder().apply {
-            with(ocDot)
-            with(processedSimulationConfig)
+            withOcDot(ocDot)
+            withConfig(processedSimulationConfig)
         }
 
         val model = fullModelBuilder.newTask().process()
@@ -137,7 +138,7 @@ class ConversionTest {
 
         val simulationCreator = SimulationCreator(
             simulationParams = simulationParams,
-            executionConditions = ConsoleDebugExecutionConditions(),
+            executionConditions = SimpleExecutionConditions(),
         )
         val simulationTask = simulationCreator.createSimulationTask()
 

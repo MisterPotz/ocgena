@@ -1,6 +1,6 @@
 package simulation
 
-class ConsoleDebugExecutionConditions() : ExecutionConditions {
+class SimpleExecutionConditions() : ExecutionConditions {
     //    override fun checkTerminateConditionSatisfied(ocNet: StaticCoreOcNet): Boolean {
 //        // TODO: check for terminate token amounts at place nodes
 //        return false
@@ -19,8 +19,5 @@ class ConsoleDebugExecutionConditions() : ExecutionConditions {
 //        TODO("Not yet implemented")
         return false
     }
-
-    override suspend fun checkIfSuspend(ocNet: RunningSimulatableOcNet) {
-
-    }
 }
+

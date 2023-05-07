@@ -7,15 +7,7 @@ import ast.Types
 import dsl.OCNetFacadeBuilder
 import model.*
 
-
-data class ConversionParams(
-    val placeTyping: PlaceTyping,
-    val inputOutputPlaces: InputOutputPlaces,
-    val dslElementsContainer: StructureContainer,
-    val useType: OcNetType
-)
-
-class OCDotToDomainConverter(
+actual class OCDotToDomainConverter actual constructor(
     private val conversionParams: ConversionParams,
 ) {
     private val initialMarking = ObjectMarking()
@@ -24,7 +16,7 @@ class OCDotToDomainConverter(
     )
     val arcConversionCreator = ArcConversionCreator(conversionContainer)
 
-    fun convert(): OCNetFacadeBuilder.BuiltOCNet {
+    actual fun convert(): OCNetFacadeBuilder.BuiltOCNet {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val placeTyping = conversionParams.placeTyping
         val inputOutputPlaces = conversionParams.inputOutputPlaces

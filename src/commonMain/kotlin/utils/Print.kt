@@ -6,12 +6,7 @@ fun String.toIds() : Collection<String> {
     return split(" ")
 }
 
-fun mprintln(string: Any? = null) {
-    if (string != null) {
-        print(string)
-    }
-    spprintln()
-}
+expect fun mprintln(string: Any?)
 
 expect fun spprintln()
 

@@ -1,5 +1,6 @@
 package converter
 
+import model.OcDotParseResult
 import simulation.ProcessedSimulationConfig
 
 class FullModelBuildingTask(
@@ -17,25 +18,5 @@ class FullModelBuildingTask(
         )
 
         return ocDotParseProcessor.process(ocdot)
-    }
-}
-
-class FullModelBuilder {
-    private var simulationConfig : ProcessedSimulationConfig? = null
-    private var ocDot: String? = null
-
-    fun with(simulationConfig: ProcessedSimulationConfig) {
-        this.simulationConfig = simulationConfig
-    }
-
-    fun with(ocdot: String) {
-        this.ocDot = ocdot
-    }
-
-    fun newTask() : FullModelBuildingTask {
-        return FullModelBuildingTask(
-             ocDot = ocDot!!,
-            processedConfig = simulationConfig!!
-        )
     }
 }

@@ -8,10 +8,9 @@ import ast.OcNet
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
-import converter.ErrorReporterContainer
-import converter.DefaultErrorReporterContainer
 import error.Error
 import error.ErrorLevel
+import converter.ErrorReporterContainer
 import parse.SemanticError
 
 class StructureCheckASTVisitorBFS(

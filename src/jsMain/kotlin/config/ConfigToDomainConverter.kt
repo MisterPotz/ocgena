@@ -6,16 +6,14 @@ import model.time.IntervalFunction
 import model.time.TransitionTimes
 import simulation.PlainMarking
 import simulation.ProcessedSimulationConfig
+import simulation.config.ConfigEnum
+import simulation.config.SimulationConfig
 
-fun processConfig(simulationConfig: SimulationConfig) : ProcessedSimulationConfig {
-    val converter = ConfigToDomainConverter(simulationConfig)
-    return converter.processAll()
-}
 
-class ConfigToDomainConverter(
+actual class SimulationConfigProcessor actual constructor(
     private val simulationConfig: SimulationConfig
 ) {
-    fun processAll(): ProcessedSimulationConfig {
+    actual fun createProcessedConfig(): ProcessedSimulationConfig {
         return ProcessedSimulationConfig(
             placeTyping = getPlaceTyping(),
             inputOutputPlaces = getInputOutputPlaces(),

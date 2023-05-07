@@ -1,8 +1,6 @@
 package converter
 
-import converter.visitors.DelegateOCDotASTVisitorBFS
-import converter.visitors.ElementsDeclarationsASTVisitorBFS
-import converter.visitors.StructureCheckASTVisitorBFS
+import model.OcDotParseResult
 
 class ParseProcessingTask(
     private val parseProcessorParams: ParseProcessorParams,
@@ -11,27 +9,15 @@ class ParseProcessingTask(
     private val ocDot: String,
 ) {
     private val structureContainer = StructureContainer()
-
-    private val structureCheckerVisitor = StructureCheckASTVisitorBFS(errorReporterContainer)
-    private val elementsDeclarationsVisitor =
-        ElementsDeclarationsASTVisitorBFS(structureContainer, errorReporterContainer)
-
-    private val delegateOCDotASTVisitorBFS = DelegateOCDotASTVisitorBFS(
-        listOf(
-            structureCheckerVisitor,
-            elementsDeclarationsVisitor,
-        )
+    private val semanticCheckerCreator = SemanticCheckerCreator(
+        structureContainer, errorReporterContainer
     )
-
     fun process(): OcDotParseResult {
         val parsingResult = ocDotParserV2.parse(ocDot)
         if (parsingResult.isFailure) {
             return createErrorResult()
         }
-        val semanticChecker = SemanticChecker(
-            delegateOCDotASTVisitorBFS,
-            errorReporterContainer
-        )
+        val semanticChecker = semanticCheckerCreator.create()
         if (!semanticChecker.checkErrors(parsingResult.getOrThrow())) {
             return createErrorResult()
         }

@@ -62,7 +62,7 @@ class OCNetTest {
 
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsBuilder.build(),
-            executionConditions = ConsoleDebugExecutionConditions(),
+            executionConditions = SimpleExecutionConditions(),
             logger = LoggerFactoryDefault
         )
         simulatorCreator
@@ -135,7 +135,7 @@ class OCNetTest {
 
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsBuilder.build(),
-            executionConditions = ConsoleDebugExecutionConditions(),
+            executionConditions = SimpleExecutionConditions(),
             logger = LoggerFactoryDefault
         )
         simulatorCreator
@@ -202,7 +202,7 @@ class OCNetTest {
 
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsBuilder.build(),
-            executionConditions = ConsoleDebugExecutionConditions(),
+            executionConditions = SimpleExecutionConditions(),
             logger = LoggerFactoryDefault
         )
         simulatorCreator

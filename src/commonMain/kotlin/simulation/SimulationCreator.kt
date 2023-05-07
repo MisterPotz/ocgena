@@ -1,8 +1,6 @@
 package simulation
 
-import model.LabelMapping
-import model.ObjectMarking
-import model.OcNetType
+import model.*
 import simulation.random.BindingSelector
 import simulation.random.RandomFactory
 import simulation.random.TokenSelector
@@ -21,6 +19,7 @@ data class SimulationParams(
     val ocNetType : OcNetType
         get() = templateOcNet.ocNetType
 }
+
 
 class SimulationCreator(
     private val simulationParams: SimulationParams,

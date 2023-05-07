@@ -5,7 +5,7 @@ import ast.Node
 import ast.Subgraph
 import converter.subgraph.SubgraphAssociations
 
-class StructureContainer() {
+actual class StructureContainer actual constructor() {
     private val places: MutableMap<String, Node> = mutableMapOf()
     private val transitions: MutableMap<String, Node> = mutableMapOf()
 
@@ -24,6 +24,7 @@ class StructureContainer() {
     fun rememberPlace(place: Node) {
         places[place.id.value] = place
     }
+
     fun rememberSubgraph(subgraph: Subgraph) {
         subgraphAssociations.rememberSubgraph(subgraph)
     }

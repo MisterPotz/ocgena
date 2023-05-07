@@ -2,30 +2,14 @@
 
 package config
 
-import csstype.array
 import kotlinx.js.Object
 import model.ObjectTypeId
 import model.OcNetType
 import model.TransitionId
-import simulation.PlainMarking
+import simulation.config.Config
+import simulation.config.ConfigEnum
+import simulation.config.SimulationConfig
 
-enum class ConfigEnum {
-    INPUT_PLACES,
-    OUTPUT_PLACES,
-    PLACE_TYPING,
-    LABEL_MAPPING,
-
-    //    OBJECT_TYPES,
-    INITIAL_MARKING,
-    TRANSITIONS,
-    OC_TYPE
-}
-
-
-@JsExport
-abstract class Config() {
-    abstract val type: Int
-}
 
 @JsExport
 class InputPlacesConfig(val inputPlaces: String) : Config() {
@@ -100,15 +84,6 @@ class TransitionsConfig(
     }
 
     override val type: Int = ConfigEnum.TRANSITIONS.ordinal
-}
-
-@JsExport
-class SimulationConfig(val configs: Array<Config>) {
-
-    fun getConfig(configEnum: ConfigEnum): Config? {
-        val value = configs.find { it.type == configEnum.ordinal }
-        return value
-    }
 }
 
 fun createConfig(
