@@ -4,23 +4,23 @@ import model.*
 
 interface LoggerFactory {
     fun create(
-        labelsActivities: LabelsActivities
+        labelMapping: LabelMapping
     ): Logger
 }
 
 object LoggerFactoryDefault : LoggerFactory {
-    override fun create(labelsActivities: LabelsActivities): Logger {
+    override fun create(labelMapping: LabelMapping): Logger {
         return DebugTracingLogger(
-            labelsActivities = labelsActivities,
+            labelMapping = labelMapping,
             logCurrentState = true
         )
     }
 }
 
 object LoggerFactoryFileDefault : LoggerFactory {
-    override fun create(labelsActivities: LabelsActivities): Logger {
+    override fun create(labelMapping: LabelMapping): Logger {
         return DebugTracingFileLogger(
-            labelsActivities = labelsActivities,
+            labelMapping = labelMapping,
             logCurrentState = true
         )
     }

@@ -34,7 +34,6 @@ class OCNetChecker(
             transitions = ocNetElements.transitions,
             arcs = ocNetElements.arcs,
             allPetriNodes = ocNetElements.allPetriNodes,
-            labelsActivities = LabelsActivities.createFromTransitions(ocNetElements.transitions),
             placeTyping = placeTyping,
         )
     }

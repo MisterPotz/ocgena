@@ -1,9 +1,9 @@
 @file:OptIn(ExperimentalJsExport::class)
+
 package config
 
 import kotlinx.js.Object
 import model.ObjectTypeId
-import model.OcNetType
 import model.TransitionId
 
 enum class ConfigEnum {
@@ -11,6 +11,7 @@ enum class ConfigEnum {
     OUTPUT_PLACES,
     PLACE_TYPING,
     LABEL_MAPPING,
+
     //    OBJECT_TYPES,
     INITIAL_MARKING,
     TRANSITIONS,
@@ -20,12 +21,12 @@ enum class ConfigEnum {
 
 @JsExport
 abstract class Config() {
-    abstract val type : Int
+    abstract val type: Int
 }
 
 @JsExport
-class OCNetTypeConfig(val ocNetType : Int/* OcNetType */) : Config() {
-    override val type : Int = ConfigEnum.OC_TYPE.ordinal
+class OCNetTypeConfig(val ocNetType: Int/* OcNetType */) : Config() {
+    override val type: Int = ConfigEnum.OC_TYPE.ordinal
 }
 
 @JsExport
@@ -34,21 +35,22 @@ class InputPlacesConfig(val inputPlaces: String) : Config() {
 }
 
 @JsExport
-class OutputPlacesConfig(val outputPlaces : String): Config() {
+class OutputPlacesConfig(val outputPlaces: String) : Config() {
     override val type: Int = ConfigEnum.OUTPUT_PLACES.ordinal
 }
 
 @JsExport
-class LabelMapping(val placeIdToLabel : dynamic): Config() {
+class LabelMapping(val placeIdToLabel: dynamic) : Config() {
     override val type: Int = ConfigEnum.LABEL_MAPPING.ordinal
 }
+
 @JsExport
 class PlaceTypingConfig(val objectTypeIdToPlaceId: dynamic) : Config() {
-    fun objectTypes() : List<ObjectTypeId> {
+    fun objectTypes(): List<ObjectTypeId> {
         return Object.keys(objectTypeIdToPlaceId).toList()
     }
 
-    fun forObjectType(objectTypeId: ObjectTypeId) : String {
+    fun forObjectType(objectTypeId: ObjectTypeId): String {
         return objectTypeIdToPlaceId[objectTypeId] as String
     }
 
@@ -58,30 +60,35 @@ class PlaceTypingConfig(val objectTypeIdToPlaceId: dynamic) : Config() {
 
 @JsExport
 class InitialMarkingConfig(
-    val placeIdToInitialMarking : dynamic /* map place id to initial marking (int) */
+    val placeIdToInitialMarking: dynamic /* map place id to initial marking (int) */
 ) : Config() {
     override val type: Int = ConfigEnum.INITIAL_MARKING.ordinal
 }
 
 @JsExport
-class TimeRange(
-    val start : Int,
-    val end : Int
-)
+interface TimeRange {
+    val start: Int
+    val end: Int
+}
+
+class TimeRangeImp(override val start: Int, override val end: Int) : TimeRange
 
 @JsExport
-class TransitionConfig(
-    val duration: TimeRange,
-    val minOccurrenceInterval : TimeRange,
-) {
+interface TransitionIntervals {
+    val duration: TimeRange
+    val minOccurrenceInterval: TimeRange
 }
+
+class TransitionIntervalsImp(override val duration: TimeRange, override val minOccurrenceInterval: TimeRange) :
+    TransitionIntervals
 
 @JsExport
 class TransitionsConfig(
-    val transitionsToConfig : dynamic /* map transition id to transition config */
+    val defaultTransitionInterval : TransitionIntervals?,
+    val transitionsToIntervals: dynamic /* map transition id to transition config */
 ) : Config() {
-    fun getTransitionConfig(transitionId : TransitionId) : TransitionConfig {
-        return transitionsToConfig[transitionId] as TransitionConfig
+    fun getTransitionConfig(transitionId: TransitionId): TransitionIntervals {
+        return transitionsToIntervals[transitionId] as TransitionIntervals
     }
 
     override val type: Int = ConfigEnum.TRANSITIONS.ordinal
@@ -90,7 +97,7 @@ class TransitionsConfig(
 @JsExport
 class SimulationConfig(val configs: Array<Config>) {
 
-    fun getConfig(configEnum: ConfigEnum) : Config? {
+    fun getConfig(configEnum: ConfigEnum): Config? {
         val value = configs.find { it.type == configEnum.ordinal }
         return value
     }

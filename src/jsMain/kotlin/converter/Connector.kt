@@ -1,6 +1,8 @@
 package converter
 
 import ast.*
+import model.Arc
+import utils.mprintln
 
 class Connector(
     private val edge: Edge,
@@ -57,10 +59,20 @@ class Connector(
                         toNode,
                         edgeFromAndEdgeTarget.to
                     )
+                    recordArcForPetriNodes(fromNode, toNode, newArc)
                     conversionEntitiesCreator.recordArc(newArc)
                 }
             }
         }
+    }
+
+    private fun recordArcForPetriNodes(fromNodeId : String, toNodeId : String, arc: Arc) {
+        val fromNode = conversionEntitiesCreator.elementByLabel(fromNodeId)
+        val toNode = conversionEntitiesCreator.elementByLabel(toNodeId)
+
+        mprintln("fromNode $fromNode to $toNodeId : arc $arc")
+        fromNode?.outputArcs?.add(arc)
+        toNode?.inputArcs?.add(arc)
     }
 
     class ToFrom(val from: dynamic, val to: EdgeRHSElement) {

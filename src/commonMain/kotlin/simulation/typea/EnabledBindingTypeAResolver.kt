@@ -15,7 +15,7 @@ import simulation.random.TokenSelector
 import simulation.time.TransitionOccurrenceAllowedTimes
 
 
-class EnabledBindingPlainResolver(
+class EnabledBindingTypeAResolver(
     private val pMarkingProvider: PMarkingProvider,
     private val arcMultiplicity: ArcMultiplicityTypeA,
     val arcs: Arcs,
@@ -99,15 +99,5 @@ class EnabledBindingPlainResolver(
             transition = transition,
             ImmutableObjectMarking(placeToObjectTokenMap.toMutableMap())
         )
-    }
-
-
-    override fun checkBinding(objectBinding: EnabledBinding): Boolean {
-        val transition = objectBinding.transition
-
-        return transition.inputPlaces.all { place ->
-            isNormalArcAndEnoughTokens(place, transition)
-                    || isVariableArcAndEnoughTokens(place, transition)
-        }
     }
 }

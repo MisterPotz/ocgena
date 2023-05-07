@@ -78,7 +78,7 @@ class ConversionTest {
         fullModelBuilder.with(simulationConfig)
 
         val processingResult = fullModelBuilder.tryBuildTask()!!.process()
-        assertNotNull(processingResult.ocNet)
         println(processingResult)
+        assertNotNull(processingResult.ocNet)
     }
 }

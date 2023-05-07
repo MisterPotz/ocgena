@@ -5,10 +5,10 @@ import eventlog.ModelToEventLogConverter
 import model.*
 import utils.*
 
-class DebugTracingFileLogger(labelsActivities: LabelsActivities, logCurrentState: Boolean) : Logger {
+class DebugTracingFileLogger(labelMapping: LabelMapping, logCurrentState: Boolean) : Logger {
     private val eventLog = EventLog()
     private val modelToEventLogConverter = ModelToEventLogConverter(
-        labelsActivities = labelsActivities,
+        labelMapping = labelMapping,
     )
     override val loggingEnabled: Boolean
         get() = true

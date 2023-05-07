@@ -13,9 +13,26 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<PlaceId, Set<ObjectTo
         )
     }
 
+    fun allTokensOfType(placeTyping: PlaceTyping, objectType: ObjectType) : Collection<ObjectToken> {
+        return buildList {
+            for ((place, tokens) in placesToObjectTokens) {
+                val type = placeTyping[place]
+                if (type != objectType) {
+                    continue
+                }
+                addAll(tokens)
+            }
+        }
+    }
+
     operator fun get(place: PlaceId): Set<ObjectToken>? {
         return placesToObjectTokens[place]
     }
+
+    operator fun get(place: Place): Set<ObjectToken>? {
+        return placesToObjectTokens[place.id]
+    }
+
     fun shiftTokenTime(tokenTimeDelta: Time) {
         allTokens().forEach {
             it.ownPathTime += tokenTimeDelta
@@ -31,6 +48,18 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<PlaceId, Set<ObjectTo
             accum.addAll(set)
             accum
         }
+    }
+
+    fun filterByType(
+        placeTyping: PlaceTyping,
+        objectType: ObjectType,
+    ): ImmutableObjectMarking {
+        return ImmutableObjectMarking(
+            placesToObjectTokens.filter { entry ->
+                val type = placeTyping[entry.key]
+                type == objectType
+            }.toMutableMap()
+        )
     }
 
     operator fun minus(objectMarking: ObjectMarking): ObjectMarking {

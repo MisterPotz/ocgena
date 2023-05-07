@@ -1,6 +1,8 @@
 package simulation
 
+import model.LabelMapping
 import model.ObjectMarking
+import model.OcNetType
 import simulation.random.BindingSelector
 import simulation.random.RandomFactory
 import simulation.random.TokenSelector
@@ -12,8 +14,13 @@ data class SimulationParams(
     val initialMarking: ObjectMarking,
     val timeoutSec: Long?,
     val randomSeed: Long?,
-    val useRandom : Boolean = true,
-)
+    val useRandom: Boolean = true,
+    val labelMapping: LabelMapping,
+    val objectTokenGenerator: ObjectTokenGenerator,
+) {
+    val ocNetType : OcNetType
+        get() = templateOcNet.ocNetType
+}
 
 class SimulationCreator(
     private val simulationParams: SimulationParams,
@@ -30,7 +37,7 @@ class SimulationCreator(
         return SimulationTask(
             simulationParams = simulationParams.copy(templateOcNet = copy),
             executionConditions = executionConditions,
-            logger = logger.create(labelsActivities = copy.coreOcNet.labelsActivities),
+            logger = logger.create(labelMapping = simulationParams.labelMapping),
             bindingSelector = BindingSelector(random),
             tokenSelector = TokenSelector(random),
             transitionDurationSelector = TransitionDurationSelector(

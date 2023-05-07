@@ -16,7 +16,7 @@ class EnabledBindingSubstitutableResolver(
         TODO("Not yet implemented")
     }
 
-    override fun checkBinding(objectBinding: EnabledBinding): Boolean {
+    fun checkBinding(objectBinding: EnabledBinding): Boolean {
         TODO("Not yet implemented")
     }
 }

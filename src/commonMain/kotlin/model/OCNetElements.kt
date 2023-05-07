@@ -11,8 +11,6 @@ interface OCNetElements {
 
     val objectTypes : ObjectTypes
 
-    val labelsActivities : LabelsActivities
-
     val placeTyping: PlaceTyping
 }
 

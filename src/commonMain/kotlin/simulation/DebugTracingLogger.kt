@@ -7,11 +7,11 @@ import utils.*
 
 class DebugTracingLogger(
     val logCurrentState: Boolean = false,
-    private val labelsActivities: LabelsActivities,
+    private val labelMapping: LabelMapping,
 ) : Logger {
     private val eventLog = EventLog()
     private val modelToEventLogConverter = ModelToEventLogConverter(
-        labelsActivities = labelsActivities,
+        labelMapping = labelMapping,
     )
     override val loggingEnabled: Boolean
         get() = true

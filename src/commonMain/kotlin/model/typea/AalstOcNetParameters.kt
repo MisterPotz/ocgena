@@ -23,7 +23,7 @@ class ArcMultiplicityTypeA(val arcs: Arcs) : ArcMultiplicity {
     }
 
     fun isVariable(arc: Arc) : Boolean {
-        return arc is VariableArcTypeA
+        return arc !is NormalArc
     }
 
 

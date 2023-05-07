@@ -20,7 +20,6 @@ class StaticCoreOcNet(
     override val objectTypes: ObjectTypes,
     override val arcs: Arcs,
     override val allPetriNodes: List<PetriNode>,
-    override val labelsActivities: LabelsActivities,
     override val placeTyping: PlaceTyping,
 ) : OCNetElements {
 
@@ -51,7 +50,6 @@ class StaticCoreOcNet(
             objectTypes = objectTypes,
             arcs = arcs,
             allPetriNodes = allPetriNodes,
-            labelsActivities = labelsActivities,
             placeTyping = placeTyping,
         )
     }

@@ -4,7 +4,7 @@ import dsl.OCNetFacadeBuilder
 import error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import model.typea.SimulationParamsTypeABuilder
+import simulation.utils.SimulationParamsBuilder
 import model.time.IntervalFunction
 import model.time.TransitionTimes
 import simulation.*
@@ -36,13 +36,11 @@ class OCNetTest {
             "ocNet is null, detected errors: ${ocNetFacadeBuilder.definedNetData!!.errors.prettyPrint()}"
         )
 
-        val places = ocNet.places
-        val transitions = ocNet.transitions
-        val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+        val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
             .withPlaceTyping(PlaceTyping.build())
             .withInitialMarking(
                 PlainMarking.of {
-                    put(places["p1"], 10)
+                    put("p1", 10)
                 }
             )
             .withInputOutput(
@@ -54,7 +52,7 @@ class OCNetTest {
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
-                        transitions["t1"], TransitionTimes(
+                        "t1", TransitionTimes(
                             duration = 10..15,
                             pauseBeforeNextOccurence = 0..0
                         )
@@ -63,7 +61,7 @@ class OCNetTest {
             )
 
         val simulatorCreator = SimulationCreator(
-            simulationParams = simulationParamsTypeABuilder.build(),
+            simulationParams = simulationParamsBuilder.build(),
             executionConditions = ConsoleDebugExecutionConditions(),
             logger = LoggerFactoryDefault
         )
@@ -107,27 +105,25 @@ class OCNetTest {
         }
         requireNotNull(ocNet)
 
-        val places = ocNet.places
-        val transitions = ocNet.transitions
-        val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+        val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
             .withPlaceTyping(placeTyping = placeTyping)
             .withInputOutput(inputOutputPlaces)
             .withInitialMarking(
                 PlainMarking.of {
-                    put(places["p1"], 10)
-                    put(places["p2"], 4)
+                    put("p1", 10)
+                    put("p2", 4)
                 }
             )
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
-                        transitions["t1"], TransitionTimes(
+                        "t1", TransitionTimes(
                             duration = 10..15,
                             pauseBeforeNextOccurence = 10..10
                         )
                     )
                     put(
-                        transitions["t2"], TransitionTimes(
+                        "t2", TransitionTimes(
                             duration = 0..5,
                             pauseBeforeNextOccurence = 0..0
                         )
@@ -138,7 +134,7 @@ class OCNetTest {
             .useRandom(true)
 
         val simulatorCreator = SimulationCreator(
-            simulationParams = simulationParamsTypeABuilder.build(),
+            simulationParams = simulationParamsBuilder.build(),
             executionConditions = ConsoleDebugExecutionConditions(),
             logger = LoggerFactoryDefault
         )
@@ -176,27 +172,25 @@ class OCNetTest {
         }
         requireNotNull(ocNet)
 
-        val places = ocNet.places
-        val transitions = ocNet.transitions
-        val simulationParamsTypeABuilder = SimulationParamsTypeABuilder(ocNet)
+        val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
             .withPlaceTyping(placeTyping)
             .withInitialMarking(
                 PlainMarking.of {
-                    put(places["p1"], 10)
-                    put(places["p2"], 4)
+                    put("p1", 10)
+                    put("p2", 4)
                 }
             )
             .withInputOutput(inputOutputPlaces)
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
-                        transitions["t1"], TransitionTimes(
+                        "t1", TransitionTimes(
                             duration = 10..15,
                             pauseBeforeNextOccurence = 10..10
                         )
                     )
                     put(
-                        transitions["t2"], TransitionTimes(
+                        "t2", TransitionTimes(
                             duration = 0..5,
                             pauseBeforeNextOccurence = 0..0
                         )
@@ -207,7 +201,7 @@ class OCNetTest {
             .useRandom(false)
 
         val simulatorCreator = SimulationCreator(
-            simulationParams = simulationParamsTypeABuilder.build(),
+            simulationParams = simulationParamsBuilder.build(),
             executionConditions = ConsoleDebugExecutionConditions(),
             logger = LoggerFactoryDefault
         )

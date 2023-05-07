@@ -33,4 +33,8 @@ class TokenSelector(
             .take(amount)
             .toSet()
     }
+
+    fun shuffleTokens(tokens: List<ObjectToken>): List<ObjectToken> {
+        return random?.let { tokens.sortedBy { it.id }.shuffled(it) } ?: tokens.sortedBy { it.id }
+    }
 }

@@ -5,29 +5,25 @@ import model.EmptyObjectValuesMap
 import model.ObjectMarking
 import model.ObjectToken
 import model.ObjectType
-import model.ObjectTypes
 import model.PlaceTyping
 
-class ObjectTokenGenerator(
-    private val types: ObjectTypes,
-) {
-    private val generators: Map<ObjectType, SingleTypeObjectTokenGenerator> = buildMap {
-        for (i in types) {
-            put(i, SingleTypeObjectTokenGenerator(i))
-        }
-    }
+class ObjectTokenGenerator() {
+    private val generators: MutableMap<ObjectType, SingleTypeObjectTokenGenerator> = mutableMapOf()
 
     fun generate(type: ObjectType): ObjectToken {
-        return generators[type]!!.generate()
+        val generator = generators.getOrPut(type) {
+            SingleTypeObjectTokenGenerator(type)
+        }
+        return generator.generate()
     }
 }
 
 class SingleTypeObjectTokenGenerator(
     val type: ObjectType,
-) {
-    val idIssuer = PatternIdCreator(startIndex = 1) {
+    private val idIssuer: PatternIdCreator = PatternIdCreator(startIndex = 1) {
         "${type.label.first()}$it"
     }
+) {
 
     fun generate(): ObjectToken {
         return ObjectToken(
@@ -42,8 +38,7 @@ class SingleTypeObjectTokenGenerator(
 class ObjectMarkingFromPlainCreator(
     private val plainMarking: PlainMarking,
     private val placeTyping: PlaceTyping,
-    private val objectTypes: ObjectTypes,
-    private val generator: ObjectTokenGenerator = ObjectTokenGenerator(objectTypes),
+    private val generator: ObjectTokenGenerator,
 ) {
 
     fun create(): ObjectMarking {
