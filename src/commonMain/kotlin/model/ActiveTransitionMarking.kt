@@ -58,6 +58,13 @@ class ActiveTransitionMarking() {
         current.add(tMarkingValue)
     }
 
+    fun htmlLinesState() : List<String> {
+        return transitionsToTMarkingValue.keys.flatMap {
+            val tMarkings = transitionsToTMarkingValue[it]
+            tMarkings?.htmlLines() ?: listOf()
+        }
+    }
+
     override fun toString(): String {
         return transitionsToTMarkingValue.keys.joinToString("\n") {
             val tMarkings = transitionsToTMarkingValue[it]

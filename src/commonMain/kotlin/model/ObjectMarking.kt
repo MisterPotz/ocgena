@@ -172,8 +172,28 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<PlaceId, MutableSet<Obj
     }
 
     private var stringBuilder = StringBuilder()
+
+    fun toLines() : List<String> {
+        return placesToObjectTokens.keys.map { place ->
+            val objectTokens = placesToObjectTokens[place]!!
+
+            val objectTokensString =
+                objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
+            """${place}: $objectTokensString"""
+        }
+    }
     override fun toString(): String {
         return placesToObjectTokens.keys.joinToString(separator = "\n") { place ->
+            val objectTokens = placesToObjectTokens[place]!!
+
+            val objectTokensString =
+                objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
+            """${place}: $objectTokensString"""
+        }
+    }
+
+    fun htmlLines() : List<String> {
+        return placesToObjectTokens.keys.map { place ->
             val objectTokens = placesToObjectTokens[place]!!
 
             val objectTokensString =

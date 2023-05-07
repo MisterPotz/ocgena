@@ -66,6 +66,7 @@ kotlin {
                 implementation(npm("peggy", "3.0.1"))
                 val pathToLocalNpmModule = file("./ocdot-parser/") //rootProject.projectDir.resolve("ocgena-js/")
 
+                implementation("org.jetbrains.kotlinx:kotlinx-html-js:0.8.0")
                 println("path to the module $pathToLocalNpmModule")
                 implementation(npm("ocdot-parser", pathToLocalNpmModule))
                 implementation("org.jetbrains.kotlin-wrappers:kotlin-react:18.2.0-pre.346")

@@ -87,6 +87,15 @@ class ImmutableObjectMarking(val placesToObjectTokens: Map<PlaceId, Set<ObjectTo
         }
     }
 
+    fun htmlLines() : List<String> {
+        return placesToObjectTokens.keys.map { place ->
+            val objectTokens = placesToObjectTokens[place]!!
+
+            val objectTokensString = objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
+            """${place}: $objectTokensString"""
+        }
+    }
+
     operator fun plus(objectMarking: ObjectMarking): ObjectMarking {
         val addedKeys = objectMarking.placesToObjectTokens.keys
 

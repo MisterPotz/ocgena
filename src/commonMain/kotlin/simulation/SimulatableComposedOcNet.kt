@@ -19,9 +19,13 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
 
     fun fullCopy() : T
 
+
     interface State {
         val tMarking: ActiveTransitionMarking
         val pMarking: ObjectMarking
         val tTimes: TransitionOccurrenceAllowedTimes
+
+        fun toHtmlLines() : List<String>
+
     }
 }

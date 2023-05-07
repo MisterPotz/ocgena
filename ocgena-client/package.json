@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
+    "html-to-text": "^9.0.5",
     "ocdot-parser": "file:../ocdot-parser",
     "ocgena": "file:../ocgenajs"
   }

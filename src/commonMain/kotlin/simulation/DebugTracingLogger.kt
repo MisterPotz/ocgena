@@ -25,6 +25,7 @@ class DebugTracingLogger(
     }
 
     override fun onFinalMarking(marking: ObjectMarking) {
+
         mprintln("""${background("125")}final marking:$ANSI_RESET""".indent(1))
         mprintln(marking.toString().indentMargin(2, "${
             background("125")}#$ANSI_RESET"))

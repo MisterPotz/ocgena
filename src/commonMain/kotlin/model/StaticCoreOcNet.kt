@@ -9,9 +9,6 @@ import kotlin.js.JsExport
 /**
  * the net, formed with passed arguments, must already be consistent
  */
-@OptIn(ExperimentalJsExport::class)
-@Suppress("NON_EXPORTABLE_TYPE")
-@JsExport
 class StaticCoreOcNet(
     val inputPlaces: Places,
     val outputPlaces: Places,

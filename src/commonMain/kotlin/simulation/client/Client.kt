@@ -2,7 +2,9 @@ package simulation.client
 
 import kotlinx.coroutines.*
 import simulation.config.SimulationConfig
+import kotlin.js.JsExport
 
+@JsExport
 class Client(
     private val onReadinessCallback: OnReadinessCallback
 ) {
@@ -34,7 +36,8 @@ class Client(
 
         return ClientSimTask(
             staticCoreOcNet = ocNet,
-            config = simConfig
+            config = simConfig,
+            loggerWrapper = HtmlPrintingLoggerWrapper()
         )
     }
 
