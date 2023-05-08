@@ -19,7 +19,7 @@ object LoggerFactoryDefault : LoggerFactory {
 
 object LoggerFactoryFileDefault : LoggerFactory {
     override fun create(labelMapping: LabelMapping): Logger {
-        return DebugTracingFileLogger(
+        return DebugTracingLogger(
             labelMapping = labelMapping,
             logCurrentState = true
         )

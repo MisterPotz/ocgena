@@ -13,6 +13,7 @@ data class ActiveFiringTransition(
     val lockTimeByLatestObjectToken: Time,
     val relativeTimePassedSinceLock: Time,
     val duration: Int,
+    val startedAt: Time,
     val tokenSynchronizationTime: Time,
     val lockedObjectTokens: ImmutableObjectMarking,
 ) {
@@ -102,6 +103,7 @@ data class ActiveFiringTransition(
             transition: Transition,
             lockedObjectTokens: ImmutableObjectMarking,
             duration: Time,
+            startedAt: Time,
             tokenSynchronizationTime: Time,
         ): ActiveFiringTransition {
             val nonEmptyPlaces = lockedObjectTokens.nonEmptyPlaces()
@@ -115,6 +117,7 @@ data class ActiveFiringTransition(
                 relativeTimePassedSinceLock = 0,
                 lockedObjectTokens = lockedObjectTokens,
                 duration = duration,
+                startedAt = startedAt,
                 tokenSynchronizationTime = tokenSynchronizationTime
             )
             return activeFiringTransition.also {

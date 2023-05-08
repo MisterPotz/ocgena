@@ -75,7 +75,7 @@ class ObjectTypeImpl(
 }
 
 class PlaceDSLImpl(
-    override var objectTypeId: Int,
+    override var objectTypeId: Long,
 //    private val defaultLabelFactory: () -> String,
     private val onAssignNewObjectType: (ObjectTypeDSL) -> Unit,
     private val labelFactory: () -> String,
@@ -101,7 +101,7 @@ class PlaceDSLImpl(
 }
 
 class TransitionDSLImpl(
-    override var transitionIndex: Int,
+    override var transitionIndex: Long,
     defaultLabel: String,
 ) : TransitionDSL {
 

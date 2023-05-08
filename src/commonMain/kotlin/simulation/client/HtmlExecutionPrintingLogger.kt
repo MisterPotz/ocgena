@@ -1,7 +1,5 @@
 package simulation.client
 
-import eventlog.EventLog
-import eventlog.ModelToEventLogConverter
 import model.*
 import simulation.Logger
 import simulation.SimulatableComposedOcNet
@@ -12,30 +10,20 @@ import utils.html.indentLinesRoot
 import utils.print
 
 
-class CompoundLogger {
-
-}
-
 class HtmlExecutionPrintingLogger(
     override val loggingEnabled: Boolean,
     val labelMapping: LabelMapping,
+    val writer: Writer
 ) : Logger {
-    private val eventLog = EventLog()
 
-    private val modelToEventLogConverter = ModelToEventLogConverter(
-        labelMapping = labelMapping,
-    )
-
-    val htmlStringBuilder = StringBuilder()
 
     fun write(string: String) {
-        htmlStringBuilder.append(string)
-        htmlStringBuilder.appendLine()
+        writer.writeLine(string)
     }
 
     fun write(lines: List<String>) {
         for (line in lines) {
-            htmlStringBuilder.appendLine(line)
+            writer.writeLine(line)
         }
     }
 
@@ -46,10 +34,6 @@ class HtmlExecutionPrintingLogger(
     override fun onInitialMarking(marking: ObjectMarking) {
         val lines = marking.toLines()
         write(indentLinesRoot(1, lines, marginSymbol = "#"))
-    }
-
-    fun collectHtml() : String {
-        return HtmlExecutionTraceGenerator(htmlStringBuilder.toString()).generate()
     }
 
     override fun onFinalMarking(marking: ObjectMarking) {
@@ -66,7 +50,7 @@ class HtmlExecutionPrintingLogger(
 
     override fun onEnd() {
         write(indentLinesRoot(0, bold("execution ended")))
-        println(collectHtml())
+        writer.end()
     }
 
     override fun onTimeout() {
@@ -130,8 +114,6 @@ class HtmlExecutionPrintingLogger(
     }
 
     override fun onTransitionEnded(executedBinding: ExecutedBinding) {
-        val event = modelToEventLogConverter.executedToEvent(executedBinding)
-        eventLog.recordEvent(event)
         write(
             indentLinesRoot(
                 3,

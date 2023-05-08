@@ -26,7 +26,7 @@ class Client(
         configStore.updatePlainConfig(simulationConfigStore)
     }
 
-    fun createClientSimTask() : ClientSimTask? {
+    fun createClientSimTaskFactory() : ClientSimTaskFactory? {
         val ocNet = modelCreator.builtModelFlow.value?.ocNet
         val simConfig = configStore.simulationConfigFlow.value
 
@@ -34,10 +34,9 @@ class Client(
             return null
         }
 
-        return ClientSimTask(
+        return ClientSimTaskFactoryImpl(
             staticCoreOcNet = ocNet,
             config = simConfig,
-            loggerWrapper = HtmlPrintingLoggerWrapper()
         )
     }
 

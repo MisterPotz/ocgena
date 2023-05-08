@@ -1,6 +1,9 @@
 package simulation.client
 
-class HtmlExecutionTraceGenerator(val body : String ) {
+import kotlin.js.JsExport
+
+@JsExport
+class HtmlExecutionTraceGenerator(val body: String) {
     private fun makeHead(): String {
         return """<!DOCTYPE html>
 <html lang="en">
@@ -24,14 +27,14 @@ class HtmlExecutionTraceGenerator(val body : String ) {
   <body style="white-space: normal;">"""
     }
 
-    private fun makeBottom() : String {
+    private fun makeBottom(): String {
         return """        
   </body>
 
 </html>"""
     }
 
-    fun generate() : String  {
+    fun generate(): String {
         return makeHead() + body + makeBottom()
     }
 }

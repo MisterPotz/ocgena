@@ -16,7 +16,7 @@ interface OCScope :
     // creates new or returns already defined
 }
 interface ObjectTypeAcceptor {
-    fun objectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)): ObjectTypeDSL
+    fun objectType(label: String, placeNameCreator: ((placeIndexForType: Long) -> String)): ObjectTypeDSL
 
     fun objectType(label: String): ObjectTypeDSL
 }
@@ -73,11 +73,11 @@ interface NodeDSL {
 
 interface PlaceDSL : OCPlaceScope, LinkChainDSL, AtomDSL, NodeDSL {
     // the index of this place for its type
-    var objectTypeId: Int
+    var objectTypeId: Long
 }
 
 interface TransitionDSL : OCTransitionScope, LinkChainDSL, AtomDSL, NodeDSL {
-    var transitionIndex: Int
+    var transitionIndex: Long
 }
 
 interface AtomDSL

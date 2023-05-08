@@ -4,9 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import kotlinx.js.jso
 import model.OcNetType
-import simulation.client.Client
-import simulation.client.OnReadinessCallback
-import simulation.client.SimCallback
+import simulation.client.*
 import simulation.config.SimulationConfig
 import utils.mprintln
 import kotlin.test.BeforeTest
@@ -15,7 +13,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ClientTest {
-    fun createOcDot() : String {
+    fun createOcDot(): String {
         return """ocnet {
             |   places { 
             |       p1 p2 p3
@@ -27,11 +25,12 @@ class ClientTest {
             |}
         """.trimMargin()
     }
+
     fun createSimConfig(): SimulationConfig {
         return createConfig(
             inputPlacesConfig = InputPlacesConfig("p1"),
             outputPlacesConfig = OutputPlacesConfig("p3"),
-            ocNetTypeConfig =  OCNetTypeConfig.from(OcNetType.TYPE_A),
+            ocNetTypeConfig = OCNetTypeConfig.from(OcNetType.TYPE_A),
             labelMappingConfig = LabelMappingConfig(
                 jso {
                     t1 = "Initialization"
@@ -47,6 +46,7 @@ class ClientTest {
             // transition config
         )
     }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     @BeforeTest
     fun prepare() {
@@ -105,17 +105,28 @@ class ClientTest {
 
         assertTrue(successObserved, "on ready callback either not invoked or critical error detected in the model")
 
-        val simTask = client.createClientSimTask()
-        assertNotNull(simTask, "expected successfully created simulation task")
+        val simTaskFactory = client.createClientSimTaskFactory()
+        val htmlStringBuilderWriter = HtmlDebugTraceBuilderWriter()
+        val ocelWriter = OcelWriter()
 
         var invoked = false
-        simTask.launch(
-            object : SimCallback {
-                override fun onFinishedSimulation() {
-                    invoked = true
-                }
-            }
+
+        val simTask = simTaskFactory!!.create(
+            simTaskClientCallback = createSimpleClientCallback(onExecutionFinish = {
+                println("finished successfully")
+                val html = htmlStringBuilderWriter.collect()
+                println(html)
+                val ocel = ocelWriter.collect()
+                println(JSON.stringify(ocel))
+                invoked = true
+            }),
+            htmlTraceFileWriter = htmlStringBuilderWriter,
+            ocelWriter = ocelWriter
         )
+
+        assertNotNull(simTask, "expected successfully created simulation task")
+
+        simTask.launch()
         advanceUntilIdle()
         assertTrue(invoked)
     }

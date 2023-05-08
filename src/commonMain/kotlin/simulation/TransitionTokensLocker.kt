@@ -2,6 +2,7 @@ package simulation
 
 import model.ActiveFiringTransition
 import model.ActiveTransitionMarking
+import model.Time
 import simulation.binding.EnabledBindingWithTokens
 import simulation.time.TransitionDurationSelector
 import simulation.time.TransitionInstanceOccurenceDeltaSelector
@@ -13,7 +14,8 @@ class TransitionTokensLocker(
     private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
     private val transitionDurationSelector: TransitionDurationSelector,
     private val tTimes: TransitionOccurrenceAllowedTimes,
-    private val logger: Logger
+    private val logger: Logger,
+    private val simulationTime: SimulationTime,
 ) {
     private fun recordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
         val transition = enabledBindingWithTokens.transition
@@ -26,6 +28,7 @@ class TransitionTokensLocker(
             transition = transition,
             lockedObjectTokens = enabledBindingWithTokens.involvedObjectTokens,
             duration = randomSelectedDuration,
+            startedAt = simulationTime.globalTime,
             tokenSynchronizationTime = enabledBindingWithTokens.synchronizationTime
         )
 
