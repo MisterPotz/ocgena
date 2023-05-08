@@ -1,8 +1,13 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
 import './App.css';
+import { Editor, EditorWrapper } from './components/Editor';
+import { MainScreen } from './MainScreen';
+import { Allotment } from 'allotment';
+import "allotment/dist/style.css"
 
-function Hello() {
+
+export function Hello() {
   return (
     <div>
       <div className="bg-gray-500 p-5 text-center">Tailwind</div>
@@ -47,7 +52,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Hello />} />
+        <Route path="/" element={<MainScreen />} />
       </Routes>
     </Router>
   );

@@ -38,6 +38,9 @@ if (
   execSync('npm run postinstall');
 }
 
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+
+
 const configuration: webpack.Configuration = {
   devtool: 'inline-source-map',
 
@@ -174,6 +177,10 @@ const configuration: webpack.Configuration = {
       isDevelopment: process.env.NODE_ENV !== 'production',
       nodeModules: webpackPaths.appNodeModulesPath,
     }),
+    
+    new MonacoWebpackPlugin({
+
+    })
   ],
 
   node: {
