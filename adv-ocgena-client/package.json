@@ -95,6 +95,7 @@
     }
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.33",
     "allotment": "^1.19.0",
     "electron-debug": "^3.2.0",
     "electron-log": "^4.4.8",
@@ -102,7 +103,9 @@
     "monaco-editor": "^0.38.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.8.1"
+    "react-router-dom": "^6.8.1",
+    "xterm": "^5.1.0",
+    "xterm-addon-fit": "^0.7.0"
   },
   "devDependencies": {
     "@electron/notarize": "^1.2.3",

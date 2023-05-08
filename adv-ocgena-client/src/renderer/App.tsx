@@ -1,10 +1,8 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
 import './App.css';
-import { Editor, EditorWrapper } from './components/Editor';
-import { MainScreen } from './MainScreen';
-import { Allotment } from 'allotment';
 import "allotment/dist/style.css"
+import { DefaultVisualStudioCode } from './VisualStudioCode';
 
 
 export function Hello() {
@@ -52,7 +50,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<MainScreen />} />
+        <Route path="/" element={<DefaultVisualStudioCode />} />
       </Routes>
     </Router>
   );
