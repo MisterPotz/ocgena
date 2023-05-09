@@ -3,9 +3,13 @@ package model
 import utils.print
 
 
-class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<ObjectToken>> = mutableMapOf()) {
-    operator fun get(place: Place): MutableSet<ObjectToken>? {
+class ObjectMarking(val placesToObjectTokens: MutableMap<PlaceId, MutableSet<ObjectToken>> = mutableMapOf()) {
+    operator fun get(place: PlaceId): MutableSet<ObjectToken>? {
         return placesToObjectTokens[place]
+    }
+
+    operator fun get(place: Place): MutableSet<ObjectToken>? {
+        return placesToObjectTokens[place.id]
     }
 
     fun shiftTokenTime(tokenTimeDelta: Time) {
@@ -14,17 +18,53 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
         }
     }
 
-    operator fun set(place: Place, set: Set<ObjectToken>) {
+    operator fun set(place: PlaceId, set: Set<ObjectToken>) {
         placesToObjectTokens[place] = set.toMutableSet()
     }
 
-    fun setTokens(place: Place, tokens: Collection<ObjectToken>) {
+    fun filterByType(
+        placeTyping: PlaceTyping,
+        objectType: ObjectType,
+    ): ObjectMarking {
+        return ObjectMarking(
+            placesToObjectTokens.filter { entry ->
+                val type = placeTyping[entry.key]
+                type == objectType
+            }.toMutableMap()
+        )
+    }
+
+    fun removeTokensMetInTheMarking(theMarking : ObjectMarking) {
+        val allTheMarkingTokens = theMarking.allTokens().toSet()
+
+        for (place in placesToObjectTokens.keys) {
+            val tokensOfPlace = placesToObjectTokens[place] ?: continue
+
+            tokensOfPlace -= allTheMarkingTokens
+        }
+    }
+
+    fun removeTokens(tokens : List<ObjectToken>) {
+        val allTheMarkingTokens = tokens.toSet()
+
+        for (place in placesToObjectTokens.keys) {
+            val tokensOfPlace = placesToObjectTokens[place] ?: continue
+
+            tokensOfPlace -= allTheMarkingTokens
+        }
+    }
+
+    operator fun set(place: Place, set: Set<ObjectToken>) {
+        placesToObjectTokens[place.id] = set.toMutableSet()
+    }
+
+    fun setTokens(place: PlaceId, tokens: Collection<ObjectToken>) {
         placesToObjectTokens[place] = placesToObjectTokens[place].let {
             it?.apply { addAll(tokens) } ?: mutableSetOf<ObjectToken>().apply { addAll(tokens) }
         }
     }
 
-    fun allTokens() : Collection<ObjectToken> {
+    fun allTokens(): Collection<ObjectToken> {
         return placesToObjectTokens.values.fold(mutableSetOf()) { accum, set ->
             accum.addAll(set)
             accum
@@ -90,7 +130,7 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
     operator fun minus(objectMarking: ObjectMarking): ObjectMarking {
         val subtractedKeys = objectMarking.placesToObjectTokens.keys
 
-        val newMap = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        val newMap = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
 
         for (place in subtractedKeys) {
             val current = placesToObjectTokens[place] ?: setOf()
@@ -106,7 +146,7 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
     operator fun plus(objectMarking: ObjectMarking): ObjectMarking {
         val addedKeys = objectMarking.placesToObjectTokens.keys
 
-        val newMap = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        val newMap = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
 
         for (place in addedKeys) {
             val current = placesToObjectTokens[place] ?: setOf()
@@ -119,7 +159,7 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
         return ObjectMarking(newMap)
     }
 
-    fun prettyPrint() : String {
+    fun prettyPrint(): String {
         return placesToObjectTokens.entries.fold(StringBuilder()) { accum, line ->
             accum.append(line.key)
             accum.append(" |\n")
@@ -132,18 +172,49 @@ class ObjectMarking(val placesToObjectTokens: MutableMap<Place, MutableSet<Objec
     }
 
     private var stringBuilder = StringBuilder()
+
+    fun toLines() : List<String> {
+        return placesToObjectTokens.keys.map { place ->
+            val objectTokens = placesToObjectTokens[place]!!
+
+            val objectTokensString =
+                objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
+            """${place}: $objectTokensString"""
+        }
+    }
     override fun toString(): String {
         return placesToObjectTokens.keys.joinToString(separator = "\n") { place ->
             val objectTokens = placesToObjectTokens[place]!!
 
-            val objectTokensString = objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
-            """${place.id}: $objectTokensString"""
+            val objectTokensString =
+                objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
+            """${place}: $objectTokensString"""
         }
     }
 
+    fun htmlLines() : List<String> {
+        return placesToObjectTokens.keys.map { place ->
+            val objectTokens = placesToObjectTokens[place]!!
+
+            val objectTokensString =
+                objectTokens.joinToString(separator = " ") { "${it.name}[${it.ownPathTime.print()}]" }
+            """${place}: $objectTokensString"""
+        }
+    }
+
+    fun toImmutableMarking() : ImmutableObjectMarking {
+        return ImmutableObjectMarking(
+            placesToObjectTokens = buildMap {
+                for ((key, value) in placesToObjectTokens) {
+                    put(key, value.toSet())
+                }
+            }
+        )
+    }
+
     companion object {
-        fun build(block: MutableMap<Place, MutableSet<ObjectToken>>.() -> Unit) : ObjectMarking {
-            val map = mutableMapOf<Place, MutableSet<ObjectToken>>()
+        fun build(block: MutableMap<PlaceId, MutableSet<ObjectToken>>.() -> Unit): ObjectMarking {
+            val map = mutableMapOf<PlaceId, MutableSet<ObjectToken>>()
             map.block()
             val newObjectMarking = ObjectMarking(map)
             return newObjectMarking

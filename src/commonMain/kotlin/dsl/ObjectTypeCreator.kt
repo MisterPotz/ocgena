@@ -5,9 +5,9 @@ class ObjectTypeCreator(
     private val objectTypeIdCreator: PatternIdCreator,
     private val groupsIdCreator: GroupsIdCreator,
 ) {
-    fun createObjectType(label: String, placeNameCreator: ((placeIndexForType: Int) -> String)?) : ObjectTypeDSL {
+    fun createObjectType(label: String, placeNameCreator: ((placeIndexForType: Long) -> String)?) : ObjectTypeDSL {
         return objectTypesContainer.objectTypes.getOrPut(label) {
-            val newId = objectTypeIdCreator.newIntId()
+            val newId = objectTypeIdCreator.newLabelId()
             val localPlaceNameCreator = placeNameCreator ?: {
                 "${label}_$it"
             }

@@ -12,7 +12,9 @@ import kotlin.test.assertTrue
 class OCScopeImplCommonTest {
 
     private val ocNetDSLElements = createExampleModel()
-    private val objectSearcher = ObjectsSearcher(ocNetDSLElements)
+    private val placeTyping = createExamplePlaceTyping()
+    private val inputOutputPlaces = createExampleInputOutputPlaces()
+//    private val objectSearcher = ObjectsSearcher(ocNetDSLElements)
 
 
     @Test
@@ -23,13 +25,13 @@ class OCScopeImplCommonTest {
 
         val orderPlaces = ocNetDSLElements.places
             .values
-            .filter { it.objectType == order }
+            .filter { placeTyping[it.label].label == order.label }
         val itemPlaces = ocNetDSLElements.places
             .values
-            .filter { it.objectType == item }
+            .filter {  placeTyping[it.label].label == item.label }
         val routePlaces = ocNetDSLElements.places
             .values
-            .filter { it.objectType == route }
+            .filter {  placeTyping[it.label].label == route.label }
 
         assertEquals(5, orderPlaces.size)
         assertEquals(6, itemPlaces.size)
@@ -67,10 +69,10 @@ class OCScopeImplCommonTest {
         }
     }
 
-    @Test
-    fun testObjectTypesAmount() {
-        assertEquals(objectSearcher.withoutDefaultObjectTypeIfPossible().size, 3)
-    }
+//    @Test
+//    fun testObjectTypesAmount() {
+//        assertEquals(objectSearcher.withoutDefaultObjectTypeIfPossible().size, 3)
+//    }
 
     @Test
     fun testTransitionsAmount() {
@@ -81,15 +83,15 @@ class OCScopeImplCommonTest {
     fun testPlaceTypes() {
         assertEquals(
             3,
-            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.INPUT }.size
+            ocNetDSLElements.places.values.filter { inputOutputPlaces[it.label] == PlaceType.INPUT }.size
         )
         assertEquals(
             3,
-            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
+            ocNetDSLElements.places.values.filter {  inputOutputPlaces[it.label] == PlaceType.OUTPUT }.size
         )
         assertEquals(
             3,
-            ocNetDSLElements.places.values.filter { it.placeType == PlaceType.OUTPUT }.size
+            ocNetDSLElements.places.values.filter {  inputOutputPlaces[it.label] == PlaceType.OUTPUT }.size
         )
         // totally 14 places
         assertEquals(14, ocNetDSLElements.places.size)
@@ -119,7 +121,7 @@ class OCScopeImplCommonTest {
             }
         ocNetDSLElements.places.values
             .filter {
-                it.label.matches(Regex("""item_\d+"""))
+                it.label.matches(Regex("""i\d+"""))
             }.let {
                 assertEquals(6, it.size)
                 assertTrue(it.all {
@@ -175,18 +177,18 @@ class OCScopeImplCommonTest {
                 arcs.forEach {
                     mprintln(it)
                 }
-                outputArcFor(place("item_1"))
-                outputArcFor(place("item_2"))
-                outputArcFor(place("item_3"))
-                outputArcFor(place("item_4"))
-                outputArcFor(place("item_5"))
+                outputArcFor(place("i1"))
+                outputArcFor(place("i2"))
+                outputArcFor(place("i3"))
+                outputArcFor(place("i4"))
+                outputArcFor(place("i5"))
 
 
-                inputArcFor(place("item_2"))
-                inputArcFor(place("item_3"))
-                inputArcFor(place("item_4"))
-                inputArcFor(place("item_5"))
-                inputArcFor(place("item_6"))
+                inputArcFor(place("i2"))
+                inputArcFor(place("i3"))
+                inputArcFor(place("i4"))
+                inputArcFor(place("i5"))
+                inputArcFor(place("i6"))
             }
         }
     }

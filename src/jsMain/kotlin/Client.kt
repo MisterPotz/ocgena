@@ -2,7 +2,6 @@
 @file:JsExport
 
 import ast.Types
-import converter.OCDotParser
 import kotlinx.js.jso
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -56,11 +55,11 @@ fun probeParse() : dynamic {
         |   }
         |}
     """.trimMargin()
-    val parser = OCDotParser()
-    val timeTakenForThis = measureTime {
-        parser.parse(ocDot)
-    }.inWholeMilliseconds
-    console.log(timeTakenForThis)
+//    val parser = OCDotParser()
+//    val timeTakenForThis = measureTime {
+//        parser.parse(ocDot)
+//    }.inWholeMilliseconds
+//    console.log(timeTakenForThis)
     return jso()
 }
 

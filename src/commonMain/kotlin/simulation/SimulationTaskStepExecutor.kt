@@ -39,6 +39,7 @@ class SimulationTaskStepExecutor(
         logger = logger,
         tTimes = state.tTimes,
         transitionDurationSelector = transitionDurationSelector,
+        simulationTime = simulationTime,
         transitionInstanceOccurenceDeltaSelector = nextTransitionOccurenceTimeSelector,
     )
     private val bindingsCollector = EnabledBindingsCollector(

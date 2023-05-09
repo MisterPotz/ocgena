@@ -9,6 +9,10 @@ import ast.Subgraph
 import ast.Types
 import converter.ASTVisitorPath
 
+interface PathAcceptorVisitorBFS {
+    fun withPath(astVisitorPath: ASTVisitorPath): OCDotASTVisitorBFS
+}
+
 class DelegateOCDotASTVisitorBFS(
     private val visitors: List<PathAcceptorVisitorBFS>,
 ) : OCDotASTVisitorBFS {

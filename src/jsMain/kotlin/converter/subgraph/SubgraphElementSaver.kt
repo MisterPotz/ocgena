@@ -4,13 +4,13 @@ import ast.ASTBaseNode
 import ast.Subgraph
 import ast.Types
 import converter.ErrorReporterContainer
-import converter.SemanticDomainErrorReporterContainer
+import converter.DefaultErrorReporterContainer
 import error.ErrorLevel
 import parse.SemanticError
 
 abstract class SubgraphElementSaver(
     val subgraphSpecialType: dynamic, /* SubgraphSpecialTypes */
-    val semanticErrorReporterContainer: SemanticDomainErrorReporterContainer,
+    val semanticErrorReporterContainer: ErrorReporterContainer,
 ) : ErrorReporterContainer by semanticErrorReporterContainer {
     abstract fun saveNode(ast: ASTBaseNode)
     private var hasSaved: Boolean = false

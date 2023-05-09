@@ -7,15 +7,23 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class NodeCacherVisitorDFSTest {
+    private val defaultPlaceTyping = PlaceTyping.build()
+    private val defaultInputOutputPlaces = InputOutputPlaces.build {
+        inputPlaces("p1")
+        outputPlaces("p2")
+    }
+
     @Test
     fun checkSimpleNetIsCached() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel {
-            place {
-                placeType = PlaceType.INPUT
-            }
+        val placeTyping = PlaceTyping.build()
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
+            placeTyping,
+            inputOutputPlaces = defaultInputOutputPlaces
+        ) {
+            place { }
                 .arcTo(transition { })
-                .arcTo(place { placeType = PlaceType.OUTPUT })
+                .arcTo(place { })
         }.requireConsistentOCNet()
 
         val nodeCacher = NodesCacherVisitorDFS()
@@ -32,18 +40,21 @@ class NodeCacherVisitorDFSTest {
     @Test
     fun checkComplexOcNetCacher() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel {
-            place {
-                placeType = PlaceType.INPUT
-            }
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
+            defaultPlaceTyping,
+            InputOutputPlaces.build {
+                outputPlaces("p3")
+                inputPlaces("p1")
+            }) {
+            place { }
                 .arcTo(transition { })
                 .connectTo(subgraph {
                     this.inNode
-                        .arcTo(place {  })
+                        .arcTo(place { })
                         .variableArcTo(transition { })
                         .variableArcTo(outNode)
                 })
-                .connectToLeftOf(place { placeType = PlaceType.OUTPUT })
+                .connectToLeftOf(place { })
         }.requireConsistentOCNet()
 
         val nodeCacher = NodesCacherVisitorDFS()
@@ -62,23 +73,27 @@ class NodeCacherVisitorDFSTest {
     @Test
     fun checkComplexOcNetCacherObjectTypes() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val ocNet = ocNetFacadeBuilder.tryBuildModel {
+        val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
+            placeTyping = PlaceTyping.build {
+                objectType("ob1", "ob11")
+                objectType("ob2", "ob21 ob22")
+            },
+            inputOutputPlaces = InputOutputPlaces.build {
+                inputPlaces("ob11")
+                outputPlaces("ob22")
+            }
+        ) {
             objectType("ob1") { "ob1$it" }
             objectType("ob2") { "ob2$it" }
-            place {
-                placeType = PlaceType.INPUT
-                objectType = objectType("ob1")
-            }
+            place("ob11") {   }
                 .arcTo(transition { })
                 .connectTo(subgraph {
                     this.inNode
-                        .arcTo(place {
-                            objectType = objectType("ob2")
-                        })
+                        .arcTo(place("ob21"))
                         .variableArcTo(transition { })
                         .variableArcTo(outNode)
                 })
-                .connectToLeftOf(place { placeType = PlaceType.OUTPUT; objectType = objectType("ob2")})
+                .connectToLeftOf(place("ob22"))
         }.requireConsistentOCNet()
 
         val nodeCacher = NodesCacherVisitorDFS()

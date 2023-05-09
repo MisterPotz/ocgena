@@ -34,4 +34,10 @@ class TransitionOccurrenceAllowedTimes {
             """${it.id} permitted in ${transitionsToNextTimes[it]?.print()}"""
         }
     }
+
+    fun htmlLines() : List<String> {
+        return transitionsToNextTimes.keys.map {
+            """${it.id} permitted in ${transitionsToNextTimes[it]?.print()}"""
+        }
+    }
 }

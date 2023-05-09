@@ -1,17 +1,22 @@
 package simulation
 
+import eventlog.ActivityOccurrenceRegistry
 import eventlog.EventLog
 import eventlog.ModelToEventLogConverter
 import model.*
+import simulation.client.OcelParams
 import utils.*
 
 class DebugTracingLogger(
     val logCurrentState: Boolean = false,
-    private val labelsActivities: LabelsActivities,
+    private val labelMapping: LabelMapping,
 ) : Logger {
     private val eventLog = EventLog()
+
+    private val activityOccurrenceRegistry = ActivityOccurrenceRegistry(OcelParams(logBothStartAndEnd = false))
     private val modelToEventLogConverter = ModelToEventLogConverter(
-        labelsActivities = labelsActivities,
+        labelMapping = labelMapping,
+        ocelParams = OcelParams(logBothStartAndEnd = false)
     )
     override val loggingEnabled: Boolean
         get() = true
@@ -25,6 +30,7 @@ class DebugTracingLogger(
     }
 
     override fun onFinalMarking(marking: ObjectMarking) {
+
         mprintln("""${background("125")}final marking:$ANSI_RESET""".indent(1))
         mprintln(marking.toString().indentMargin(2, "${
             background("125")}#$ANSI_RESET"))
@@ -64,7 +70,7 @@ class DebugTracingLogger(
     }
 
     override fun onTransitionEnded(executedBinding: ExecutedBinding) {
-        val event = modelToEventLogConverter.executedToEvent(executedBinding)
+        val event = modelToEventLogConverter.convertToEventEnd(executedBinding)
         eventLog.recordEvent(event)
         mprintln(executedBinding.prettyPrintExecuted().indentMargin(3, margin = "x"))
     }

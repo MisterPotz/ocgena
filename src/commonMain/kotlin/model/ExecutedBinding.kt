@@ -1,6 +1,7 @@
 package model
 
-import eventlog.Timestamp
+import utils.html.color
+import utils.html.indentLines
 import utils.*
 
 
@@ -27,6 +28,41 @@ data class ExecutedBinding(
             |${"\t"}${font(ANSI_GREEN)}produced:$ANSI_RESET
             |${producedMap.toString().prependIndent("${font(ANSI_GREEN)}\t+ ")}
         """.trimMargin()
+    }
+
+    fun prettyPrintHtmlLinesExecuted(): List<String> {
+        return buildList {
+            add(
+                color(
+                    "> executed ${finishedTransition.transition.id} [${
+                        finishedTransition.timeLeftUntilFinish().print()
+                    }, ${finishedTransition.duration.print()}, synchr.time: ${finishedTransition.tokenSynchronizationTime.print()}]",
+                    fontColor = "rgb(164, 102, 255)",
+                )
+            )
+            addAll( indentLines(1, color("consumed:", fontColor = "rgb(255, 49, 45)")))
+            addAll(
+                indentLines(
+                indentation = 2,
+                marginSymbol = color("- ", "rgb(255, 49, 45)"),
+                item = color(
+                    consumedMap.toString(),
+                    fontColor = "rgb(255, 49, 45)"
+                )
+            )
+            )
+            addAll(indentLines(1, color("produced:", fontColor = "rgb(0, 133, 88)")))
+            addAll(
+                indentLines(
+                indentation = 2,
+                marginSymbol = color("+ ", "rgb(0, 133, 88)"),
+                item = color(
+                    producedMap.toString(),
+                    fontColor = "rgb(0, 133, 88)"
+                )
+            )
+            )
+        }
     }
 
     override fun toString(): String {

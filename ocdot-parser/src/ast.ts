@@ -1,5 +1,6 @@
-import { Compass } from 'ts-graphviz';
+import { Compass, Int } from 'ts-graphviz';
 import { parse as _parse, FileRange as _FileRange } from './ocdot.peggy';
+import { prependIndent } from './exts';
 
 /**
  * The `AST` module provides the ability to handle the AST as a result of parsing the ocdot language
@@ -36,11 +37,6 @@ export namespace AST {
   export const SubgraphSpecialTypes = Object.freeze({
     Places: 'places',
     Transitions: 'transitions',
-    ObjectTypes: 'object types',
-    InitialMarking: 'initial marking',
-    PlacesForType: 'places for',
-    Inputs: "inputs",
-    Outputs: "outputs"
   } as const)
   export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>
 
@@ -49,6 +45,12 @@ export namespace AST {
     Variable: '=>'
   } as const)
   export type OpTypes = ValueOf<typeof OpTypes>
+
+  export const OpParamsTypes = Object.freeze({
+    Expression : "expression",
+    Number : "number"
+  })
+  export type OpParamsTypes = ValueOf<typeof OpParamsTypes>
 
   export function isASTBaseNode(value: unknown): value is ASTBaseNode {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -153,12 +155,35 @@ export namespace AST {
 
   export type EdgeTarget = NodeRef | EdgeSubgraph;
 
-  export interface NumberLiteral extends ASTBaseNode { 
+  export interface NumberLiteral extends ASTBaseNode {
     value: number,
   }
 
-  export interface EdgeOpParams {
-    number: NumberLiteral
+  export interface Variable { 
+    variable : string
+  }
+
+  export interface ExpressionOp {
+    op : "*" | "+" | "-" | "/",
+    target : Expression
+  }
+
+  export interface Expression { 
+    head : Expression | number | Variable
+    tail : ExpressionOp[]
+  }
+
+  export interface RootExpression extends EdgeOpParams, Expression { 
+    type : typeof OpParamsTypes.Expression
+  }
+
+  export interface EdgeOpParams extends ASTBaseNode {
+    type : OpParamsTypes,
+  }
+
+  export interface OpParamsNumber extends EdgeOpParams {
+    type : typeof OpParamsTypes.Number
+    value : number
   }
 
   export interface EdgeOperator extends ASTBaseNode {
@@ -393,6 +418,29 @@ export namespace AST {
     indentSize?: number;
   }
 
+  
+  export function isEdgeOpParamsExpression(edgeOpParams : EdgeOpParams): edgeOpParams is RootExpression { 
+    return edgeOpParams.type == OpParamsTypes.Expression
+  }
+
+  export function isEdgeOpParamsNumber(edgeOpParams : EdgeOpParams) : edgeOpParams is OpParamsNumber {
+    return edgeOpParams.type == OpParamsTypes.Number
+  }
+
+  export function isExpression(item : any) : item is Expression {
+    if (typeof item !== "object") {
+      return false
+    }
+    return "head" in item
+  }
+
+  export function isVariable(object : any) : object is Variable { 
+    if (typeof object !== "object") {
+      return false
+    }
+    return "variable" in object
+  }
+
   export class Compiler {
     protected indentSize: number;
     constructor({ indentSize = 0 }: StringifyOption = {}) {
@@ -401,6 +449,24 @@ export namespace AST {
 
     protected indent(line: string): string {
       return '  '.repeat(this.indentSize) + line;
+    }
+
+    protected indentForSize(size : number) : string {
+      return '  '.repeat(size);
+    }
+
+    protected buildIndent(): string {
+      return this.indentForSize(this.indentSize)
+    }
+
+    protected withIndentIncrease(multiline: string): string {
+      // this.increaseIndent()
+      const saved = this.indentSize
+      this.indentSize = 2
+      const value = prependIndent(multiline, this.buildIndent())
+      // this.decreaseIndent()
+      this.indentSize = saved;
+      return value
     }
 
     protected pad(pad: string): (l: string) => string {
@@ -420,11 +486,9 @@ export namespace AST {
     }
 
     protected printAttributes(ast: AST.Attributes): string {
-      this.increaseIndent();
       const value = ast.body.length === 0
         ? `${ast.kind};`
-        : `${ast.kind} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
-      this.decreaseIndent();
+        : `${ast.kind} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this).join('\n'))}\n];`;
       return value;
     }
 
@@ -448,39 +512,75 @@ export namespace AST {
       const targets = ast.targets.map(this.stringify.bind(this))/* .join(this.directed ? ' -> ' : ' -- '); */
       const allEdgeTargets = [from, ...targets].join(' ')
 
-      this.increaseIndent();
-      const value = ast.body.length === 0
-        ? `${allEdgeTargets};`
-        : `${allEdgeTargets} [\n${ast.body.map(this.stringify.bind(this)).map(this.indent.bind(this)).join('\n')}\n];`;
-      this.decreaseIndent();
-      return value;
+      if (ast.body.length === 0) {
+        return allEdgeTargets + ";"
+      }
+
+      return `${allEdgeTargets} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this)
+        .join('\n'))
+        }\n]`
+    }
+
+    protected stringifyExpressionElement(head : Expression | number | Variable) : string {
+      if (isExpression(head)) {
+        return this.stringifyExpression(head);
+      } else if (isVariable(head)) {
+        return head.variable
+      } else {
+        return head.toString()
+      }
+    }
+
+    protected stringifyExpressionOp(expressionOp : ExpressionOp) : string { 
+      let op = expressionOp.op
+      let expression = this.stringifyExpressionElement(expressionOp.target)
+      return `${op} ${expression}`
+    }
+
+    public stringifyExpression(expression : Expression) : string {
+      let arr = [ ]
+      if (expression.tail.length == 0 && !isExpression(expression.head)) {
+        return this.stringifyExpressionElement(expression.head);
+      }
+      arr.push(this.stringifyExpressionElement(expression.head))
+      for (let i = 0; i < expression.tail.length; i++) {
+        arr.push(this.stringifyExpressionOp(expression.tail[i]))
+      }
+      return "(" + arr.join(' ') + ")";
+    }
+
+    protected printEdgeOpParams(edgeOpParams : EdgeOpParams) : string {
+      if (isEdgeOpParamsExpression(edgeOpParams)) {
+        return this.stringifyExpression(edgeOpParams)
+      } else if (isEdgeOpParamsNumber(edgeOpParams))  {
+        return edgeOpParams.value.toString()
+      } else {
+        return "UNKNOWN_EDGE_OP_PARAM"
+      }
     }
 
     protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string {
       const edgeOp = edgeRHSElement.edgeop.type
       const multiplicity = edgeRHSElement.edgeop.params
-        ? `${edgeRHSElement.edgeop.params.number.value}`
+        ? this.printEdgeOpParams(edgeRHSElement.edgeop.params)
         : ""
       return `${multiplicity}${edgeOp} ${this.stringify(edgeRHSElement.id)}`
     }
 
     protected printNode(ast: AST.Node): string {
-      this.increaseIndent();
-      const value = ast.body.length == 0
-        ? `${this.stringify(ast.id)};`
-        : `${this.stringify(ast.id)} [\n${ast.body
-          .map(this.stringify.bind(this))
-          .map(this.indent.bind(this))
-          .join('\n')}\n];`;
-      this.decreaseIndent();
-      return value;
+      if (ast.body.length === 0) {
+        return this.stringify(ast.id)
+      }
+      return `${this.stringify(ast.id)} [\n${this.withIndentIncrease(ast.body.map(this.stringify, this)
+        .join('\n'))
+        }\n];`
     }
 
     protected printNodeRef(ast: AST.NodeRef): string {
       return [
         this.stringify(ast.id),
-        ast.port ? this.stringify(ast.port) 
-        : null,
+        ast.port ? this.stringify(ast.port)
+          : null,
         ast.compass ? this.stringify(ast.compass) : null,
       ]
         .filter((v) => v !== null)
@@ -496,13 +596,11 @@ export namespace AST {
     }
 
     protected printEdgeSubgraph(ast: AST.EdgeSubgraph): string {
-      const body = this.withIndentIncrease(() => {
-        return ast.body.length === 0
-          ? '{}'
-          : `{\n${ast.body.map(this.stringify.bind(this))
-            .map(this.indent.bind(this))
-            .join('\n')}\n${this.closingBracketIndented()}`;
-      })
+      if (ast.body.length === 0) {
+        return "{}"
+      }
+      const body = `{\n${this.withIndentIncrease(ast.body.map(this.stringify, this).join('\n'))
+        }\n}`
 
       return [
         ...this.printEdgeSubgraphName(ast),
@@ -512,37 +610,18 @@ export namespace AST {
         .join(' ');
     }
 
-    protected withIndentIncrease(block: () => string): string {
-      this.increaseIndent();
-      const result = block()
-      this.decreaseIndent();
-      return result;
-    }
-
-    protected withIndentDecrease(block: () => string): string {
-      this.decreaseIndent();
-      const result = block();
-      this.increaseIndent();
-      return result;
-    }
-
-    protected closingBracketIndented(): string {
-      return this.withIndentDecrease(() => {
-        return this.indent('}')
-      })
-    }
-
     protected printOcNet(ast: AST.OcNet): string {
+      var body = "ocnet {"
+      if (ast.body.length === 0) {
+        body += "}"
+        return body
+      }
+      body += "\n"
+      body += this.withIndentIncrease(ast.body
+        .map(this.stringify.bind(this))
+        .join('\n'))
+      body += "\n}"
 
-      const body = this.withIndentIncrease(() => {
-        return ast.body.length === 0
-          ? 'ocnet {}'
-          : `ocnet {\n${ast.body
-            .map(this.stringify.bind(this))
-            .map(this.indent.bind(this))
-            .join('\n')
-          }\n${this.closingBracketIndented()}`
-      })
       return [
         // ast.strict ? 'strict' : null,
         // ast.directed ? 'digraph' : 'graph',
@@ -566,13 +645,17 @@ export namespace AST {
     }
 
     protected printSubgraph(ast: AST.Subgraph): string {
-      const body = this.withIndentIncrease(() => {
-        return ast.body.length === 0
-          ? '{}'
-          : `{\n${ast.body.map(this.stringify.bind(this))
-            .map(this.indent.bind(this)).join('\n')}\n${this.closingBracketIndented()
-          }`
-      })
+      var body = "{"
+      if (ast.body.length === 0) {
+        body += "}"
+        return body
+      }
+      body += "\n"
+      body += this.withIndentIncrease(
+        ast.body.map(this.stringify.bind(this)).join('\n')
+      )
+      body += "\n}"
+
       return [
         ...this.printSubgraphName(ast),
         body
@@ -594,6 +677,9 @@ export namespace AST {
 
 
     protected isAstNode(object: any): object is AST.ASTNode {
+      if (typeof object !== "object") {
+        return false
+      }
       return 'type' in object;
     }
 

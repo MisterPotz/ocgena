@@ -1,5 +1,5 @@
 @file:JsModule("ocdot-parser/lib/ocdot.peggy")
-
+@file:JsNonModule
 package declarations.ocdot
 
 import ast.FileRange

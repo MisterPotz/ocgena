@@ -9,11 +9,14 @@ class OCNetChecker(
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
     private val ocNetElements: OCNetElements,
+    private val placeTyping: PlaceTyping,
+    private val inputOutputPlaces: InputOutputPlaces,
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
-    private var inputPlaces: List<Place>? = null
-    private var outputPlaces: List<Place>? = null
-    private var objectTypes: List<ObjectType>? = null
+//    private var inputPlaces: List<Place>? = null
+//    private var outputPlaces: List<Place>? = null
+    val inputPlaces = inputOutputPlaces.getInputPlaces(ocNetElements.places)
+    val outputPlaces = inputOutputPlaces.getOutputPlaces(ocNetElements.places)
 
     val isConsistent: Boolean
         get() {
@@ -22,16 +25,16 @@ class OCNetChecker(
 
     fun createWellFormedOCNet(): StaticCoreOcNet {
         require(isConsistent)
+
         return StaticCoreOcNet(
             inputPlaces = Places(checkNotNull(inputPlaces)),
             outputPlaces = Places(checkNotNull(outputPlaces)),
-            objectTypes = ObjectTypes(checkNotNull(objectTypes)),
+            objectTypes = ObjectTypes(checkNotNull(placeTyping.allObjectTypes().toList())),
             places = ocNetElements.places,
             transitions = ocNetElements.transitions,
             arcs = ocNetElements.arcs,
             allPetriNodes = ocNetElements.allPetriNodes,
-            labelsActivities = LabelsActivities.createFromTransitions(ocNetElements.transitions),
-            placeTyping = PlaceTyping()
+            placeTyping = placeTyping,
         )
     }
 
@@ -48,7 +51,9 @@ class OCNetChecker(
                 // the subgraph of this place was already visited
             } else {
                 val visitor = ConsistencyCheckPetriAtomVisitorDFS(
-                    assignedSubgraphIndex = currentSubgraphIndex
+                    assignedSubgraphIndex = currentSubgraphIndex,
+                    placeTyping,
+                    inputOutputPlaces
                 )
                 createdCheckVisitors.add(visitor)
                 petriNode.acceptVisitor(visitor)
@@ -65,37 +70,17 @@ class OCNetChecker(
         }
 
         // case 2 - check input places presence
-        val allInputPlaces = mutableListOf<Place>()
-        for (visitor in createdCheckVisitors) {
-            allInputPlaces.addAll(visitor.obtainedInputPlaces)
-        }
-        if (allInputPlaces.isEmpty()) {
+        if (inputPlaces.isEmpty()) {
             inconsistencies.add(ConsistencyCheckError.NoInputPlacesDetected)
         }
 
         // case 3 - check output places presence
-        val allOutputPlaces = mutableListOf<Place>()
-        for (visitor in createdCheckVisitors) {
-            allOutputPlaces.addAll(visitor.obtainedOutputPlaces)
-        }
-        if (allOutputPlaces.isEmpty()) {
+
+        if (outputPlaces.isEmpty()) {
             inconsistencies.add(ConsistencyCheckError.NoOutputPlacesDetected)
-        }
-        val allObjectTypes = mutableSetOf<ObjectType>()
-        for (visitor in createdCheckVisitors) {
-            allObjectTypes.addAll(visitor.obtainedObjectTypes)
         }
 
         lastConsistencyResults = inconsistencies
-        if (isConsistent) {
-            inputPlaces = allInputPlaces
-            outputPlaces = allOutputPlaces
-            objectTypes = allObjectTypes.toList()
-        } else {
-            inputPlaces = null
-            outputPlaces = null
-            objectTypes = null
-        }
         return inconsistencies
     }
 

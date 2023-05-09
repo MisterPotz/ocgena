@@ -1,7 +1,7 @@
 import { AST } from 'ocdot-parser'
-import { OCDotToDOTConverter } from '../converter'
+import { OCDotToDOTConverter } from '../converter_old'
 import * as shelljs from 'shelljs'
-import * as s from '../exts'
+import * as s from 'ocdot-parser/lib/exts'
 import * as fs from 'fs'
 
 describe("convertion from OCDot to plain dot", () => {
@@ -9,31 +9,11 @@ describe("convertion from OCDot to plain dot", () => {
         const myOcDotRaw = `
             ocnet { 
                 places { 
-                    p1 p2
+                    p1 [ label= "place 1" ] p2
                 }
 
                 transitions { 
                     t1
-                }
-                
-                object types {
-                     type1 type2
-                }
-
-                inputs {
-                     p1 
-                }
-
-                outputs { 
-                    p2
-                }
-
-                places for type1 {
-                    p1
-                }
-
-                places for type2 {
-                    p2
                 }
 
                 p1 10=> t1 1-> p2 -> p3 [color="orange"];
@@ -43,13 +23,9 @@ describe("convertion from OCDot to plain dot", () => {
 
                     }
                 } 3-> t1 2-> { p1 p2 }
-                
-                initial marking { 
-                    p1=2
-                    p2=3
-                }
             }
         `
+     
         const myOcDot = s.trimIndent(myOcDotRaw)
         const result = AST.parse(myOcDot, { rule: AST.Types.OcDot })
 
@@ -64,6 +40,28 @@ describe("convertion from OCDot to plain dot", () => {
         expect(s.removeEmptyLineSpaces(plainDot.trim()))
             .toEqual(s.removeEmptyLineSpaces(expected.toString().trim()))
     })
+
+    test("simple conversion", () => {
+        const myOcDotRaw = `
+            ocnet { 
+                a -> b
+            }
+        `
+        const myOcDot = s.trimIndent(myOcDotRaw)
+        const result = AST.parse(myOcDot, { rule: AST.Types.OcDot })
+
+        const converter = new OCDotToDOTConverter(result);
+
+        const plainDot = converter.compileDot();
+
+        // fs.writeFileSync("./test_artefacts/converter.test.txt", myOcDot + "\n" + plainDot);
+        console.log(plainDot);
+        // var expected = fs.readFileSync("./test_artefacts/ocdot_dot_ex1.txt")
+        
+        // expect(s.removeEmptyLineSpaces(plainDot.trim()))
+        //     .toEqual(s.removeEmptyLineSpaces(expected.toString().trim()))
+    })
+
 
     test('test string equality', () => {
         expect('biba').toEqual("biba")

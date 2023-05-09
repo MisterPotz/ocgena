@@ -18,6 +18,10 @@ class ActiveFiringTransitions() {
         return tMarkingValues.joinToString(separator = "\n") { it.prettyPrintState() }
     }
 
+    fun htmlLines() : List<String> {
+        return tMarkingValues.flatMap { it.prettyPrintHtmlLinesState() }
+    }
+
     override fun toString(): String {
         return tMarkingValues.joinToString(separator = "\n") { it.toString() }
     }

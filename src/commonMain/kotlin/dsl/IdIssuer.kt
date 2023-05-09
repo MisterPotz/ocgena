@@ -1,15 +1,15 @@
 package dsl
 
-class IdIssuer(private val startIndex : Int = 0) {
-    private var uniqueIdCounter: Int = startIndex
+class IdIssuer(private val startIndex : Long = 0) {
+    private var uniqueIdCounter: Long = startIndex
 
-    val lastUsed: Int
+    val lastUsed: Long
         get() {
             require(uniqueIdCounter > startIndex)
             return uniqueIdCounter - 1
         }
 
-    fun createId(): Int {
+    fun createId(): Long {
         return uniqueIdCounter++
     }
 

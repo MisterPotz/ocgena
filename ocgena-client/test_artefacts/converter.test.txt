@@ -1,30 +1,10 @@
 ocnet { 
     places { 
-        p1 p2
+        p1 [ label= "place 1" ] p2
     }
 
     transitions { 
         t1
-    }
-    
-    object types {
-         type1 type2
-    }
-
-    inputs {
-         p1 
-    }
-
-    outputs { 
-        p2
-    }
-
-    places for type1 {
-        p1
-    }
-
-    places for type2 {
-        p2
     }
 
     p1 10=> t1 1-> p2 -> p3 [color="orange"];
@@ -34,24 +14,24 @@ ocnet {
 
         }
     } 3-> t1 2-> { p1 p2 }
-    
-    initial marking { 
-        p1=2
-        p2=3
-    }
 }
 
 digraph {
-	p1 -> t1 [color="orange:white:orange"; ];
-	t1 -> p2 [color="orange"; ];
-	p2 -> p3 [color="orange"; ];
-
-	subgraph s1 {
-		subgraph ss1 {}
-	} -> t1 [color="black"; ];
-	t1 -> {
-		p1;
-		p2;
-	} [color="black"; ];
-
+    p1 [
+        label = "place 1";
+    ];
+    p2;
+    t1;
+    p1 -> t1 [color="orange:white:orange"; ];
+    t1 -> p2 [color="orange"; ];
+    p2 -> p3 [color="orange"; ];
+    
+    subgraph s1 {
+        {}
+    } -> t1 [color="black"; ];
+    t1 -> {
+        p1;
+        p2;
+    } [color="black"; ];
+    
 }

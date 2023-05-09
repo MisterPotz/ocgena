@@ -3,7 +3,7 @@ package dsl
 class PlaceDSLCreation(
     val userPlaceLabel : String?,
     val groupIdIssuer: GroupsIdCreator,
-    var defaultIdForObjectType: Int,
+    var defaultIdForObjectType: Long,
     var defaultLabelIdForObjectType: String,
     var selectedObjectType: ObjectTypeDSL
 )  {

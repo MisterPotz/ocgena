@@ -31,11 +31,6 @@ export declare namespace AST {
     export const SubgraphSpecialTypes: Readonly<{
         readonly Places: "places";
         readonly Transitions: "transitions";
-        readonly ObjectTypes: "object types";
-        readonly InitialMarking: "initial marking";
-        readonly PlacesForType: "places for";
-        readonly Inputs: "inputs";
-        readonly Outputs: "outputs";
     }>;
     export type SubgraphSpecialTypes = ValueOf<typeof SubgraphSpecialTypes>;
     export const OpTypes: Readonly<{
@@ -43,6 +38,11 @@ export declare namespace AST {
         readonly Variable: "=>";
     }>;
     export type OpTypes = ValueOf<typeof OpTypes>;
+    export const OpParamsTypes: Readonly<{
+        Expression: "expression";
+        Number: "number";
+    }>;
+    export type OpParamsTypes = ValueOf<typeof OpParamsTypes>;
     export function isASTBaseNode(value: unknown): value is ASTBaseNode;
     /**
      * AST node.
@@ -128,8 +128,26 @@ export declare namespace AST {
     export interface NumberLiteral extends ASTBaseNode {
         value: number;
     }
-    export interface EdgeOpParams {
-        number: NumberLiteral;
+    export interface Variable {
+        variable: string;
+    }
+    export interface ExpressionOp {
+        op: "*" | "+" | "-" | "/";
+        target: Expression;
+    }
+    export interface Expression {
+        head: Expression | number | Variable;
+        tail: ExpressionOp[];
+    }
+    export interface RootExpression extends EdgeOpParams, Expression {
+        type: typeof OpParamsTypes.Expression;
+    }
+    export interface EdgeOpParams extends ASTBaseNode {
+        type: OpParamsTypes;
+    }
+    export interface OpParamsNumber extends EdgeOpParams {
+        type: typeof OpParamsTypes.Number;
+        value: number;
     }
     export interface EdgeOperator extends ASTBaseNode {
         type: "->" | "=>";
@@ -327,10 +345,17 @@ export declare namespace AST {
     export interface StringifyOption {
         indentSize?: number;
     }
+    export function isEdgeOpParamsExpression(edgeOpParams: EdgeOpParams): edgeOpParams is RootExpression;
+    export function isEdgeOpParamsNumber(edgeOpParams: EdgeOpParams): edgeOpParams is OpParamsNumber;
+    export function isExpression(item: any): item is Expression;
+    export function isVariable(object: any): object is Variable;
     export class Compiler {
         protected indentSize: number;
         constructor({ indentSize }?: StringifyOption);
         protected indent(line: string): string;
+        protected indentForSize(size: number): string;
+        protected buildIndent(): string;
+        protected withIndentIncrease(multiline: string): string;
         protected pad(pad: string): (l: string) => string;
         protected printAttribute(ast: AST.Attribute): string;
         protected increaseIndent(): void;
@@ -339,15 +364,15 @@ export declare namespace AST {
         protected printComment(ast: AST.Comment): string;
         protected printOcDot(ast: AST.OcDot): string;
         protected printEdge(ast: AST.Edge): string;
+        protected stringifyExpressionElement(head: Expression | number | Variable): string;
+        protected stringifyExpressionOp(expressionOp: ExpressionOp): string;
+        stringifyExpression(expression: Expression): string;
+        protected printEdgeOpParams(edgeOpParams: EdgeOpParams): string;
         protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string;
         protected printNode(ast: AST.Node): string;
         protected printNodeRef(ast: AST.NodeRef): string;
         protected printEdgeSubgraphName(ast: AST.EdgeSubgraph): (string | null)[];
         protected printEdgeSubgraph(ast: AST.EdgeSubgraph): string;
-        protected withIndentIncrease(block: () => string): string;
-        protected withIndentDecrease(block: () => string): string;
-        protected closingBracketIndented(): string;
-        protected closingBracket(): string;
         protected printOcNet(ast: AST.OcNet): string;
         protected checkSubgraphKeyword(ast: AST.Subgraph): boolean;
         protected printSubgraphName(ast: AST.Subgraph): (string | null)[];

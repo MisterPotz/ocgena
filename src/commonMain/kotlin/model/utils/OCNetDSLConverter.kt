@@ -8,11 +8,13 @@ import dsl.PlaceDSL
 import dsl.TransitionDSL
 import dsl.VariableArcDSL
 import model.*
+import model.typea.VariableArcTypeA
 
 class OCNetDSLConverter(
     private val ocNetDSLElements: OCNetDSLElements,
+    private val placeTyping: PlaceTyping,
 ) {
-    private val foundObjectTypes: MutableMap<Int, ObjectType> = mutableMapOf()
+    private val foundObjectTypes: MutableMap<ObjectTypeId, ObjectType> = mutableMapOf()
     private val elementsIdCreator = ElementsIdCreator()
     private val createdPlaces: MutableList<Place> = mutableListOf()
     private val createdTransitions: MutableList<Transition> = mutableListOf()
@@ -33,14 +35,13 @@ class OCNetDSLConverter(
     private fun getOrCreatePlace(placeDSL: PlaceDSL): Place {
         return createdPlaces.find { placeDSL.label == it.label }
             ?: run {
-                val objectType = foundObjectTypes.getOrPut(placeDSL.objectType.id) {
-                    ObjectType(id = placeDSL.objectType.id, label = placeDSL.objectType.label)
-                }
+//                val objectType = foundObjectTypes.getOrPut(placeDSL.objectType.id) {
+//                    ObjectType(id = placeDSL.objectType.id, label = placeDSL.objectType.label)
+//                }
 
                 Place(
                     label = elementsIdCreator.createPlaceId(placeDSL),
-                    type = objectType,
-                    placeType = placeDSL.placeType,
+//                    type = objectType,
                     inputArcs = mutableListOf(),
                     outputArcs = mutableListOf(),
                     id = placeDSL.label,
@@ -130,7 +131,8 @@ class OCNetDSLConverter(
             places = Places(createdPlaces),
             transitions = Transitions(createdTransitions),
             arcs = Arcs(),
-            objectTypes =  ObjectTypes(foundObjectTypes.values.toList())
+            objectTypes =  ObjectTypes(foundObjectTypes.values.toList()),
+            placeTyping = placeTyping
         )
     }
 }

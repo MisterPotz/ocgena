@@ -1,8 +1,9 @@
 package simulation.typea
 
+import model.OcNetType
 import model.time.IntervalFunction
 import model.StaticCoreOcNet
-import model.aalst.ArcMultiplicityTypeA
+import model.typea.ArcMultiplicityTypeA
 import simulation.SimulatableComposedOcNet
 import simulation.State
 
@@ -11,6 +12,8 @@ class SimulatableOcNetTypeA(
     override val arcMultiplicity: ArcMultiplicityTypeA,
     override val intervalFunction: IntervalFunction,
 ) : SimulatableComposedOcNet<SimulatableOcNetTypeA> {
+    override val ocNetType: OcNetType = OcNetType.TYPE_A
+
     override fun createInitialState(): SimulatableComposedOcNet.State {
         return State()
     }

@@ -8,6 +8,4 @@ data class TransitionTimes(
         get() = duration.first
     val latestFiringTime
         get() = duration.last
-
-
 }

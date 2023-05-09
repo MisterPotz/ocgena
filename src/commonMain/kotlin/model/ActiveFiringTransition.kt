@@ -1,5 +1,7 @@
 package model
 
+import utils.html.color
+import utils.html.indentLines
 import utils.ANSI_CYAN
 import utils.ANSI_RESET
 import utils.ANSI_YELLOW
@@ -11,6 +13,7 @@ data class ActiveFiringTransition(
     val lockTimeByLatestObjectToken: Time,
     val relativeTimePassedSinceLock: Time,
     val duration: Int,
+    val startedAt: Time,
     val tokenSynchronizationTime: Time,
     val lockedObjectTokens: ImmutableObjectMarking,
 ) {
@@ -26,11 +29,56 @@ data class ActiveFiringTransition(
         """.trimMargin()
     }
 
-    fun prettyPrintStarted() : String {
+    fun prettyPrintHtmlLinesState() : List<String> {
+        return buildList {
+            add(
+                color(
+                    "ongoing ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]:",
+                    fontColor = "rgb(0, 133, 88)",
+                )
+            )
+            addAll(indentLines(indentation = 1, color("[locked]:", fontColor = "rgb(209, 194, 0)")))
+            addAll(
+
+                indentLines(
+                    indentation = 2,
+                    color(
+                        lockedObjectTokens.htmlLines(),
+                        fontColor = "rgb(209, 194, 0)"
+                    ),
+                    marginSymbol = "~",
+                )
+            )
+        }
+    }
+
+    fun prettyPrintStarted(): String {
         return """${font(ANSI_CYAN)}started ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]:$ANSI_RESET 
             |   ${font(ANSI_YELLOW)}[locked]:$ANSI_RESET
             |${lockedObjectTokens.toString().prependIndent("\t${font(ANSI_YELLOW)}")}
         """.trimMargin()
+    }
+
+    fun prettyPrintHtmlLinesStarted(): List<String> {
+        return buildList {
+            add(
+                color(
+                    "started ${transition.id} [until exec. ${timeLeftUntilFinish().print()}, dur. ${duration.print()}]:",
+                    fontColor = "rgb(0, 133, 88)",
+                )
+            )
+            addAll(indentLines(indentation = 1, color("[locked]:", fontColor = "rgb(209, 194, 0)")))
+            addAll(
+                indentLines(
+                    indentation = 2,
+                    color(
+                        lockedObjectTokens.htmlLines(),
+                        fontColor = "rgb(209, 194, 0)"
+                    ),
+                    marginSymbol = "~",
+                )
+            )
+        }
     }
 
     override fun toString(): String {
@@ -55,7 +103,8 @@ data class ActiveFiringTransition(
             transition: Transition,
             lockedObjectTokens: ImmutableObjectMarking,
             duration: Time,
-            tokenSynchronizationTime : Time,
+            startedAt: Time,
+            tokenSynchronizationTime: Time,
         ): ActiveFiringTransition {
             val nonEmptyPlaces = lockedObjectTokens.nonEmptyPlaces()
             require(nonEmptyPlaces.isNotEmpty())
@@ -68,6 +117,7 @@ data class ActiveFiringTransition(
                 relativeTimePassedSinceLock = 0,
                 lockedObjectTokens = lockedObjectTokens,
                 duration = duration,
+                startedAt = startedAt,
                 tokenSynchronizationTime = tokenSynchronizationTime
             )
             return activeFiringTransition.also {

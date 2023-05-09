@@ -8,17 +8,16 @@ import ast.OcNet
 import ast.Subgraph
 import ast.SubgraphSpecialTypes
 import ast.Types
-import converter.ErrorReporterContainer
-import converter.SemanticDomainErrorReporterContainer
 import error.Error
 import error.ErrorLevel
+import converter.ErrorReporterContainer
 import parse.SemanticError
 
 class StructureCheckASTVisitorBFS(
-    private val errorReporterContainer: SemanticDomainErrorReporterContainer,
+    private val errorReporterContainer: ErrorReporterContainer,
 ) : PathAcceptingASTVisitorBFS(), ErrorReporterContainer by errorReporterContainer {
 
-    private fun pushError(error: Error) {
+    override fun pushError(error: Error) {
         errorReporterContainer.pushError(error)
     }
 

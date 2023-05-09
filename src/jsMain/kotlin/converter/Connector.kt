@@ -1,9 +1,14 @@
 package converter
 
 import ast.*
-import dsl.OCScope
+import model.Arc
+import utils.mprintln
 
-class Connector(private val edge: Edge) {
+class Connector(
+    private val edge: Edge,
+    val conversionEntitiesCreator: ConversionEntitiesCreator,
+    val arcConversionCreator: ArcConversionCreator
+) {
 
     private fun createToFromIterator(): Iterator<ToFrom> {
         return EdgeToFromIterator(edge)
@@ -40,30 +45,34 @@ class Connector(private val edge: Edge) {
         return listOf()
     }
 
-    fun OCScope.tryConnectAll() {
+    fun tryConnectAll() {
         val iterable = createToFromIterator()
 
-        for (toFrom in iterable) {
-            val allNodesOfFrom = getAllNodeRefsFromEdgeFromOrTo(toFrom.from)
-            val allNodesOfTo = getAllNodeRefsFromEdgeFromOrTo(toFrom.to)
+        for (edgeFromAndEdgeTarget in iterable) {
+            val allNodesOfFrom = getAllNodeRefsFromEdgeFromOrTo(edgeFromAndEdgeTarget.from)
+            val allNodesOfTo = getAllNodeRefsFromEdgeFromOrTo(edgeFromAndEdgeTarget.to)
 
             for (fromNode in allNodesOfFrom) {
-                val fromNode = elementByLabel(fromNode) ?: continue
                 for (toNode in allNodesOfTo) {
-                    val toNode = elementByLabel(toNode) ?: continue
-                    val number = toFrom.to.edgeop.params?.number?.toInt()
-                    when (toFrom.to.edgeop.type) {
-                        OpTypes.Normal -> fromNode.arcTo(toNode) {
-                            if (number != null) {
-                                this.multiplicity = number
-                            }
-                        }
-                        OpTypes.Variable -> fromNode.variableArcTo(toNode)
-                    }
+                    val newArc  = arcConversionCreator.createArc(
+                        fromNode,
+                        toNode,
+                        edgeFromAndEdgeTarget.to
+                    )
+                    recordArcForPetriNodes(fromNode, toNode, newArc)
+                    conversionEntitiesCreator.recordArc(newArc)
                 }
             }
         }
+    }
 
+    private fun recordArcForPetriNodes(fromNodeId : String, toNodeId : String, arc: Arc) {
+        val fromNode = conversionEntitiesCreator.elementByLabel(fromNodeId)
+        val toNode = conversionEntitiesCreator.elementByLabel(toNodeId)
+
+        mprintln("fromNode $fromNode to $toNodeId : arc $arc")
+        fromNode?.outputArcs?.add(arc)
+        toNode?.inputArcs?.add(arc)
     }
 
     class ToFrom(val from: dynamic, val to: EdgeRHSElement) {
@@ -72,3 +81,4 @@ class Connector(private val edge: Edge) {
         }
     }
 }
+

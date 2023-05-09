@@ -1,21 +1,17 @@
 package model.utils
 
 import error.ConsistencyCheckError
-import model.AbsPetriAtomVisitorDFS
-import model.Arc
-import model.ObjectType
-import model.PetriAtom
-import model.Place
-import model.PlaceType
-import model.Transition
-import model.VariableArcTypeA
+import model.*
+import model.typea.VariableArcTypeA
 
 class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,
+    private val placeTyping: PlaceTyping,
+    private val inputOutputPlaces: InputOutputPlaces,
 ) : AbsPetriAtomVisitorDFS() {
-    val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
-    val obtainedInputPlaces: MutableList<Place> = mutableListOf()
-    val obtainedObjectTypes: MutableSet<ObjectType> = mutableSetOf()
+//    val obtainedOutputPlaces: MutableList<Place> = mutableListOf()
+//    val obtainedInputPlaces: MutableList<Place> = mutableListOf()
+//    val obtainedObjectTypes: MutableSet<ObjectType> = mutableSetOf()
     val inconsistenciesSet: MutableList<ConsistencyCheckError> = mutableListOf()
 
     private var discoveredSubgraphIndex: Int? = null
@@ -57,12 +53,12 @@ class ConsistencyCheckPetriAtomVisitorDFS(
     }
 
     private fun savePlaceData(place: Place) {
-        obtainedObjectTypes.add(place.type)
-        when (place.placeType) {
-            PlaceType.INPUT -> obtainedInputPlaces.add(place)
-            PlaceType.OUTPUT -> obtainedOutputPlaces.add(place)
-            PlaceType.NORMAL -> Unit
-        }
+//        obtainedObjectTypes.add(place.type)
+//        when (place.placeType) {
+//            PlaceType.INPUT -> obtainedInputPlaces.add(place)
+//            PlaceType.OUTPUT -> obtainedOutputPlaces.add(place)
+//            PlaceType.NORMAL -> Unit
+//        }
     }
 
     private fun recordIfArcConsistencyErrors(arc: Arc) {
@@ -152,7 +148,9 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             for (outputArc in transition.outputArcs) {
                 val outputPlace = (outputArc.arrowNode ?: continue) as Place
 
-                if (inputPlace.type == outputPlace.type) {
+                val inputPlaceType = placeTyping[inputPlace]
+                val outputPlaceType = placeTyping[outputPlace]
+                if (inputPlaceType == outputPlaceType) {
                     // arcs must be of same type
                     val arcsOfSameType = inputArc.isSameArcType(outputArc)
 
@@ -204,14 +202,15 @@ class ConsistencyCheckPetriAtomVisitorDFS(
                 )
             )
         }
+
         // case 2 - input place has input arcs
-        if (place.placeType == PlaceType.INPUT && place.inputArcs.isNotEmpty()) {
+        if (inputOutputPlaces[place] == PlaceType.INPUT && place.inputArcs.isNotEmpty()) {
             inconsistenciesSet.add(
                 ConsistencyCheckError.InputPlaceHasInputArcs(place, copyAndAppendTraversalPath(place))
             )
         }
         // case 3 - output place has output arcs
-        if (place.placeType == PlaceType.OUTPUT && place.outputArcs.isNotEmpty()) {
+        if (inputOutputPlaces[place] == PlaceType.OUTPUT && place.outputArcs.isNotEmpty()) {
             inconsistenciesSet.add(
                 ConsistencyCheckError.OutputPlaceHasOutputArcs(place, copyAndAppendTraversalPath(place))
             )

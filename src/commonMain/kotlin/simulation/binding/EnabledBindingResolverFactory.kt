@@ -2,12 +2,12 @@ package simulation.binding
 
 import model.ArcMultiplicity
 import model.Arcs
-import model.aalst.ArcMultiplicityTypeA
-import model.lomazova.ExpressionArcMultiplicity
+import model.typea.ArcMultiplicityTypeA
+import model.typel.ExpressionArcMultiplicity
 import simulation.PMarkingProvider
 import simulation.random.TokenSelector
 import simulation.time.TransitionOccurrenceAllowedTimes
-import simulation.typea.EnabledBindingPlainResolver
+import simulation.typea.EnabledBindingTypeAResolver
 
 class EnabledBindingResolverFactory(
     private val arcMultiplicity: ArcMultiplicity,
@@ -18,7 +18,7 @@ class EnabledBindingResolverFactory(
 ) {
     fun create() : EnabledBindingResolver {
         return when (arcMultiplicity) {
-            is ArcMultiplicityTypeA -> EnabledBindingPlainResolver(
+            is ArcMultiplicityTypeA -> EnabledBindingTypeAResolver(
                 pMarkingProvider,
                 arcMultiplicity,
                 arcs = arcs,

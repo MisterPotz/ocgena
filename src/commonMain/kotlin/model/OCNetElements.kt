@@ -11,7 +11,14 @@ interface OCNetElements {
 
     val objectTypes : ObjectTypes
 
-    val labelsActivities : LabelsActivities
-
     val placeTyping: PlaceTyping
+}
+
+typealias PlaceId = String
+
+interface OCNetSimulationData {
+    val inputPlaces : List<PlaceId>
+    val outputPlaces : List<PlaceId>
+
+
 }

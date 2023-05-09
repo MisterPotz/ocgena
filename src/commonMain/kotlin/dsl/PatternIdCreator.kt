@@ -1,8 +1,8 @@
 package dsl
 
 class PatternIdCreator(
-    private val startIndex : Int,
-    private val formatter: (index: Int) -> String,
+    private val startIndex : Long,
+    private val formatter: (index: Long) -> String,
 ) {
     private var idIssuer: IdIssuer = IdIssuer(startIndex)
 
@@ -11,7 +11,7 @@ class PatternIdCreator(
         return formatter(index)
     }
 
-    fun newIntId() : Int {
+    fun newIntId() : Long {
         return idIssuer.createId()
     }
 
@@ -25,7 +25,7 @@ class PatternIdCreator(
             return formatter(index)
         }
 
-    val lastIntId : Int
+    val lastIntId : Long
         get() {
             return idIssuer.lastUsed
         }

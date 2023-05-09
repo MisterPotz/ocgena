@@ -2,12 +2,11 @@ package utils
 
 import model.Time
 
-fun mprintln(string: Any? = null) {
-    if (string != null) {
-        print(string)
-    }
-    spprintln()
+fun String.toIds() : Collection<String> {
+    return split(" ")
 }
+
+expect fun mprintln(string: Any?)
 
 expect fun spprintln()
 

@@ -4,7 +4,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import simulation.binding.ActiveTransitionFinisherImpl
-import simulation.binding.InputToOutputPlaceResolverFactory
+import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
 import simulation.time.TransitionDurationSelector
@@ -37,9 +37,12 @@ class SimulationTask(
         bindingSelector,
         transitionFinisher = ActiveTransitionFinisherImpl(
             state.pMarking,
-            inputToOutputPlaceResolver = InputToOutputPlaceResolverFactory(
-                arcMultiplicity = ocNet.arcMultiplicity,
-                arcs = ocNet.coreOcNet.arcs
+            inputToOutputPlaceResolver = BindingOutputMarkingResolverFactory(
+                arcs = ocNet.coreOcNet.arcs,
+                ocNetType = ocNet.ocNetType,
+                placeTyping = ocNet.coreOcNet.placeTyping,
+                objectTokenGenerator = simulationParams.objectTokenGenerator,
+                objectTokenMoverFactory = ObjectTokenMoverFactory(tokenSelector, ocNetType = simulationParams.ocNetType)
             ).create(),
             logger,
             simulationTime
