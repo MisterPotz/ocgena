@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 import { ActivityBar } from "../activity-bar";
 import { AuxiliaryBar } from "../auxiliary-bar";
@@ -7,6 +7,8 @@ import { Panel } from "../panel";
 import { Sidebar } from "../sidebar";
 import { Allotment, LayoutPriority } from "allotment";
 import { ActionBar } from "../actions-bar";
+import { GraphvizPane } from "../graphviz-pane";
+import Graph from "renderer/components/Graph";
 
 export interface Document {
   title: string;
@@ -41,6 +43,7 @@ export type AppProps = {
   onEditorVisibleChanged: (visible: boolean) => void;
   onOpenEditorsChanged: (documents: Document[]) => void;
   onPanelVisibleChanged: (visible: boolean) => void;
+
 };
 
 export const AppEditor = ({
@@ -59,6 +62,13 @@ export const AppEditor = ({
   onOpenEditorsChanged,
   onPanelVisibleChanged,
 }: AppProps) => {
+
+  const [onParentSizeUpdate, setOnParentSizeUpdate] = useState<(() => void) | null>(null);
+
+  const registerParentSizeUpdate: (onParentSizeUpdate: () => void) => void = (onParentSizeUpdate: () => void) => {
+    setOnParentSizeUpdate(() => onParentSizeUpdate);
+  }
+
   const auxiliarySidebar = (
     <Allotment.Pane
       key="auxiliarySidebar"
@@ -67,8 +77,9 @@ export const AppEditor = ({
       preferredSize={300}
       visible={secondarySideBar}
       snap
+
     >
-      <AuxiliaryBar />
+      <GraphvizPane dotSrc="" registerParentSizeUpdate={registerParentSizeUpdate}/>
     </Allotment.Pane>
   );
 
@@ -96,14 +107,21 @@ export const AppEditor = ({
     <Allotment proportionalLayout={false} vertical>
 
       <Allotment.Pane maxSize={48} minSize={48}>
-        <ActionBar pauseButtonEnabled 
+        <ActionBar pauseButtonEnabled
           startButtonMode="start"
-           onClickStart={onClickStart}
-           onClickRefresh={onClickRefresh} />
+          onClickStart={onClickStart}
+          onClickRefresh={onClickRefresh} />
       </Allotment.Pane>
 
+
+
       <Allotment.Pane>
-        <Allotment>
+        <Allotment onChange={() => {
+          if (onParentSizeUpdate) {
+            console.log("invoking update function");
+            onParentSizeUpdate();
+          }
+        }}>
           <Allotment.Pane
             key="activityBar"
             minSize={48}

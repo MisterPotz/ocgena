@@ -27,12 +27,12 @@ export function ActionBar(
                 relative
                 flex-row
                 flex    
-                px-3 py-2
+                px-2 py-2
                 text-green-500
                 rounded-sm
                 active:bg-green-800`}>
-                <div className='codicon codicon-debug-start relative bottom-0.5'></div>
-                <div className='ps-1 text-gray-200 relative text-sm'>Start</div>
+                <div className={`codicon codicon-debug-start relative text-sm ${styles.myCodeIcon}`}></div>
+                <div className='ps-1 text-gray-200 relative text-sm pe-1'>Start</div>
             </button>
 
             <button onClick={onClickRefresh} className={`
@@ -40,13 +40,13 @@ export function ActionBar(
                 relative
                 flex-row
                 flex    
-                px-3 py-2
+                px-2 py-2
                 text-yellow-400
                 ms-2
                 rounded-sm
                 active:bg-yellow-700`}>
-                <div className='codicon codicon-debug-restart'></div>
-                <div className='ps-1 text-gray-200 relative text-sm'>Reload</div>
+                <div className={`codicon codicon-debug-restart relative text-sm ${styles.myCodeIcon}`}></div>
+                <div className='ps-1 text-gray-200 relative text-sm pe-1'>Reload</div>
             </button>
         </div>
     )

@@ -6,6 +6,9 @@
     font-display: block;
   }
   
+.myCodeIcon {
+  top: 1px;
+}
 
 .actionBar {
     flex-direction: row;
