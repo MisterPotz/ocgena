@@ -13,13 +13,28 @@ export const Editor: FC = () => {
 				if (editor) return editor;
 
 				if (!isOcDotRegistered()) { 
+					monaco.editor.defineTheme("ocDotTheme", {
+						base: "vs", // can also be vs-dark or hc-black
+						inherit: true, // can also be false to completely replace the builtin rules
+						rules: [
+							{ token: "mult", foreground: "2563eb", fontStyle: "italic bold" },
+						],
+						colors: {
+						},
+
+					});
+
 					registerOcDot();
 				}
+
 
 				return monaco.editor.create(monacoEl.current!, {
 					value: ['digraph {\n\ta -> b\n}'].join('\n'),
 					language: 'ocdot',
 					automaticLayout: true,
+					theme: 'ocDotTheme',
+					fontLigatures: true,
+					autoIndent: 'full'
 				});
 			});
 		}

@@ -18,21 +18,16 @@ export function registerOcDot() {
 }
 
 export const ocDotLanguage = <languages.IMonarchLanguage>{
-    // Difficulty: Easy
-    // Dot graph language.
-    // See http://www.rise4fun.com/Agl
-
     // Set defaultToken to invalid to see what you do not tokenize yet
     // defaultToken: 'invalid',
 
     keywords: [
-        'strict', 'ocnet', 'graph', 'digraph', 'node', 'edge', 'subgraph', 'rank', 'abstract',
+        'strict', 'graph', 'digraph', 'node', 'edge', 'subgraph', 'rank', 'abstract',
         'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw', 'c', '_',
-        '->', '=>', ':', '=', ',','transitions', 'places'
+        '->', ':', '=', ',',
     ],
 
     builtins: [
-        
         'rank', 'rankdir', 'ranksep', 'size', 'ratio',
         'label', 'headlabel', 'taillabel',
         'arrowhead', 'samehead', 'samearrowhead',
@@ -51,7 +46,6 @@ export const ocDotLanguage = <languages.IMonarchLanguage>{
     // we include these common regular expressions
     symbols: /[=><!~?:&|+\-*\/\^%]+/,
 
-
     // The main tokenizer for our languages
     tokenizer: {
         root: [
@@ -68,8 +62,15 @@ export const ocDotLanguage = <languages.IMonarchLanguage>{
             // whitespace
             { include: '@whitespace' },
 
+            // declare for multiplicities arithmetics
+            [/(?=(\([()+\-\d*\s\w]+(=>|->)))/, 'mult','@mult'],
+
+
             // html identifiers
             [/<(?!@symbols)/, { token: 'string.html.quote', bracket: '@open', next: 'html' }],
+
+            // do not scan as brackets 
+            // [/\((?=(@symbols|@numbers)+\)@whitespace->)/, 'multiplicity.operator', '@multiplicity'],
 
             // delimiters and operators
             [/[{}()\[\]]/, '@brackets'],
@@ -116,11 +117,40 @@ export const ocDotLanguage = <languages.IMonarchLanguage>{
             [/"/, { token: 'string.quote', bracket: '@close', next: '@pop' }]
         ],
 
+        mult: [
+            // not arrows nor opening/closinj brackat, cauz we wanna track in the stack all da brakkaz
+            [/((?!((->)|(=>)|\(|\))).)+/, 'mult'],
+            // [/bro/, 'broment', "@push"],
+            [/\(/, 'mult', '@push'],
+            [/\)/, 'mult', '@pop'],
+            [/((->)|(=>))/, 'mult', "@pop"],
+          ],
+
         whitespace: [
             [/[ \t\r\n]+/, 'white'],
             [/\/\*/, 'comment', '@comment'],
             [/\/\/.*$/, 'comment'],
             [/#.*$/, 'comment'],
         ],
+
+        // multiplicity: [
+        //     [/\(/, { token: '@brackets.type' }, '@multiplicity_nested'],
+        //     { include: '@multiplicity_content' }
+        // ],
+        // multiplicity_nested: [
+        //     [/\)/, { token: '@brackets.type' }, '@pop'],
+        //     [/\(/, { token: '@brackets.type' }, '@push'],
+        //     { include: '@multiplicity_content' }
+        // ],
+
+        // multiplicity_content: [
+        //     { include: '@whitespace' },
+        //     { include: '@symbols' },
+        //     { include: '@numbers' },
+        //     // // type identifiers
+        //     // [/@symbols|@numbers/, 'multiplicity.item'],
+        //     ['', '', '@pop']  // catch all
+        // ]
+
     },
 };
