@@ -22,7 +22,7 @@ export const ocDotLanguage = <languages.IMonarchLanguage>{
     // defaultToken: 'invalid',
 
     keywords: [
-        'strict', 'graph', 'digraph', 'node', 'edge', 'subgraph', 'rank', 'abstract',
+        'ocnet', 'strict', 'graph', 'digraph', 'node', 'edge', 'subgraph', 'rank', 'abstract',
         'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw', 'c', '_',
         '->', ':', '=', ',',
     ],

@@ -3,6 +3,7 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import React from 'react';
 import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 
+
 export const Editor: FC = () => {
 	const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 	const monacoEl = useRef(null);
@@ -28,14 +29,19 @@ export const Editor: FC = () => {
 				}
 
 
-				return monaco.editor.create(monacoEl.current!, {
+				let newEditor = monaco.editor.create(monacoEl.current!, {
 					value: ['digraph {\n\ta -> b\n}'].join('\n'),
 					language: 'ocdot',
 					automaticLayout: true,
 					theme: 'ocDotTheme',
 					fontLigatures: true,
-					autoIndent: 'full'
+					autoIndent: 'full',
+				
 				});
+				newEditor.addCommand(monaco.KeyCode.F9, function () {
+					alert("F9 pressed!");
+				});
+				return newEditor;
 			});
 		}
 
