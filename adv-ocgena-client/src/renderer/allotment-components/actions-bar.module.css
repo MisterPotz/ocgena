@@ -1,0 +1,19 @@
+@font-face {
+    src: url("../../../assets/fonts/fira_sans/FiraSans-Regular.ttf") format("truetype");
+    font-family: "Fira Sans";
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+  }
+  
+
+.actionBar {
+    flex-direction: row;
+    display: flex;
+    
+    align-items: center;
+    justify-content: flex-end;
+    font-family: 'Fira Sans', sans-serif;
+    background-color: rgb(37, 37, 37);
+    padding: 0px 8px;
+}

@@ -6,6 +6,7 @@ import { Editor } from "../editor";
 import { Panel } from "../panel";
 import { Sidebar } from "../sidebar";
 import { Allotment, LayoutPriority } from "allotment";
+import { ActionBar } from "../actions-bar";
 
 export interface Document {
   title: string;
@@ -34,6 +35,8 @@ export type AppProps = {
   primarySideBar: boolean;
   primarySideBarPosition: "left" | "right";
   secondarySideBar: boolean;
+  onClickStart: () => void;
+  onClickRefresh: () => void;
   onActivityChanged: (activity: number) => void;
   onEditorVisibleChanged: (visible: boolean) => void;
   onOpenEditorsChanged: (documents: Document[]) => void;
@@ -49,6 +52,8 @@ export const AppEditor = ({
   primarySideBar,
   primarySideBarPosition,
   secondarySideBar,
+  onClickStart,
+  onClickRefresh,
   onActivityChanged,
   onEditorVisibleChanged,
   onOpenEditorsChanged,
@@ -88,77 +93,90 @@ export const AppEditor = ({
   );
 
   return (
-    <Allotment proportionalLayout={false}>
-      <Allotment.Pane
-        key="activityBar"
-        minSize={48}
-        maxSize={48}
-        visible={activityBar}
-      >
-        <ActivityBar
-          checked={activity}
-          items={[
-            "files",
-            "search",
-            "source-control",
-            "debug-alt",
-            "extensions",
-          ]}
-          onClick={(index) => {
-            onActivityChanged(index);
-          }}
-        />
+    <Allotment proportionalLayout={false} vertical>
+
+      <Allotment.Pane maxSize={48} minSize={48}>
+        <ActionBar pauseButtonEnabled 
+          startButtonMode="start"
+           onClickStart={onClickStart}
+           onClickRefresh={onClickRefresh} />
       </Allotment.Pane>
-      {primarySideBarPosition === "left" ? sidebar : auxiliarySidebar}
-      <Allotment.Pane
-        key="content"
-        minSize={300}
-        priority={LayoutPriority.High}
-      >
-        <Allotment
-          vertical
-          snap
-          onVisibleChange={(index, value) => {
-            if (index === 0) {
-              onEditorVisibleChanged(value);
-            } else if (index === 1) {
-              onPanelVisibleChanged(value);
-            }
-          }}
-        >
-          <Allotment.Pane key="editor" minSize={70} visible={editorVisible}>
-            <Editor
-              documents={openEditors}
-              onDocumentsChange={(documents) => {
-                onOpenEditorsChanged(documents);
-              }}
-            />
-          </Allotment.Pane>
+
+      <Allotment.Pane>
+        <Allotment>
           <Allotment.Pane
-            key="terminal"
-            minSize={78}
-            preferredSize="40%"
-            visible={panelVisible}
+            key="activityBar"
+            minSize={48}
+            maxSize={48}
+            visible={activityBar}
           >
-            <Panel
-              maximized={!editorVisible}
-              onClose={() => {
-                onEditorVisibleChanged(true);
-                onPanelVisibleChanged(false);
-              }}
-              onMaximize={() => {
-                onEditorVisibleChanged(false);
-                onPanelVisibleChanged(true);
-              }}
-              onMinimize={() => {
-                onEditorVisibleChanged(true);
-                onPanelVisibleChanged(true);
+            <ActivityBar
+              checked={activity}
+              items={[
+                "files",
+                "search",
+                "source-control",
+                "debug-alt",
+                "extensions",
+              ]}
+              onClick={(index) => {
+                onActivityChanged(index);
               }}
             />
           </Allotment.Pane>
+          {primarySideBarPosition === "left" ? sidebar : auxiliarySidebar}
+          <Allotment.Pane
+            key="content"
+            minSize={300}
+            priority={LayoutPriority.High}
+          >
+            <Allotment
+              vertical
+              snap
+              onVisibleChange={(index, value) => {
+                if (index === 0) {
+                  onEditorVisibleChanged(value);
+                } else if (index === 1) {
+                  onPanelVisibleChanged(value);
+                }
+              }}
+            >
+              <Allotment.Pane key="editor" minSize={70} visible={editorVisible}>
+                <Editor
+                  documents={openEditors}
+                  onDocumentsChange={(documents) => {
+                    onOpenEditorsChanged(documents);
+                  }}
+                />
+              </Allotment.Pane>
+              <Allotment.Pane
+                key="terminal"
+                minSize={78}
+                preferredSize="40%"
+                visible={panelVisible}
+              >
+                <Panel
+                  maximized={!editorVisible}
+                  onClose={() => {
+                    onEditorVisibleChanged(true);
+                    onPanelVisibleChanged(false);
+                  }}
+                  onMaximize={() => {
+                    onEditorVisibleChanged(false);
+                    onPanelVisibleChanged(true);
+                  }}
+                  onMinimize={() => {
+                    onEditorVisibleChanged(true);
+                    onPanelVisibleChanged(true);
+                  }}
+                />
+              </Allotment.Pane>
+            </Allotment>
+          </Allotment.Pane>
+          {primarySideBarPosition === "right" ? sidebar : auxiliarySidebar}
+
         </Allotment>
       </Allotment.Pane>
-      {primarySideBarPosition === "right" ? sidebar : auxiliarySidebar}
     </Allotment>
   );
 };

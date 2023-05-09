@@ -49,6 +49,8 @@ export const VisualStudioCode = ({
           onEditorVisibleChanged={setEditorVisible}
           onOpenEditorsChanged={setOpenEditors}
           onPanelVisibleChanged={setPanelVisible}
+          onClickStart={() => {}}
+          onClickRefresh={() => {}}
         />
       </div>
     );
