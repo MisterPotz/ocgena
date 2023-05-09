@@ -1,6 +1,7 @@
 import { FC, useRef, useState, useEffect } from 'react';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import React from 'react';
+import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 
 export const Editor: FC = () => {
 	const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -11,11 +12,14 @@ export const Editor: FC = () => {
 			setEditor((editor) => {
 				if (editor) return editor;
 
-				return monaco.editor.create(monacoEl.current!, {
-					value: ['function x() {', '\tconsole.log("Hello world!");', '}'].join('\n'),
-					language: 'typescript',
-					automaticLayout: true,
+				if (!isOcDotRegistered()) { 
+					registerOcDot();
+				}
 
+				return monaco.editor.create(monacoEl.current!, {
+					value: ['digraph {\n\ta -> b\n}'].join('\n'),
+					language: 'ocdot',
+					automaticLayout: true,
 				});
 			});
 		}
