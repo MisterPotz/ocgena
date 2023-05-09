@@ -2,17 +2,19 @@ import React, { useState } from "react";
 
 import { ActivityBar } from "../activity-bar";
 import { AuxiliaryBar } from "../auxiliary-bar";
-import { Editor } from "../editor";
+import { EditorParent, EditorParentProps } from "../editor";
 import { Panel } from "../panel";
 import { Sidebar } from "../sidebar";
 import { Allotment, LayoutPriority } from "allotment";
 import { ActionBar } from "../actions-bar";
 import { GraphvizPane } from "../graphviz-pane";
 import Graph from "renderer/components/Graph";
+import { EditorProps } from "renderer/components/Editor";
 
 export interface Document {
   title: string;
   icon: string;
+  editorProps: EditorProps
 }
 
 export const ACTIVITIES = [
@@ -23,10 +25,21 @@ export const ACTIVITIES = [
   "Extensions",
 ];
 
-export const DOCUMENTS = [
-  { title: "allotment.tsx", icon: "ts" },
-  { title: "allotment.module.css", icon: "css" },
-];
+export function createOcDotEditor(
+  onNewInput: (input: string) => void,
+  ocDot?: string | null,
+) : Document[]{
+  return [
+    {
+      title: "ocdot file", icon: "ts", editorProps: {
+        editorId: "ocdot",
+        onNewInput,
+        ocDot: ocDot || null
+      },
+    },
+    // { title: "yaml", icon: "css" },
+  ];
+}
 
 export type AppProps = {
   activity: number;
@@ -38,6 +51,7 @@ export type AppProps = {
   primarySideBarPosition: "left" | "right";
   secondarySideBar: boolean;
   onClickStart: () => void;
+  onOpenNewFile: () => void;
   onClickRefresh: () => void;
   onActivityChanged: (activity: number) => void;
   onEditorVisibleChanged: (visible: boolean) => void;
@@ -55,6 +69,7 @@ export const AppEditor = ({
   primarySideBar,
   primarySideBarPosition,
   secondarySideBar,
+  onOpenNewFile,
   onClickStart,
   onClickRefresh,
   onActivityChanged,
@@ -79,7 +94,7 @@ export const AppEditor = ({
       snap
 
     >
-      <GraphvizPane dotSrc="" registerParentSizeUpdate={registerParentSizeUpdate}/>
+      <GraphvizPane dotSrc="" registerParentSizeUpdate={registerParentSizeUpdate} />
     </Allotment.Pane>
   );
 
@@ -94,7 +109,7 @@ export const AppEditor = ({
     >
       <Sidebar
         title={ACTIVITIES[activity]}
-        documents={DOCUMENTS}
+        documents={openEditors}
         openEditors={openEditors}
         onOpenEditorsChange={(openEditor) => {
           onOpenEditorsChanged(openEditor);
@@ -110,7 +125,8 @@ export const AppEditor = ({
         <ActionBar pauseButtonEnabled
           startButtonMode="start"
           onClickStart={onClickStart}
-          onClickRefresh={onClickRefresh} />
+          onClickRefresh={onClickRefresh}
+          onOpenNewFile={onOpenNewFile} />
       </Allotment.Pane>
 
 
@@ -160,7 +176,7 @@ export const AppEditor = ({
               }}
             >
               <Allotment.Pane key="editor" minSize={70} visible={editorVisible}>
-                <Editor
+                <EditorParent
                   documents={openEditors}
                   onDocumentsChange={(documents) => {
                     onOpenEditorsChanged(documents);

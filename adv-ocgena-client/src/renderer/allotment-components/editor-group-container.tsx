@@ -1,10 +1,11 @@
 import classNames from "classnames";
 
 import styles from "./editor-group-container.module.css";
-import { EditorWrapper } from "renderer/components/Editor";
+import { EditorProps, EditorWrapper } from "renderer/components/Editor";
 
 export type EditorGroupContainerProps = {
   document: { title: string; icon: string };
+  editorProps : EditorProps
   onClose: () => void;
   onSplitEditor: () => void;
 };
@@ -13,6 +14,7 @@ export const EditorGroupContainer = ({
   document,
   onClose,
   onSplitEditor,
+  editorProps
 }: EditorGroupContainerProps) => {
   return (
     <div className={styles.editorGroupContainer}>
@@ -55,7 +57,7 @@ export const EditorGroupContainer = ({
         <div className={styles.editorActions}></div>
       </div>
       <div className={`${styles.editorContainer} w-full h-full`}>
-        <EditorWrapper />
+        <EditorWrapper {...editorProps} />
       </div>
     </div>
   );

@@ -1,8 +1,11 @@
-import { useState } from "react";
-import { AppEditor, DOCUMENTS } from "./allotment-components";
+import { useEffect, useState } from "react";
+import { AppEditor, createOcDotEditor } from "./allotment-components";
 import { Document } from "./allotment-components";
 import styles from "./VisualStudioCode.module.css";
 import classNames from "classnames";
+import { useObservable, useObservableState } from "observable-hooks";
+import { appService } from "./AppService";
+import { map } from "rxjs/operators";
 console.log(styles)
 
 export const DefaultVisualStudioCode = (
@@ -10,7 +13,7 @@ export const DefaultVisualStudioCode = (
   return VisualStudioCode(
     {
       activityBar: true,
-      primarySideBar: true,
+      primarySideBar: false,
       primarySideBarPosition: "left",
       secondarySideBar: true,
     }
@@ -22,6 +25,10 @@ type VSCodeParams = {
   primarySideBar: boolean;
   primarySideBarPosition: "left" | "right";
   secondarySideBar: boolean;
+  ocDotSrc?: string,
+}
+const onNewInput = (newInput : string ) => {
+  appService.openNewFile();
 }
 
 export const VisualStudioCode = ({
@@ -33,8 +40,17 @@ export const VisualStudioCode = ({
   const [editorVisible, setEditorVisible] = useState(true);
   const [panelVisible, setPanelVisible] = useState(true);
   const [activity, setActivity] = useState(0);
-  const [openEditors, setOpenEditors] = useState<Document[]>(DOCUMENTS);
+  const [openEditors, setOpenEditors] = useState<Document[]>(() => createOcDotEditor(onNewInput, null));
+  
+  const [ocDot, updateOcDot] = useObservableState(() => {
+    return appService.getFileSourceOcDotObservable().pipe(map((value, index) => {
+      console.log("mapping opened file " + value)
+      setOpenEditors(createOcDotEditor(onNewInput, value))
+      return value;
+    }));
+  }, null);
 
+  console.log("open Editors + " + JSON.stringify(openEditors));
   return (
     <div className={classNames(styles.editorsContainer, "w-full", "h-full")}>
       <AppEditor
@@ -52,6 +68,10 @@ export const VisualStudioCode = ({
         onPanelVisibleChanged={setPanelVisible}
         onClickStart={() => { }}
         onClickRefresh={() => { }}
+        onOpenNewFile={() => {
+          console.log("opening new file");
+          appService.openNewFile();
+        }}
       />
     </div>
   );

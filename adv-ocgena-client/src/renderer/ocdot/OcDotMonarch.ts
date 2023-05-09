@@ -25,6 +25,7 @@ export const ocDotLanguage = <languages.IMonarchLanguage>{
         'ocnet', 'strict', 'graph', 'digraph', 'node', 'edge', 'subgraph', 'rank', 'abstract',
         'n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw', 'c', '_',
         '->', ':', '=', ',',
+        'transitions', 'places'
     ],
 
     builtins: [

@@ -2,12 +2,25 @@ import { FC, useRef, useState, useEffect } from 'react';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import React from 'react';
 import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
+import { appService } from 'renderer/AppService';
 
+export type EditorProps = {
+	editorId : string,
+	onNewInput: (newInput: string) => void, 
+	ocDot?: string | null,
+}
 
-export const Editor: FC = () => {
+export const Editor = (
+	{
+		editorId,
+		onNewInput,
+		ocDot
+	} : EditorProps
+) => {
 	const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 	const monacoEl = useRef(null);
 
+	console.log("receiving at editor this input: " + ocDot);
 	useEffect(() => {
 		if (monacoEl) {
 			setEditor((editor) => {
@@ -38,8 +51,11 @@ export const Editor: FC = () => {
 					autoIndent: 'full',
 				
 				});
-				newEditor.addCommand(monaco.KeyCode.F9, function () {
-					alert("F9 pressed!");
+				newEditor.onDidChangeModelContent(function (event) {
+					
+					let newContent = newEditor.getValue();
+					console.log("new content of editor " + newContent);
+					appService.onNewOcDotEditorValue(newContent)
 				});
 				return newEditor;
 			});
@@ -48,11 +64,19 @@ export const Editor: FC = () => {
 		return () => editor?.dispose();
 	}, [monacoEl.current]);
 
+	useEffect(() => {
+		if (editor) {
+			console.log("setting ocdot to editor from file")
+			editor.setValue(ocDot ? ocDot : "");
+		}
+	}, [ocDot])
+
 	return <div className='container h-full w-full' ref={monacoEl}></div>;
 };
 
-export const EditorWrapper = () => {
+export const EditorWrapper = (editorProps : EditorProps) => {
+	console.log("at wrapper have " + JSON.stringify(editorProps))
 	return (<React.StrictMode>
-		<Editor />
+		<Editor {...editorProps}/>
 	</React.StrictMode>);
 }

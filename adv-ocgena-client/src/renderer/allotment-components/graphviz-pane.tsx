@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react"
 
 import Graph from "renderer/components/Graph"
-
+import { useObservableState } from 'observable-hooks';
+import { appService } from "renderer/AppService";
 export type GraphvizProps = {
     dotSrc: string,
     registerParentSizeUpdate: (onParentSizeUpdate: () => void) => void;
@@ -11,7 +12,7 @@ export const GraphvizPane = (
     {
         registerParentSizeUpdate,
         dotSrc
-    } : GraphvizProps
+    }: GraphvizProps
 ) => {
 
     // const [graphvizs, setGraphviz] = useState<string>("digraph {a -> b}'")
@@ -35,14 +36,18 @@ export const GraphvizPane = (
 
     // }, [dotString])
 
+    const [dot, updateDot] = useObservableState(() => appService.getGraphvizObservable(), "");
+
+    console.log("doing this dot: \n" + dot);
+
     return (
         <div className="w-full h-full bg-white">
-            <Graph 
-            dotSrc={"digraph {a -> b}"}
-            fit
-            transitionDuration={1}
-            registerParentSizeUpdate={registerParentSizeUpdate}
-        />
+            <Graph
+                dotSrc={dot}
+                fit
+                transitionDuration={1}
+                registerParentSizeUpdate={registerParentSizeUpdate}
+            />
         </div>
     )
 }

@@ -6,6 +6,7 @@ export type ActionBarProps = {
     pauseButtonEnabled: boolean,
     onClickStart: () => void,
     onClickRefresh: () => void,
+    onOpenNewFile: () => void,
 }
 
 export function ActionBar(
@@ -13,7 +14,8 @@ export function ActionBar(
         startButtonMode,
         pauseButtonEnabled,
         onClickStart,
-        onClickRefresh
+        onClickRefresh,
+        onOpenNewFile,
     }: ActionBarProps
 ) {
     let showOutline = startButtonMode == "executing"
@@ -47,6 +49,20 @@ export function ActionBar(
                 active:bg-yellow-700`}>
                 <div className={`codicon codicon-debug-restart relative text-sm ${styles.myCodeIcon}`}></div>
                 <div className='ps-1 text-gray-200 relative text-sm pe-1'>Reload</div>
+            </button>
+
+            <button onClick={onOpenNewFile} className={`
+                bg-zinc-700
+                relative
+                flex-row
+                flex    
+                px-2 py-2
+                text-gray-200
+                ms-2
+                rounded-sm
+                active:bg-zinc-400`}>
+                <div className={`codicon codicon-symbol-file relative text-sm ${styles.myCodeIcon}`}></div>
+                <div className='ps-1 text-gray-200 relative text-sm pe-1'>Open file</div>
             </button>
         </div>
     )

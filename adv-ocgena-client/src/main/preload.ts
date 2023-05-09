@@ -2,7 +2,13 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type Channels = 'ipc-example';
+export type Channels =
+  | 'open'
+  | 'file-opened'
+  | 'start'
+  | 'reload'
+  | 'parsed-oc-dot'
+  | 'processed-oc-dot-errors';
 
 const electronHandler = {
   ipcRenderer: {

@@ -37,7 +37,7 @@ export class OCDotToDOTConverter extends AST.Compiler {
   }
 
   protected findColorAttr(ast: AST.Edge): string | null {
-    return ast.body.find((attr) => attr.key.value == 'color')?.value?.value;
+    return ast.body.find((attr) => attr.key.value == 'color')?.value?.value || null;
   }
 
   protected makeEdgeOpColorAttr(edgeOp: '->' | '=>', color: string | null): string {
@@ -77,6 +77,14 @@ export class OCDotToDOTConverter extends AST.Compiler {
       }
 
       return pairs;
+    } else if (size == 1) { 
+      return [
+        <EdgePair>{
+          from : ast.from,
+          to: ast.targets[0].id,
+          edgeOp: ast.targets[0].edgeop.type
+        }
+      ]
     } else {
       return []
     }
