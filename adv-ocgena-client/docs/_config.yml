@@ -1,0 +1,22 @@
+title: OCGENA
+description: A tool to study object-centric business process and generate object-centric event-logs.
+theme: just-the-docs
+
+url: https://just-the-docs.github.io
+
+color_scheme: light
+
+aux_links:
+  # Template Repository: https://github.com/just-the-docs/just-the-docs-template
+  GitHub: https://github.com/MisterPotz/ocgena
+
+aux_links_new_tab: false
+baseurl: "/docs" # Change this to match your desired path
+
+callouts:
+  warning:
+    title: Warning
+    color: red
+  construction:
+    title: Under construction
+    color: yellow

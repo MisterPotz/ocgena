@@ -5,6 +5,7 @@ import {
   BrowserWindow,
   MenuItemConstructorOptions,
 } from 'electron';
+import { createDocumentationWindow } from './documentation';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -264,9 +265,10 @@ export default class MenuBuilder {
           {
             label: 'Documentation',
             click() {
-              shell.openExternal(
-                'https://github.com/electron/electron/tree/main/docs#readme'
-              );
+              createDocumentationWindow();
+              // shell.openExternal(
+              //   'https://github.com/electron/electron/tree/main/docs#readme'
+              // );
             },
           },
           {
