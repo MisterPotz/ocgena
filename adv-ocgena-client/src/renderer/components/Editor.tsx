@@ -4,7 +4,7 @@ import React from 'react';
 import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 import { appService } from 'renderer/AppService';
 
-export type EditorProps = {
+export type OcDotEditorProps = {
 	editorId : string,
 	onNewInput: (newInput: string) => void, 
 	ocDot?: string | null,
@@ -15,12 +15,13 @@ export const Editor = (
 		editorId,
 		onNewInput,
 		ocDot
-	} : EditorProps
+	} : OcDotEditorProps
 ) => {
 	const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 	const monacoEl = useRef(null);
 
 	console.log("receiving at editor this input: " + ocDot);
+
 	useEffect(() => {
 		if (monacoEl) {
 			setEditor((editor) => {
@@ -74,7 +75,7 @@ export const Editor = (
 	return <div className='container h-full w-full' ref={monacoEl}></div>;
 };
 
-export const EditorWrapper = (editorProps : EditorProps) => {
+export const EditorWrapper = (editorProps : OcDotEditorProps) => {
 	console.log("at wrapper have " + JSON.stringify(editorProps))
 	return (<React.StrictMode>
 		<Editor {...editorProps}/>

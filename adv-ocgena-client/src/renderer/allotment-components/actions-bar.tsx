@@ -67,7 +67,7 @@ export function ActionBar(
             />
 
             <ActionButton
-                onClick={onClickRefresh}
+                onClick={onOpenNewFile}
                 iconClass='codicon-symbol-file'
                 text='Open file'
                 buttonStyle={`text-gray-200 hover:bg-zinc-400`}

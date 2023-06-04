@@ -9,12 +9,14 @@ import { Allotment, LayoutPriority } from "allotment";
 import { ActionBar } from "../actions-bar";
 import { GraphvizPane } from "../graphviz-pane";
 import Graph from "renderer/components/Graph";
-import { EditorProps } from "renderer/components/Editor";
+import { OcDotEditorProps } from "renderer/components/Editor";
+import { useObservableState } from "observable-hooks";
+import { appService } from "renderer/AppService";
 
 export interface Document {
   title: string;
   icon: string;
-  editorProps: EditorProps
+  editorProps: OcDotEditorProps
 }
 
 export const ACTIVITIES = [
@@ -84,6 +86,8 @@ export const AppEditor = ({
     setOnParentSizeUpdate(() => onParentSizeUpdate);
   }
 
+  const loadingGraph = useObservableState(appService.getGraphvizLoading(), false);
+
   const auxiliarySidebar = (
     <Allotment.Pane
       key="auxiliarySidebar"
@@ -94,7 +98,7 @@ export const AppEditor = ({
       snap
 
     >
-      <GraphvizPane dotSrc="" registerParentSizeUpdate={registerParentSizeUpdate} />
+      <GraphvizPane dotSrc="" registerParentSizeUpdate={registerParentSizeUpdate} loading={loadingGraph} />
     </Allotment.Pane>
   );
 

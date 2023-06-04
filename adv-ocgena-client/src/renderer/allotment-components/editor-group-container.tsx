@@ -1,11 +1,11 @@
 import classNames from "classnames";
 
 import styles from "./editor-group-container.module.css";
-import { EditorProps, EditorWrapper } from "renderer/components/Editor";
+import { OcDotEditorProps, EditorWrapper } from "renderer/components/Editor";
 
 export type EditorGroupContainerProps = {
   document: { title: string; icon: string };
-  editorProps : EditorProps
+  editorProps : OcDotEditorProps
   onClose: () => void;
   onSplitEditor: () => void;
 };

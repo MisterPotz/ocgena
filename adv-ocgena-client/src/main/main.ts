@@ -37,9 +37,9 @@ ipcMain.on('open', () => {
 });
 
 const openFile = (window : BrowserWindow, file : string) => {
-  const content = fs.readFileSync(file).toString();
-  console.log(content);
-  window.webContents.send('file-opened', file, content);
+  const fileContents = fs.readFileSync(file).toString();
+  console.log(fileContents);
+  window.webContents.send('file-opened', file, fileContents);
 }
 
 const getFileFromUser = async (targetWindow : BrowserWindow) => {

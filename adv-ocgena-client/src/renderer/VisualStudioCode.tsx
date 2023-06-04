@@ -43,7 +43,7 @@ export const VisualStudioCode = ({
   const [openEditors, setOpenEditors] = useState<Document[]>(() => createOcDotEditor(onNewInput, null));
   
   const [ocDot, updateOcDot] = useObservableState(() => {
-    return appService.getFileSourceOcDotObservable().pipe(map((value, index) => {
+    return appService.getOcDotFileSourceObservable().pipe(map((value, index) => {
       console.log("mapping opened file " + value)
       setOpenEditors(createOcDotEditor(onNewInput, value))
       return value;

@@ -4,7 +4,7 @@ import { Document } from "./app";
 import styles from "./editor.module.css";
 import { EditorGroupContainer } from "./editor-group-container";
 import { Allotment } from "allotment";
-import { EditorProps } from "renderer/components/Editor";
+import { OcDotEditorProps } from "renderer/components/Editor";
 
 export type EditorParentProps = {
   documents: Document[];

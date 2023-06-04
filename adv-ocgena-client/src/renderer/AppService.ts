@@ -4,12 +4,14 @@ import { OCDotToDOTConverter } from 'ocdot/converter';
 import { Observable, Subject } from 'rxjs';
 import * as rxops from 'rxjs/operators'
 
+export type OcDotContent = string
 
 export class AppService {
 
-    private subject = new Subject<string>();
+    private ocDotContentSubject = new Subject<OcDotContent>();
     private graphvizDot = new Subject<string>();
     private internalEditorSubject = new Subject<string>();
+    private graphvizLoading = new Subject<boolean>();
 
     private convertRawOcDotToDot(rawOcDot: string) : string | null {
         let result = null
@@ -24,20 +26,36 @@ export class AppService {
         return result
     }
 
+    showLoading() {
+        this.graphvizLoading.next(true);
+    }
+
+    hideLoading() { 
+        this.graphvizLoading.next(false);
+    }
+
     getGraphvizObservable() : Observable<string> {
         return this.graphvizDot;
     }
 
-    getFileSourceOcDotObservable(): Observable<string> {
-        return this.subject;
+    getGraphvizLoading() : Observable<boolean> {
+        return this.graphvizLoading
+    }
+
+    getOcDotFileSourceObservable(): Observable<string> {
+        return this.ocDotContentSubject;
     }
 
     initialize() {
-        window.electron.ipcRenderer.on('file-opened', (fileName, contents) => {
-            this.subject.next(contents as string)
+        window.electron.ipcRenderer.on('file-opened', (fileName, fileContents) => {
+            this.ocDotContentSubject.next(fileContents as OcDotContent)
         });
 
+
         this.internalEditorSubject.pipe(
+            rxops.tap((value) => {
+                this.showLoading();
+            }),
             rxops.debounceTime(1000),
             rxops.map(((rawOcDot) => {
                 console.log("accepting ocdot value " + rawOcDot);
@@ -48,7 +66,9 @@ export class AppService {
                 if (newDot) {
                     this.graphvizDot.next(newDot);
                 }
+                this.hideLoading();
             })
+    
     }
 
     openNewFile() {
