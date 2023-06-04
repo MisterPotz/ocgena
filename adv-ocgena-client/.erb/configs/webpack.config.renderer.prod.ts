@@ -14,9 +14,13 @@ import baseConfig from './webpack.config.base';
 import webpackPaths from './webpack.paths';
 import checkNodeEnv from '../scripts/check-node-env';
 import deleteSourceMaps from '../scripts/delete-source-maps';
+const glob = require('glob');
 
 checkNodeEnv('production');
 deleteSourceMaps();
+
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 
 const configuration: webpack.Configuration = {
   devtool: 'source-map',
@@ -25,7 +29,11 @@ const configuration: webpack.Configuration = {
 
   target: ['web', 'electron-renderer'],
 
-  entry: [path.join(webpackPaths.srcRendererPath, 'index.tsx')],
+  entry: [
+    path.join(webpackPaths.srcRendererPath, 'index.tsx'),
+    // ... other entries
+    // ...glob.sync(path.join(webpackPaths.srcDocPath, '**/*.html').replace(/\\/g, "/")),
+  ],
 
   output: {
     path: webpackPaths.distRendererPath,
@@ -57,8 +65,8 @@ const configuration: webpack.Configuration = {
       {
         test: /\.s?(a|c)ss$/,
         use: [
-          MiniCssExtractPlugin.loader, 
-          'css-loader', 
+          MiniCssExtractPlugin.loader,
+          'css-loader',
           'sass-loader',
           {
             loader: 'postcss-loader',
@@ -81,6 +89,37 @@ const configuration: webpack.Configuration = {
         test: /\.(png|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
       },
+
+      // {
+      //   test: /\.html$/,
+      //   include: webpackPaths.srcDocPath,
+      //   use: [
+      //     {
+      //       loader: 'file-loader',
+      //       options: {
+      //       name: '[path][name].[ext]',
+      //       context: webpackPaths.srcDocPath,
+      //       },
+      //   },
+      //   {
+      //       loader: 'html-loader',
+      //       options: {
+      //       preprocessor: (content, loaderContext) => {
+      //           let processedContent = content;
+      //           const regex = new RegExp('href="/docs', 'g');
+      //           const regex2 = new RegExp('src="/docs', 'g');
+      //           processedContent = processedContent.replace(regex, 'href="./docs');
+      //           processedContent = processedContent.replace(regex2, 'href="./docs');
+      //           return processedContent;
+      //       },
+      //       },
+      //   },
+      //   // {
+      //   //     loader: 'extract-loader',
+      //   // },  
+      //   ],
+      // },
+
       // SVG
       {
         test: /\.svg$/,
@@ -151,6 +190,63 @@ const configuration: webpack.Configuration = {
 
     new webpack.DefinePlugin({
       'process.type': '"renderer"',
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.join(webpackPaths.srcDocPath, "assets"),
+          to: "docs/assets",
+          transform(content, filename) {
+            const isJsRegex = new RegExp(`\.js$`);
+            const jsonRegex = new RegExp('\.json$');
+
+            let processedContent = content.toString();
+
+            if (isJsRegex.test(filename)) {
+              const regex = new RegExp('(\/docs)', 'g');
+              processedContent = processedContent.replace(regex, '.');
+            } else if (jsonRegex.test(filename)) {
+              const emptyLinkUrl = new RegExp(`"url": "\/docs\/"`, 'g')
+              const emptyLinkReplacement = `"url": "./index.html"`
+
+              const emptyLinkHeaderLinkRex = new RegExp(`"url": "\/docs\/(((?!\.html)[^"])+)"`, 'g');
+              const emptyLinkHeaderReplacmenet = `"url": "./index.html$1"`
+
+              const normalLinkUrlReg = new RegExp(`"url": "\/docs\/([^\.]*\.html[^"]*)"`, 'g');
+
+            
+              const normalLinkUrlReplacement = `"url": "./$1"`
+              
+              processedContent = processedContent.replace(emptyLinkUrl, emptyLinkReplacement);
+              processedContent = processedContent.replace(normalLinkUrlReg, normalLinkUrlReplacement)
+              processedContent = processedContent.replace(emptyLinkHeaderLinkRex, emptyLinkHeaderReplacmenet);
+            }
+
+            return processedContent;
+          }
+        },
+        {
+          from: path.join(webpackPaths.srcDocPath, '**/*.html').replace(/\\/g, "/"),
+          to: 'docs/[name][ext]',
+          
+          transform(content) {
+            let processedContent = content.toString();
+            
+            const emptyLinkUrl = new RegExp(`"\/docs\/"`, 'g')
+            const emptyLinkReplacement = `"./index.html"`
+            const regex = new RegExp('href="\/docs', 'g');
+            const regex2 = new RegExp('src="\/docs', 'g');
+            processedContent = processedContent.replace(emptyLinkUrl, emptyLinkReplacement);
+            processedContent = processedContent.replace(regex, 'href=".');
+            processedContent = processedContent.replace(regex2, 'src=".');
+            console.log(processedContent);
+            return processedContent;
+          }  
+        },
+      ]
+    }),
+    new MonacoWebpackPlugin({
+
     }),
   ],
 };
