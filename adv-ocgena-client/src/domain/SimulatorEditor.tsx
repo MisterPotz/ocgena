@@ -22,8 +22,8 @@ export class SimulatorEditor implements ProjectWindow {
         return null;
     }
 
-    createReactComponent = (onSizeChangeObservable: Observable<number>, htmlElement: HTMLElement) => <EditorWrapper
-        editorCreator={() => {
+    createReactComponent = (onSizeChangeObservable: Observable<number[]>) => <EditorWrapper
+        editorCreator={(htmlElement : HTMLElement) => {
             // The uri is used for the schema file match.
             const modelUri = Uri.parse('a://b/foo.yaml');
 

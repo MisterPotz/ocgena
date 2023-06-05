@@ -11,7 +11,7 @@ export class ModelEditor implements ProjectWindow {
     readonly title: string = "model";
     isOpened: boolean = false;
     editorDelegate = new EditorDelegate();
-
+    
     updateEditorWithContents(newContents: string) {
         this.editorDelegate.updateEditorWithContents(newContents);
     }
@@ -20,8 +20,8 @@ export class ModelEditor implements ProjectWindow {
         return this.editorDelegate.currentContent;
     }
 
-    createReactComponent = (onSizeChangeObservable: Observable<number>, htmlElement: HTMLElement) => <EditorWrapper
-        editorCreator={() => {
+    createReactComponent = (onSizeChangeObservable: Observable<number[]>) => <EditorWrapper
+        editorCreator={(htmlElement : HTMLElement) => {
             if (!isOcDotRegistered()) {
                 monaco.editor.defineTheme("ocDotTheme", {
                     base: "vs",

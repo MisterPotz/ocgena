@@ -2,8 +2,6 @@ import { simulation } from "ocgena";
 import { Subject, tap } from "rxjs";
 import { OcDotContent, SimulationConfig } from "./domain";
 
-
-
 export class ProjectSingleSimulationExecutor {
     private simulationClient = new simulation.client.Client({
         readyToCalc: (ready) => {

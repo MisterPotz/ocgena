@@ -2,7 +2,7 @@ import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
 import icon from '../../assets/icon.svg';
 import './App.css';
 import "allotment/dist/style.css"
-import { DefaultMainScreen } from './VisualStudioCode';
+import { DefaultMainScreen } from './MainScreen';
 
 
 export function Hello() {

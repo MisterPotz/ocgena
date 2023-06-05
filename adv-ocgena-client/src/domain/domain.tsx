@@ -19,11 +19,9 @@ export interface UiError {
 
 export type ProjectWindowStructure = StructureNode<ProjectWindow>
 
-
 export interface ProjectWindow {
     readonly title: string
     isOpened: boolean
-    createReactComponent:
-    (onSizeChangeObservable: Observable<number>, htmlElement: HTMLElement) => JSX.Element
+    createReactComponent: (onSizeChangeObservable: Observable<number[]>) => JSX.Element
 }
 
