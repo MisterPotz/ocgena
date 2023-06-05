@@ -4,21 +4,27 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { SchemasSettings, setDiagnosticsOptions } from 'monaco-yaml';
 import { Uri } from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorDelegate } from "./EditorDelegate";
-import { ProjectWindow } from "./domain";
+import { ProjectWindow, ProjectWindowId } from "./domain";
+import { ProjectWindowManager } from "./StructureNode";
+import { ClickHandler } from "./ModelEditor";
 
 
 export class SimulatorEditor implements ProjectWindow {
 
-    readonly title: string = "config";
+    readonly title: string = "config of my model";
+    static id: ProjectWindowId = "sim-config";
     isOpened: boolean = false;
     editorDelegate = new EditorDelegate();
+    id = SimulatorEditor.id
+    
+    constructor() {
+    }
 
     updateEditorWithContents(newContents: string) {
         this.editorDelegate.updateEditorWithContents(newContents);
     }
 
     collectSimulationConfig() {
-
         return null;
     }
 

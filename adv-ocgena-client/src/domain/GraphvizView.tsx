@@ -2,6 +2,7 @@ import { Observable } from "rxjs";
 import { useObservableState } from "observable-hooks";
 import Graph from "renderer/components/Graph";
 import { ProjectWindow } from "./domain";
+import { ProjectWindowManager } from "./StructureNode";
 
 
 export class GraphvizView implements ProjectWindow {
@@ -9,7 +10,9 @@ export class GraphvizView implements ProjectWindow {
     isOpened: boolean = false;
     dotObservable: Observable<string>;
     loadingObservable: Observable<boolean>;
-
+    static id: string = "grapvhiz"
+    id = GraphvizView.id
+    
     constructor(
         dotObservable: Observable<string>,
         loadingObservable: Observable<boolean>) {

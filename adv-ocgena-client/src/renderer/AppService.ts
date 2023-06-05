@@ -12,12 +12,12 @@ export class AppService {
     private openedProject = new Project();
 
 
-    getProjectState$() {
-        return this.openedProject.projectState$
+    getActiveProject(): Project {
+        return this.openedProject;
     }
 
-    getDefaultProjectState() : ProjectState {
-        return this.openedProject.createInitialState()
+    getProjectState$() {
+        return this.openedProject.projectState$
     }
 
     openNewFile() {
@@ -31,4 +31,4 @@ export class AppService {
     }
 }
 
-export const appService = new AppService();
+export const appService = new AppService(); 

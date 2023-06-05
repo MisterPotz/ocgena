@@ -33,6 +33,7 @@ export const Editor = (
 			setEditor((editor) => {
 				if (editor) return editor;
 				
+				console.log("creating new editor")
 				let newEditor = editorCreator(monacoEl.current!)
 				newEditor.onDidChangeModelContent(function (event) {
 					let newContent = newEditor.getValue();
@@ -53,11 +54,10 @@ export const Editor = (
 		}
 	}, [input])
 
-	return <div className='container h-full w-full' ref={monacoEl}></div>;
+	return <div className='h-full w-full' ref={monacoEl}></div>;
 };
 
 export const EditorWrapper = (editorProps : EditorProps) => {
-	console.log("at wrapper have " + JSON.stringify(editorProps))
 	return (<React.StrictMode>
 		<Editor {...editorProps}/>
 	</React.StrictMode>);

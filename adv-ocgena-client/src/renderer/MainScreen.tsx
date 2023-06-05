@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import {  useState } from "react";
 import { AllottedScreen } from "./allotment-components";
-import { Document } from "./allotment-components";
-import styles from "./VisualStudioCode.module.css";
+import styles from "./MainScreen.module.css";
 import classNames from "classnames";
-import { useObservable, useObservableState } from "observable-hooks";
+import { useObservableState } from "observable-hooks";
 import { appService } from "./AppService";
-import { map } from "rxjs/operators";
 console.log(styles)
 
 export const DefaultMainScreen = (
@@ -40,14 +38,14 @@ export const MainScreen = ({
   const [panelVisible, setPanelVisible] = useState(true);
   const [activity, setActivity] = useState(0);
   
-  const projectState = useObservableState(appService.getProjectState$(), appService.getDefaultProjectState())
-
+  const projectState = useObservableState(appService.getProjectState$(), null)
+  console.log("MainScreen using new project state: " + JSON.stringify(projectState?.windowStructure))
   return (
     <div className={classNames(styles.editorsContainer, "w-full", "h-full")}>
       <AllottedScreen
         activity={activity}
         activityBar={activityBar}
-        projectWindowStructure={projectState.windowStructure}
+        projectWindowStructure={projectState?.windowStructure}
         panelVisible={panelVisible}
         primarySideBar={primarySideBar}
         primarySideBarPosition={primarySideBarPosition}

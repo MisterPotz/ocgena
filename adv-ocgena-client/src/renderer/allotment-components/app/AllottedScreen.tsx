@@ -1,151 +1,221 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from 'react';
 
-import { ActivityBar } from "../activity-bar";
-import { AuxiliaryBar } from "../auxiliary-bar";
-import { EditorParent, EditorParentProps } from "../editor";
-import { Panel } from "../panel";
-import { Sidebar } from "../sidebar";
-import { Allotment, LayoutPriority } from "allotment";
-import { ActionBar } from "../actions-bar";
-import { GraphvizPane } from "../graphviz-pane";
-import Graph from "renderer/components/Graph";
-import { EditorProps, EditorWrapper } from "renderer/components/Editor";
-import { useObservable, useObservableCallback, useObservableState, useSubscription } from "observable-hooks";
-import { appService } from "renderer/AppService";
-import { ProjectWindow, ProjectWindowStructure } from "domain/domain";
-import { StructureNode, StructureParent, StructureWithTabs } from "domain/StructureNode";
-import { Observable } from "rxjs";
+import { ActivityBar } from '../activity-bar';
+import { AuxiliaryBar } from '../auxiliary-bar';
+import { EditorParent, EditorParentProps } from '../editor';
+import { Panel } from '../panel';
+import { Sidebar } from '../sidebar';
+import { Allotment, LayoutPriority } from 'allotment';
+import { ActionBar } from '../actions-bar';
+import { GraphvizPane } from '../graphviz-pane';
+import Graph from 'renderer/components/Graph';
+import { EditorProps, EditorWrapper } from 'renderer/components/Editor';
+import {
+  useObservable,
+  useObservableCallback,
+  useObservableState,
+  useSubscription,
+} from 'observable-hooks';
+import { appService } from 'renderer/AppService';
+import {
+  ProjectWindow,
+  ProjectWindowId,
+  ProjectWindowStructure,
+} from 'domain/domain';
+import {
+  StructureNode,
+  StructureParent,
+  StructureWithTabs,
+  isAllotedPane,
+  isTabPane,
+} from 'domain/StructureNode';
+import { Observable } from 'rxjs';
+import style from './AllottedScreen.module.css';
 
 export interface Document {
   title: string;
   icon: string;
-  editorProps: EditorProps
+  editorProps: EditorProps;
 }
 
 export const ACTIVITIES = [
-  "Explorer",
-  "Search",
-  "Source Control",
-  "Run and Debug",
-  "Extensions",
+  'Explorer',
+  'Search',
+  'Source Control',
+  'Run and Debug',
+  'Extensions',
 ];
 
-// export function createOcDotEditor(
-//   onNewInput: (input: string) => void,
-//   ocDot?: string | null,
-// ): Document[] {
-//   return [
-//     {
-//       title: "ocdot file", icon: "ts", editorProps: {
-//         editorId: "ocdot",
-//         onNewInput,
-//         ocDot: ocDot || null
-//       },
-//     },
-//     // { title: "yaml", icon: "css" },
-//   ];
-// }
-
-
-
 export type TabProps = {
-  title: string
-}
-function Tab(
-  { title
-  }: TabProps
-) {
-  return <div className="ms-0 bg-gray-300 text-black hover:bg-gray-500 h-8 max-w-xs text-ellipsis min-w-fit w-">
-    {title}
-  </div>
+  title: string;
+  active: boolean;
+  onClick: () => void;
+};
+function Tab({ title, active, onClick }: TabProps) {
+  return (
+    <div
+      onClick={onClick}
+      className={`
+        ${active && 'bg-white'}
+        ${!active && 'hover:bg-zinc-200'}
+        relative
+        flex
+        h-9 
+        w-16
+        min-w-fit
+        flex-shrink-0
+        flex-row
+        items-center
+        overflow-hidden
+        text-ellipsis
+        whitespace-nowrap
+        rounded-none
+        border-0
+        border-r-1 
+        border-solid
+        border-r-black 
+        border-opacity-10
+        bg-transparent 
+        px-2 
+        text-center 
+        text-xs
+         text-black
+        text-opacity-75 
+        shadow-none transition-colors
+        duration-300
+        ease-in-out
+        `}
+    >
+      {title}
+    </div>
+  );
 }
 
 type TabPaneProps = {
-  onSizeChangeObservable?: Observable<number[]>,
-  structureWithTabs: StructureWithTabs<ProjectWindow>,
-}
+  onSizeChangeObservable?: Observable<number[]>;
+  structureWithTabs: StructureWithTabs<ProjectWindowId>;
+};
 
 function TabPane({
   structureWithTabs: structureNode,
-  onSizeChangeObservable
+  onSizeChangeObservable,
 }: TabPaneProps) {
-  let projectWindows = structureNode.tabs
-  let visibleIndex = structureNode.currentTabIndex
+  let projectWindows = structureNode.tabs;
+  let visibleIndex = structureNode.currentTabIndex;
 
-  let sizeChange$ = onSizeChangeObservable ? onSizeChangeObservable : useObservable(() => new Observable<number[]>())
+  let sizeChange$ = onSizeChangeObservable
+    ? onSizeChangeObservable
+    : useObservable(() => new Observable<number[]>());
+
+  console.log('doing tab pane for ' + structureNode.id);
+
+  let project = appService.getActiveProject();
 
   return (
     // tabs and the editors
-    <div className="container">
-      <div className="flex flex-row justify-start h-fit container">
-        {projectWindows.map((projectWindow) => <Tab title={projectWindow.title} />)}
+    <div className="h-full w-full">
+      <div className="relative h-10 overflow-hidden bg-white">
+        <div
+          className={`${style.tabList} absolute inset-0 flex h-fit w-full flex-1 cursor-pointer flex-row flex-nowrap justify-start overflow-x-auto bg-zinc-50`}
+        >
+          {projectWindows.map((projectWindowId, index) => {
+            let active = index == visibleIndex;
+
+            let projectWindow = project.getProjectWindow(projectWindowId)!;
+
+            return (
+              <Tab
+                key={projectWindow.title}
+                title={projectWindow.title}
+                active={active}
+                onClick={project.clickTab.bind(project, projectWindow.id)}
+              />
+            );
+          })}
+        </div>
       </div>
-      <div className={`w-full h-full`}>
-        <Allotment>
-          {projectWindows.map((projectWindow, index) => {
-            let visible = index == visibleIndex
-            return <Allotment.Pane visible={visible}>
-              {projectWindow.createReactComponent(sizeChange$)}
-            </Allotment.Pane>
+      <div className={`h-full w-full`}>
+        <Allotment className="h-full w-full">
+          {projectWindows.map((projectWindowId, index) => {
+            let visible = index == visibleIndex;
+            let projectWindow = project.getProjectWindow(projectWindowId)!
+            return (
+              <Allotment.Pane
+                className="h-full w-full"
+                key={projectWindow.title}
+                visible={visible}
+              >
+                {projectWindow.createReactComponent(sizeChange$)}
+              </Allotment.Pane>
+            );
           })}
         </Allotment>
       </div>
     </div>
-  )
+  );
 }
 
 export type AllottedPane = {
-  onSizeChangeObservable?: Observable<number[]>,
-  structureParent: StructureParent<ProjectWindow>
-}
+  onSizeChangeObservable?: Observable<number[]>;
+  structureParent: StructureParent<ProjectWindow>;
+};
 
-function isAllotedPane<T>(structureNode: StructureNode<T>): structureNode is StructureParent<T> {
-  if (typeof structureNode !== "object") return false
-  return "direction" in structureNode
-}
-
-function isTabPane<T>(structureNode: StructureNode<T>): structureNode is StructureWithTabs<T> {
-  if (typeof structureNode !== "object") return false
-  return "tabs" in structureNode
-}
-
-function makeStructurePane<T extends ProjectWindow>(
+function makeStructurePane<T extends ProjectWindowId>(
   structureNode: StructureNode<T>,
-  onSizeChangeObservable: Observable<number[]> | undefined = undefined,
-  ) {
-  return isAllotedPane(structureNode)
-    ? <AllottedPane structureParent={structureNode} onSizeChangeObservable={onSizeChangeObservable} />
-    : isTabPane(structureNode)
-      ? <TabPane structureWithTabs={structureNode} onSizeChangeObservable={onSizeChangeObservable}/>
-      : <div className="container h-full bg-yellow-300 rounded-md text-black p-4">Unknown structure node encountered</div>
+  onSizeChangeObservable: Observable<number[]> | undefined = undefined
+) {
+  return isAllotedPane(structureNode) ? (
+    <AllottedPane
+      structureParent={structureNode}
+      onSizeChangeObservable={onSizeChangeObservable}
+    />
+  ) : isTabPane(structureNode) ? (
+    <TabPane
+      structureWithTabs={structureNode}
+      onSizeChangeObservable={onSizeChangeObservable}
+    />
+  ) : (
+    <div className="h-full w-full rounded-md bg-yellow-300 p-4 text-black">
+      Unknown structure node encountered
+    </div>
+  );
 }
 
 function AllottedPane({
   structureParent: paneParent,
-  onSizeChangeObservable
+  onSizeChangeObservable,
 }: AllottedPane) {
-  let structureNodes = paneParent.children
+  let structureNodes = paneParent.children;
 
-  let vertical = paneParent.direction == "column"
-  let [onChangeSize, sizeChange$] = useObservableCallback((event$) => event$ as Observable<number[]>)
-  let [parentSizeChange$] = useState(onSizeChangeObservable)
+  let vertical = paneParent.direction == 'column';
+  let [onChangeSize, sizeChange$] = useObservableCallback(
+    (event$) => event$ as Observable<number[]>
+  );
+  let [parentSizeChange$] = useState(onSizeChangeObservable);
 
   if (parentSizeChange$ != null) {
     useSubscription(parentSizeChange$, (event: number[]) => {
-      console.log("AllottedPane: useSubscription: " + JSON.stringify(event))
-      onChangeSize(event)
-    })
+      console.log('AllottedPane: useSubscription: ' + JSON.stringify(event));
+      onChangeSize(event);
+    });
   }
 
-  return <Allotment className="w-full h-full" vertical={vertical} onChange={onChangeSize}>
-    {
-      structureNodes.map((structureNode) => {
-        return <Allotment.Pane visible>
-          {makeStructurePane(structureNode, onSizeChangeObservable)}
-        </Allotment.Pane>
-      })
-    }
-  </Allotment>
+  console.log('doing allotted pane for + ' + paneParent.id);
+  return (
+    <Allotment
+      className="h-full w-full"
+      vertical={vertical}
+      onChange={onChangeSize}
+    >
+      {structureNodes.map((structureNode) => {
+        return (
+          <Allotment.Pane key={structureNode.id} visible>
+            {makeStructurePane(structureNode, sizeChange$)}
+          </Allotment.Pane>
+        );
+      })}
+    </Allotment>
+  );
 }
 
 export type AllottedScreenProps = {
@@ -155,9 +225,9 @@ export type AllottedScreenProps = {
   // openEditors: Document[];
   panelVisible: boolean;
   primarySideBar: boolean;
-  primarySideBarPosition: "left" | "right";
+  primarySideBarPosition: 'left' | 'right';
   secondarySideBar: boolean;
-  projectWindowStructure: ProjectWindowStructure,
+  projectWindowStructure?: ProjectWindowStructure;
   onClickStart: () => void;
   onOpenNewFile: () => void;
   onClickRefresh: () => void;
@@ -179,7 +249,6 @@ export const AllottedScreen = ({
   onActivityChanged,
   onPanelVisibleChanged,
 }: AllottedScreenProps) => {
-
   // const auxiliarySidebar = (
   //   <Allotment.Pane
   //     key="auxiliarySidebar"
@@ -214,17 +283,18 @@ export const AllottedScreen = ({
   //   </Allotment.Pane>
   // );
 
-  let structureNode = projectWindowStructure
-
+  let structureNode = projectWindowStructure;
+  console.log("allotting structure : " + JSON.stringify(structureNode));
   return (
     <Allotment proportionalLayout={false} vertical>
-
-      <Allotment.Pane maxSize={48} minSize={48}>
-        <ActionBar pauseButtonEnabled
+      <Allotment.Pane minSize={36} maxSize={36}>
+        <ActionBar
+          pauseButtonEnabled
           startButtonMode="start"
           onClickStart={onClickStart}
           onClickRefresh={onClickRefresh}
-          onOpenNewFile={onOpenNewFile} />
+          onOpenNewFile={onOpenNewFile}
+        />
       </Allotment.Pane>
 
       <Allotment.Pane>
@@ -238,11 +308,11 @@ export const AllottedScreen = ({
             <ActivityBar
               checked={activity}
               items={[
-                "files",
-                "search",
-                "source-control",
-                "debug-alt",
-                "extensions",
+                'files',
+                'search',
+                'source-control',
+                'debug-alt',
+                'extensions',
               ]}
               onClick={(index) => {
                 onActivityChanged(index);
@@ -255,8 +325,8 @@ export const AllottedScreen = ({
             minSize={300}
             priority={LayoutPriority.High}
           >
-            {makeStructurePane(structureNode)}
-              {/* <Allotment.Pane
+            {structureNode && makeStructurePane(structureNode)}
+            {/* <Allotment.Pane
                 key="terminal"
                 minSize={78}
                 preferredSize="40%"
