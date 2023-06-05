@@ -13,17 +13,17 @@ import simulation.config.SimulationConfig
 
 @JsExport
 class InputPlacesConfig(val inputPlaces: String) : Config() {
-    override val type: Int = ConfigEnum.INPUT_PLACES.ordinal
+    override val type = ConfigEnum.INPUT_PLACES
 }
 
 @JsExport
 class OutputPlacesConfig(val outputPlaces: String) : Config() {
-    override val type: Int = ConfigEnum.OUTPUT_PLACES.ordinal
+    override val type = ConfigEnum.OUTPUT_PLACES
 }
 
 @JsExport
 class OCNetTypeConfig(val ocNetType: Int/* OcNetType */) : Config() {
-    override val type: Int = ConfigEnum.OC_TYPE.ordinal
+    override val type = ConfigEnum.OC_TYPE
     companion object {
         fun from(ocNetType: OcNetType) : OCNetTypeConfig {
             return OCNetTypeConfig(ocNetType.ordinal)
@@ -42,19 +42,19 @@ class PlaceTypingConfig(val objectTypeIdToPlaceId: dynamic) : Config() {
         return objectTypeIdToPlaceId[objectTypeId] as String
     }
 
-    override val type: Int = ConfigEnum.PLACE_TYPING.ordinal
+    override val type = ConfigEnum.PLACE_TYPING
 }
 
 @JsExport
 class LabelMappingConfig(val placeIdToLabel: dynamic) : Config() {
-    override val type: Int = ConfigEnum.LABEL_MAPPING.ordinal
+    override val type = ConfigEnum.LABEL_MAPPING
 }
 
 @JsExport
 class InitialMarkingConfig(
     val placeIdToInitialMarking: dynamic /* map place id to initial marking (int) */
 ) : Config() {
-    override val type: Int = ConfigEnum.INITIAL_MARKING.ordinal
+    override val type = ConfigEnum.INITIAL_MARKING
 }
 
 @JsExport
@@ -83,7 +83,7 @@ class TransitionsConfig(
         return transitionsToIntervals[transitionId] as TransitionIntervals
     }
 
-    override val type: Int = ConfigEnum.TRANSITIONS.ordinal
+    override val type = ConfigEnum.TRANSITIONS
 }
 
 fun createConfig(

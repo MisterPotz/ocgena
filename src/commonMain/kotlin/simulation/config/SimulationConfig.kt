@@ -6,7 +6,7 @@ import kotlin.js.JsExport
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 abstract class Config() {
-    abstract val type: Int
+    abstract val type: ConfigEnum
 }
 
 @OptIn(ExperimentalJsExport::class)
@@ -14,12 +14,13 @@ abstract class Config() {
 class SimulationConfig(val configs: Array<Config>) {
 
     fun getConfig(configEnum: ConfigEnum): Config? {
-        val value = configs.find { it.type == configEnum.ordinal }
+        val value = configs.find { it.type == configEnum }
         return value
     }
 }
 
-
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 enum class ConfigEnum {
     INPUT_PLACES,
     OUTPUT_PLACES,

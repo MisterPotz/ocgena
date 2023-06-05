@@ -9,14 +9,16 @@ import { Allotment, LayoutPriority } from "allotment";
 import { ActionBar } from "../actions-bar";
 import { GraphvizPane } from "../graphviz-pane";
 import Graph from "renderer/components/Graph";
-import { OcDotEditorProps } from "renderer/components/Editor";
+import { EditorProps } from "renderer/components/Editor";
 import { useObservableState } from "observable-hooks";
 import { appService } from "renderer/AppService";
+import { ProjectWindow, ProjectWindowStructure } from "domain/domain";
+import { StructureNode, StructureParent, StructureWithTabs } from "domain/StructureNode";
 
 export interface Document {
   title: string;
   icon: string;
-  editorProps: OcDotEditorProps
+  editorProps: EditorProps
 }
 
 export const ACTIVITIES = [
@@ -30,7 +32,7 @@ export const ACTIVITIES = [
 export function createOcDotEditor(
   onNewInput: (input: string) => void,
   ocDot?: string | null,
-) : Document[]{
+): Document[] {
   return [
     {
       title: "ocdot file", icon: "ts", editorProps: {
@@ -43,30 +45,65 @@ export function createOcDotEditor(
   ];
 }
 
-export type AppProps = {
+type TabPaneProps = {
+  structureNode: StructureWithTabs<ProjectWindow>
+}
+
+export type TabProps = {
+  title: string
+}
+function Tab(
+  { title
+  }: TabProps
+) {
+  return <div className="ms-0 bg-gray-300 text-black hover:bg-gray-500 h-8 max-w-xs text-ellipsis min-w-fit w-">
+    {title}
+  </div>
+}
+
+
+function TabPane({
+  structureNode
+}: TabPaneProps) {
+  let projectWindows = structureNode.tabs
+
+  return (
+    // tabs and the editors
+    <div className="container">
+      <div className="flex flex-row justify-start h-fit container">
+        {projectWindows.map((projectWindow) => <Tab title={projectWindow.title} />)}
+      </div>
+      <div className={`w-full h-full`}>
+        <EditorWrapper key={} {...editorProps} />
+      </div>
+    </div>
+  )
+}
+
+
+
+export type AllottedScreenProps = {
   activity: number;
   activityBar: boolean;
-  editorVisible: boolean;
-  openEditors: Document[];
+  // editorVisible: boolean;
+  // openEditors: Document[];
   panelVisible: boolean;
   primarySideBar: boolean;
   primarySideBarPosition: "left" | "right";
   secondarySideBar: boolean;
+  windowStructure: ProjectWindowStructure,
   onClickStart: () => void;
   onOpenNewFile: () => void;
   onClickRefresh: () => void;
   onActivityChanged: (activity: number) => void;
   onEditorVisibleChanged: (visible: boolean) => void;
-  onOpenEditorsChanged: (documents: Document[]) => void;
+  // onOpenEditorsChanged: (documents: Document[]) => void;
   onPanelVisibleChanged: (visible: boolean) => void;
-
 };
 
-export const AppEditor = ({
+export const AllottedScreen = ({
   activity,
   activityBar,
-  editorVisible,
-  openEditors,
   panelVisible,
   primarySideBar,
   primarySideBarPosition,
@@ -76,9 +113,8 @@ export const AppEditor = ({
   onClickRefresh,
   onActivityChanged,
   onEditorVisibleChanged,
-  onOpenEditorsChanged,
   onPanelVisibleChanged,
-}: AppProps) => {
+}: AllottedScreenProps) => {
 
   const [onParentSizeUpdate, setOnParentSizeUpdate] = useState<(() => void) | null>(null);
 
@@ -132,8 +168,6 @@ export const AppEditor = ({
           onClickRefresh={onClickRefresh}
           onOpenNewFile={onOpenNewFile} />
       </Allotment.Pane>
-
-
 
       <Allotment.Pane>
         <Allotment onChange={() => {
@@ -194,7 +228,7 @@ export const AppEditor = ({
                 visible={panelVisible}
               >
                 <Panel
-                  maximized={!editorVisible}
+                  maximized={false}
                   onClose={() => {
                     onEditorVisibleChanged(true);
                     onPanelVisibleChanged(false);
@@ -212,7 +246,6 @@ export const AppEditor = ({
             </Allotment>
           </Allotment.Pane>
           {primarySideBarPosition === "right" ? sidebar : auxiliarySidebar}
-
         </Allotment>
       </Allotment.Pane>
     </Allotment>

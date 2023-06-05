@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AppEditor, createOcDotEditor } from "./allotment-components";
+import { AllottedScreen, createOcDotEditor } from "./allotment-components";
 import { Document } from "./allotment-components";
 import styles from "./VisualStudioCode.module.css";
 import classNames from "classnames";
@@ -8,9 +8,9 @@ import { appService } from "./AppService";
 import { map } from "rxjs/operators";
 console.log(styles)
 
-export const DefaultVisualStudioCode = (
+export const DefaultMainScreen = (
 ) => {
-  return VisualStudioCode(
+  return MainScreen(
     {
       activityBar: true,
       primarySideBar: false,
@@ -20,7 +20,7 @@ export const DefaultVisualStudioCode = (
   )
 }
 
-type VSCodeParams = {
+type MainScreenProps = {
   activityBar: boolean;
   primarySideBar: boolean;
   primarySideBarPosition: "left" | "right";
@@ -31,40 +31,39 @@ const onNewInput = (newInput : string ) => {
   appService.openNewFile();
 }
 
-export const VisualStudioCode = ({
+export const MainScreen = ({
   activityBar,
   primarySideBar,
   primarySideBarPosition,
   secondarySideBar,
-}: VSCodeParams) => {
+}: MainScreenProps) => {
   const [editorVisible, setEditorVisible] = useState(true);
   const [panelVisible, setPanelVisible] = useState(true);
   const [activity, setActivity] = useState(0);
-  const [openEditors, setOpenEditors] = useState<Document[]>(() => createOcDotEditor(onNewInput, null));
+  // const [openEditors, setOpenEditors] = useState<Document[]>(() => createOcDotEditor(onNewInput, null));
   
-  const [ocDot, updateOcDot] = useObservableState(() => {
-    return appService.getOcDotFileSourceObservable().pipe(map((value, index) => {
-      console.log("mapping opened file " + value)
-      setOpenEditors(createOcDotEditor(onNewInput, value))
-      return value;
-    }));
-  }, null);
+  // const [ocDot, updateOcDot] = useObservableState(() => {
+  //   return appService.getOcDotFileSourceObservable().pipe(map((value, index) => {
+  //     console.log("mapping opened file " + value)
+  //     setOpenEditors(createOcDotEditor(onNewInput, value))
+  //     return value;
+  //   }));
+  // }, null);
 
-  console.log("open Editors + " + JSON.stringify(openEditors));
+  const projectState = useObservableState(appService.getProjectState$(), appService.getDefaultProjectState())
+
   return (
     <div className={classNames(styles.editorsContainer, "w-full", "h-full")}>
-      <AppEditor
+      <AllottedScreen
         activity={activity}
         activityBar={activityBar}
-        editorVisible={editorVisible}
+        windowStructure={projectState.windowStructure}
         panelVisible={panelVisible}
-        openEditors={openEditors}
         primarySideBar={primarySideBar}
         primarySideBarPosition={primarySideBarPosition}
         secondarySideBar={secondarySideBar}
         onActivityChanged={setActivity}
         onEditorVisibleChanged={setEditorVisible}
-        onOpenEditorsChanged={setOpenEditors}
         onPanelVisibleChanged={setPanelVisible}
         onClickStart={() => { }}
         onClickRefresh={() => { }}

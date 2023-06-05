@@ -7,6 +7,7 @@ import { zoomIdentity as d3_zoomIdentity} from 'd3-zoom';
 import { zoomTransform as d3_zoomTransform} from 'd3-zoom';
 import { pointer as d3_pointer} from 'd3-selection';
 import 'd3-graphviz';
+import { tap } from 'rxjs';
 
 const styles = {
   root: {
@@ -39,6 +40,7 @@ class Graph extends React.Component {
     this.isDrawingEdge = false;
     this.isDrawingNode = false;
     this.startNode = null;
+    this.sizeUpdateObservable = props.sizeUpdateObservable;
     this.selectedComponents = d3_selectAll(null);
     this.selectArea = null;
     this.selectRects = d3_select(null);
@@ -89,7 +91,8 @@ class Graph extends React.Component {
     this.graphviz = this.div.graphviz()
       .onerror(this.handleError.bind(this))
       .on('initEnd', () => this.renderGraph.call(this));
-      this.props.registerParentSizeUpdate(() => this.resizeSVG());
+    this.props.sizeUpdateObservable.pipe(tap(() => this.resizeSVG())).subscribe();
+      // this.props.registerParentSizeUpdate(() => this.resizeSVG());
     // this.props.registerNodeShapeClick(this.handleNodeShapeClick);
     // this.props.registerNodeShapeDragStart(this.handleNodeShapeDragStart);
     // this.props.registerNodeShapeDragEnd(this.handleNodeShapeDragEnd);

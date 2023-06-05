@@ -6,6 +6,8 @@ import kotlinx.js.Object
 import kotlinx.js.jso
 import model.ObjectToken
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 actual class OcelWriter {
 
     val ocelObject = jso<dynamic> {
