@@ -9,7 +9,7 @@ import { useObservableState } from 'observable-hooks';
 export type EditorProps = {
 	readonly editorId : string,
 	readonly onInputUpdated: (newInput: string) => void, 
-	readonly inputObservable : Observable<string>,
+	readonly editorInputRequest$ : Observable<string>,
 	readonly editorCreator: (htmlElement : HTMLElement) => monaco.editor.IStandaloneCodeEditor
 }
 
@@ -17,7 +17,7 @@ export const Editor = (
 	{
 		editorId,
 		onInputUpdated,
-		inputObservable,
+		editorInputRequest$: inputObservable,
 		editorCreator
 	} : EditorProps
 ) => {

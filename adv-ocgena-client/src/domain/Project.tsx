@@ -36,8 +36,7 @@ export interface ProjectWindowProvider {
 export class Project implements ProjectWindowProvider {
   private graphvizLoading = new Subject<boolean>();
   private graphvizDot = new Subject<string>();
-  private internalEditorSubject = new Subject<string>();
-  private ocDotFileSourceObservable = new Subject<OcDotContent>();
+  private internalOcDotEditorSubject = new Subject<string>();
 
   readonly modelEditor;
   readonly simulationConfigEditor;
@@ -83,7 +82,7 @@ export class Project implements ProjectWindowProvider {
       }
     );
 
-    this.internalEditorSubject
+    this.internalOcDotEditorSubject
       .pipe(
         rxops.tap((value) => this.onNewOcDotContents(value)),
         rxops.debounceTime(500),
@@ -99,6 +98,11 @@ export class Project implements ProjectWindowProvider {
         }
         this.hideLoading();
       });
+
+
+      this.modelEditor.editorDelegate.editorCurrentInput$.subscribe((input) => {
+        this.internalOcDotEditorSubject.next(input);
+      })
   }
 
   getProjectWindow(projectWindowId: ProjectWindowId): ProjectWindow | undefined {
@@ -167,6 +171,11 @@ export class Project implements ProjectWindowProvider {
           tabs: [SimulatorEditor.id, ModelEditor.id],
           currentTabIndex: 0,
         } as StructureWithTabs<ProjectWindowId>,
+        {
+          id: 'view',
+          tabs: [GraphvizView.id],
+          currentTabIndex: 0,
+        } as StructureWithTabs<ProjectWindowId>,
       ],
     } as StructureParent<ProjectWindowId>;
   }
@@ -179,16 +188,9 @@ export class Project implements ProjectWindowProvider {
     this.graphvizLoading.next(false);
   }
 
-  onNewOcDotEditorValue(newValue: string) {
-    this.internalEditorSubject.next(newValue);
-  }
-
-  getOcDotFileSourceObservable(): Observable<string> {
-    return this.ocDotFileSourceObservable;
-  }
-
   onFileOpened(fileOcDotContents: string) {
-    this.ocDotFileSourceObservable.next(fileOcDotContents);
+    this.modelEditor.updateEditorWithContents(fileOcDotContents);
+    this.internalOcDotEditorSubject.next(fileOcDotContents);
   }
 
   private createInitialState(): ProjectState {

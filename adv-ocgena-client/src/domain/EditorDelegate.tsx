@@ -4,17 +4,20 @@ export class EditorDelegate {
     currentContent: string | null = null;
     onNewEditorInput: (newInput: string) => void = (newInput: string) => {
         this.currentContent = newInput;
+        this.editorCurrentInput$.next(newInput);
     };
-    inputObservable = new Subject<string>();
+    
+    editorInputRequest$ = new Subject<string>();
+    editorCurrentInput$ = new Subject<string>();
 
     updateEditorWithContents(newContents: string) {
         this.currentContent = newContents;
-        this.inputObservable.next(newContents);
+        this.editorInputRequest$.next(newContents);
     }
 
     createProps() {
         return {
-            inputObservable: this.inputObservable,
+            editorInputRequest$: this.editorInputRequest$,
             onInputUpdated: this.onNewEditorInput
         };
     }

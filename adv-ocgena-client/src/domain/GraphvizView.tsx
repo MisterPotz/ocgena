@@ -6,7 +6,7 @@ import { ProjectWindowManager } from "./StructureNode";
 
 
 export class GraphvizView implements ProjectWindow {
-    readonly title: string = "graphviz";
+    readonly title: string = "Graphviz";
     isOpened: boolean = false;
     dotObservable: Observable<string>;
     loadingObservable: Observable<boolean>;
