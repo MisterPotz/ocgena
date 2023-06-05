@@ -31,7 +31,7 @@ export class SimulatorEditor implements ProjectWindow {
     createReactComponent = (onSizeChangeObservable: Observable<number[]>) => <EditorWrapper
         editorCreator={(htmlElement : HTMLElement) => {
             // The uri is used for the schema file match.
-            const modelUri = Uri.parse('a://b/foo.yaml');
+            const modelUri = Uri.parse('a://sim-config.yaml');
 
             setDiagnosticsOptions({
                 enableSchemaRequest: true,
@@ -42,35 +42,103 @@ export class SimulatorEditor implements ProjectWindow {
                 schemas: [
                     {
                         // Id of the first schema
-                        uri: 'http://myserver/foo-schema.json',
+                        uri: 'http://myserver/sim-config.json',
                         // Associate with our model
                         fileMatch: [String(modelUri)],
                         schema: {
                             type: 'object',
                             properties: {
-                                p1: {
-                                    enum: ['v1', 'v2']
+                                inputPlaces: {
+                                    type: "string",
+                                    title: "input places",
+                                    description: "List all input places separated by space"
                                 },
-                                p2: {
-                                    // Reference the second schema
-                                    $ref: 'http://myserver/bar-schema.json'
+                                outputPlaces: {
+                                    type: "string",
+                                    title: "output places",
+                                    description: "List all output places separated by space"
+                                },
+                                ocNetDefinition: {
+                                    enum: ["aalst", "lomazova"],
+                                    title: "Definition of OC-net",
+                                    description: "Chosen definition of OC-net may affect calculations and consistency checks"
+                                },
+                                placeTyping: {
+                                    type: "object",
+                                    description: "Mapping from object type to places, list all places with spaces",
+                                    additionalProperties: {
+                                        type: "string"
+                                    }
+                                },
+                                labelMapping: {
+                                    type: "object",
+                                    description: "Mapping from place id to activity label",
+                                    additionalProperties: {
+                                        type: "string"
+                                    }
+                                },
+                                initialMarking: {
+                                    type: "object",
+                                    description: "Places to their respective initial marking",
+                                    additionalProperties: {
+                                        type: "integer"
+                                    }
+                                },
+                                transitionInterval: {
+                                    type: "object",
+                                    properties: {
+                                        defaultTransitionInterval: {
+                                            $ref: 'http://myserver/transition-interval.json'
+                                        },
+                                        transitionsToIntervals: {
+                                            type: "object",
+                                            additionalProperties: {
+                                                $ref: "http://myserver/transition-interval.json"
+                                            }
+                                        }
+                                    }
                                 }
+                                // p1: {
+                                //     enum: ['v1', 'v2']
+                                // },
+                                // p2: {
+                                //     // Reference the second schema
+                                //     $ref: 'http://myserver/bar-schema.json'
+                                // }
                             }
                         }
                     },
                     {
                         // Id of the first schema
-                        uri: 'http://myserver/bar-schema.json',
+                        uri: 'http://myserver/time-range.json',
                         fileMatch: [],
                         schema: {
-                            type: 'object',
-                            properties: {
-                                q1: {
-                                    enum: ['x1', 'x2']
-                                }
-                            }
+                            type: 'array',
+                            items: {
+                              type: "integer"
+                            },
+                            minItems: 2,
+                            maxItems: 2,
+                            description: "Start and end value of the possible range"
                         }
-                    } as SchemasSettings
+                    } as SchemasSettings,
+                    {
+                        // Id of the first schema
+                        uri: 'http://myserver/transition-interval.json',
+                        fileMatch: [],
+                        schema: {
+                            type: "object",
+                            properties: {
+                                duration: {
+                                    $ref: "http://myserver/time-range.json"
+                                },
+                                minOccurrenceInterval: {
+                                    $ref: "http://myserver/time-range.json"
+                                }
+                            },
+                            description: "Define possible ranges for duration and minOccurrenceInterval"
+                        }
+                    } as SchemasSettings,
                 ]
             });
 
