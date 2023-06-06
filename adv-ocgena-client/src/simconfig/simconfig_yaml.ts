@@ -6,17 +6,25 @@ import * as t from 'io-ts';
 import { config } from 'ocgena';
 
 export const modelUri = Uri.parse('a://sim-config.yaml');
+export const INPUT_PLACES = 'inputPlaces';
+export const OUTPUT_PLACES = 'outputPlaces';
+export const OC_NET_DEFINITION = 'ocNetDefinition';
+export const PLACE_TYPING = 'placeTyping';
+export const LABEL_MAPPING = 'labelMapping';
+export const INITIAL_MARKING = 'initialMarking';
+export const TRANSITIONS_CONFIG = 'transitionsConfig';
+
 export const setupTemplate = trimIndent(`
-    labelMapping:
+    ${LABEL_MAPPING}:
         p1: sd
-    inputPlaces: p1 
-    outputPlaces: p3
-    initialMarking:
+    ${INPUT_PLACES}: p1 
+    ${OUTPUT_PLACES}: p3
+    ${INITIAL_MARKING}:
         p1: 3
-    ocNetDefinition: aalst
-    placeTyping:
+    ${OC_NET_DEFINITION}: aalst
+    ${PLACE_TYPING}:
         ot1: p1
-    transitionInterval:
+    ${TRANSITIONS_CONFIG}:
         defaultTransitionInterval:
             duration: [1, 1]
             minOccurrenceInterval: [2,2]
@@ -29,13 +37,7 @@ export const setupTemplate = trimIndent(`
 export const simconfigSchemaId = 'http://myserver/sim-config.json';
 export const timeIntervalSchemaId = 'http://myserver/transition-interval.json';
 
-export const INPUT_PLACES = 'inputPlaces';
-export const OUTPUT_PLACES = 'outputPlaces';
-export const OC_NET_DEFINITION = 'ocNetDefinition';
-export const PLACE_TYPING = 'placeTyping';
-export const LABEL_MAPPING = 'labelMapping';
-export const INITIAL_MARKING = 'initialMarking';
-export const TRANSITIONS_CONFIG = 'transitionsConfig';
+
 
 const TimeRange = t.tuple([t.number, t.number]);
 

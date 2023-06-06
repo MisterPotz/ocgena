@@ -37,7 +37,7 @@ export class ProjectSingleSimulationExecutor {
       .pipe(
         tap((value) => {
           this.currentSimulationReadiness = value;
-
+          console.log("ProjectSingleSimulationExecutor: new simulation readiness state")
           let currentStatus = this.simulationClientStatus$.getValue();
           let newStatus = produce(currentStatus, (draft) => {
             draft.canLaunchNewSimulation = this.isLaunchAllowed();
@@ -51,6 +51,7 @@ export class ProjectSingleSimulationExecutor {
 
   updateModel(ocDotContent: OcDotContent | null) {
     if (ocDotContent == null) return;
+    console.log("ProjectSingleSimulationExecutor: setting new ocdot contents")
     this.simulationClient.updateOcDot(ocDotContent);
   }
 
@@ -78,6 +79,7 @@ export class ProjectSingleSimulationExecutor {
 
   updateSimulationConfig(simulationConfig: SimulationConfig | null) {
     if (simulationConfig == null) return;
+    console.log("ProjectSingleSimulationExecutor: setting new config")
     this.simulationClient.updateConfig(simulationConfig);
   }
 

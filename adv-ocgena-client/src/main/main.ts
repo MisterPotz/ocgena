@@ -14,7 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-const fs = require('fs')
+const fs = require('fs');
 
 class AppUpdater {
   constructor() {
@@ -33,30 +33,31 @@ ipcMain.on('ipc-example', async (event, arg) => {
 });
 
 ipcMain.on('open', () => {
-    getFileFromUser(mainWindow!)
+  getFileFromUser(mainWindow!);
 });
 
-const openFile = (window : BrowserWindow, file : string) => {
+const openFile = (window: BrowserWindow, file: string) => {
   const fileContents = fs.readFileSync(file).toString();
   console.log(fileContents);
   window.webContents.send('file-opened', file, fileContents);
-}
+};
 
-const getFileFromUser = async (targetWindow : BrowserWindow) => {
+const getFileFromUser = async (targetWindow: BrowserWindow) => {
   const files = dialog.showOpenDialog(targetWindow, {
-      properties: ['openFile'],
-      filters: [
-          {
-              name: 'OcDot files', extensions: ['ocdot']
-          }
-      ]
-  })
+    properties: ['openFile'],
+    filters: [
+      {
+        name: 'OcDot files',
+        extensions: ['ocdot'],
+      },
+    ],
+  });
 
   const kek = await files;
   if (kek && kek.filePaths && kek.filePaths[0]) {
-      openFile(targetWindow, kek.filePaths[0])
+    openFile(targetWindow, kek.filePaths[0]);
   }
-}
+};
 
 if (process.env.NODE_ENV === 'production') {
   const sourceMapSupport = require('source-map-support');
@@ -83,6 +84,21 @@ const installExtensions = async () => {
     .catch(console.log);
 };
 
+
+function createDevToolWindow(win: Electron.BrowserWindow) {
+  // Create a new window for the DevTools
+  const devTools = new BrowserWindow({
+    width: 800,
+    height: 600
+  })
+
+  win.webContents.setDevToolsWebContents(devTools.webContents)
+  win.webContents.openDevTools({mode: 'detach'})
+
+  // Resize the DevTools window
+  devTools.setSize(1300, 900);
+} 
+
 const createWindow = async () => {
   if (isDebug) {
     await installExtensions();
@@ -98,8 +114,8 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width: 1024,
-    height: 728,
+    width: 1200,
+    height: 1080,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: app.isPackaged
@@ -109,6 +125,8 @@ const createWindow = async () => {
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
+
+  createDevToolWindow(mainWindow);
 
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
@@ -138,7 +156,6 @@ const createWindow = async () => {
   // eslint-disable-next-line
   new AppUpdater();
 };
-
 
 /**
  * Add event listeners...
