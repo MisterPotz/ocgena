@@ -3,8 +3,8 @@ import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 import { Observable } from 'rxjs';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { EditorDelegate } from './EditorDelegate';
-import { ProjectWindow, ProjectWindowId } from './domain';
-import { ProjectWindowManager } from './StructureNode';
+import { ProjectWindow, ProjectWindowId } from '../domain';
+import { ProjectWindowManager } from '../StructureNode';
 
 export interface ClickHandler {
   clickTab(projectWindowId: ProjectWindowId): void;

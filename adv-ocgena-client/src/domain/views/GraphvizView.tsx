@@ -1,8 +1,8 @@
 import { Observable } from "rxjs";
 import { useObservableState } from "observable-hooks";
 import Graph from "renderer/components/Graph";
-import { ProjectWindow } from "./domain";
-import { ProjectWindowManager } from "./StructureNode";
+import { ProjectWindow } from "../domain";
+import { ProjectWindowManager } from "../StructureNode";
 
 
 export class GraphvizView implements ProjectWindow {

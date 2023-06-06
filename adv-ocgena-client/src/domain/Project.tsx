@@ -11,9 +11,9 @@ import {
   ProjectWindowId,
   SimulationConfig,
 } from './domain';
-import { GraphvizView } from './GraphvizView';
+import { GraphvizView } from './views/GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
-import { ClickHandler, ModelEditor } from './ModelEditor';
+import { ClickHandler, ModelEditor } from './views/ModelEditor';
 import { ProjectSingleSimulationExecutor, SimulationClientStatus } from './ProjectSingleSimulationExecutor';
 import {
   StructureNode,
@@ -33,6 +33,7 @@ import {
 } from 'simconfig/simconfig_yaml';
 import { SimConfigCreator } from '../simconfig/SimConfigCreator';
 import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
+import { ErrorConsole } from './views/ErrorConsole';
 
 export type ProjectState = {
   canStartSimulation: boolean;
@@ -55,6 +56,7 @@ export class Project implements ProjectWindowProvider {
   readonly modelEditor;
   readonly simulationConfigEditor;
   readonly graphvizView;
+  readonly errorConsole;
 
   private projectSimulationExecutor = new ProjectSingleSimulationExecutor();
   private initialState;
@@ -74,12 +76,23 @@ export class Project implements ProjectWindowProvider {
       this.graphvizDot,
       this.graphvizLoading
     );
+    this.errorConsole = new ErrorConsole();
 
     this.projectWindowManager = this.createProjectWindowManager();
     this.startProcessingProjectState();
     this.startProcessingOcDotInput();
     this.startProcessingSimConfigInput();
     this.startObservingSimulationStatus();
+
+    let subj = new Subject<string>();
+    subj.pipe(
+      rxops.delay(3000)
+    ).subscribe((line) => {
+        this.errorConsole.writeLine(line)
+    })
+
+    subj.next("hi that's my ocnet ide with other stuff")
+    subj.next("check this out!")
   }
 
   private startProcessingProjectState() {
@@ -179,6 +192,7 @@ export class Project implements ProjectWindowProvider {
       [ModelEditor.id]: this.modelEditor,
       [SimulatorEditor.id]: this.simulationConfigEditor,
       [GraphvizView.id]: this.graphvizView,
+      [ErrorConsole.id]: this.errorConsole
     });
   }
 
@@ -263,21 +277,32 @@ export class Project implements ProjectWindowProvider {
 
   private createSimpleStructure(): ProjectWindowStructure {
     return {
-      id: 'root',
-      direction: 'row',
+      id : 'root',
+      direction: 'column',
       children: [
         {
-          id: 'editors',
-          tabs: [SimulatorEditor.id, ModelEditor.id],
-          currentTabIndex: 0,
-        } as StructureWithTabs<ProjectWindowId>,
+          id: 'workspace',
+          direction: 'row',
+          children: [
+            {
+              id: 'editors',
+              tabs: [SimulatorEditor.id, ModelEditor.id],
+              currentTabIndex: 0,
+            } as StructureWithTabs<ProjectWindowId>,
+            {
+              id: 'view',
+              tabs: [GraphvizView.id],
+              currentTabIndex: 0,
+            } as StructureWithTabs<ProjectWindowId>,
+          ],
+        } as StructureParent<ProjectWindowId>,
         {
-          id: 'view',
-          tabs: [GraphvizView.id],
-          currentTabIndex: 0,
-        } as StructureWithTabs<ProjectWindowId>,
-      ],
-    } as StructureParent<ProjectWindowId>;
+          id: 'terminal',
+          tabs : [ErrorConsole.id],
+          currentTabIndex: 0
+        } as StructureWithTabs<ProjectWindowId>
+      ]
+    } as StructureParent<ProjectWindowId>
   }
 
   showLoading() {

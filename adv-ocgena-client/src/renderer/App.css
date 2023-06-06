@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "../../node_modules/xterm/css/xterm.css";
 
 /*
  * @NOTE: Prepend a `~` to css file paths that are in your node_modules

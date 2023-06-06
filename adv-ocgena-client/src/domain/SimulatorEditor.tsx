@@ -3,10 +3,10 @@ import { Observable } from "rxjs";
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { SchemasSettings, setDiagnosticsOptions } from 'monaco-yaml';
 import { Uri } from "monaco-editor/esm/vs/editor/editor.api";
-import { EditorDelegate } from "./EditorDelegate";
+import { EditorDelegate } from "./views/EditorDelegate";
 import { ProjectWindow, ProjectWindowId } from "./domain";
 import { ProjectWindowManager } from "./StructureNode";
-import { ClickHandler } from "./ModelEditor";
+import { ClickHandler } from "./views/ModelEditor";
 import { modelUri, setupTemplate, setupYamlLanguageServer } from "simconfig/simconfig_yaml";
 
 
