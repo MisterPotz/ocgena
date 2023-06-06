@@ -31,6 +31,7 @@ import {
 } from 'domain/StructureNode';
 import { Observable } from 'rxjs';
 import style from './AllottedScreen.module.css';
+import { ProjectState } from 'domain/Project';
 
 export interface Document {
   title: string;
@@ -138,7 +139,7 @@ function TabPane({
         <Allotment className="h-full w-full">
           {projectWindows.map((projectWindowId, index) => {
             let visible = index == visibleIndex;
-            let projectWindow = project.getProjectWindow(projectWindowId)!
+            let projectWindow = project.getProjectWindow(projectWindowId)!;
             return (
               <Allotment.Pane
                 className="h-full w-full"
@@ -227,7 +228,8 @@ export type AllottedScreenProps = {
   primarySideBar: boolean;
   primarySideBarPosition: 'left' | 'right';
   secondarySideBar: boolean;
-  projectWindowStructure?: ProjectWindowStructure;
+  projectState?: ProjectState;
+  // projectWindowStructure?: ProjectWindowStructure;
   onClickStart: () => void;
   onOpenNewFile: () => void;
   onClickRefresh: () => void;
@@ -242,7 +244,7 @@ export const AllottedScreen = ({
   primarySideBar,
   primarySideBarPosition,
   secondarySideBar,
-  projectWindowStructure,
+  projectState,
   onOpenNewFile,
   onClickStart,
   onClickRefresh,
@@ -283,14 +285,20 @@ export const AllottedScreen = ({
   //   </Allotment.Pane>
   // );
 
+  let projectWindowStructure = projectState?.windowStructure;
+
   let structureNode = projectWindowStructure;
-  console.log("allotting structure : " + JSON.stringify(structureNode));
+  console.log('allotting structure : ' + JSON.stringify(structureNode));
   return (
     <Allotment proportionalLayout={false} vertical>
       <Allotment.Pane minSize={36} maxSize={36}>
         <ActionBar
           pauseButtonEnabled
-          startButtonMode="start"
+          startButtonMode={
+            projectState?.startButtonMode
+              ? projectState.startButtonMode
+              : 'disabled'
+          }
           onClickStart={onClickStart}
           onClickRefresh={onClickRefresh}
           onOpenNewFile={onOpenNewFile}

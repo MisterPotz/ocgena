@@ -8,11 +8,13 @@ export interface ActionButtonProps {
   text: string;
   iconClass: string;
   buttonStyle?: string;
+  disabled?: boolean;
 }
 
 export function ActionButton(props: ActionButtonProps) {
   return (
     <button
+      disabled={props.disabled}
       onClick={props.onClick}
       className={`
             relative
@@ -37,8 +39,10 @@ export function ActionButton(props: ActionButtonProps) {
   );
 }
 
+export type StartButtonMode = 'executing' | 'start' | 'disabled';
+
 export type ActionBarProps = {
-  startButtonMode: 'executing' | 'start';
+  startButtonMode: StartButtonMode;
   pauseButtonEnabled: boolean;
   onClickStart: () => void;
   onClickRefresh: () => void;
@@ -53,6 +57,8 @@ export function ActionBar({
   onOpenNewFile,
 }: ActionBarProps) {
   let showOutline = startButtonMode == 'executing';
+  let disabled = startButtonMode == 'disabled';
+
   return (
     <div
       className={`${styles.actionBar} flex h-9 flex-row items-start justify-start bg-zinc-50`}
@@ -61,9 +67,10 @@ export function ActionBar({
         onClick={onClickStart}
         iconClass="codicon-debug-start"
         text="Start"
-        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-green-300 ${
+        buttonStyle={`${disabled ? "text-opacity-50 bg-zinc-300" : "text-opacity-75 hover:bg-green-300" }  text-black  border-solid border-0 border-r-black border-r-1 border-opacity-10   ${
           showOutline ? 'outline-green-500 outline-2 outline' : ''
         }`}
+        disabled={disabled}
       />
 
       <ActionButton

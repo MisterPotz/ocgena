@@ -14,7 +14,7 @@ import {
 import { GraphvizView } from './GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
 import { ClickHandler, ModelEditor } from './ModelEditor';
-import { ProjectSingleSimulationExecutor } from './ProjectSingleSimulationExecutor';
+import { ProjectSingleSimulationExecutor, SimulationClientStatus } from './ProjectSingleSimulationExecutor';
 import {
   StructureNode,
   StructureWithTabs,
@@ -32,10 +32,12 @@ import {
   simconfigSchemaId,
 } from 'simconfig/simconfig_yaml';
 import { SimConfigCreator } from '../simconfig/SimConfigCreator';
+import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
 
 export type ProjectState = {
   canStartSimulation: boolean;
   isSimulating: boolean;
+  startButtonMode : StartButtonMode;
   windowStructure: StructureNode<ProjectWindow>;
 };
 
@@ -43,8 +45,8 @@ export interface ProjectWindowProvider {
   getProjectWindow(projectWindowId: ProjectWindowId): ProjectWindow | undefined;
 }
 
-
 export class Project implements ProjectWindowProvider {
+
   private graphvizLoading = new Subject<boolean>();
   private graphvizDot = new Subject<string>();
   private internalOcDotEditorSubject$ = new Subject<string>();
@@ -58,7 +60,7 @@ export class Project implements ProjectWindowProvider {
   private initialState;
   readonly projectState$;
   private projectWindowManager;
-  // private ajv = createAjv();
+  private ajv = createAjv();
 
   private simConfigCreator = new SimConfigCreator();
 
@@ -73,15 +75,14 @@ export class Project implements ProjectWindowProvider {
       this.graphvizLoading
     );
 
-    this.projectWindowManager = new ProjectWindowManager(
-      this.initialState.windowStructure,
-      {
-        [ModelEditor.id]: this.modelEditor,
-        [SimulatorEditor.id]: this.simulationConfigEditor,
-        [GraphvizView.id]: this.graphvizView,
-      }
-    );
+    this.projectWindowManager = this.createProjectWindowManager();
+    this.startProcessingProjectState();
+    this.startProcessingOcDotInput();
+    this.startProcessingSimConfigInput();
+    this.startObservingSimulationStatus();
+  }
 
+  private startProcessingProjectState() {
     this.projectWindowManager.projectWindowStructure$.subscribe(
       (newStructure) => {
         let currentProjectState = this.projectState$.getValue();
@@ -99,7 +100,9 @@ export class Project implements ProjectWindowProvider {
         this.projectState$.next(newProjectState);
       }
     );
+  }
 
+  private startProcessingOcDotInput() {
     this.internalOcDotEditorSubject$
       .pipe(
         rxops.tap((value) => this.onNewOcDotContents(value)),
@@ -111,29 +114,82 @@ export class Project implements ProjectWindowProvider {
       )
       .subscribe((newDot) => {
         console.log('new dot: ' + newDot);
+        this.projectSimulationExecutor.updateModel(newDot);
         if (newDot) {
           this.graphvizDot.next(newDot);
         }
         this.hideLoading();
       });
 
-    // this.internalSimConfigEditorInput$.pipe(
-    //   rxops.debounceTime(500),
-    //   rxops.map((rawSimConfig) => {
-    //     console.log('accepting sim config value ' + rawSimConfig);
-    //     return this.convertRawSimConfigToSimConfig(rawSimConfig);
-    //   })
-    // ).subscribe((newConfig) => {
-    //   console.log("new successfully mapped config " + JSON.stringify(newConfig))
-    // });
-
     this.modelEditor.getEditorCurrentInput$().subscribe((input) => {
       this.internalOcDotEditorSubject$.next(input);
     });
+  }
+
+  private startProcessingSimConfigInput() {
+    this.internalSimConfigEditorInput$
+      .pipe(
+        rxops.debounceTime(500),
+        rxops.map((rawSimConfig) => {
+          console.log('accepting sim config value ' + rawSimConfig);
+          return this.convertRawSimConfigToSimConfig(rawSimConfig);
+        })
+      )
+      .subscribe((newConfig) => {
+        this.projectSimulationExecutor.updateSimulationConfig(newConfig);
+        console.log(
+          'new successfully mapped config ' + JSON.stringify(newConfig)
+        );
+      });
 
     this.simulationConfigEditor.getEditorCurrentInput$().subscribe((input) => {
       this.internalSimConfigEditorInput$.next(input);
     });
+  }
+
+  private startObservingSimulationStatus() {
+    this.getCanStartSimulationObservable()
+      .pipe(rxops.debounceTime(500), rxops.distinctUntilChanged())
+      .subscribe((newValue) => {
+        let currentProjectState = this.projectState$.getValue();
+        let newProjectState = produce(currentProjectState, (draft) => {
+          draft.canStartSimulation = newValue.canLaunchNewSimulation;
+          let valueMode : StartButtonMode = "disabled"
+
+          if (!newValue.canLaunchNewSimulation && !newValue.ongoingSimulation) {
+            valueMode = "disabled"
+          } else if (!newValue.canLaunchNewSimulation && newValue.ongoingSimulation) {
+            valueMode = "executing"
+          } else if (newValue.canLaunchNewSimulation) {
+            valueMode = "start"
+          }
+
+          draft.startButtonMode = valueMode
+        });
+        console.log(
+          'Project: startObservingSimulationReadiness : emitting new structure ' +
+            JSON.stringify(newProjectState)
+        );
+        this.projectState$.next(newProjectState);
+      });
+  }
+
+  private createProjectWindowManager() {
+    return new ProjectWindowManager(this.initialState.windowStructure, {
+      [ModelEditor.id]: this.modelEditor,
+      [SimulatorEditor.id]: this.simulationConfigEditor,
+      [GraphvizView.id]: this.graphvizView,
+    });
+  }
+
+  onClickStart() {
+    let currentProjectStatus = this.projectState$.getValue();
+    let buttonMode = currentProjectStatus.startButtonMode;
+    console.log("start button clicked")
+    if (buttonMode == "start") {
+      console.log('starting new simulation, g\'luck to us all')
+      this.projectSimulationExecutor.tryStartSimulation();
+    }
   }
 
   getProjectWindow(
@@ -162,24 +218,35 @@ export class Project implements ProjectWindowProvider {
     } as ClickHandler;
   }
 
-  // private convertRawSimConfigToSimConfig(
-  //   rawSimConfig: string
-  // ): SimulationConfig | null {
-  //   let yamlObj = yaml.load(rawSimConfig);
-  //   console.log("Project: convertRawSimConfigToSimConfig: yamlObj: " + JSON.stringify(yamlObj))
+  private convertRawSimConfigToSimConfig(
+    rawSimConfig: string
+  ): SimulationConfig | null {
+    let yamlObj: any;
 
-  //   let isValid = this.ajv.validate(simconfigSchemaId, yamlObj);
+    try {
+      yamlObj = yaml.load(rawSimConfig);
+    } catch (e) {
+      console.log('oops, yaml error ' + e);
+      return null;
+    }
 
-  //   if (!isValid) {
-  //     console.log(
-  //       'Project: convertRawSimConfigToSimConfig: have errors: ' +
-  //         JSON.stringify(this.ajv.errors)
-  //     );
-  //     return null;
-  //   }
+    console.log(
+      'Project: convertRawSimConfigToSimConfig: yamlObj: ' +
+        JSON.stringify(yamlObj)
+    );
 
-  //   return this.simConfigCreator.createFromObj(yamlObj);
-  // }
+    let isValid = this.ajv.validate(simconfigSchemaId, yamlObj);
+
+    if (!isValid) {
+      console.log(
+        'Project: convertRawSimConfigToSimConfig: have errors: ' +
+          JSON.stringify(this.ajv.errors)
+      );
+      return null;
+    }
+
+    return this.simConfigCreator.createFromObj(yamlObj);
+  }
 
   private convertRawOcDotToDot(rawOcDot: string): string | null {
     let result = null;
@@ -230,6 +297,7 @@ export class Project implements ProjectWindowProvider {
     return {
       canStartSimulation: false,
       isSimulating: false,
+      startButtonMode: 'disabled',
       windowStructure: this.createSimpleStructure(),
       // windowStructure: this.createInitialStructure()
     };
@@ -255,8 +323,8 @@ export class Project implements ProjectWindowProvider {
     };
   }
 
-  getCanStartSimulationObservable(): Observable<boolean> {
-    return this.projectSimulationExecutor.isLaunchAllowed$;
+  getCanStartSimulationObservable(): Observable<SimulationClientStatus> {
+    return this.projectSimulationExecutor.simulationClientStatus$;
   }
 
   getGraphvizObservable(): Observable<string> {

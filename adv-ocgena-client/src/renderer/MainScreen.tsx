@@ -38,21 +38,23 @@ export const MainScreen = ({
   const [panelVisible, setPanelVisible] = useState(true);
   const [activity, setActivity] = useState(0);
   
-  const projectState = useObservableState(appService.getProjectState$(), null)
+  const projectState = useObservableState(appService.getProjectState$(), undefined)
   console.log("MainScreen using new project state: " + JSON.stringify(projectState?.windowStructure))
   return (
     <div className={classNames(styles.editorsContainer, "w-full", "h-full")}>
       <AllottedScreen
         activity={activity}
         activityBar={activityBar}
-        projectWindowStructure={projectState?.windowStructure}
+        projectState={projectState}
         panelVisible={panelVisible}
         primarySideBar={primarySideBar}
         primarySideBarPosition={primarySideBarPosition}
         secondarySideBar={secondarySideBar}
         onActivityChanged={setActivity}
         onPanelVisibleChanged={setPanelVisible}
-        onClickStart={() => { }}
+        onClickStart={() => { 
+          appService.onClickStart()
+        }}
         onClickRefresh={() => { }}
         onOpenNewFile={() => {
           console.log("opening new file");

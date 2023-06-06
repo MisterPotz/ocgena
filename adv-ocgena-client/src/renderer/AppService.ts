@@ -20,6 +20,10 @@ export class AppService {
         return this.openedProject.projectState$
     }
 
+    onClickStart() {
+        this.openedProject.onClickStart();
+    }
+
     openNewFile() {
         window.electron.ipcRenderer.sendMessage('open', []);
     }

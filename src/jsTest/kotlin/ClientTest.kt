@@ -121,6 +121,8 @@ class ClientTest {
                 invoked = true
             }),
             htmlTraceFileWriter = htmlStringBuilderWriter,
+            ansiTraceWriter = CallbackStringWriter { _ ->
+            },
             ocelWriter = ocelWriter
         )
 

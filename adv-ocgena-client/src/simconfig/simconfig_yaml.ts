@@ -21,7 +21,7 @@ export const setupTemplate = trimIndent(`
             duration: [1, 1]
             minOccurrenceInterval: [2,2]
         transitionsToIntervals:
-          t1:
+            t1:
               duration: [1, 1]
               minOccurrenceInterval: [1,2]
 `);
@@ -36,23 +36,6 @@ export const PLACE_TYPING = 'placeTyping';
 export const LABEL_MAPPING = 'labelMapping';
 export const INITIAL_MARKING = 'initialMarking';
 export const TRANSITIONS_CONFIG = 'transitionsConfig';
-
-// export type TimeRange = {
-//   start : number,
-//   end : number
-// }
-
-// export type TransitionInterval = {
-//   duration: TimeRange,
-//   minOccurrenceInterval : TimeRange
-// }
-
-// export type TransitionIntervals = {
-//   defaultTransitionInterval?: TransitionInterval,
-//   transitionsToIntervals: {
-//     [transitionId : string] : TransitionInterval
-//   }
-// }
 
 const TimeRange = t.tuple([t.number, t.number]);
 
@@ -143,13 +126,6 @@ export const simconfigSchema = {
           },
         },
       },
-      // p1: {
-      //     enum: ['v1', 'v2']
-      // },
-      // p2: {
-      //     // Reference the second schema
-      //     $ref: 'http://myserver/bar-schema.json'
-      // }
     },
   },
 } as SchemasSettings;
