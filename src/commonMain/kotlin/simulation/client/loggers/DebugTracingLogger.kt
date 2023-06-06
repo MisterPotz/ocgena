@@ -1,9 +1,12 @@
-package simulation
+package simulation.client.loggers
 
 import eventlog.ActivityOccurrenceRegistry
 import eventlog.EventLog
 import eventlog.ModelToEventLogConverter
 import model.*
+import simulation.Logger
+import simulation.SimulatableComposedOcNet
+import simulation.SimulationTime
 import simulation.client.OcelParams
 import utils.*
 

@@ -9,6 +9,7 @@ import {
   ProjectWindow,
   SimulationArgument,
   ProjectWindowId,
+  SimulationConfig,
 } from './domain';
 import { GraphvizView } from './GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
@@ -22,6 +23,15 @@ import {
   WindowsMap,
 } from './StructureNode';
 import { produce } from 'immer';
+import * as yaml from 'js-yaml';
+import Ajv from 'ajv';
+import {
+  TimeRangeClass,
+  createAjv,
+  simconfigSchema,
+  simconfigSchemaId,
+} from 'simconfig/simconfig_yaml';
+import { SimConfigCreator } from '../simconfig/SimConfigCreator';
 
 export type ProjectState = {
   canStartSimulation: boolean;
@@ -29,14 +39,16 @@ export type ProjectState = {
   windowStructure: StructureNode<ProjectWindow>;
 };
 
-export interface ProjectWindowProvider { 
-  getProjectWindow(projectWindowId : ProjectWindowId) : ProjectWindow | undefined
+export interface ProjectWindowProvider {
+  getProjectWindow(projectWindowId: ProjectWindowId): ProjectWindow | undefined;
 }
+
 
 export class Project implements ProjectWindowProvider {
   private graphvizLoading = new Subject<boolean>();
   private graphvizDot = new Subject<string>();
-  private internalOcDotEditorSubject = new Subject<string>();
+  private internalOcDotEditorSubject$ = new Subject<string>();
+  private internalSimConfigEditorInput$ = new Subject<string>();
 
   readonly modelEditor;
   readonly simulationConfigEditor;
@@ -46,43 +58,49 @@ export class Project implements ProjectWindowProvider {
   private initialState;
   readonly projectState$;
   private projectWindowManager;
-  private clickHandler = this.createClickHandler();
+  // private ajv = createAjv();
+
+  private simConfigCreator = new SimConfigCreator();
 
   constructor() {
     this.initialState = this.createInitialState();
     this.projectState$ = new BehaviorSubject<ProjectState>(this.initialState);
-    
+
     this.modelEditor = new ModelEditor(ModelEditor.id);
     this.simulationConfigEditor = new SimulatorEditor();
     this.graphvizView = new GraphvizView(
       this.graphvizDot,
-      this.graphvizLoading,
+      this.graphvizLoading
     );
 
     this.projectWindowManager = new ProjectWindowManager(
       this.initialState.windowStructure,
       {
-        [ModelEditor.id] : this.modelEditor,
-        [SimulatorEditor.id] : this.simulationConfigEditor,
-        [GraphvizView.id] : this.graphvizView,
+        [ModelEditor.id]: this.modelEditor,
+        [SimulatorEditor.id]: this.simulationConfigEditor,
+        [GraphvizView.id]: this.graphvizView,
       }
     );
-    
+
     this.projectWindowManager.projectWindowStructure$.subscribe(
       (newStructure) => {
         let currentProjectState = this.projectState$.getValue();
         let newProjectState = produce(currentProjectState, (draft) => {
-          draft.windowStructure = newStructure
-        })
+          draft.windowStructure = newStructure;
+        });
         console.log(
-          'Project: projectWindowStructure$.subscribe : emitting new structure ' + JSON.stringify(newStructure)
+          'Project: projectWindowStructure$.subscribe : emitting new structure ' +
+            JSON.stringify(newStructure)
         );
-        console.log("project: projectWindowStructure$: state shallow equal to previous: " + (newProjectState === currentProjectState))
+        console.log(
+          'project: projectWindowStructure$: state shallow equal to previous: ' +
+            (newProjectState === currentProjectState)
+        );
         this.projectState$.next(newProjectState);
       }
     );
 
-    this.internalOcDotEditorSubject
+    this.internalOcDotEditorSubject$
       .pipe(
         rxops.tap((value) => this.onNewOcDotContents(value)),
         rxops.debounceTime(500),
@@ -99,35 +117,69 @@ export class Project implements ProjectWindowProvider {
         this.hideLoading();
       });
 
+    // this.internalSimConfigEditorInput$.pipe(
+    //   rxops.debounceTime(500),
+    //   rxops.map((rawSimConfig) => {
+    //     console.log('accepting sim config value ' + rawSimConfig);
+    //     return this.convertRawSimConfigToSimConfig(rawSimConfig);
+    //   })
+    // ).subscribe((newConfig) => {
+    //   console.log("new successfully mapped config " + JSON.stringify(newConfig))
+    // });
 
-      this.modelEditor.editorDelegate.editorCurrentInput$.subscribe((input) => {
-        this.internalOcDotEditorSubject.next(input);
-      })
+    this.modelEditor.getEditorCurrentInput$().subscribe((input) => {
+      this.internalOcDotEditorSubject$.next(input);
+    });
+
+    this.simulationConfigEditor.getEditorCurrentInput$().subscribe((input) => {
+      this.internalSimConfigEditorInput$.next(input);
+    });
   }
 
-  getProjectWindow(projectWindowId: ProjectWindowId): ProjectWindow | undefined {
-      return this.projectWindowManager.windowsMap[projectWindowId]
+  getProjectWindow(
+    projectWindowId: ProjectWindowId
+  ): ProjectWindow | undefined {
+    return this.projectWindowManager.windowsMap[projectWindowId];
   }
 
-  clickTab(projectWindowId : ProjectWindowId) {
-    this.projectWindowManager.clickTabOfProjectWindow(projectWindowId)
+  clickTab(projectWindowId: ProjectWindowId) {
+    this.projectWindowManager.clickTabOfProjectWindow(projectWindowId);
   }
 
   private onNewOcDotContents(onNewOcDotContents: OcDotContent | null) {
     this.showLoading();
   }
 
-  private createClickHandler() { 
-    let project = this
+  private createClickHandler() {
+    let project = this;
 
     return {
       clickTab(projectWindowId) {
-          if (project.projectWindowManager) {
-            project.projectWindowManager.clickTabOfProjectWindow(projectWindowId)
-          }
+        if (project.projectWindowManager) {
+          project.projectWindowManager.clickTabOfProjectWindow(projectWindowId);
+        }
       },
-    } as ClickHandler
+    } as ClickHandler;
   }
+
+  // private convertRawSimConfigToSimConfig(
+  //   rawSimConfig: string
+  // ): SimulationConfig | null {
+  //   let yamlObj = yaml.load(rawSimConfig);
+  //   console.log("Project: convertRawSimConfigToSimConfig: yamlObj: " + JSON.stringify(yamlObj))
+
+  //   let isValid = this.ajv.validate(simconfigSchemaId, yamlObj);
+
+  //   if (!isValid) {
+  //     console.log(
+  //       'Project: convertRawSimConfigToSimConfig: have errors: ' +
+  //         JSON.stringify(this.ajv.errors)
+  //     );
+  //     return null;
+  //   }
+
+  //   return this.simConfigCreator.createFromObj(yamlObj);
+  // }
 
   private convertRawOcDotToDot(rawOcDot: string): string | null {
     let result = null;
@@ -140,25 +192,6 @@ export class Project implements ProjectWindowProvider {
       console.log(e);
     }
     return result;
-  }
-
-  private createInitialStructure(): ProjectWindowStructure {
-    return {
-      id: 'root',
-      direction: 'row',
-      children: [
-        {
-          id: 'editors',
-          tabs: [this.modelEditor, this.simulationConfigEditor],
-          currentTabIndex: 0,
-        },
-        {
-          id: 'view',
-          tabs: [this.graphvizView],
-          currentTabIndex: 0,
-        } as StructureWithTabs<ProjectWindow>,
-      ],
-    } as StructureParent<ProjectWindow>;
   }
 
   private createSimpleStructure(): ProjectWindowStructure {
@@ -190,7 +223,7 @@ export class Project implements ProjectWindowProvider {
 
   onFileOpened(fileOcDotContents: string) {
     this.modelEditor.updateEditorWithContents(fileOcDotContents);
-    this.internalOcDotEditorSubject.next(fileOcDotContents);
+    this.internalOcDotEditorSubject$.next(fileOcDotContents);
   }
 
   private createInitialState(): ProjectState {

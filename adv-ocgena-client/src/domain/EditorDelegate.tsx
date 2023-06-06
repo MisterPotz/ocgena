@@ -8,11 +8,15 @@ export class EditorDelegate {
     };
     
     editorInputRequest$ = new Subject<string>();
-    editorCurrentInput$ = new Subject<string>();
+    private editorCurrentInput$ = new Subject<string>();
 
     updateEditorWithContents(newContents: string) {
         this.currentContent = newContents;
         this.editorInputRequest$.next(newContents);
+    }
+
+    getEditorCurrentInput$() {
+        return this.editorCurrentInput$
     }
 
     createProps() {

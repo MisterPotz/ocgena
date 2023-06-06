@@ -1,4 +1,4 @@
-package simulation.client
+package simulation.client.loggers
 
 import eventlog.EventLog
 import eventlog.ModelToEventLogConverter
@@ -7,6 +7,8 @@ import model.ExecutedBinding
 import model.LabelMapping
 import simulation.SimulatableComposedOcNet
 import simulation.SimulationTime
+import simulation.client.OcelParams
+import simulation.client.OcelWriter
 
 class OcelEventLogger(
     private val ocelParams: OcelParams,

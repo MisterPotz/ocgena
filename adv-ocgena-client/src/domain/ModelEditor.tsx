@@ -14,12 +14,16 @@ export class ModelEditor implements ProjectWindow {
   readonly title: string = 'model of my OC net';
   static id: ProjectWindowId = 'model';
   isOpened: boolean = false;
-  editorDelegate = new EditorDelegate();
+  private editorDelegate = new EditorDelegate();
   projectWindowId: string;
-  id = ModelEditor.id
-  
+  id = ModelEditor.id;
+
   constructor(projectWindowId: ProjectWindowId) {
     this.projectWindowId = projectWindowId;
+  }
+
+  getEditorCurrentInput$() {
+    return this.editorDelegate.getEditorCurrentInput$();
   }
 
   updateEditorWithContents(newContents: string) {

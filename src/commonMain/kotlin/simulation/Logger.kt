@@ -1,6 +1,7 @@
 package simulation
 
 import model.*
+import simulation.client.loggers.DebugTracingLogger
 
 interface LoggerFactory {
     fun create(

@@ -22,11 +22,11 @@ class OutputPlacesConfig(val outputPlaces: String) : Config() {
 }
 
 @JsExport
-class OCNetTypeConfig(val ocNetType: Int/* OcNetType */) : Config() {
+class OCNetTypeConfig(val ocNetType: OcNetType) : Config() {
     override val type = ConfigEnum.OC_TYPE
     companion object {
         fun from(ocNetType: OcNetType) : OCNetTypeConfig {
-            return OCNetTypeConfig(ocNetType.ordinal)
+            return OCNetTypeConfig(ocNetType)
         }
     }
 }
@@ -63,12 +63,34 @@ interface TimeRange {
     val end: Int
 }
 
+@JsExport
+class TimeRangeClass(private val array : Array<Int>) : TimeRange {
+    override val start: Int
+        get() = array.first()
+    override val end: Int
+        get() = array[1]
+}
+
 class TimeRangeImp(override val start: Int, override val end: Int) : TimeRange
+
+@JsExport
+external interface JsTransitionIntervals {
+    val duration: TimeRange
+    val minOccurrenceInterval: TimeRange
+}
 
 @JsExport
 interface TransitionIntervals {
     val duration: TimeRange
     val minOccurrenceInterval: TimeRange
+}
+
+@JsExport
+fun toTransitionIntervals(jsTransitionIntervals: JsTransitionIntervals) : TransitionIntervals = object : TransitionIntervals {
+    override val duration: TimeRange
+        get() = jsTransitionIntervals.duration
+    override val minOccurrenceInterval: TimeRange
+        get() = jsTransitionIntervals.minOccurrenceInterval
 }
 
 class TransitionIntervalsImp(override val duration: TimeRange, override val minOccurrenceInterval: TimeRange) :

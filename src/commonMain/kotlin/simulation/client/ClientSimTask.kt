@@ -4,6 +4,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import model.*
 import simulation.*
+import simulation.client.loggers.CompoundLogger
+import simulation.client.loggers.HtmlExecutionPrintingLogger
+import simulation.client.loggers.OcelEventLogger
 import simulation.utils.createParams
 import kotlin.js.JsExport
 

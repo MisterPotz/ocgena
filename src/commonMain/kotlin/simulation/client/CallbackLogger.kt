@@ -1,6 +1,7 @@
 package simulation.client
 
 import model.Time
+import simulation.client.loggers.StubLogger
 
 class CallbackLogger(
     private val simTaskClientCallback: SimTaskClientCallback
