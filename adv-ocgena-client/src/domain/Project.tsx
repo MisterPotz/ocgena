@@ -14,7 +14,10 @@ import {
 import { GraphvizView } from './views/GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
 import { ClickHandler, ModelEditor } from './views/ModelEditor';
-import { ProjectSingleSimulationExecutor, SimulationClientStatus } from './ProjectSingleSimulationExecutor';
+import {
+  ProjectSingleSimulationExecutor,
+  SimulationClientStatus,
+} from './ProjectSingleSimulationExecutor';
 import {
   StructureNode,
   StructureWithTabs,
@@ -34,11 +37,12 @@ import {
 import { SimConfigCreator } from '../simconfig/SimConfigCreator';
 import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
 import { ErrorConsole } from './views/ErrorConsole';
+import { error, model, simulation } from 'ocgena';
 
 export type ProjectState = {
   canStartSimulation: boolean;
   isSimulating: boolean;
-  startButtonMode : StartButtonMode;
+  startButtonMode: StartButtonMode;
   windowStructure: StructureNode<ProjectWindow>;
 };
 
@@ -47,7 +51,6 @@ export interface ProjectWindowProvider {
 }
 
 export class Project implements ProjectWindowProvider {
-
   private graphvizLoading = new Subject<boolean>();
   private graphvizDot = new Subject<string>();
   private internalOcDotEditorSubject$ = new Subject<string>();
@@ -83,16 +86,7 @@ export class Project implements ProjectWindowProvider {
     this.startProcessingOcDotInput();
     this.startProcessingSimConfigInput();
     this.startObservingSimulationStatus();
-
-    let subj = new Subject<string>();
-    subj.pipe(
-      rxops.delay(3000)
-    ).subscribe((line) => {
-        this.errorConsole.writeLine(line)
-    })
-
-    subj.next("hi that's my ocnet ide with other stuff")
-    subj.next("check this out!")
+    this.startObservingErrors();
   }
 
   private startProcessingProjectState() {
@@ -115,6 +109,19 @@ export class Project implements ProjectWindowProvider {
     );
   }
 
+  private startObservingErrors() {
+    this.projectSimulationExecutor.errors$
+      .pipe(rxops.debounceTime(200))
+      .subscribe((errors: string[] | undefined) => {
+        console.log("Project: received new errors " + errors)
+        if (!errors) {
+          this.errorConsole.clean()
+          return
+        }
+        this.errorConsole.writeLines(errors)
+      });
+  }
+
   private startProcessingOcDotInput() {
     this.internalOcDotEditorSubject$
       .pipe(
@@ -127,7 +134,6 @@ export class Project implements ProjectWindowProvider {
       )
       .subscribe((newDot) => {
         console.log('new dot: ' + newDot);
-        this.projectSimulationExecutor.updateModel(newDot);
         if (newDot) {
           this.graphvizDot.next(newDot);
         }
@@ -167,17 +173,20 @@ export class Project implements ProjectWindowProvider {
         let currentProjectState = this.projectState$.getValue();
         let newProjectState = produce(currentProjectState, (draft) => {
           draft.canStartSimulation = newValue.canLaunchNewSimulation;
-          let valueMode : StartButtonMode = "disabled"
+          let valueMode: StartButtonMode = 'disabled';
 
           if (!newValue.canLaunchNewSimulation && !newValue.ongoingSimulation) {
-            valueMode = "disabled"
-          } else if (!newValue.canLaunchNewSimulation && newValue.ongoingSimulation) {
-            valueMode = "executing"
+            valueMode = 'disabled';
+          } else if (
+            !newValue.canLaunchNewSimulation &&
+            newValue.ongoingSimulation
+          ) {
+            valueMode = 'executing';
           } else if (newValue.canLaunchNewSimulation) {
-            valueMode = "start"
+            valueMode = 'start';
           }
 
-          draft.startButtonMode = valueMode
+          draft.startButtonMode = valueMode;
         });
         console.log(
           'Project: startObservingSimulationReadiness : emitting new structure ' +
@@ -192,16 +201,16 @@ export class Project implements ProjectWindowProvider {
       [ModelEditor.id]: this.modelEditor,
       [SimulatorEditor.id]: this.simulationConfigEditor,
       [GraphvizView.id]: this.graphvizView,
-      [ErrorConsole.id]: this.errorConsole
+      [ErrorConsole.id]: this.errorConsole,
     });
   }
 
   onClickStart() {
     let currentProjectStatus = this.projectState$.getValue();
     let buttonMode = currentProjectStatus.startButtonMode;
-    console.log("start button clicked")
-    if (buttonMode == "start") {
-      console.log('starting new simulation, g\'luck to us all')
+    console.log('start button clicked');
+    if (buttonMode == 'start') {
+      console.log("starting new simulation, g'luck to us all");
       this.projectSimulationExecutor.tryStartSimulation();
     }
   }
@@ -218,6 +227,7 @@ export class Project implements ProjectWindowProvider {
 
   private onNewOcDotContents(onNewOcDotContents: OcDotContent | null) {
     this.showLoading();
+    this.projectSimulationExecutor.updateModel(onNewOcDotContents);
   }
 
   private createClickHandler() {
@@ -277,7 +287,7 @@ export class Project implements ProjectWindowProvider {
 
   private createSimpleStructure(): ProjectWindowStructure {
     return {
-      id : 'root',
+      id: 'root',
       direction: 'column',
       children: [
         {
@@ -298,11 +308,11 @@ export class Project implements ProjectWindowProvider {
         } as StructureParent<ProjectWindowId>,
         {
           id: 'terminal',
-          tabs : [ErrorConsole.id],
-          currentTabIndex: 0
-        } as StructureWithTabs<ProjectWindowId>
-      ]
-    } as StructureParent<ProjectWindowId>
+          tabs: [ErrorConsole.id],
+          currentTabIndex: 0,
+        } as StructureWithTabs<ProjectWindowId>,
+      ],
+    } as StructureParent<ProjectWindowId>;
   }
 
   showLoading() {
@@ -313,9 +323,14 @@ export class Project implements ProjectWindowProvider {
     this.graphvizLoading.next(false);
   }
 
-  onFileOpened(fileOcDotContents: string) {
-    this.modelEditor.updateEditorWithContents(fileOcDotContents);
-    this.internalOcDotEditorSubject$.next(fileOcDotContents);
+  setModelOcDotContents(modelOcDotContents: string) {
+    this.modelEditor.updateEditorWithContents(modelOcDotContents);
+    this.internalOcDotEditorSubject$.next(modelOcDotContents)
+  }
+  
+  setSimConfigContents(simConfigContents: string) {
+    this.simulationConfigEditor.updateEditorWithContents(simConfigContents);
+    this.internalSimConfigEditorInput$.next(simConfigContents)
   }
 
   private createInitialState(): ProjectState {

@@ -196,16 +196,17 @@ const configuration: webpack.Configuration = {
         {
           from: path.join(webpackPaths.srcDocPath, "assets"),
           to: "docs/assets",
-          transform(content, filename) {
+          transform(content, absoluteFilename) {
+            console.log("transforming file: %s", absoluteFilename);
             const isJsRegex = new RegExp(`\.js$`);
             const jsonRegex = new RegExp('\.json$');
 
             let processedContent = content.toString();
 
-            if (isJsRegex.test(filename)) {
+            if (isJsRegex.test(absoluteFilename)) {
               const regex = new RegExp('(\/docs)', 'g');
               processedContent = processedContent.replace(regex, '.');
-            } else if (jsonRegex.test(filename)) {
+            } else if (jsonRegex.test(absoluteFilename)) {
               const emptyLinkUrl = new RegExp(`"url": "\/docs\/"`, 'g')
               const emptyLinkReplacement = `"url": "./index.html"`
 
@@ -229,7 +230,8 @@ const configuration: webpack.Configuration = {
           from: path.join(webpackPaths.srcDocPath, '**/*.html').replace(/\\/g, "/"),
           to: 'docs/[name][ext]',
           
-          transform(content) {
+          transform(content, absoluteFilename) {
+            console.log("transforming file: %s", absoluteFilename);
             let processedContent = content.toString();
             
             const emptyLinkUrl = new RegExp(`"\/docs\/"`, 'g')
@@ -239,7 +241,6 @@ const configuration: webpack.Configuration = {
             processedContent = processedContent.replace(emptyLinkUrl, emptyLinkReplacement);
             processedContent = processedContent.replace(regex, 'href=".');
             processedContent = processedContent.replace(regex2, 'src=".');
-            console.log(processedContent);
             return processedContent;
           }  
         },

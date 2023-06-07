@@ -5,10 +5,37 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { EditorDelegate } from './EditorDelegate';
 import { ProjectWindow, ProjectWindowId } from '../domain';
 import { ProjectWindowManager } from '../StructureNode';
+import { trimIndent } from 'ocdot-parser/lib/exts';
 
 export interface ClickHandler {
   clickTab(projectWindowId: ProjectWindowId): void;
 }
+
+const exampleModel = trimIndent(`
+  ocnet {
+    a -> b
+    b -> c
+    c-> a
+    transitions {
+      t1 t2
+    }
+    places { 
+      p1 p2 p3
+    }
+
+    t3 -> subgraph {
+      p3 p4
+      subgraph { 
+        p5
+      }
+    }
+    t8 -> ad
+
+    p1 => t1 -> p2 [color ="red"] 
+    p2 -> t2 
+    t2 (3*k + 1)=> p3 [color="orange"]
+  }
+`)
 
 export class ModelEditor implements ProjectWindow {
   readonly title: string = 'model of my OC net';
@@ -51,7 +78,7 @@ export class ModelEditor implements ProjectWindow {
         }
 
         let newEditor = monaco.editor.create(htmlElement, {
-          value: ['digraph {\n\ta -> b\n}'].join('\n'),
+          value: [exampleModel].join('\n'),
           language: 'ocdot',
           automaticLayout: true,
           theme: 'ocDotTheme',

@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import model.OcDotParseResult
 
-class ModelSimulationReadinessReporter(
+class ModelSimulationReadinessDeducer(
     private val modelCreator: ModelCreator
 ) {
     data class Readiness(

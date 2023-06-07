@@ -1,7 +1,8 @@
-import { simulation } from 'ocgena';
+import { error, model, simulation } from 'ocgena';
 import { BehaviorSubject, Subject, tap } from 'rxjs';
 import { OcDotContent, SimulationConfig } from './domain';
 import { produce } from 'immer';
+import { red, reset, yellow } from 'renderer/allotment-components/panel';
 
 export type SimulationClientStatus = {
   canLaunchNewSimulation: boolean;
@@ -14,11 +15,33 @@ export class ProjectSingleSimulationExecutor {
       readyToCalc: (ready) => {
         this.simulationReadiness$.next(ready);
       },
-    } as simulation.client.JsOnReadinessCallback)
+      ocDotParseResult: (ocDotParseResult: model.OcDotParseResult) => {
+        console.log(ocDotParseResult)
+      },
+      onCurrentErrorsChange: (errors) => {
+          console.log("have currently these errors: " + errors?.map((eror) =>  `${Object.keys(eror)} ${eror.message}`)?.join('\n'));
+          if (errors) {
+            this.errors$.next(this.buildErrorMessageChunk(errors))
+          } else {
+            this.errors$.next(undefined)
+          }
+      },
+    } )
   );
+
+  private buildErrorMessageChunk(errors : error.Error[]) {
+    return errors.map(
+        (error) =>  { 
+          let errorColor = (error.errorLevel.name == "CRITICAL") ? red : yellow
+          let errorTag = `[${error.errorLevel.name}]`.padEnd(10)
+          return `${errorColor}${errorTag}${reset} : ${error.message}`
+        }
+    )
+  }
 
   private simulationReadiness$ = new Subject<boolean>();
   private currentSimulationReadiness = false;
+  readonly errors$ = new BehaviorSubject<string[] | undefined>(undefined);
 
   readonly simulationClientStatus$ =
     new BehaviorSubject<SimulationClientStatus>({
@@ -30,6 +53,11 @@ export class ProjectSingleSimulationExecutor {
 
   constructor() {
     this.startObservingSimulationReadiness();
+    this.startClient();
+  } 
+  
+  private startClient() {
+    this.simulationClient.start();
   }
 
   private startObservingSimulationReadiness() {

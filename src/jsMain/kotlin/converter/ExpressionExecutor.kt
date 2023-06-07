@@ -2,6 +2,8 @@ package converter
 
 import ast.*
 
+@OptIn(ExperimentalJsExport::class)
+@JsExport
 class ExpressionExecutor(private val rootExpression: RootExpression) {
     private var foundVariable: String? = null
     private val opStack: MutableList<Op> = mutableListOf()
@@ -30,7 +32,7 @@ class ExpressionExecutor(private val rootExpression: RootExpression) {
 
     private fun consumeOperations(amount: Int) {
         for (i in (opStack.size - 1) downTo (opStack.size - amount)) {
-            val op = opStack[i]
+            val op = opStack.removeLast()
             val rightValue = valuesStack.removeLast()
             val leftValue = valuesStack.removeLast()
             val result = when (op) {
@@ -55,23 +57,21 @@ class ExpressionExecutor(private val rootExpression: RootExpression) {
     }
 
     private fun parseExpression(expression: Expression) {
-        val head = expression.head
-
-        if (isFinishedValue(head)) {
-            substituteValue(head)
+        if (isFinishedValue(expression)) {
+            substituteValue(expression)
         } else {
             parseExpression(expression.head)
-        }
 
-        val tails = expression.tail
+            val tails = expression.tail
 
-        for (tail in tails) {
-            parseExpressionOp(tail)
-        }
-        val parsedTails = tails.size
-        if (parsedTails > 0) {
-            if (isInSubstituteMode) {
-                consumeOperations(parsedTails)
+            for (tail in tails) {
+                parseExpressionOp(tail)
+            }
+            val parsedTails = tails.size
+            if (parsedTails > 0) {
+                if (isInSubstituteMode) {
+                    consumeOperations(parsedTails)
+                }
             }
         }
     }
@@ -97,7 +97,7 @@ class ExpressionExecutor(private val rootExpression: RootExpression) {
         }
     }
 
-    fun isFinishedValue(expressionElement: model.typel.Expression): Boolean {
+    fun isFinishedValue(expressionElement: Expression): Boolean {
         return !isExpression(expressionElement)
     }
 

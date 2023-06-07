@@ -414,6 +414,12 @@ export namespace AST {
     });
   }
 
+  export function parseExpression(expression : string) : RootExpression {
+    return _parse(expression, {
+      startRule: "RootExpression"
+    })
+  }
+
   export interface StringifyOption {
     indentSize?: number;
   }

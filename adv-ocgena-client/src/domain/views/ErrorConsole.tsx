@@ -11,12 +11,21 @@ export class ErrorConsole implements ProjectWindow {
   static id: string = 'Errors';
   id = ErrorConsole.id;
 
-  outputLine$ = new Subject<string>();
+  outputLine$ = new Subject<string[]>();
+  clean$ = new Subject<boolean>();
 
   constructor() {}
 
   writeLine(line: string) {
-    this.outputLine$.next(line);
+    this.outputLine$.next([line]);
+  }
+
+  writeLines(lines: string[]) {
+    this.outputLine$.next(lines)
+  }
+
+  clean() {
+    this.clean$.next(true);
   }
 
   createReactComponent = (onSizeChangeObservable: Observable<number[]>) => {
@@ -24,6 +33,7 @@ export class ErrorConsole implements ProjectWindow {
       <Panel
         sizeChange$={onSizeChangeObservable}
         outputLine$={this.outputLine$}
+        clean$={this.clean$}
         maximized={false}
         onClose={() => {  }}
         onMaximize={() => {  }}

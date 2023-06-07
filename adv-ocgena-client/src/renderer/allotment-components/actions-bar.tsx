@@ -1,5 +1,6 @@
 import styles from './actions-bar.module.css';
 import '@vscode/codicons/dist/codicon.css';
+import { FileType } from 'main/preload';
 
 import * as React from 'react';
 
@@ -46,7 +47,7 @@ export type ActionBarProps = {
   pauseButtonEnabled: boolean;
   onClickStart: () => void;
   onClickRefresh: () => void;
-  onOpenNewFile: () => void;
+  onOpenNewFile: (fileType: FileType) => void;
 };
 
 export function ActionBar({
@@ -63,11 +64,41 @@ export function ActionBar({
     <div
       className={`${styles.actionBar} flex h-9 flex-row items-start justify-start bg-zinc-50`}
     >
+      <div
+        className="
+            rounded-none
+            border-0
+            border-r-1 border-solid border-r-black border-opacity-10 bg-transparent px-2 text-sm text-black"
+      >
+        <b>OCGena</b>
+      </div>
+      <ActionButton
+        onClick={() => {
+          onOpenNewFile('ocdot');
+        }}
+        iconClass="codicon-symbol-file"
+        text="Open model file"
+        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-zinc-200`}
+      />
+
+      <ActionButton
+        onClick={() => {
+          onOpenNewFile('simconfig');
+        }}
+        iconClass="codicon-symbol-file"
+        text="Open configuration file"
+        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-zinc-200`}
+      />
+
       <ActionButton
         onClick={onClickStart}
         iconClass="codicon-debug-start"
         text="Start"
-        buttonStyle={`${disabled ? "text-opacity-50 bg-zinc-300" : "text-opacity-75 hover:bg-green-300" }  text-black  border-solid border-0 border-r-black border-r-1 border-opacity-10   ${
+        buttonStyle={`${
+          disabled
+            ? 'text-opacity-50 bg-zinc-300'
+            : 'text-opacity-75 hover:bg-green-300'
+        }  text-black  border-solid border-0 border-r-black border-r-1 border-opacity-10   ${
           showOutline ? 'outline-green-500 outline-2 outline' : ''
         }`}
         disabled={disabled}
@@ -78,13 +109,6 @@ export function ActionBar({
         iconClass="codicon-debug-restart"
         text="Restart"
         buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-yellow-200`}
-      />
-
-      <ActionButton
-        onClick={onOpenNewFile}
-        iconClass="codicon-symbol-file"
-        text="Open file"
-        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-zinc-200`}
       />
     </div>
   );

@@ -5,13 +5,13 @@ import converter.visitors.ElementsDeclarationsASTVisitorBFS
 import converter.visitors.StructureCheckASTVisitorBFS
 
 actual class SemanticCheckerCreator actual constructor(
-    private val structureContainer: StructureContainer,
+    private val destStructureContainer: StructureContainer,
     private val errorReporterContainer: ErrorReporterContainer,
 ) {
     actual fun create(): SemanticChecker {
         val structureCheckerVisitor = StructureCheckASTVisitorBFS(errorReporterContainer)
         val elementsDeclarationsVisitor =
-            ElementsDeclarationsASTVisitorBFS(structureContainer, errorReporterContainer)
+            ElementsDeclarationsASTVisitorBFS(destStructureContainer, errorReporterContainer)
 
         val delegateOCDotASTVisitorBFS = DelegateOCDotASTVisitorBFS(
             listOf(

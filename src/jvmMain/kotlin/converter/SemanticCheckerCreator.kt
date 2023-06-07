@@ -1,7 +1,7 @@
 package converter
 
 actual class SemanticCheckerCreator actual constructor(
-    structureContainer: StructureContainer,
+    destStructureContainer: StructureContainer,
     errorReporterContainer: ErrorReporterContainer
 ) {
     actual fun create(): SemanticChecker {

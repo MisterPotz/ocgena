@@ -14,6 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { FileType } from './preload';
 const fs = require('fs');
 
 class AppUpdater {
@@ -32,17 +33,44 @@ ipcMain.on('ipc-example', async (event, arg) => {
   event.reply('ipc-example', msgTemplate('pong'));
 });
 
-ipcMain.on('open', () => {
-  getFileFromUser(mainWindow!);
+ipcMain.on('open', (event, args : unknown[]) => {
+  let fileType = args[0] as FileType
+  console.log('received request to open %s', fileType)
+  switch(fileType) {
+    case 'ocdot':
+      getOcDotFileFromUser(mainWindow!);
+      break;
+    case 'simconfig':
+      getSimConfigFileFromUser(mainWindow!);
+      break;
+  }
 });
 
-const openFile = (window: BrowserWindow, file: string) => {
+const openFile = (window: BrowserWindow,
+                   file: string,
+                   fileType: FileType) => {
   const fileContents = fs.readFileSync(file).toString();
   console.log(fileContents);
-  window.webContents.send('file-opened', file, fileContents);
+  window.webContents.send('file-opened', file, fileContents, fileType);
 };
 
-const getFileFromUser = async (targetWindow: BrowserWindow) => {
+const getSimConfigFileFromUser = async (targetWindow: BrowserWindow) => {
+  const files = await dialog.showOpenDialog(targetWindow, {
+    properties: ['openFile'],
+    filters: [
+      {
+        name: 'Simulation Configuration',
+        extensions: ['yaml']
+      }
+    ]
+  })
+
+  if (files && files.filePaths && files.filePaths[0]) {
+    openFile(targetWindow, files.filePaths[0], 'simconfig')
+  }
+}
+
+const getOcDotFileFromUser = async (targetWindow: BrowserWindow) => {
   const files = dialog.showOpenDialog(targetWindow, {
     properties: ['openFile'],
     filters: [
@@ -52,10 +80,9 @@ const getFileFromUser = async (targetWindow: BrowserWindow) => {
       },
     ],
   });
-
   const kek = await files;
   if (kek && kek.filePaths && kek.filePaths[0]) {
-    openFile(targetWindow, kek.filePaths[0]);
+    openFile(targetWindow, kek.filePaths[0], 'ocdot');
   }
 };
 
@@ -116,7 +143,8 @@ const createWindow = async () => {
     show: false,
     width: 1200,
     height: 1080,
-    icon: getAssetPath('icon.png'),
+    icon: getAssetPath('ocgena.png'),
+    title: 'OCGena',
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')

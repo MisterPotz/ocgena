@@ -1,3 +1,5 @@
+import cluster from 'cluster';
+import { once } from 'events';
 import { AST } from 'ocdot-parser'
 import { isEmpty, isEmptyOrBlank, prependIndent } from 'ocdot-parser/lib/exts';
 
@@ -7,17 +9,76 @@ interface EdgePair {
   edgeOp: '->' | '=>'
 }
 
+class ElementsSaver { 
+  placesMap = new Map<string, AST.Node>()
+  transitionsMap = new Map<string, AST.Node>()
+  ocDot : AST.OcDot
+  
+  constructor(ocDot : AST.OcDot) {
+    this.ocDot = ocDot
+  }
+
+  tryExtractPlacesAndTransitions() {
+    this.placesMap.clear();
+    this.transitionsMap.clear();
+    let ocNet = this.ocDot.body.find((ocDotStatement: AST.OcDotStatement) => {
+      return ocDotStatement.type == 'ocnet'
+    })
+    if (ocNet && ocNet.type == 'ocnet') {
+      ocNet.body.forEach((clusterStatement) => {
+        switch(clusterStatement.type) {
+          case 'subgraph': {
+            if (clusterStatement.specialType) {
+              clusterStatement.body.forEach((node) => {
+                if (node.type == 'node') {
+                  let mapToSave = (clusterStatement.specialType === 'places' ? this.placesMap : this.transitionsMap)
+                  mapToSave.set(node.id.value, node)
+                }
+              })
+            }
+            break;
+          }
+          default: {
+
+          }
+        }
+      })
+    }
+  }
+}
+
 export class OCDotToDOTConverter extends AST.Compiler {
   ocDot: AST.OcDot;
+  elementsSaver;
+
+  public get placesMap(): Map<string, AST.Node> {
+    return this.elementsSaver.placesMap;
+  }
+  
+  public get transitionsMap(): Map<string, AST.Node> {
+    return this.elementsSaver.transitionsMap;
+  }
 
   constructor(
     ocDot: AST.OcDot
   ) {
     super({ indentSize: 0 });
     this.ocDot = ocDot;
+    this.elementsSaver = new ElementsSaver(ocDot);
+  }
+
+  getNodeType(node : AST.Node) : 'place' | 'transition' | undefined {
+    if (this.placesMap.has(node.id.value)) {
+      return 'place'
+    }
+    if (this.transitionsMap.has(node.id.value)) {
+      return 'transition'
+    }
   }
 
   compileDot(): string {
+    this.elementsSaver.tryExtractPlacesAndTransitions();
+
     return this.stringify(this.ocDot)
   }
 
@@ -104,20 +165,6 @@ export class OCDotToDOTConverter extends AST.Compiler {
     return value;
   }
 
-
-  protected indentAllButFirst(items: string[]): string[] {
-    if (items.length == 0) return items;
-    let newItems = []
-    newItems.push(items[0]);
-    if (items.length == 1) return newItems
-
-    for (let i = 1; i < items.length; i++) {
-      newItems.push(prependIndent(items[i], this.indentForSize(2)));
-    }
-
-    return newItems
-  }
-
   protected override printEdge(ast: AST.Edge): string {
     const edgePairs = this.makeEdgePairs(ast);
     if (edgePairs.length === 0) {
@@ -134,9 +181,14 @@ export class OCDotToDOTConverter extends AST.Compiler {
   }
 
   protected override printNode(ast: AST.Node): string {
+    let nodeType = this.getNodeType(ast)
+    let attr : string = " "
+    if (nodeType == 'transition') {
+      attr = "shape=box "
+    }
     const value = ast.body.length == 0
-      ? `${this.stringify(ast.id)};`
-      : `${this.stringify(ast.id)} [\n${this.withIndentIncrease(ast.body
+      ? `${this.stringify(ast.id)} [ ${attr} ];`
+      : `${this.stringify(ast.id)} [ ${attr} \n${this.withIndentIncrease(ast.body
         .map(this.printFilteredAttribute, this)
         .filter((str) => !isEmptyOrBlank(str))
         .join('\n'))}\n];`;

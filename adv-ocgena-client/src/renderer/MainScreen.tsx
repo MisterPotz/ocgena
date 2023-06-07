@@ -4,6 +4,7 @@ import styles from "./MainScreen.module.css";
 import classNames from "classnames";
 import { useObservableState } from "observable-hooks";
 import { appService } from "./AppService";
+import { FileType } from "main/preload";
 console.log(styles)
 
 export const DefaultMainScreen = (
@@ -26,7 +27,7 @@ type MainScreenProps = {
   ocDotSrc?: string,
 }
 const onNewInput = (newInput : string ) => {
-  appService.openNewFile();
+  appService.openConfigurationFile();
 }
 
 export const MainScreen = ({
@@ -56,9 +57,9 @@ export const MainScreen = ({
           appService.onClickStart()
         }}
         onClickRefresh={() => { }}
-        onOpenNewFile={() => {
-          console.log("opening new file");
-          appService.openNewFile();
+        onOpenNewFile={(fileType : FileType) => {
+          console.log("opening new file of type %s", fileType);
+          appService.openFile(fileType);
         }}
       />
     </div>

@@ -10,7 +10,8 @@ import { Observable, Subscription } from 'rxjs';
 
 export type PanelProps = {
   maximized: boolean;
-  outputLine$: Observable<string>;
+  outputLine$: Observable<string[]>;
+  clean$: Observable<boolean>;
   sizeChange$: Observable<number[]>;
   onClose: () => void;
   onMaximize: () => void;
@@ -21,6 +22,7 @@ export const Panel = ({
   maximized,
   outputLine$,
   sizeChange$,
+  clean$,
   onClose,
   onMaximize,
   onMinimize,
@@ -30,25 +32,32 @@ export const Panel = ({
   const [fitAddon, setFitAddon] = useState<FitAddon | undefined>(undefined);
 
   useEffect(() => {
-    let subscription1: Subscription | undefined;
-    let subscription2: Subscription | undefined;
+    let subscriptionWriteLine: Subscription | undefined;
+    let subscriptionSizeChange: Subscription | undefined;
+    let subscriptionClean : Subscription | undefined;
 
     if (term) {
       console.log('terminal subscribed to line output');
       fitAddon?.fit();
 
-      subscription1 = outputLine$.subscribe((line) => {
-        term.writeln(line);
+      subscriptionWriteLine = outputLine$.subscribe((lines) => {
+        term.clear()
+        for (let line of lines) {
+          term.writeln(line);
+        }
       });
-      subscription2 = sizeChange$.subscribe((newsize) => {
+      subscriptionSizeChange = sizeChange$.subscribe((newsize) => {
         fitAddon?.fit();
       });
-
+      subscriptionClean = clean$.subscribe((clean) => {
+        term.clear()
+      })
     }
 
     return () => {
-      subscription1?.unsubscribe();
-      subscription2?.unsubscribe();
+      subscriptionWriteLine?.unsubscribe();
+      subscriptionSizeChange?.unsubscribe();
+      subscriptionClean?.unsubscribe();
     };
   }, [outputLine$, term]);
 
@@ -63,7 +72,7 @@ export const Panel = ({
         black: '#000000',
         red: '#CD3131',
         green: '#0DBC79',
-        yellow: '#E5E510',
+        yellow: '#ffc107',
         blue: '#2472C8',
         magenta: '#BC3FBC',
         cyan: '#11A8CD',
@@ -87,9 +96,6 @@ export const Panel = ({
     term.loadAddon(fitAddon);
 
     term.open(ref.current);
-    const prompt = () => {
-      term.write('\r\n$ ');
-    };
 
     term.writeln('Welcome to allotment');
     term.writeln(
@@ -97,7 +103,6 @@ export const Panel = ({
     );
     term.writeln('Type some keys and commands to play around.');
     term.writeln('');
-    prompt();
     window.addEventListener('resize', () => fitAddon.fit());
 
     fitAddon.fit();
@@ -178,3 +183,12 @@ export const Panel = ({
     </div>
   );
 };
+
+export const reset = "\x1b[0m"
+export const black = "\x1b[30m"
+export const yellow = "\x1b[33m"
+export const red = "\x1b[31m"
+export const green = '\x1b[32m'
+export const blue = '\x1b[34m'
+export const magena = '\x1b[35m'
+export const cyan = "\x1b[36m"

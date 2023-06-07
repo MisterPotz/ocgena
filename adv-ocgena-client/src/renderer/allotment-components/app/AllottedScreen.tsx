@@ -32,6 +32,7 @@ import {
 import { Observable } from 'rxjs';
 import style from './AllottedScreen.module.css';
 import { ProjectState } from 'domain/Project';
+import { FileType } from 'main/preload';
 
 export interface Document {
   title: string;
@@ -231,7 +232,7 @@ export type AllottedScreenProps = {
   projectState?: ProjectState;
   // projectWindowStructure?: ProjectWindowStructure;
   onClickStart: () => void;
-  onOpenNewFile: () => void;
+  onOpenNewFile: (fileType: FileType) => void;
   onClickRefresh: () => void;
   onActivityChanged: (activity: number) => void;
   onPanelVisibleChanged: (visible: boolean) => void;

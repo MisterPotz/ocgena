@@ -46,7 +46,8 @@
     "start:preload": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.preload.dev.ts",
     "start:renderer": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack serve --config ./.erb/configs/webpack.config.renderer.dev.ts",
     "start:docs": "cross-env NODE_ENV=development TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.docs.ts",
-    "test": "jest"
+    "test": "jest",
+    "test-ocgena": "node ../build/js/packages/ocgena-test/kotlin/ocgena_test.js"
   },
   "browserslist": [],
   "prettier": {
@@ -96,8 +97,8 @@
     }
   },
   "dependencies": {
-    "@hpcc-js/wasm": "^2.13.0",
     "@vscode/codicons": "^0.0.33",
+    "@hpcc-js/wasm": "^2.13.0",
     "ajv": "^8.12.0",
     "allotment": "^1.19.0",
     "d3": "^7.8.4",
@@ -141,6 +142,7 @@
     "@types/webpack-bundle-analyzer": "^4.6.0",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
+    "@vscode/codicons": "^0.0.33",
     "autoprefixer": "^10.4.14",
     "browserslist-config-erb": "^0.0.3",
     "chalk": "^4.1.2",

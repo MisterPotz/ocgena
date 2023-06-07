@@ -7,7 +7,7 @@
     "build": "tsc --project ./tsconfig.json",
     "build-with-dukats": "npm run build && npm run make-dukats",
     "test": "jest",
-    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node,edge,attributes,attribute,cluster_statements -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts",
+    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node,edge,attributes,attribute,cluster_statements,RootExpression -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts",
     "make-dukats": "node ./bin/make_dukats.js"
   },
   "author": "",

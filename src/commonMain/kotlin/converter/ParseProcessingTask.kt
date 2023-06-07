@@ -8,17 +8,17 @@ class ParseProcessingTask(
     private val errorReporterContainer: ErrorReporterContainer,
     private val ocDot: String,
 ) {
-    private val structureContainer = StructureContainer()
-    private val semanticCheckerCreator = SemanticCheckerCreator(
-        structureContainer, errorReporterContainer
+    private val destStructureContainer = StructureContainer()
+    private val semanticVisitorCheckerCreator = SemanticCheckerCreator(
+        destStructureContainer, errorReporterContainer
     )
     fun process(): OcDotParseResult {
         val parsingResult = ocDotParserV2.parse(ocDot)
         if (parsingResult.isFailure) {
             return createErrorResult()
         }
-        val semanticChecker = semanticCheckerCreator.create()
-        if (!semanticChecker.checkErrors(parsingResult.getOrThrow())) {
+        val semanticVisitorChecker = semanticVisitorCheckerCreator.create()
+        if (!semanticVisitorChecker.checkErrors(parsingResult.getOrThrow())) {
             return createErrorResult()
         }
 
@@ -26,11 +26,12 @@ class ParseProcessingTask(
             ConversionParams(
                 placeTyping = parseProcessorParams.placeTyping,
                 inputOutputPlaces = parseProcessorParams.inputOutputPlaces,
-                dslElementsContainer = structureContainer,
+                dslElementsContainer = destStructureContainer,
                 useType = parseProcessorParams.netType
             )
         )
         val builtOcNet = ocDotToDomainConverter.convert()
+        println("got builtOcNet, success: ${builtOcNet.ocNet != null}")
         builtOcNet.errors.forEach {
             errorReporterContainer.pushError(it)
         }

@@ -30,8 +30,13 @@ const configuration: webpack.Configuration = {
    */
   module: require('./webpack.config.renderer.dev').default.module,
 
+  
   entry: {
-    renderer: Object.keys(dependencies || {}),
+    renderer: Object.keys(dependencies || {}).filter((item) => {
+      let included = item !== "@vscode/codicons"
+      console.log(`${item} is ${included ? "included" : "excluded"}`)
+      return included
+    }),
   },
 
   output: {
@@ -42,6 +47,7 @@ const configuration: webpack.Configuration = {
       type: 'var',
     },
   },
+
 
   plugins: [
     new webpack.DllPlugin({

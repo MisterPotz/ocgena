@@ -65,7 +65,7 @@ class ConversionTest {
                         ot1 = "p1 p2 p3"
                     }
                 ),
-                OCNetTypeConfig(OcNetType.TYPE_A.ordinal)
+                OCNetTypeConfig(OcNetType.TYPE_A)
             )
         )
         val processedSimulationConfig = processConfig(simulationConfig)

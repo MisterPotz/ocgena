@@ -69,6 +69,12 @@ var AST;
         });
     }
     AST.parse = parse;
+    function parseExpression(expression) {
+        return (0, ocdot_peggy_1.parse)(expression, {
+            startRule: "RootExpression"
+        });
+    }
+    AST.parseExpression = parseExpression;
     function isEdgeOpParamsExpression(edgeOpParams) {
         return edgeOpParams.type == AST.OpParamsTypes.Expression;
     }
