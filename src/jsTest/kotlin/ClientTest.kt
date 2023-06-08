@@ -1,8 +1,10 @@
 import config.*
+import error.Error
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import kotlinx.js.jso
+import model.OcDotParseResult
 import model.OcNetType
 import simulation.client.*
 import simulation.config.SimulationConfig
@@ -64,6 +66,13 @@ class ClientTest {
         var successObserved = false
         val client = Client(
             object : OnReadinessCallback {
+                override fun ocDotParseResult(ocDotParseResult: OcDotParseResult) {
+
+                }
+
+                override fun onCurrentErrorsChange(errors: Array<Error>?) {
+                }
+
                 override fun readyToCalc(boolean: Boolean) {
                     mprintln("readiness callback invoked $boolean")
                     successObserved = boolean
@@ -89,6 +98,13 @@ class ClientTest {
         var successObserved = false
         val client = Client(
             object : OnReadinessCallback {
+                override fun ocDotParseResult(ocDotParseResult: OcDotParseResult) {
+
+                }
+
+                override fun onCurrentErrorsChange(errors: Array<Error>?) {
+                }
+
                 override fun readyToCalc(boolean: Boolean) {
                     mprintln("readiness callback invoked $boolean")
                     successObserved = boolean
@@ -121,7 +137,11 @@ class ClientTest {
                 invoked = true
             }),
             htmlTraceFileWriter = htmlStringBuilderWriter,
-            ocelWriter = ocelWriter
+            ansiTraceWriter = CallbackStringWriter { _ ->
+            },
+            ocelWriter = ocelWriter,
+            onSimulationStatusUpdate = {
+            }
         )
 
         assertNotNull(simTask, "expected successfully created simulation task")

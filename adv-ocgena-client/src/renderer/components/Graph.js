@@ -7,6 +7,7 @@ import { zoomIdentity as d3_zoomIdentity} from 'd3-zoom';
 import { zoomTransform as d3_zoomTransform} from 'd3-zoom';
 import { pointer as d3_pointer} from 'd3-selection';
 import 'd3-graphviz';
+import { tap } from 'rxjs';
 
 const styles = {
   root: {
@@ -39,6 +40,7 @@ class Graph extends React.Component {
     this.isDrawingEdge = false;
     this.isDrawingNode = false;
     this.startNode = null;
+    this.sizeUpdateObservable = props.sizeUpdateObservable;
     this.selectedComponents = d3_selectAll(null);
     this.selectArea = null;
     this.selectRects = d3_select(null);
@@ -89,7 +91,8 @@ class Graph extends React.Component {
     this.graphviz = this.div.graphviz()
       .onerror(this.handleError.bind(this))
       .on('initEnd', () => this.renderGraph.call(this));
-      this.props.registerParentSizeUpdate(() => this.resizeSVG());
+    this.props.sizeUpdateObservable.pipe(tap(() => this.resizeSVG())).subscribe();
+      // this.props.registerParentSizeUpdate(() => this.resizeSVG());
     // this.props.registerNodeShapeClick(this.handleNodeShapeClick);
     // this.props.registerNodeShapeDragStart(this.handleNodeShapeDragStart);
     // this.props.registerNodeShapeDragEnd(this.handleNodeShapeDragEnd);
@@ -101,9 +104,9 @@ class Graph extends React.Component {
   }
 
   renderGraph() {
-    console.log("graph rendering")
     let width = this.div.node().parentElement.clientWidth;
     let height = this.div.node().parentElement.clientHeight;
+    console.log("graph rendering %s %s", width, height)
     let fit = true//this.props.fit;
     // let engine = this.props.engine;
     if (this.props.dotSrc.length === 0) {
@@ -266,7 +269,7 @@ class Graph extends React.Component {
 
     let self = this;
     this.graphviz.zoomBehavior().filter(function (event) {
-      if (event.type === 'mousedown' && !event.ctrlKey) {
+      if (event.type !== 'mousedown'/*  && !event.ctrlKey */) {
         if (self.isDrawingEdge) {
           return true;
         } else {
@@ -282,17 +285,17 @@ class Graph extends React.Component {
 
     d3_select(window).on("resize", this.resizeSVG.bind(this));
     this.div.on("click", this.handleClickDiv.bind(this));
-    d3_select(document).on("keydown", this.handleKeyDownDocument.bind(this));
+    // d3_select(document).on("keydown", this.handleKeyDownDocument.bind(this));
     this.div.on("mousemove", this.handleMouseMoveDiv.bind(this));
-    this.div.on("contextmenu", this.handleRightClickDiv.bind(this));
-    this.svg.on("mousedown", this.handleMouseDownSvg.bind(this));
-    this.svg.on("mousemove", this.handleMouseMoveSvg.bind(this));
-    this.svg.on("click", this.handleClickSvg.bind(this));
-    this.svg.on("mouseup", this.handleMouseUpSvg.bind(this));
-    nodes.on("click mousedown", this.handleClickNode.bind(this));
-    nodes.on("dblclick", this.handleDblClickNode.bind(this));
-    nodes.on("contextmenu", this.handleRightClickNode.bind(this));
-    edges.on("click mousedown", this.handleClickEdge.bind(this));
+    // this.div.on("contextmenu", this.handleRightClickDiv.bind(this));
+    // this.svg.on("mousedown", this.handleMouseDownSvg.bind(this));
+    // this.svg.on("mousemove", this.handleMouseMoveSvg.bind(this));
+    // this.svg.on("click", this.handleClickSvg.bind(this));
+    // this.svg.on("mouseup", this.handleMouseUpSvg.bind(this));
+    // nodes.on("click mousedown", this.handleClickNode.bind(this));
+    // nodes.on("dblclick", this.handleDblClickNode.bind(this));
+    // nodes.on("contextmenu", this.handleRightClickNode.bind(this));
+    // edges.on("click mousedown", this.handleClickEdge.bind(this));
 
   }
 
@@ -301,7 +304,7 @@ class Graph extends React.Component {
     document.activeElement.blur();
     event.preventDefault();
     event.stopPropagation();
-    if (!(event.which === 1 && (event.ctrlKey || event.shiftKey))) {
+    if (!(event.which === 1 /* && (event.ctrlKey || event.shiftKey) */)) {
       this.unSelectComponents();
     }
   }
@@ -760,7 +763,7 @@ class Graph extends React.Component {
   }
 
   render() {
-    const { classes } = this.props;
+    // const { classes } = this.props;
     return (
       <React.Fragment>
         <div
@@ -793,7 +796,7 @@ class Graph extends React.Component {
 }
 
 Graph.propTypes = {
-  classes: PropTypes.object.isRequired,
+  // classes: PropTypes.object.isRequired,
 };
 
-export default /* withStyles(styles) */(Graph);
+export default /* withStyles(styles) */(Graph);    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.789 3 7.938l3-2.647z"></path>

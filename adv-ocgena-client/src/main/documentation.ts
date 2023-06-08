@@ -12,8 +12,8 @@ export function createDocumentationWindow() {
   };
   // Create a new browser window
   let newWindow: BrowserWindow | null = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1200,
+    height: 1000,
     webPreferences: {
       preload: app.isPackaged
         ? path.join(__dirname, 'preload.js')
@@ -24,10 +24,9 @@ export function createDocumentationWindow() {
   // Load the HTML file in the new window
   newWindow?.loadURL(resolveDocHtmlPath('index.html'));
 
-  newWindow?.webContents.openDevTools() 
-  // Optionally, customize the window further
-  // ...
-
+  newWindow?.on('ready-to-show', () => {
+    newWindow?.webContents?.closeDevTools();
+  })
   // When the window is closed, dereference the window object
   newWindow?.on('closed', () => {
     newWindow = null;

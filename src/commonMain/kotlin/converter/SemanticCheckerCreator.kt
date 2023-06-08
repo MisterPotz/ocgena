@@ -1,7 +1,7 @@
 package converter
 
 expect class SemanticCheckerCreator(
-    structureContainer: StructureContainer,
+    destStructureContainer: StructureContainer,
     errorReporterContainer: ErrorReporterContainer
 ) {
     fun create() : SemanticChecker

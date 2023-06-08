@@ -4,6 +4,7 @@ import eventlog.Event
 import eventlog.EventLog
 import model.ObjectToken
 
+
 expect class OcelWriter {
     fun collect() : Any
     fun write(eventLog: EventLog)

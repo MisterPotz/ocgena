@@ -19,7 +19,7 @@ fun indentLines(
     val indentBeforeSymbol = (indentation - 1).coerceAtLeast(0)
     val indentAfterSymbol = 1
     return lines.map {
-        """<span style="padding-left: ${indentBeforeSymbol}em;">$marginSymbol<span style="padding-left: ${indentAfterSymbol}em;">$it</span>"""
+        """<span style="padding-left: ${indentBeforeSymbol}em;">$marginSymbol<span style="padding-left: ${indentAfterSymbol}em;">$it</span></span>"""
     }
 }
 
@@ -40,7 +40,7 @@ fun indentLinesRoot(
     val indentBeforeSymbol = (indentation - 1).coerceAtLeast(0)
     val indentAfterSymbol = 1
     return lines.map {
-        """<div style="padding-left: ${indentBeforeSymbol}em;">$marginSymbol<span style="padding-left: ${indentAfterSymbol}em;">$it</div>"""
+        """<div style="padding-left: ${indentBeforeSymbol}em;">$marginSymbol<span style="padding-left: ${indentAfterSymbol}em;">$it</span></div>"""
     }
 }
 

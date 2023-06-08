@@ -165,6 +165,7 @@ function peg$parse(input, options) {
         attributes: peg$parseattributes,
         attribute: peg$parseattribute,
         cluster_statements: peg$parsecluster_statements,
+        RootExpression: peg$parseRootExpression,
     };
     let peg$startRuleFunction = peg$parseocdot;
     const peg$c0 = function (v) {

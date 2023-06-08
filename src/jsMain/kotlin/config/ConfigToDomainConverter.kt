@@ -51,9 +51,7 @@ actual class SimulationConfigProcessor actual constructor(
     }
 
     private fun getOcNetType(): OcNetType {
-        return (simulationConfig.getConfig(ConfigEnum.OC_TYPE) as? OCNetTypeConfig)?.ocNetType?.let {
-            OcNetType.values()[it]
-        } ?: OcNetType.TYPE_A
+        return (simulationConfig.getConfig(ConfigEnum.OC_TYPE) as? OCNetTypeConfig)?.ocNetType ?: OcNetType.TYPE_A
     }
 
     private fun getInitialMarking(): PlainMarking {

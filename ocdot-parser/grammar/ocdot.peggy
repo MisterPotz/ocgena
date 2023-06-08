@@ -268,23 +268,47 @@ TermOp
 }
 
 Term
-  = head:Factor tail:(TermOp)* {
-  	return { 
-    	head,
+  = head:UnaryOp tail:(TermOp)* {
+  	return {
+      head, 
       tail
     }
 }
 
 Factor
   = "(" _ expr:Expression _ ")" { return expr; }
-  / Integer 
+  / Integer
   / Variable
 
+UnaryOp 
+  = _ sign:("+" / "-")? _ value:(Factor) _ {
+    if (!sign && sign == "+") {
+      return value
+    }
+
+    return {
+      head : { 
+        head: 0,
+        tail: []
+      },
+      tail : [
+        {
+          sign,
+          target: value
+        }
+      ]
+    }
+  }
+
 Integer "integer"
-  = _ [0-9]+ { return parseInt(text(), 10); }
+  = _ [0-9]+ { return { head: parseInt(text(), 10), tail: [] } }
   
 Variable "variable"
- = _ [a-zA-Z]+ { return { variable: text()}; }
+ = _ [a-zA-Z]+ { return { 
+  head: { variable: text(), },
+    tail: [] 
+  } 
+}
 
 _literal
   = QUOTED_STRING

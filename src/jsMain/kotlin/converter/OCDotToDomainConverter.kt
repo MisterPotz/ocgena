@@ -36,6 +36,7 @@ actual class OCDotToDomainConverter actual constructor(
         for (edge in dslElementsContainer.savedEdgeBlocks) {
             processEdge(edge)
         }
+        console.log("connected all edges")
 
         val resultOfBuildAttempt = ocNetFacadeBuilder.tryBuildModelFromOcNetElements(
             placeTyping = placeTyping,

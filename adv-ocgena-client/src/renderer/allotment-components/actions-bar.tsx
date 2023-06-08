@@ -1,77 +1,115 @@
-import styles from './actions-bar.module.css'
-import "@vscode/codicons/dist/codicon.css";
+import styles from './actions-bar.module.css';
+import '@vscode/codicons/dist/codicon.css';
+import { FileType } from 'main/preload';
 
 import * as React from 'react';
 
 export interface ActionButtonProps {
-    onClick: () => void;
-    text: string;
-    iconClass: string;
-    buttonStyle?: string;
+  onClick: () => void;
+  text: string;
+  iconClass: string;
+  buttonStyle?: string;
+  disabled?: boolean;
 }
 
 export function ActionButton(props: ActionButtonProps) {
-    return (
-        <button onClick={props.onClick} className={`
-            bg-transparent
+  return (
+    <button
+      disabled={props.disabled}
+      onClick={props.onClick}
+      className={`
             relative
-            flex-row 
             flex
+            flex-row 
+            rounded-none
+            bg-transparent
             px-2
-            py-2
-            rounded-sm
+            shadow-none
             transition-colors
             duration-300
             ease-in-out
-            ${props.buttonStyle ? props.buttonStyle : ""} `}>
-            <div className={`relative text-sm codicon ${props.iconClass} !top-0.5`}></div>
-            <div className={`ps-1 text-gray-200 relative text-sm pe-1`}>{props.text}</div>
-        </button>
-
-    );
+            ${props.buttonStyle ? props.buttonStyle : ''} `}
+    >
+      <div
+        className={`codicon relative scale-90 text-xs ${props.iconClass} `}
+      ></div>
+      <div className={`relative pe-1 ps-1 text-xs text-black`}>
+        {props.text}
+      </div>
+    </button>
+  );
 }
+
+export type StartButtonMode = 'executing' | 'start' | 'disabled';
 
 export type ActionBarProps = {
-    startButtonMode: "executing" | "start";
-    pauseButtonEnabled: boolean,
-    onClickStart: () => void,
-    onClickRefresh: () => void,
-    onOpenNewFile: () => void,
-}
+  startButtonMode: StartButtonMode;
+  pauseButtonEnabled: boolean;
+  onClickStart: () => void;
+  onClickRefresh: () => void;
+  onOpenNewFile: (fileType: FileType) => void;
+};
 
-export function ActionBar(
-    {
-        startButtonMode,
-        pauseButtonEnabled,
-        onClickStart,
-        onClickRefresh,
-        onOpenNewFile,
-    }: ActionBarProps
-) {
-    let showOutline = startButtonMode == "executing"
-    return (
-        <div className={`${styles.actionBar} h-full flex`} >
+export function ActionBar({
+  startButtonMode,
+  pauseButtonEnabled,
+  onClickStart,
+  onClickRefresh,
+  onOpenNewFile,
+}: ActionBarProps) {
+  let showOutline = startButtonMode == 'executing';
+  let disabled = startButtonMode == 'disabled';
 
-            <ActionButton
-                onClick={onClickStart}
-                iconClass='codicon-debug-start'
-                text='Start'
-                buttonStyle={`text-green-500 hover:bg-green-800 ${showOutline ? "outline-green-500 outline-2 outline" : ""}`}
-            />
+  return (
+    <div
+      className={`${styles.actionBar} flex h-9 flex-row items-start justify-start bg-zinc-50`}
+    >
+      <div
+        className="
+            rounded-none
+            border-0
+            border-r-1 border-solid border-r-black border-opacity-10 bg-transparent px-2 text-sm text-black"
+      >
+        <b>OCGena</b>
+      </div>
+      <ActionButton
+        onClick={() => {
+          onOpenNewFile('ocdot');
+        }}
+        iconClass="codicon-symbol-file"
+        text="Open model file"
+        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-zinc-200`}
+      />
 
-            <ActionButton
-                onClick={onClickRefresh}
-                iconClass='codicon-debug-restart'
-                text='Restart'
-                buttonStyle={`text-yellow-400 hover:bg-yellow-700`}
-            />
+      <ActionButton
+        onClick={() => {
+          onOpenNewFile('simconfig');
+        }}
+        iconClass="codicon-symbol-file"
+        text="Open configuration file"
+        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-zinc-200`}
+      />
 
-            <ActionButton
-                onClick={onClickRefresh}
-                iconClass='codicon-symbol-file'
-                text='Open file'
-                buttonStyle={`text-gray-200 hover:bg-zinc-400`}
-            />
-        </div>
-    )
+      <ActionButton
+        onClick={onClickStart}
+        iconClass="codicon-debug-start"
+        text="Start"
+        buttonStyle={`${
+          disabled
+            ? 'text-opacity-50 bg-zinc-300'
+            : 'text-opacity-75 hover:bg-green-300'
+        }  text-black  border-solid border-0 border-r-black border-r-1 border-opacity-10   ${
+          showOutline ? 'outline-green-500 outline-2 outline' : ''
+        }`}
+        disabled={disabled}
+      />
+
+      <ActionButton
+        onClick={onClickRefresh}
+        iconClass="codicon-debug-restart"
+        text="Restart"
+        buttonStyle={`text-black text-opacity-75 border-solid border-0 border-r-black border-r-1 border-opacity-10  hover:bg-yellow-200`}
+      />
+    </div>
+  );
 }

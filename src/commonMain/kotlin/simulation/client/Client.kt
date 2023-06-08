@@ -1,12 +1,15 @@
 package simulation.client
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import simulation.config.SimulationConfig
+import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
+@OptIn(ExperimentalJsExport::class)
 @JsExport
 class Client(
-    private val onReadinessCallback: OnReadinessCallback
+    private val callback: OnReadinessCallback
 ) {
     private val ocDotStore: OcDotStore = OcDotStore()
     private val configStore = SimulationConfigStore()
@@ -14,15 +17,18 @@ class Client(
         ocDotStore,
         configStore
     )
-    private val readinessReporter = ModelSimulationReadinessReporter(modelCreator)
-    private val notifier = Notifier(onReadinessCallback, readinessReporter)
+    private val readinessDeducer = ModelSimulationReadinessDeducer(modelCreator)
+    private val clientNotifier = ClientNotifier(callback, modelCreator, readinessDeducer)
     private val scope = MyCoroutineScope()
+    private val currentErrors = MutableStateFlow<List<Error>?>(null)
 
     fun updateOcDot(ocDot: String) {
+        println("Client.kt: updateOcDot")
         ocDotStore.updateOcDot(ocDot)
     }
 
     fun updateConfig(simulationConfigStore: SimulationConfig) {
+        println("Client.kt: updateConfig")
         configStore.updatePlainConfig(simulationConfigStore)
     }
 
@@ -43,13 +49,13 @@ class Client(
     fun start() {
         scope.launch {
             launch {
-                modelCreator.startObserving()
+                modelCreator.startModelCreation()
             }
             launch {
-                readinessReporter.startObserving()
+                readinessDeducer.startObserving()
             }
             launch {
-                notifier.startObserving()
+                clientNotifier.startNotification()
             }
         }
     }

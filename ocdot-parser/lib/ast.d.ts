@@ -342,6 +342,7 @@ export declare namespace AST {
     export function parse(ocdot: string, options: ParseOption<typeof Types.ClusterStatements>): ClusterStatement[];
     export function parse(ocdot: string, options: ParseOption<typeof Types.OcDot>): OcDot;
     export function parse(ocdot: string, options: ParseOption): OcDot | OcNet | ClusterStatement | ClusterStatement[];
+    export function parseExpression(expression: string): RootExpression;
     export interface StringifyOption {
         indentSize?: number;
     }

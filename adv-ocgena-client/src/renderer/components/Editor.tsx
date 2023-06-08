@@ -3,59 +3,43 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import React from 'react';
 import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 import { appService } from 'renderer/AppService';
+import { Observable } from 'rxjs';
+import { useObservableState } from 'observable-hooks';
 
 export type EditorProps = {
-	editorId : string,
-	onNewInput: (newInput: string) => void, 
-	ocDot?: string | null,
+	readonly editorId : string,
+	readonly onInputUpdated: (newInput: string) => void, 
+	readonly editorInputRequest$ : Observable<string>,
+	readonly editorCreator: (htmlElement : HTMLElement) => monaco.editor.IStandaloneCodeEditor
 }
 
 export const Editor = (
 	{
 		editorId,
-		onNewInput,
-		ocDot
+		onInputUpdated,
+		editorInputRequest$: inputObservable,
+		editorCreator
 	} : EditorProps
 ) => {
+	console.log('redrawing editor')
 	const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 	const monacoEl = useRef(null);
 
-	console.log("receiving at editor this input: " + ocDot);
+	const input = useObservableState(inputObservable)
+
+	console.log("receiving at editor this input: " + input);
+
 	useEffect(() => {
-		if (monacoEl) {
+		if (monacoEl.current) {
 			setEditor((editor) => {
 				if (editor) return editor;
-
-				if (!isOcDotRegistered()) { 
-					monaco.editor.defineTheme("ocDotTheme", {
-						base: "vs", // can also be vs-dark or hc-black
-						inherit: true, // can also be false to completely replace the builtin rules
-						rules: [
-							{ token: "mult", foreground: "2563eb", fontStyle: "italic bold" },
-						],
-						colors: {
-						},
-
-					});
-
-					registerOcDot();
-				}
-
-
-				let newEditor = monaco.editor.create(monacoEl.current!, {
-					value: ['digraph {\n\ta -> b\n}'].join('\n'),
-					language: 'ocdot',
-					automaticLayout: true,
-					theme: 'ocDotTheme',
-					fontLigatures: true,
-					autoIndent: 'full',
 				
-				});
+				console.log("creating new editor")
+				let newEditor = editorCreator(monacoEl.current!)
 				newEditor.onDidChangeModelContent(function (event) {
-					
 					let newContent = newEditor.getValue();
-					console.log("new content of editor " + newContent);
-					appService.onNewOcDotEditorValue(newContent)
+					console.log("new content of editor  " + editorId + " is :" + newContent);
+					onInputUpdated(newContent)
 				});
 				return newEditor;
 			});
@@ -67,15 +51,14 @@ export const Editor = (
 	useEffect(() => {
 		if (editor) {
 			console.log("setting ocdot to editor from file")
-			editor.setValue(ocDot ? ocDot : "");
+			editor.setValue(input ? input : "");
 		}
-	}, [ocDot])
+	}, [input])
 
-	return <div className='container h-full w-full' ref={monacoEl}></div>;
+	return <div className='h-full w-full' ref={monacoEl}></div>;
 };
 
 export const EditorWrapper = (editorProps : EditorProps) => {
-	console.log("at wrapper have " + JSON.stringify(editorProps))
 	return (<React.StrictMode>
 		<Editor {...editorProps}/>
 	</React.StrictMode>);

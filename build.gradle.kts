@@ -28,6 +28,18 @@ kotlin {
                 this.enabled = true
             }
         }
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                    // Enable source maps for debugging
+                    webpackConfig.sourceMaps = true
+                    webpackConfig.cssSupport {
+                        this.enabled.set(false)
+                    }
+                }
+            }
+        }
         binaries.executable()
     }
 

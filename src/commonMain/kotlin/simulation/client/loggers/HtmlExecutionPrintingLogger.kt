@@ -1,9 +1,10 @@
-package simulation.client
+package simulation.client.loggers
 
 import model.*
 import simulation.Logger
 import simulation.SimulatableComposedOcNet
 import simulation.SimulationTime
+import simulation.client.Writer
 import utils.html.bold
 import utils.html.color
 import utils.html.indentLinesRoot
@@ -15,7 +16,6 @@ class HtmlExecutionPrintingLogger(
     val labelMapping: LabelMapping,
     val writer: Writer
 ) : Logger {
-
 
     fun write(string: String) {
         writer.writeLine(string)
