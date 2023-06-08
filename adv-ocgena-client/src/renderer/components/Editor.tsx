@@ -21,6 +21,7 @@ export const Editor = (
 		editorCreator
 	} : EditorProps
 ) => {
+	console.log('redrawing editor')
 	const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 	const monacoEl = useRef(null);
 

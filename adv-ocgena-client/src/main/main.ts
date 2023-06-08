@@ -8,7 +8,7 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
-import { app, BrowserWindow, shell, ipcMain, dialog, screen } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog, screen, clipboard } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -176,6 +176,13 @@ ipcMain.on('save-all-shortcut' as Channels, (event, args: unknown[]) => {
 ipcMain.on('save-the-current-file' as Channels, (event, args: unknown[]) => {
   mainService.handleSaveCurrentFileResponse(args);
 });
+
+ipcMain.on('copy' as Channels, (event, args: unknown[]) => {
+  if (!(args && args[0])) {
+    return 
+  }
+  clipboard.writeText(args[0] as string);
+})
 
 const openFile = (window: BrowserWindow, file: string, fileType: FileType) => {
   const fileContents = fs.readFileSync(file).toString();

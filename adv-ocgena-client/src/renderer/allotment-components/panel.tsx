@@ -1,6 +1,5 @@
 import 'xterm/css/xterm.css';
 
-import classNames from 'classnames';
 import { useEffect, useRef, useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
@@ -63,6 +62,7 @@ export const Panel = ({
 
   useEffect(() => {
     const term = new Terminal({
+      disableStdin: true,
       fontSize: 13,
       theme: {
         background: '#FFFFFF',
@@ -95,6 +95,7 @@ export const Panel = ({
     setTerminal(term);
     term.loadAddon(fitAddon);
 
+  
     term.open(ref.current);
 
     term.writeln('Welcome to allotment');
@@ -104,6 +105,15 @@ export const Panel = ({
     term.writeln('Type some keys and commands to play around.');
     term.writeln('');
     window.addEventListener('resize', () => fitAddon.fit());
+
+    term.attachCustomKeyEventHandler((e) => {
+      // Ctrl+C or Cmd+C pressed and text is selected
+      if ((e.ctrlKey || e.metaKey) && e.code === "KeyC" && term.hasSelection()) {
+        window.electron.ipcRenderer.sendMessage('copy', [term.getSelection()])
+        return false; // Prevent the event from being handled by the global listener
+      }
+      return true
+    });
 
     fitAddon.fit();
     fitAddon.activate(term);
@@ -126,9 +136,9 @@ export const Panel = ({
   }, []);
 
   return (
-    <div className={` bg-white border-white h-full w-full flex flex-col`}>
-      <div className={`${styles.title} flex h-9 overflow-hidden pl-2 pr-2 justify-between`}>
-        <div className={styles.actionBar}>
+    <div className={` bg-white border-white h-full w-full flex flex-col pr-0`}>
+      {/* <div className={`${styles.title} flex h-9 overflow-hidden pl-2 pr-2 justify-between`}> */}
+        {/* <div className={styles.actionBar}>
           <ul className={styles.actionsContainer}>
             <li className={classNames(styles.actionItem, 'checked', "text-opacity-75 text-black")}>
               <a className={classNames(styles.actionLabel, "text-black text-opacity-75")}>
@@ -137,8 +147,8 @@ export const Panel = ({
               <div className={classNames(styles.activeItemIndicator, "bg-white bg-opacity-75")} />
             </li>
           </ul>
-        </div>
-        <div>
+        </div> */}
+        {/* <div>
           <ul className={styles.actionsContainer}>
             <li>
               {maximized ? (
@@ -176,9 +186,9 @@ export const Panel = ({
             </li>
           </ul>
         </div>
-      </div>
-      <div className={styles.content}>
-        <div ref={ref} className={styles.terminalWrapper}></div>
+      </div> */}
+      <div className={`${styles.content} overflow-hidden w-full pr-0`}>
+        <div ref={ref} className={`${styles.terminalWrapper} overflow-hidden !pr-0`}></div>
       </div>
     </div>
   );

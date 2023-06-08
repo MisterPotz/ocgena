@@ -104,9 +104,9 @@ class Graph extends React.Component {
   }
 
   renderGraph() {
-    console.log("graph rendering")
     let width = this.div.node().parentElement.clientWidth;
     let height = this.div.node().parentElement.clientHeight;
+    console.log("graph rendering %s %s", width, height)
     let fit = true//this.props.fit;
     // let engine = this.props.engine;
     if (this.props.dotSrc.length === 0) {
@@ -269,7 +269,7 @@ class Graph extends React.Component {
 
     let self = this;
     this.graphviz.zoomBehavior().filter(function (event) {
-      if (event.type === 'mousedown' && !event.ctrlKey) {
+      if (event.type !== 'mousedown'/*  && !event.ctrlKey */) {
         if (self.isDrawingEdge) {
           return true;
         } else {
@@ -285,17 +285,17 @@ class Graph extends React.Component {
 
     d3_select(window).on("resize", this.resizeSVG.bind(this));
     this.div.on("click", this.handleClickDiv.bind(this));
-    d3_select(document).on("keydown", this.handleKeyDownDocument.bind(this));
+    // d3_select(document).on("keydown", this.handleKeyDownDocument.bind(this));
     this.div.on("mousemove", this.handleMouseMoveDiv.bind(this));
-    this.div.on("contextmenu", this.handleRightClickDiv.bind(this));
-    this.svg.on("mousedown", this.handleMouseDownSvg.bind(this));
-    this.svg.on("mousemove", this.handleMouseMoveSvg.bind(this));
-    this.svg.on("click", this.handleClickSvg.bind(this));
-    this.svg.on("mouseup", this.handleMouseUpSvg.bind(this));
-    nodes.on("click mousedown", this.handleClickNode.bind(this));
-    nodes.on("dblclick", this.handleDblClickNode.bind(this));
-    nodes.on("contextmenu", this.handleRightClickNode.bind(this));
-    edges.on("click mousedown", this.handleClickEdge.bind(this));
+    // this.div.on("contextmenu", this.handleRightClickDiv.bind(this));
+    // this.svg.on("mousedown", this.handleMouseDownSvg.bind(this));
+    // this.svg.on("mousemove", this.handleMouseMoveSvg.bind(this));
+    // this.svg.on("click", this.handleClickSvg.bind(this));
+    // this.svg.on("mouseup", this.handleMouseUpSvg.bind(this));
+    // nodes.on("click mousedown", this.handleClickNode.bind(this));
+    // nodes.on("dblclick", this.handleDblClickNode.bind(this));
+    // nodes.on("contextmenu", this.handleRightClickNode.bind(this));
+    // edges.on("click mousedown", this.handleClickEdge.bind(this));
 
   }
 
@@ -304,7 +304,7 @@ class Graph extends React.Component {
     document.activeElement.blur();
     event.preventDefault();
     event.stopPropagation();
-    if (!(event.which === 1 && (event.ctrlKey || event.shiftKey))) {
+    if (!(event.which === 1 /* && (event.ctrlKey || event.shiftKey) */)) {
       this.unSelectComponents();
     }
   }

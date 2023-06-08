@@ -115,7 +115,7 @@ function TabPane({
 
   return (
     // tabs and the editors
-    <div className="h-full w-full">
+    <div className="h-full w-full flex flex-col">
       <div className="relative h-10 overflow-hidden bg-white">
         <div
           className={`${style.tabList} absolute inset-0 flex h-fit w-full flex-1 cursor-pointer flex-row flex-nowrap justify-start overflow-x-auto bg-zinc-50`}
@@ -136,7 +136,7 @@ function TabPane({
           })}
         </div>
       </div>
-      <div className={`h-full w-full`}>
+      <div className={`h-full w-full flex-grow`}>
         <Allotment className="h-full w-full">
           {projectWindows.map((projectWindowId, index) => {
             let visible = index == visibleIndex;
@@ -195,12 +195,12 @@ function AllottedPane({
   );
   let [parentSizeChange$] = useState(onSizeChangeObservable);
 
-  if (parentSizeChange$ != null) {
-    useSubscription(parentSizeChange$, (event: number[]) => {
-      console.log('AllottedPane: useSubscription: ' + JSON.stringify(event));
-      onChangeSize(event);
-    });
-  }
+  // if (parentSizeChange$ != null) {
+  //   useSubscription(parentSizeChange$, (event: number[]) => {
+  //     console.log('AllottedPane: useSubscription: ' + JSON.stringify(event));
+  //     // onChangeSize(event);
+  //   });
+  // }
 
   console.log('doing allotted pane for + ' + paneParent.id);
   return (

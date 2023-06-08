@@ -2,10 +2,11 @@
 /* eslint no-unused-vars: off */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
 
-export type FileType = 'simconfig' | 'ocdot'
+export type FileType = 'simconfig' | 'ocdot';
 
 export type Channels =
   | 'open'
+  | 'copy'
   | 'file-opened'
   | 'start'
   | 'save-all-shortcut'

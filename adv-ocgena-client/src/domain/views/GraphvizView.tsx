@@ -1,4 +1,4 @@
-import { Observable } from "rxjs";
+import { Observable, debounce, debounceTime, delay } from "rxjs";
 import { useObservableState } from "observable-hooks";
 import Graph from "renderer/components/Graph";
 import { ProjectWindow } from "../domain";
@@ -36,7 +36,7 @@ export class GraphvizView implements ProjectWindow {
                 dotSrc={dotString}
                 fit
                 transitionDuration={1}
-                sizeUpdateObservable={onSizeChangeObservable} />
+                sizeUpdateObservable={onSizeChangeObservable.pipe(delay(100),debounceTime(50))} />
         </div>;
     };
 }
