@@ -4,8 +4,13 @@ import {
   shell,
   BrowserWindow,
   MenuItemConstructorOptions,
+  ipcMain,
+  MenuItem,
 } from 'electron';
 import { createDocumentationWindow } from './documentation';
+import { FileType } from './preload';
+import { createDevToolWindow, mainService } from './main';
+import { electron } from 'webpack';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -30,9 +35,9 @@ export default class MenuBuilder {
     const template =
       process.platform === 'darwin'
         ? this.buildDarwinTemplate()
-        : this.buildDefaultTemplate();
+        : this.buildDefaultTemplate(this.mainWindow);
 
-    const menu = Menu.buildFromTemplate(template);
+    const menu = Menu.buildFromTemplate(template as Array<(MenuItemConstructorOptions) | (MenuItem)>);
     Menu.setApplicationMenu(menu);
 
     return menu;
@@ -122,7 +127,7 @@ export default class MenuBuilder {
           label: 'Toggle Developer Tools',
           accelerator: 'Alt+Command+I',
           click: () => {
-            this.mainWindow.webContents.toggleDevTools();
+            createDevToolWindow(this.mainWindow!)
           },
         },
       ],
@@ -193,14 +198,44 @@ export default class MenuBuilder {
     return [subMenuAbout, subMenuEdit, subMenuView, subMenuWindow, subMenuHelp];
   }
 
-  buildDefaultTemplate() {
+  buildDefaultTemplate(window: BrowserWindow) {
     const templateDefault = [
       {
         label: '&File',
         submenu: [
           {
-            label: '&Open',
+            label: 'Open model file',
             accelerator: 'Ctrl+O',
+            click: () => {
+              mainService.handleOpenRequest(['ocdot' as FileType]);
+            },
+          },
+          {
+            label: 'Open simulation config file',
+            accelerator: 'Ctrl+Y',
+            click: () => {
+              mainService.handleOpenRequest(['simconfig' as FileType]);
+            },
+          },
+          {
+            type: 'separator',
+          },
+          {
+            label: 'Save focused file',
+            accelerator: "Ctrl+S",
+            click: () => {
+              mainService.handleSaveCurrentFileRequest([])
+            }
+          },
+          {
+            label: 'Save All',
+            accelerator: 'Ctrl+Shift+S',
+            click: () => {
+              mainService.handleSaveAllShortcutRequest([])
+            },
+          },
+          {
+            type: 'separator'
           },
           {
             label: '&Close',
@@ -224,6 +259,7 @@ export default class MenuBuilder {
                     this.mainWindow.webContents.reload();
                   },
                 },
+
                 {
                   label: 'Toggle &Full Screen',
                   accelerator: 'F11',
@@ -237,7 +273,7 @@ export default class MenuBuilder {
                   label: 'Toggle &Developer Tools',
                   accelerator: 'Alt+Ctrl+I',
                   click: () => {
-                    this.mainWindow.webContents.toggleDevTools();
+                    createDevToolWindow(this.mainWindow!)
                   },
                 },
               ]
@@ -290,3 +326,4 @@ export default class MenuBuilder {
     return templateDefault;
   }
 }
+

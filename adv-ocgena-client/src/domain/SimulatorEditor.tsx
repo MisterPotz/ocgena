@@ -6,27 +6,36 @@ import { Uri } from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorDelegate } from "./views/EditorDelegate";
 import { ProjectWindow, ProjectWindowId } from "./domain";
 import { ProjectWindowManager } from "./StructureNode";
-import { ClickHandler } from "./views/ModelEditor";
+import { ClickHandler, EditorHolder, OpenedFile } from "./views/ModelEditor";
 import { modelUri, setupTemplate, setupYamlLanguageServer } from "simconfig/simconfig_yaml";
 
 
-export class SimulatorEditor implements ProjectWindow {
 
-    readonly title: string = "config of my model";
+export class SimulatorEditor implements ProjectWindow, EditorHolder {
+
+    readonly title: string = "Simulation Configuration";
     static id: ProjectWindowId = "sim-config";
     isOpened: boolean = false;
-    private editorDelegate = new EditorDelegate();
+    readonly editorDelegate = new EditorDelegate("yaml", "Simulation Configuration");
     id = SimulatorEditor.id
-    
+    readonly editorKey = 'editor';
+
     constructor() {
     }
+
+    collectFile(): OpenedFile {
+        return {
+          contents : this.editorDelegate.currentContent,
+          filePath : this.editorDelegate.openedFilePath
+        }
+      }
 
     getEditorCurrentInput$() {
         return this.editorDelegate.getEditorCurrentInput$();
     }
 
-    updateEditorWithContents(newContents: string) {
-        this.editorDelegate.updateEditorWithContents(newContents);
+    updateEditorWithContents(newContents: string, filePath : string) {
+        this.editorDelegate.updateEditorWithContentsFromFile(newContents, filePath);
     }
 
     collectSimulationConfig() {
@@ -45,6 +54,7 @@ export class SimulatorEditor implements ProjectWindow {
                 automaticLayout: true,
                 model: monaco.editor.createModel(value, 'yaml', modelUri)
             });
+            this.editorDelegate.onNewEditorInput(setupTemplate)
 
             return newEditor;
         }}

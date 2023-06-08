@@ -1,17 +1,31 @@
 import { Subject } from "rxjs";
 
 export class EditorDelegate {
-    currentContent: string | null = null;
+    currentContent: string | undefined;
+    openedFilePath : string | undefined;
+    extension : string
+    fileType: string
+
+    constructor(
+        extension: string,
+        fileType: string,
+    ) {
+        this.extension = extension;
+        this.fileType = fileType
+    }
+
     onNewEditorInput: (newInput: string) => void = (newInput: string) => {
         this.currentContent = newInput;
+        console.log('received editor input for %s', this.extension)
         this.editorCurrentInput$.next(newInput);
     };
     
-    editorInputRequest$ = new Subject<string>();
+    readonly editorInputRequest$ = new Subject<string>();
     private editorCurrentInput$ = new Subject<string>();
 
-    updateEditorWithContents(newContents: string) {
+    updateEditorWithContentsFromFile(newContents: string, filePath : string) {
         this.currentContent = newContents;
+        this.openedFilePath = filePath;
         this.editorInputRequest$.next(newContents);
     }
 

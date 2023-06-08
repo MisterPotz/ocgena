@@ -8,8 +8,8 @@ export type OcDotContent = string
 export type SimulationConfig = simulation.config.SimulationConfig
 
 export type SimulationArgument = {
-    ocDot: OcDotContent | null,
-    simulationConfig: SimulationConfig | null
+    ocDot: OcDotContent | undefined | null,
+    simulationConfig: SimulationConfig | undefined | null
 }
 
 export interface UiError {

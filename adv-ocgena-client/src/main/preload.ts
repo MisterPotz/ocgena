@@ -8,6 +8,9 @@ export type Channels =
   | 'open'
   | 'file-opened'
   | 'start'
+  | 'save-all-shortcut'
+  | 'save-the-current-file'
+  | 'saved-current-file'
   | 'reload'
   | 'parsed-oc-dot'
   | 'processed-oc-dot-errors';

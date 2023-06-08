@@ -13,7 +13,7 @@ import {
 } from './domain';
 import { GraphvizView } from './views/GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
-import { ClickHandler, ModelEditor } from './views/ModelEditor';
+import { ClickHandler, EditorHolder, ModelEditor } from './views/ModelEditor';
 import {
   ProjectSingleSimulationExecutor,
   SimulationClientStatus,
@@ -87,6 +87,14 @@ export class Project implements ProjectWindowProvider {
     this.startProcessingSimConfigInput();
     this.startObservingSimulationStatus();
     this.startObservingErrors();
+  }
+
+  getModelFiles() {
+
+  }
+
+  getLastFocusedEditor() : EditorHolder | undefined {
+    return this.projectWindowManager.lastFocusedEditor
   }
 
   private startProcessingProjectState() {
@@ -230,18 +238,6 @@ export class Project implements ProjectWindowProvider {
     this.projectSimulationExecutor.updateModel(onNewOcDotContents);
   }
 
-  private createClickHandler() {
-    let project = this;
-
-    return {
-      clickTab(projectWindowId) {
-        if (project.projectWindowManager) {
-          project.projectWindowManager.clickTabOfProjectWindow(projectWindowId);
-        }
-      },
-    } as ClickHandler;
-  }
-
   private convertRawSimConfigToSimConfig(
     rawSimConfig: string
   ): SimulationConfig | null {
@@ -323,13 +319,13 @@ export class Project implements ProjectWindowProvider {
     this.graphvizLoading.next(false);
   }
 
-  setModelOcDotContents(modelOcDotContents: string) {
-    this.modelEditor.updateEditorWithContents(modelOcDotContents);
+  setModelOcDotContentsFromFile(modelOcDotContents: string, filePath : string) {
+    this.modelEditor.updateEditorWithContents(modelOcDotContents, filePath);
     this.internalOcDotEditorSubject$.next(modelOcDotContents)
   }
   
-  setSimConfigContents(simConfigContents: string) {
-    this.simulationConfigEditor.updateEditorWithContents(simConfigContents);
+  setSimConfigContentsFromFile(simConfigContents: string, filePath: string) {
+    this.simulationConfigEditor.updateEditorWithContents(simConfigContents, filePath);
     this.internalSimConfigEditorInput$.next(simConfigContents)
   }
 
@@ -341,12 +337,6 @@ export class Project implements ProjectWindowProvider {
       windowStructure: this.createSimpleStructure(),
       // windowStructure: this.createInitialStructure()
     };
-  }
-
-  updateModel(ocDotContent: OcDotContent | null) {
-    if (ocDotContent != null) {
-      this.modelEditor.updateEditorWithContents(ocDotContent);
-    }
   }
 
   startSimulation() {

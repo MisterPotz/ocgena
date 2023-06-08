@@ -37,24 +37,42 @@ const exampleModel = trimIndent(`
   }
 `)
 
-export class ModelEditor implements ProjectWindow {
-  readonly title: string = 'model of my OC net';
+export type OpenedFile = {
+  contents ?: string, 
+  filePath ?: string
+}
+
+export interface EditorHolder {
+  readonly editorKey : 'editor'
+  readonly editorDelegate : EditorDelegate
+}
+
+export class ModelEditor implements ProjectWindow, EditorHolder {
+  readonly title: string = 'OC-net Model';
   static id: ProjectWindowId = 'model';
   isOpened: boolean = false;
-  private editorDelegate = new EditorDelegate();
+  readonly editorDelegate = new EditorDelegate("ocdot", "Model file");
   projectWindowId: string;
   id = ModelEditor.id;
+  readonly editorKey = 'editor';
 
   constructor(projectWindowId: ProjectWindowId) {
     this.projectWindowId = projectWindowId;
+  }
+
+  collectFile(): OpenedFile {
+    return {
+      contents : this.editorDelegate.currentContent,
+      filePath : this.editorDelegate.openedFilePath
+    }
   }
 
   getEditorCurrentInput$() {
     return this.editorDelegate.getEditorCurrentInput$();
   }
 
-  updateEditorWithContents(newContents: string) {
-    this.editorDelegate.updateEditorWithContents(newContents);
+  updateEditorWithContents(newContents: string, filePath : string) {
+    this.editorDelegate.updateEditorWithContentsFromFile(newContents, filePath);
   }
 
   collectOcDot() {
@@ -85,6 +103,7 @@ export class ModelEditor implements ProjectWindow {
           fontLigatures: true,
           autoIndent: 'full',
         });
+        this.editorDelegate.onNewEditorInput(exampleModel)
 
         return newEditor;
       }}
