@@ -1,0 +1,21 @@
+@font-face {
+    src: url("../../../assets/fonts/fira_sans/FiraSans-Regular.ttf") format("truetype");
+    font-family: "Fira Sans";
+    font-weight: normal;
+    font-style: normal;
+    font-display: block;
+  }
+
+@font-face {
+  src: url("../../../assets/fonts/fira_mono/FiraMono-Regular.ttf") format("truetype");
+  font-family: "Fira Mono";
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+  
+  
+.console {
+    font-family: 'Fira Mono', monospace;
+}
+  

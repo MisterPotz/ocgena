@@ -4,6 +4,9 @@ import Graph from 'renderer/components/Graph';
 import { ProjectWindow } from '../domain';
 import { ProjectWindowManager } from '../StructureNode';
 import { Panel } from 'renderer/allotment-components/panel';
+import XtermComponent from 'renderer/allotment-components/xterm';
+import { Console } from 'renderer/allotment-components/console';
+import Anser from 'anser';
 
 export class ErrorConsole implements ProjectWindow {
   readonly title: string = 'Errors';
@@ -11,8 +14,9 @@ export class ErrorConsole implements ProjectWindow {
   static id: string = 'Errors';
   id = ErrorConsole.id;
 
-  outputLine$ = new Subject<string[]>();
+  outputLine$ = new Subject<string[] | undefined>();
   clean$ = new Subject<boolean>();
+  fitRequest$ = new Subject<boolean>()
 
   constructor() {}
 
@@ -20,25 +24,40 @@ export class ErrorConsole implements ProjectWindow {
     this.outputLine$.next([line]);
   }
 
+  fit() {
+    this.fitRequest$.next(true)
+  }
+
   writeLines(lines: string[]) {
-    this.outputLine$.next(lines)
+    this.outputLine$.next(undefined)
+    let linesHtml = lines.map((line) => Anser.ansiToHtml(line))
+    console.log(linesHtml[0])
+    this.outputLine$.next(linesHtml)
   }
 
   clean() {
-    this.clean$.next(true);
+    this.outputLine$.next(undefined)
   }
 
-  createReactComponent = (onSizeChangeObservable: Observable<number[]>) => {
+  createReactComponent = (onSizeChangeObservable: Observable<number[]>, visible : boolean) => {
     return (
-      <Panel
+      // <Panel
+      //   sizeChange$={onSizeChangeObservable}
+      //   outputLine$={this.outputLine$}
+      //   clean$={this.clean$}
+      //   maximized={false}
+      //   fitRequest$={this.fitRequest$}
+      //   onClose={() => {  }}
+      //   onMaximize={() => {  }}
+      //   onMinimize={() => {  }}
+      // />
+      <Console
         sizeChange$={onSizeChangeObservable}
         outputLine$={this.outputLine$}
         clean$={this.clean$}
-        maximized={false}
-        onClose={() => {  }}
-        onMaximize={() => {  }}
-        onMinimize={() => {  }}
-      />
+        visible={visible}
+        fitRequest$={this.fitRequest$}
+    />
     );
   };
 }

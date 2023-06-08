@@ -38,6 +38,7 @@ import { SimConfigCreator } from '../simconfig/SimConfigCreator';
 import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
 import { ErrorConsole } from './views/ErrorConsole';
 import { error, model, simulation } from 'ocgena';
+import { ExecutionConsole } from './views/ExecutionConsole';
 
 export type ProjectState = {
   canStartSimulation: boolean;
@@ -60,8 +61,25 @@ export class Project implements ProjectWindowProvider {
   readonly simulationConfigEditor;
   readonly graphvizView;
   readonly errorConsole;
+  readonly executionConsole;
 
-  private projectSimulationExecutor = new ProjectSingleSimulationExecutor();
+  private projectSimulationExecutor = new ProjectSingleSimulationExecutor(
+    (line: string) => {
+      this.executionConsole.writeLine(line)
+    },
+    {
+      onExecutionFinish: () => {
+        console.log('execution finished');
+      },
+      onExecutionStart: () => {
+        console.log('execution started');
+      },
+      onExecutionTimeout: () => {
+        console.log('execution timeout');
+      },
+    } as simulation.client.JsSimTaskClientCallback
+  );
+
   private initialState;
   readonly projectState$;
   private projectWindowManager;
@@ -80,6 +98,7 @@ export class Project implements ProjectWindowProvider {
       this.graphvizLoading
     );
     this.errorConsole = new ErrorConsole();
+    this.executionConsole = new ExecutionConsole();
 
     this.projectWindowManager = this.createProjectWindowManager();
     this.startProcessingProjectState();
@@ -87,10 +106,6 @@ export class Project implements ProjectWindowProvider {
     this.startProcessingSimConfigInput();
     this.startObservingSimulationStatus();
     this.startObservingErrors();
-  }
-
-  getModelFiles() {
-
   }
 
   getLastFocusedEditor() : EditorHolder | undefined {
@@ -104,6 +119,7 @@ export class Project implements ProjectWindowProvider {
         let newProjectState = produce(currentProjectState, (draft) => {
           draft.windowStructure = newStructure;
         });
+
         console.log(
           'Project: projectWindowStructure$.subscribe : emitting new structure ' +
             JSON.stringify(newStructure)
@@ -210,6 +226,7 @@ export class Project implements ProjectWindowProvider {
       [SimulatorEditor.id]: this.simulationConfigEditor,
       [GraphvizView.id]: this.graphvizView,
       [ErrorConsole.id]: this.errorConsole,
+      [ExecutionConsole.id]: this.executionConsole,
     });
   }
 
@@ -219,6 +236,7 @@ export class Project implements ProjectWindowProvider {
     console.log('start button clicked');
     if (buttonMode == 'start') {
       console.log("starting new simulation, g'luck to us all");
+      this.executionConsole.clean();
       this.projectSimulationExecutor.tryStartSimulation();
     }
   }
@@ -304,7 +322,7 @@ export class Project implements ProjectWindowProvider {
         } as StructureParent<ProjectWindowId>,
         {
           id: 'terminal',
-          tabs: [ErrorConsole.id],
+          tabs: [ErrorConsole.id, ExecutionConsole.id],
           currentTabIndex: 0,
         } as StructureWithTabs<ProjectWindowId>,
       ],

@@ -13,27 +13,14 @@ export interface ClickHandler {
 
 const exampleModel = trimIndent(`
   ocnet {
-    a -> b
-    b -> c
-    c-> a
+    places { 
+      p1 [color=green] p2 p3
+    }
     transitions {
       t1 t2
     }
-    places { 
-      p1 p2 p3
-    }
-
-    t3 -> subgraph {
-      p3 p4
-      subgraph { 
-        p5
-      }
-    }
-    t8 -> ad
-
-    p1 => t1 -> p2 [color ="red"] 
-    p2 -> t2 
-    t2 (3*k + 1)=> p3 [color="orange"]
+    
+    p1 -> t1 -> p2 -> t2 -> p3
   }
 `)
 
@@ -79,7 +66,7 @@ export class ModelEditor implements ProjectWindow, EditorHolder {
     return this.editorDelegate.currentContent;
   }
 
-  createReactComponent = (onSizeChangeObservable: Observable<number[]>) => (
+  createReactComponent = (onSizeChangeObservable: Observable<number[]>, visible: boolean) => (
     <EditorWrapper
       editorCreator={(htmlElement: HTMLElement) => {
         if (!isOcDotRegistered()) {

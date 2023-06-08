@@ -106,6 +106,7 @@ export class SimConfigCreator {
     obj: SimConfigObj
   ): boolean {
     return (
+      obj &&
       propertyName in obj &&
       typeof obj[propertyName] === 'object' &&
       obj[propertyName] != null
@@ -117,6 +118,7 @@ export class SimConfigCreator {
     obj: SimConfigObj
   ): boolean {
     return (
+      obj &&
       propertyName in obj &&
       typeof obj[propertyName] === 'string' &&
       obj[propertyName] != null
@@ -165,13 +167,15 @@ export class SimConfigCreator {
         [key: string]: config.TransitionIntervals;
       } = {};
 
-      for (let key in transitionsConfig.transitionsToIntervals) {
-        let value = this.convertTransitionInterval(
-          transitionsConfig.transitionsToIntervals[key]
-        );
-        transitionsToIntervals[key] = value;
+      if (transitionsConfig.transitionsToIntervals) {
+        for (let key in transitionsConfig.transitionsToIntervals) {
+          let value = this.convertTransitionInterval(
+            transitionsConfig.transitionsToIntervals[key]
+          );
+          transitionsToIntervals[key] = value;
+        }  
       }
-
+      
       return new config.TransitionsConfig(
         defaultTransition,
         transitionsToIntervals

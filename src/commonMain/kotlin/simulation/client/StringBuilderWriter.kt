@@ -29,7 +29,8 @@ class CallbackStringWriter(
     override fun writeLine(line: String) {
         lineWriter.invoke(line)
     }
-    override fun end() { }
+
+    override fun end() {}
 }
 
 @OptIn(ExperimentalJsExport::class)
@@ -39,5 +40,25 @@ class HtmlDebugTraceBuilderWriter(private val strinbBuilderWriter: StringBuilder
     fun collect(): String {
         return HtmlExecutionTraceGenerator(strinbBuilderWriter.collect()).generate()
     }
+}
 
+
+@OptIn(ExperimentalJsExport::class)
+@JsExport
+class HtmlDebugTraceCallbackBuilderWriter(
+    private val lineWriter: (String) -> Unit,
+    private val strinbBuilderWriter: StringBuilderWriter = StringBuilderWriter()
+) :
+    Writer {
+    fun collect(): String {
+        return HtmlExecutionTraceGenerator(strinbBuilderWriter.collect()).generate()
+    }
+
+    override fun writeLine(line: String) {
+        lineWriter.invoke(line)
+    }
+
+    override fun end() {
+
+    }
 }

@@ -6,12 +6,14 @@ import { FitAddon } from 'xterm-addon-fit';
 
 import styles from './panel.module.css';
 import { Observable, Subscription } from 'rxjs';
+import { useSubscription } from 'observable-hooks';
 
 export type PanelProps = {
   maximized: boolean;
-  outputLine$: Observable<string[]>;
+  outputLine$: Observable<string[] | undefined>;
   clean$: Observable<boolean>;
   sizeChange$: Observable<number[]>;
+  fitRequest$: Observable<boolean>;
   onClose: () => void;
   onMaximize: () => void;
   onMinimize: () => void;
@@ -21,6 +23,7 @@ export const Panel = ({
   maximized,
   outputLine$,
   sizeChange$,
+  fitRequest$,
   clean$,
   onClose,
   onMaximize,
@@ -30,27 +33,36 @@ export const Panel = ({
   const [term, setTerminal] = useState<Terminal | undefined>(undefined);
   const [fitAddon, setFitAddon] = useState<FitAddon | undefined>(undefined);
 
+  useSubscription(fitRequest$, (request) => {
+    console.log('fitting the addon');
+    // fitAddon?.fit();
+  });
+
+  console.log('executing panel');
   useEffect(() => {
     let subscriptionWriteLine: Subscription | undefined;
     let subscriptionSizeChange: Subscription | undefined;
-    let subscriptionClean : Subscription | undefined;
+    let subscriptionClean: Subscription | undefined;
 
     if (term) {
       console.log('terminal subscribed to line output');
-      fitAddon?.fit();
+      // fitAddon?.fit();
 
       subscriptionWriteLine = outputLine$.subscribe((lines) => {
-        term.clear()
-        for (let line of lines) {
-          term.writeln(line);
+        if (lines) {
+          for (let line of lines) {
+            term.writeln(line);
+          }
+        } else {
+          term.clear();
         }
       });
       subscriptionSizeChange = sizeChange$.subscribe((newsize) => {
-        fitAddon?.fit();
+        // fitAddon?.fit();
       });
       subscriptionClean = clean$.subscribe((clean) => {
-        term.clear()
-      })
+        term.clear();
+      });
     }
 
     return () => {
@@ -64,6 +76,9 @@ export const Panel = ({
     const term = new Terminal({
       disableStdin: true,
       fontSize: 13,
+      cols: 120,
+      overviewRulerWidth: 10,
+      smoothScrollDuration: 125,
       theme: {
         background: '#FFFFFF',
         foreground: '#333333',
@@ -84,8 +99,8 @@ export const Panel = ({
         brightBlue: '#3B8EEA',
         brightMagenta: '#D670D6',
         brightCyan: '#29B8DB',
-        brightWhite: '#E5E5E5'
-    }
+        brightWhite: '#E5E5E5',
+      },
       // theme: { background: 'rgb(30,30,30)' },
     });
 
@@ -94,28 +109,45 @@ export const Panel = ({
 
     setTerminal(term);
     term.loadAddon(fitAddon);
-
-  
     term.open(ref.current);
 
+    const xterm_resize_ob = new ResizeObserver(function (entries) {
+      // since we are observing only a single element, so we access the first element in entries array
+      try {
+        console.log("fitting")
+        fitAddon && fitAddon.fit();
+      } catch (err) {
+        console.log(err);
+      }
+    });
+    
+    // start observing for resize
+    xterm_resize_ob.observe(ref.current);
+    
     term.writeln('Welcome to allotment');
     term.writeln(
       'This is a local terminal emulation, without a real terminal in the back-end.'
     );
     term.writeln('Type some keys and commands to play around.');
     term.writeln('');
-    window.addEventListener('resize', () => fitAddon.fit());
+    // window.addEventListener('resize', () => {
+    //   // fitAddon.fit()
+    // });
 
     term.attachCustomKeyEventHandler((e) => {
       // Ctrl+C or Cmd+C pressed and text is selected
-      if ((e.ctrlKey || e.metaKey) && e.code === "KeyC" && term.hasSelection()) {
-        window.electron.ipcRenderer.sendMessage('copy', [term.getSelection()])
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.code === 'KeyC' &&
+        term.hasSelection()
+      ) {
+        window.electron.ipcRenderer.sendMessage('copy', [term.getSelection()]);
         return false; // Prevent the event from being handled by the global listener
       }
-      return true
+      return true;
     });
 
-    fitAddon.fit();
+    // fitAddon.fit();
     fitAddon.activate(term);
 
     // term.onKey((e: { key: string; domEvent: KeyboardEvent }) => {
@@ -136,9 +168,9 @@ export const Panel = ({
   }, []);
 
   return (
-    <div className={` bg-white border-white h-full w-full flex flex-col pr-0`}>
+    <div className={` flex h-full w-full flex-col border-white bg-white pr-0`}>
       {/* <div className={`${styles.title} flex h-9 overflow-hidden pl-2 pr-2 justify-between`}> */}
-        {/* <div className={styles.actionBar}>
+      {/* <div className={styles.actionBar}>
           <ul className={styles.actionsContainer}>
             <li className={classNames(styles.actionItem, 'checked', "text-opacity-75 text-black")}>
               <a className={classNames(styles.actionLabel, "text-black text-opacity-75")}>
@@ -148,7 +180,7 @@ export const Panel = ({
             </li>
           </ul>
         </div> */}
-        {/* <div>
+      {/* <div>
           <ul className={styles.actionsContainer}>
             <li>
               {maximized ? (
@@ -187,18 +219,21 @@ export const Panel = ({
           </ul>
         </div>
       </div> */}
-      <div className={`${styles.content} overflow-hidden w-full pr-0`}>
-        <div ref={ref} className={`${styles.terminalWrapper} overflow-hidden !pr-0`}></div>
+      <div className={`${styles.content} w-full overflow-hidden pr-0`}>
+        <div
+          ref={ref}
+          className={`${styles.terminalWrapper} overflow-hidden !pr-0`}
+        ></div>
       </div>
     </div>
   );
 };
 
-export const reset = "\x1b[0m"
-export const black = "\x1b[30m"
-export const yellow = "\x1b[33m"
-export const red = "\x1b[31m"
-export const green = '\x1b[32m'
-export const blue = '\x1b[34m'
-export const magena = '\x1b[35m'
-export const cyan = "\x1b[36m"
+export const reset = '\x1b[0m';
+export const black = '\x1b[30m';
+export const yellow = '\x1b[33m';
+export const red = '\x1b[31m';
+export const green = '\x1b[32m';
+export const blue = '\x1b[34m';
+export const magena = '\x1b[35m';
+export const cyan = '\x1b[36m';

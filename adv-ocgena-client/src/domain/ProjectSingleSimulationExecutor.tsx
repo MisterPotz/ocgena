@@ -50,10 +50,15 @@ export class ProjectSingleSimulationExecutor {
     });
 
   private currentSimulationTask: simulation.client.ClientSimTask | null = null;
+  
+  private executionTraceLineWriter: (line: string) => void;
+  private simTaskClientCallback: simulation.client.JsSimTaskClientCallback
 
-  constructor() {
+  constructor(executionTraceLineWriter : (line: string)=>void, simTaskClientCallback: simulation.client.JsSimTaskClientCallback) {
     this.startObservingSimulationReadiness();
     this.startClient();
+    this.executionTraceLineWriter = executionTraceLineWriter;
+    this.simTaskClientCallback = simTaskClientCallback;
   } 
   
   private startClient() {
@@ -152,11 +157,18 @@ export class ProjectSingleSimulationExecutor {
   }
 
   private createHtmlTraceWriter(): simulation.client.Writer {
-    return new simulation.client.HtmlDebugTraceBuilderWriter();
+    return new simulation.client.HtmlDebugTraceCallbackBuilderWriter(
+      (line) => {
+        console.log("received line %s", line)
+        this.executionTraceLineWriter(line);
+        // console.log(line);
+      }
+    );
   }
 
   private createAnsiTraceWriter(): simulation.client.Writer {
     return new simulation.client.CallbackStringWriter((line) => {
+      // this.executionTraceLineWriter(line);
       console.log(line);
     });
   }
@@ -165,17 +177,7 @@ export class ProjectSingleSimulationExecutor {
     // let onFinish = () => {
     //   this.currentSimulationTask = null;
     // };
-    return simulation.client.toSimTaskClientCallback({
-      onExecutionFinish: () => {
-        console.log('execution finished');
-      },
-      onExecutionStart: () => {
-        console.log('execution started');
-      },
-      onExecutionTimeout: () => {
-        console.log('execution timeout');
-      },
-    } as simulation.client.JsSimTaskClientCallback);
+    return simulation.client.toSimTaskClientCallback(this.simTaskClientCallback);
   }
 
   private requireLaunchAllowed(): boolean {

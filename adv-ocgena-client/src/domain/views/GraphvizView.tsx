@@ -20,7 +20,7 @@ export class GraphvizView implements ProjectWindow {
         this.loadingObservable = loadingObservable;
     }
 
-    createReactComponent = (onSizeChangeObservable: Observable<number[]>) => {
+    createReactComponent = (onSizeChangeObservable: Observable<number[]>, visible :boolean) => {
         let dot = useObservableState(this.dotObservable);
         let loading = useObservableState(this.loadingObservable, false);
         let dotString = dot ? dot : "";

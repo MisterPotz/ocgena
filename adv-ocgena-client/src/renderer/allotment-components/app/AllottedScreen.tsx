@@ -81,6 +81,7 @@ function Tab({ title, active, onClick }: TabProps) {
         px-2 
         text-center 
         text-xs
+        rounded-tr-lg
          text-black
         text-opacity-75 
         shadow-none transition-colors
@@ -137,7 +138,7 @@ function TabPane({
         </div>
       </div>
       <div className={`h-full w-full flex-grow`}>
-        <Allotment className="h-full w-full">
+        <Allotment key={structureNode.id} className="h-full w-full">
           {projectWindows.map((projectWindowId, index) => {
             let visible = index == visibleIndex;
             let projectWindow = project.getProjectWindow(projectWindowId)!;
@@ -147,7 +148,7 @@ function TabPane({
                 key={projectWindow.title}
                 visible={visible}
               >
-                {projectWindow.createReactComponent(sizeChange$)}
+                {projectWindow.createReactComponent(sizeChange$, visible)}
               </Allotment.Pane>
             );
           })}
@@ -207,6 +208,7 @@ function AllottedPane({
     <Allotment
       className="h-full w-full"
       vertical={vertical}
+      key={paneParent.id}
       onChange={onChangeSize}
     >
       {structureNodes.map((structureNode) => {

@@ -42,7 +42,7 @@ export class SimulatorEditor implements ProjectWindow, EditorHolder {
         return null;
     }
 
-    createReactComponent = (onSizeChangeObservable: Observable<number[]>) => <EditorWrapper
+    createReactComponent = (onSizeChangeObservable: Observable<number[]>, visible: boolean) => <EditorWrapper
         editorCreator={(htmlElement : HTMLElement) => {
             // The uri is used for the schema file match.
 

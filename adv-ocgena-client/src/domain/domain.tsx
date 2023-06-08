@@ -25,6 +25,6 @@ export interface ProjectWindow {
     readonly title: string
     id : ProjectWindowId
     isOpened: boolean
-    createReactComponent: (onSizeChangeObservable: Observable<number[]>) => JSX.Element
+    createReactComponent: (onSizeChangeObservable: Observable<number[]>, visible: boolean) => JSX.Element
 }
 
