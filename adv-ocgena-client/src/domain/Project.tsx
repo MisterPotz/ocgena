@@ -39,6 +39,9 @@ import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
 import { ErrorConsole } from './views/ErrorConsole';
 import { error, model, simulation } from 'ocgena';
 import { ExecutionConsole } from './views/ExecutionConsole';
+import { OcelConsole } from './views/OcelConsole';
+import { SavedFile } from 'main/main';
+import { appService } from 'renderer/AppService';
 
 export type ProjectState = {
   canStartSimulation: boolean;
@@ -62,6 +65,7 @@ export class Project implements ProjectWindowProvider {
   readonly graphvizView;
   readonly errorConsole;
   readonly executionConsole;
+  readonly ocelConsole;
 
   private projectSimulationExecutor = new ProjectSingleSimulationExecutor(
     (line: string) => {
@@ -77,7 +81,12 @@ export class Project implements ProjectWindowProvider {
       onExecutionTimeout: () => {
         console.log('execution timeout');
       },
-    } as simulation.client.JsSimTaskClientCallback
+    } as simulation.client.JsSimTaskClientCallback,
+    (any : any) => {
+      console.log('received ocel from executor')
+      if (!any) return
+      this.ocelConsole.ocel = any
+    }
   );
 
   private initialState;
@@ -99,6 +108,12 @@ export class Project implements ProjectWindowProvider {
     );
     this.errorConsole = new ErrorConsole();
     this.executionConsole = new ExecutionConsole();
+    this.ocelConsole = new OcelConsole((savedFile: SavedFile) => {
+      console.log('requesting ocel save')
+      window.electron.ipcRenderer.sendMessage('save-the-current-file', [
+        savedFile
+      ]);
+    })
 
     this.projectWindowManager = this.createProjectWindowManager();
     this.startProcessingProjectState();
@@ -227,6 +242,7 @@ export class Project implements ProjectWindowProvider {
       [GraphvizView.id]: this.graphvizView,
       [ErrorConsole.id]: this.errorConsole,
       [ExecutionConsole.id]: this.executionConsole,
+      [OcelConsole.id] : this.ocelConsole
     });
   }
 
@@ -322,7 +338,7 @@ export class Project implements ProjectWindowProvider {
         } as StructureParent<ProjectWindowId>,
         {
           id: 'terminal',
-          tabs: [ErrorConsole.id, ExecutionConsole.id],
+          tabs: [ErrorConsole.id, ExecutionConsole.id, OcelConsole.id],
           currentTabIndex: 0,
         } as StructureWithTabs<ProjectWindowId>,
       ],

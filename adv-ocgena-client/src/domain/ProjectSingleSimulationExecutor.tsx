@@ -53,12 +53,16 @@ export class ProjectSingleSimulationExecutor {
   
   private executionTraceLineWriter: (line: string) => void;
   private simTaskClientCallback: simulation.client.JsSimTaskClientCallback
+  private resultingOcel : (any: any) => void;
 
-  constructor(executionTraceLineWriter : (line: string)=>void, simTaskClientCallback: simulation.client.JsSimTaskClientCallback) {
+  constructor(executionTraceLineWriter : (line: string)=>void, 
+            simTaskClientCallback: simulation.client.JsSimTaskClientCallback,
+            resultingOcel: (any: any) => void) {
     this.startObservingSimulationReadiness();
     this.startClient();
     this.executionTraceLineWriter = executionTraceLineWriter;
     this.simTaskClientCallback = simTaskClientCallback;
+    this.resultingOcel = resultingOcel
   } 
   
   private startClient() {
@@ -153,7 +157,9 @@ export class ProjectSingleSimulationExecutor {
   }
 
   private createOcelWriter(): simulation.client.OcelWriter {
-    return new simulation.client.OcelWriter();
+    return new simulation.client.OcelWriter((ocel) => {
+      this.resultingOcel(ocel)
+    });
   }
 
   private createHtmlTraceWriter(): simulation.client.Writer {

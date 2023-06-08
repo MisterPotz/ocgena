@@ -8,7 +8,7 @@ import model.ObjectToken
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
-actual class OcelWriter {
+actual class OcelWriter(val ocelCallback: (ocel: dynamic) -> Unit) {
 
     val ocelObject = jso<dynamic> {
         this["ocel:events"] = jso<dynamic>()
@@ -42,6 +42,7 @@ actual class OcelWriter {
         for (obj in eventLog.objects) {
             writeObjectToken(obj)
         }
+        ocelCallback(ocelObject)
     }
 
     actual fun collect(): Any {
