@@ -1,9 +1,11 @@
 import org.jetbrains.kotlin.gradle.plugin.extraProperties
 
 plugins {
-    kotlin("multiplatform") version "1.8.0"
+    kotlin("multiplatform") version "1.8.21"
+    kotlin("plugin.serialization") version "1.8.21"
     application
 }
+
 
 group = "ru.misterpotz"
 version = "1.0-SNAPSHOT"
@@ -41,12 +43,22 @@ kotlin {
             }
         }
         binaries.executable()
+        compilations.all {
+            compileTaskProvider.configure {
+                compilerOptions.freeCompilerArgs.add("-Xir-minimized-member-names=false")
+            }
+        }
+        generateTypeScriptDefinitions()
     }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+                implementation("net.mamoe.yamlkt:yamlkt:0.13.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+
             }
         }
         val commonTest by getting {
@@ -107,10 +119,10 @@ application {
     mainClass.set("ru.misterpotz.application.ServerKt")
 }
 
-tasks.named<JavaExec>("run") {
-    dependsOn(tasks.named<Jar>("jvmJar"))
-    classpath(tasks.named<Jar>("jvmJar"))
-}
+//tasks.named<JavaExec>("run") {
+//    dependsOn(tasks.named<Jar>("jvmJar"))
+//    classpath(tasks.named<Jar>("jvmJar"))
+//}
 
 //tasks.named("jsProductionExecutableCompileSync") {
 //    dependsOn(tasks.named("jsNodeDevelopmentRun"))
@@ -138,39 +150,38 @@ tasks.named<JavaExec>("run") {
 //}
 
 
-tasks.register<Delete>("deleteJsBinaries") {
-    val dir = layout.projectDirectory.dir("ocgenajs").asFile
+//tasks.register<Delete>("deleteJsBinaries") {
+//    val dir = layout.projectDirectory.dir("ocgenajs").asFile
+//
+//    val kotlinJs = layout.projectDirectory.dir("ocgenajs/kotlin").asFile
+//    val nodeModules = layout.projectDirectory.dir("ocgenajs/node_modules").asFile
+//
+//    if (kotlinJs.exists()) {
+//        delete(kotlinJs)
+//    }
+//    if (nodeModules.exists()) {
+//        delete(nodeModules)
+//    }
+//    val packageJson = layout.projectDirectory.file("ocgenajs/package.json").asFile
+//    if (packageJson.exists()) {
+//        delete(packageJson)
+//    }
+//
+//    doLast {
+//        if (!dir.exists()) {
+//            project.mkdir("ocgenajs")
+//        }
+//    }
+//}
 
-    val kotlinJs = layout.projectDirectory.dir("ocgenajs/kotlin").asFile
-    val nodeModules = layout.projectDirectory.dir("ocgenajs/node_modules").asFile
 
-    if (kotlinJs.exists()) {
-        delete(kotlinJs)
-    }
-    if (nodeModules.exists()) {
-        delete(nodeModules)
-    }
-    val packageJson = layout.projectDirectory.file("ocgenajs/package.json").asFile
-    if (packageJson.exists()) {
-        delete(packageJson)
-    }
-
-    doLast {
-        if (!dir.exists()) {
-            project.mkdir("ocgenajs")
-        }
-    }
-}
-
-
-tasks.register<Copy>("exportJsBinaries") {
-    dependsOn("compileProductionExecutableKotlinJs")
-    dependsOn("deleteJsBinaries")
-
-    from(layout.buildDirectory.dir("js/node_modules/ocgena/"))
-    into(layout.projectDirectory.dir("ocgenajs"))
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    mustRunAfter("compileProductionExecutableKotlinJs")
-
-}
-
+//tasks.register<Copy>("exportJsBinaries") {
+//    dependsOn("compileProductionExecutableKotlinJs")
+////    dependsOn("deleteJsBinaries")
+//
+////    from(layout.buildDirectory.dir("js/node_modules/ocgena/"))
+////    into(layout.projectDirectory.dir("ocgenajs"))
+////    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    mustRunAfter("compileProductionExecutableKotlinJs")
+//}
+//

@@ -14,7 +14,7 @@ export const LABEL_MAPPING = 'labelMapping';
 export const INITIAL_MARKING = 'initialMarking';
 export const TRANSITIONS_CONFIG = 'transitionsConfig';
 
-export const setupTemplate = trimIndent(`
+export const exampleConfiguration = trimIndent(`
     ${LABEL_MAPPING}:
         p1: sd
     ${INPUT_PLACES}: p1 
@@ -22,8 +22,7 @@ export const setupTemplate = trimIndent(`
     ${INITIAL_MARKING}:
         p1: 3
     ${OC_NET_DEFINITION}: aalst
-    ${PLACE_TYPING}:
-        ot1: p1
+    ${PLACE_TYPING}: {}
     ${TRANSITIONS_CONFIG}:
         defaultTransitionInterval:
             duration: [1, 1]

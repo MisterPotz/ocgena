@@ -2,6 +2,7 @@ package simulation
 
 class SimulationState() {
     private var current: BySteps? = null
+    var currentStep : Int = -1
 
     fun onStart() {
         current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false)

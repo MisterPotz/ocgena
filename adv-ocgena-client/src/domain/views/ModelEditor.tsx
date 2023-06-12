@@ -11,7 +11,7 @@ export interface ClickHandler {
   clickTab(projectWindowId: ProjectWindowId): void;
 }
 
-const exampleModel = trimIndent(`
+export const exampleModel = trimIndent(`
   ocnet {
     places { 
       p1 [color=green] p2 p3

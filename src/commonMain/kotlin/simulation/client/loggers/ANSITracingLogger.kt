@@ -28,7 +28,6 @@ class ANSITracingLogger(
     }
 
     override fun onFinalMarking(marking: ObjectMarking) {
-
         writer.writeLine("""${background("125")}final marking:$ANSI_RESET""".indent(1))
         writer.writeLine(marking.toString().indentMargin(2, "${
             background("125")

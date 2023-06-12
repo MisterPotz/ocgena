@@ -31,6 +31,15 @@ class ModelCreator(
         return ErrorClass(message = "ModelCreator: critical exception occurred during conversion, original message : ${exception?.message}", errorLevel = ErrorLevel.CRITICAL)
     }
 
+    fun tryCreateModelFromModelBuildingRequest(it: ModelBuildingRequest): Result<OcDotParseResult> {
+        return buildModel(it)
+    }
+
+    fun createModelSafely(ocDot: String, simulationConfig: ProcessedSimulationConfig) : OcDotParseResult? {
+        val modelBuildingRequest = ModelBuildingRequest(ocDot, simulationConfig)
+        return tryCreateModelFromModelBuildingRequest(modelBuildingRequest).getOrNull()
+    }
+
     suspend fun startModelCreation() {
         ocDotStore.ocDotFlow.combine(
             simulationConfigStore.simulationConfigFlow
@@ -49,18 +58,22 @@ class ModelCreator(
             .collectLatest {
                 println("ModelCreator: collecting request $it")
                 if (it == null) {
-                    builtModelFlow.emit(null)
+                    builtModelFlow.emit(null);
+                    return@collectLatest;
+                }
+                val ocDotParseResult = tryCreateModelFromModelBuildingRequest(it)
+
+                if (ocDotParseResult == null) {
+                    builtModelFlow.emit(null);
                     return@collectLatest
                 }
 
-                val builtModel = buildModel(it)
-                if (builtModel.isSuccess) {
-                    val builtModelResult = builtModel.getOrThrow()
-                    val errors = builtModelResult.errors.toList()
+                if (ocDotParseResult.isSuccess) {
+                    val builtModelResult = ocDotParseResult.getOrThrow()
                     builtModelFlow.emit(builtModelResult)
-                    errorsFlow.value = errors
+                    errorsFlow.value = builtModelResult.errors.toList()
                 } else {
-                    val criticalErorr = createCriticalErrorDuringConversion(builtModel.exceptionOrNull())
+                    val criticalErorr = createCriticalErrorDuringConversion(ocDotParseResult.exceptionOrNull())
                     errorsFlow.value = listOf(criticalErorr)
                     builtModelFlow.value = null
                 }

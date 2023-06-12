@@ -1,7 +1,9 @@
 package model
 
+import kotlinx.serialization.Serializable
 import utils.print
 
+@Serializable
 class ImmutableObjectMarking(val placesToObjectTokens: Map<PlaceId, Set<ObjectToken>>) {
     fun toMutableObjectMarking() : ObjectMarking {
         return ObjectMarking(

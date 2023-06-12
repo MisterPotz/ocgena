@@ -12,7 +12,7 @@ class SimulatableOcNetTypeA(
     override val arcMultiplicity: ArcMultiplicityTypeA,
     override val intervalFunction: IntervalFunction,
 ) : SimulatableComposedOcNet<SimulatableOcNetTypeA> {
-    override val ocNetType: OcNetType = OcNetType.TYPE_A
+    override val ocNetType: OcNetType = OcNetType.AALST
 
     override fun createInitialState(): SimulatableComposedOcNet.State {
         return State()

@@ -1,8 +1,11 @@
 package model
 
+import kotlinx.serialization.Serializable
+
 interface ObjectValuesMap
 
-object EmptyObjectValuesMap : ObjectValuesMap {
+@Serializable
+class EmptyObjectValuesMap : ObjectValuesMap {
     override fun toString(): String {
         return "[ ]"
     }
@@ -10,11 +13,12 @@ object EmptyObjectValuesMap : ObjectValuesMap {
 
 typealias Time = Int
 
+@Serializable
 data class ObjectToken(
     val id : Long,
     val name: String,
     val type: ObjectType,
-    val ovmap: ObjectValuesMap,
+    val ovmap: ObjectValuesMap = EmptyObjectValuesMap(),
 ) {
     var ownPathTime: Time = 0
     override fun equals(other: Any?): Boolean {

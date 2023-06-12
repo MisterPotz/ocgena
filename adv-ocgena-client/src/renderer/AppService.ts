@@ -1,15 +1,6 @@
-import { OcDotContent, ProjectWindowStructure } from 'domain/domain';
-import { ProjectSingleSimulationExecutor } from 'domain/ProjectSingleSimulationExecutor';
-import { Project, ProjectState } from 'domain/Project';
-import { AST } from 'ocdot-parser';
-import { PeggySyntaxError } from 'ocdot-parser/lib/ocdot.peggy';
-import { OCDotToDOTConverter } from 'ocdot/converter';
-import { Observable, Subject } from 'rxjs';
-import * as rxops from 'rxjs/operators';
+import { Project } from 'domain/Project';
 import { FileType } from 'main/preload';
-import { unknown } from 'io-ts';
 import { ModelFiles, SavedFile, SuccessfullySavedFile } from 'main/main';
-import path from 'path';
 
 export class AppService {
   private openedProject = new Project();
@@ -117,6 +108,17 @@ export class AppService {
         }
       }
     );
+    window.electron.ipcRenderer.on('transform-ocel', (...args : unknown[]) => {
+      if (!(args && args[0] && args[0] as string)) {
+        return;
+      }
+      let savedFile : SavedFile = {
+        extension : "jsonocel",
+        fileType: "OCEL JSON",
+        contents: args[0] as string,
+      } 
+      window.electron.ipcRenderer.sendMessage('save-the-current-file', [savedFile])
+    });
     window.electron.ipcRenderer.on(
       'save-all-shortcut',
       (...args: unknown[]) => {

@@ -1,12 +1,28 @@
 package simulation
 
-import model.ActiveTransitionMarking
-import model.ObjectMarking
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import model.*
+import model.time.IntervalFunction
+import model.time.SerializableIntervalFunction
+import simulation.time.SerializableTransitionOccurrenceAllowedTimes
 import utils.html.indentLines
 import utils.html.underline
 import simulation.time.TransitionOccurrenceAllowedTimes
 
-class State() : SimulatableComposedOcNet.State {
+@Serializable
+data class SerializableState(
+    val tMarking: SerializableActiveTransitionMarking,
+    val pMarking: ImmutableObjectMarking,
+    val tMinTimes: SerializableTransitionOccurrenceAllowedTimes,
+//    val intervalFunction: SerializableIntervalFunction,
+) : SimulatableComposedOcNet.SerializableState {
+
+}
+
+class State(
+//    val intervalFunction: IntervalFunction,
+) : SimulatableComposedOcNet.State {
     override val tMarking: ActiveTransitionMarking = ActiveTransitionMarking()
     override val pMarking: ObjectMarking = ObjectMarking()
     override val tTimes: TransitionOccurrenceAllowedTimes = TransitionOccurrenceAllowedTimes()
@@ -20,6 +36,16 @@ class State() : SimulatableComposedOcNet.State {
             add(underline("transition timed marking:"))
             addAll(indentLines(1, tMarking.htmlLinesState()))
         }
+    }
+
+    override fun toSerializable() : SerializableState {
+        return SerializableState(
+
+            tMarking = tMarking.toSerializable(),
+            pMarking = pMarking.toImmutableMarking(),
+            tMinTimes = tTimes.toSerializable(),
+//            intervalFunction = intervalFunction.toSerializable()
+        )
     }
 
     override fun toString(): String {

@@ -1,6 +1,11 @@
 package model
 
+import kotlinx.serialization.Serializable
+
 typealias TransitionId = String
+
+@Serializable
+data class SerializableTransition(val id : TransitionId) : SerializableAtom
 
 data class Transition(
     override val id: TransitionId,
@@ -10,6 +15,10 @@ data class Transition(
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
 ) : PetriNode, LabelHolder {
     val placesToArcs = mutableMapOf<Place, Arc>()
+
+    override val serializableAtom: SerializableTransition by lazy {
+        SerializableTransition(id)
+    }
 
     val inputPlaces : List<Place>
         get() = inputArcs.mapNotNull { it.tailNode }.filterIsInstance<Place>()

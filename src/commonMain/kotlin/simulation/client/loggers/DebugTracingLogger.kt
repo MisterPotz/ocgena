@@ -19,7 +19,8 @@ class DebugTracingLogger(
     private val activityOccurrenceRegistry = ActivityOccurrenceRegistry(OcelParams(logBothStartAndEnd = false))
     private val modelToEventLogConverter = ModelToEventLogConverter(
         labelMapping = labelMapping,
-        ocelParams = OcelParams(logBothStartAndEnd = false)
+        ocelParams = OcelParams(logBothStartAndEnd = false),
+        timeStampMapper = TimeStampMapper()
     )
     override val loggingEnabled: Boolean
         get() = true

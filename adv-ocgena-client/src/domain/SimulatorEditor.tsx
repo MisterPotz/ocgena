@@ -7,7 +7,7 @@ import { EditorDelegate } from "./views/EditorDelegate";
 import { ProjectWindow, ProjectWindowId } from "./domain";
 import { ProjectWindowManager } from "./StructureNode";
 import { ClickHandler, EditorHolder, OpenedFile } from "./views/ModelEditor";
-import { modelUri, setupTemplate, setupYamlLanguageServer } from "simconfig/simconfig_yaml";
+import { modelUri, exampleConfiguration, setupYamlLanguageServer } from "simconfig/simconfig_yaml";
 
 
 
@@ -46,7 +46,7 @@ export class SimulatorEditor implements ProjectWindow, EditorHolder {
         editorCreator={(htmlElement : HTMLElement) => {
             // The uri is used for the schema file match.
 
-            const value = setupTemplate;
+            const value = exampleConfiguration;
 
             setupYamlLanguageServer();
 
@@ -54,7 +54,7 @@ export class SimulatorEditor implements ProjectWindow, EditorHolder {
                 automaticLayout: true,
                 model: monaco.editor.createModel(value, 'yaml', modelUri)
             });
-            this.editorDelegate.onNewEditorInput(setupTemplate)
+            this.editorDelegate.onNewEditorInput(exampleConfiguration)
 
             return newEditor;
         }}

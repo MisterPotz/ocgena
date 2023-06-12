@@ -14,7 +14,8 @@ export type Channels =
   | 'saved-current-file'
   | 'reload'
   | 'parsed-oc-dot'
-  | 'processed-oc-dot-errors';
+  | 'processed-oc-dot-errors'
+  | 'transform-ocel';
 
 const electronHandler = {
   ipcRenderer: {

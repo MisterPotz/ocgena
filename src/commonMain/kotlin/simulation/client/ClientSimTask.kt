@@ -104,9 +104,10 @@ interface ClientSimTaskFactory {
     ): ClientSimTask
 }
 
-class ClientSimTaskFactoryImpl (
+class ClientSimTaskFactoryImpl(
     private val staticCoreOcNet: StaticCoreOcNet,
     private val config: ProcessedSimulationConfig,
+    private val loggingEnabled: Boolean
 ) : ClientSimTaskFactory {
     override fun create(
         onSimulationStatusUpdate : (ClientSimTaskStatus) -> Unit,
@@ -117,7 +118,7 @@ class ClientSimTaskFactoryImpl (
     ): ClientSimTask {
         return ClientSimTaskImpl(
             loggerWrapper = DefaultSimTaskLoggerWrapper(
-                loggingEnabled = true,
+                loggingEnabled = loggingEnabled,
                 simTaskClientCallback = simTaskClientCallback,
                 htmlTraceFileWriter = htmlTraceFileWriter,
                 ansiTraceWriter = ansiTraceWriter,
@@ -198,12 +199,10 @@ class ClientSimTaskImpl(
     private var jobba: Job? = null
 
     override fun launch() {
-        if (jobba?.isActive == true) return
+        if (_status != ClientSimTaskStatus.JUST_CREATED) return;
+
         _status = ClientSimTaskStatus.EXECUTING
         notifyStatus()
-
-        jobba = myCoroutineScope.launch {
-            task.prepareAndRun()
-        }
+        task.prepareAndRun()
     }
 }

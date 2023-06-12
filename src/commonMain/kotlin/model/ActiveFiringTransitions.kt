@@ -1,5 +1,12 @@
 package model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
+class SerializableActiveFiringTransitions(val tMarkingValues : List<SerializableActiveFiringTransition>) {
+
+}
+
 class ActiveFiringTransitions() {
     private val tMarkingValues: MutableList<ActiveFiringTransition> = mutableListOf()
 
@@ -12,6 +19,10 @@ class ActiveFiringTransitions() {
                         > laterTMarking.relativeTimePassedSinceLock
             )
         }
+    }
+
+    fun toSerializable() : SerializableActiveFiringTransitions {
+        return SerializableActiveFiringTransitions(tMarkingValues.map { it.toSerializable() })
     }
 
     fun prettyPrintState(): String {

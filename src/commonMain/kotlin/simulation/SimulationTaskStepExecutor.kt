@@ -23,6 +23,7 @@ class SimulationTaskStepExecutor(
     private val logger: Logger,
     private val simulationTime: SimulationTime,
     private val simulationState: SimulationState,
+    private val dumpState: () -> Unit
 ) {
 
     private val pMarkingProvider = StatePMarkingProvider(state = state)
@@ -53,6 +54,7 @@ class SimulationTaskStepExecutor(
         findAndStartEnabledTransitions()
 
         shiftByMinimalSomethingChangingTime()
+        dumpState()
     }
 
     private fun findAndStartEnabledTransitions() {

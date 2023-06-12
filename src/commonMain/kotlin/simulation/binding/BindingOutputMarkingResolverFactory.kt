@@ -16,13 +16,13 @@ class BindingOutputMarkingResolverFactory(
 ) {
     fun create() : InputToOutputPlaceResolver {
         return when (ocNetType) {
-            OcNetType.TYPE_A -> BindingOutputMarkingTypeAResolver(
+            OcNetType.AALST -> BindingOutputMarkingTypeAResolver(
                 arcs = arcs,
                 placeTyping = placeTyping,
                 objectTokenGenerator = objectTokenGenerator,
                 objectTokenMoverFactory = objectTokenMoverFactory
             )
-            OcNetType.TYPE_L -> TODO("I.A.Lomazova specification is yet to be done")
+            OcNetType.LOMAZOVA -> TODO("I.A.Lomazova specification is yet to be done")
         }
     }
 }

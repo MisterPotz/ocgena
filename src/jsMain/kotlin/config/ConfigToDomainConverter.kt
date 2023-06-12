@@ -51,7 +51,7 @@ actual class SimulationConfigProcessor actual constructor(
     }
 
     private fun getOcNetType(): OcNetType {
-        return (simulationConfig.getConfig(ConfigEnum.OC_TYPE) as? OCNetTypeConfig)?.ocNetType ?: OcNetType.TYPE_A
+        return (simulationConfig.getConfig(ConfigEnum.OC_TYPE) as? OCNetTypeConfig)?.ocNetType ?: OcNetType.AALST
     }
 
     private fun getInitialMarking(): PlainMarking {
@@ -60,7 +60,7 @@ actual class SimulationConfigProcessor actual constructor(
         val plainMarking = PlainMarking.of {
             if (configMarking != null) {
                 val placeIdToTokens = configMarking.placeIdToInitialMarking
-                val places = Object.keys(placeIdToTokens as Any)
+                val places = placeIdToTokens.keys
                 for (place in places) {
                     val tokensAmount = placeIdToTokens[place]
                     put(place, tokensAmount as Int)
@@ -76,7 +76,7 @@ actual class SimulationConfigProcessor actual constructor(
 
         return LabelMapping.create {
             if (labels != null) {
-                for (id in Object.keys(labels as Any)) {
+                for (id in labels.keys) {
                     val label = labels[id]
 
                     put(id, label.toString())
@@ -96,7 +96,7 @@ actual class SimulationConfigProcessor actual constructor(
 
                 buildMap {
                     val transitionsToIntervals = transitionIntervalConfig.transitionsToIntervals
-                    val transitions = Object.keys(transitionsToIntervals as Any)
+                    val transitions = transitionsToIntervals.keys
 
                     for (transition in transitions) {
                         val transitionTimes = mapTransitionIntervalToDomain(

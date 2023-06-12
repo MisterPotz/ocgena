@@ -1,8 +1,14 @@
 package simulation
 
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import model.*
+import model.typea.SerializableVariableArcTypeA
+import model.typel.SerializableArcTypeL
+import net.mamoe.yamlkt.Yaml
+import net.mamoe.yamlkt.YamlBuilder
 import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.random.BindingSelector
@@ -11,6 +17,12 @@ import simulation.time.TransitionDurationSelector
 import simulation.time.TransitionInstanceOccurenceDeltaSelector
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+
+@Serializable
+data class SerializableSimulationState(
+    val currentTime : Time,
+    val state: SimulatableComposedOcNet.SerializableState,
+)
 
 class SimulationTask(
     private val simulationParams: SimulationParams,
@@ -27,9 +39,7 @@ class SimulationTask(
     private val duration = (simulationParams.timeoutSec ?: 30L).toDuration(DurationUnit.SECONDS)
     private val state = ocNet.createInitialState()
 
-
     private val runningSimulatableOcNet = RunningSimulatableOcNet(ocNet, state)
-    private val executionLock: Mutex = Mutex()
     private val simulationState = SimulationState()
     private val stepExecutor = SimulationTaskStepExecutor(
         ocNet,
@@ -52,7 +62,10 @@ class SimulationTask(
         logger = logger,
         tokenSelector = tokenSelector,
         transitionDurationSelector = transitionDurationSelector,
-        nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector
+        nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector,
+        dumpState = {
+            println("\r\ndump after step state: ${simulationState.currentStep}: \r\n${dumpState().replace("\n", "\r\n")}")
+        }
     )
 
     private fun prepare() {
@@ -66,47 +79,88 @@ class SimulationTask(
         }
     }
 
-    private suspend fun run() {
+    private fun run() {
         var stepIndex: Int = 0
 
         simulationState.onStart()
         val maxSteps = 10000
-        withTimeout(duration) {
-            while (
-                !executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
-                && !simulationState.isFinished()
-                && isActive
-                && stepIndex < maxSteps
-            ) {
+        while (
+            !executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
+            && !simulationState.isFinished()
+            && stepIndex < maxSteps
+        ) {
+            simulationState.currentStep = stepIndex
+            simulationState.onNewStep()
 
-                simulationState.onNewStep()
+            logger.onExecutionStepStart(stepIndex, state, simulationTime)
 
-                logger.onExecutionStepStart(stepIndex, state, simulationTime)
+            stepExecutor.executeStep()
 
-                stepExecutor.executeStep()
-
-                stepIndex++
-
-//            logger.logBindingExecution(selectedBinding)
-//            executionConditions.checkIfSuspend()
-            }
-
-            if (!this.isActive) {
-                logger.onTimeout()
-            }
+            stepIndex++
         }
-
     }
 
-    suspend fun prepareAndRun() {
-        if (executionLock.isLocked) return
-        executionLock.lock()
+    val json = Json {
+        prettyPrint = true
+        serializersModule = SerializersModule {
+            polymorphic(baseClass = SerializableAtom::class) {
+                subclass(SerializablePlace::class, SerializablePlace.serializer())
+                subclass(SerializableTransition::class, SerializableTransition.serializer())
+                subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
+                subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
+                subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
+            }
+
+            polymorphic(SimulatableComposedOcNet.SerializableState::class) {
+                subclass(SerializableState::class, SerializableState.serializer())
+            }
+            polymorphic(ObjectValuesMap::class) {
+                subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
+            }
+        }
+    }
+
+
+    private fun dumpState() : String {
+        return yaml.encodeToString(SerializableSimulationState(simulationTime.globalTime, state.toSerializable())).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+    }
+
+    private fun dumpInput() : String {
+        return yaml.encodeToString(simulationParams.toSerializable()).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+    }
+
+    fun prepareAndRun() {
         logger.onStart()
+        println("onStart dump net: ${dumpInput().replace("\n", "\n\r")}")
         prepare()
+        println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
         logger.onInitialMarking(state.pMarking)
         run()
         logger.onFinalMarking(state.pMarking)
+        println("onFinish dump state: ${dumpState()}")
+
         logger.onEnd()
-        executionLock.unlock()
+    }
+}
+
+val yaml = Yaml {
+    this.listSerialization = YamlBuilder.ListSerialization.AUTO
+    this.mapSerialization = YamlBuilder.MapSerialization.BLOCK_MAP
+
+    serializersModule = SerializersModule {
+        polymorphic(baseClass = SerializableAtom::class) {
+            subclass(SerializablePlace::class, SerializablePlace.serializer())
+            subclass(SerializableTransition::class, SerializableTransition.serializer())
+            subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
+            subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
+            subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
+        }
+
+        polymorphic(SimulatableComposedOcNet.SerializableState::class) {
+            subclass(SerializableState::class, SerializableState.serializer())
+        }
+        polymorphic(ObjectValuesMap::class) {
+            subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
+        }
     }
 }

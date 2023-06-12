@@ -14,12 +14,9 @@ import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { Channels, FileType } from './preload';
-import { unknown } from 'io-ts';
 import * as fs from 'fs';
 import path from 'path';
-import { model } from 'ocgena';
-import { OpenedFile } from 'domain/views/ModelEditor';
-import { async } from 'rxjs';
+import { JsonOcelExporter } from '../ocel/json_ocel_exporter';
 
 class AppUpdater {
   constructor() {
@@ -184,6 +181,17 @@ ipcMain.on('copy' as Channels, (event, args: unknown[]) => {
   clipboard.writeText(args[0] as string);
 })
 
+ipcMain.on('transform-ocel' as Channels, (event, args: unknown[]) => {
+  if (!(args && args[0])) {
+    return 
+  }
+  
+  let ocelObj = args[0]
+
+  let resultString = JsonOcelExporter.apply(ocelObj)
+
+  mainWindow?.webContents?.send('transform-ocel' as Channels, resultString)
+})
 const openFile = (window: BrowserWindow, file: string, fileType: FileType) => {
   const fileContents = fs.readFileSync(file).toString();
   console.log(fileContents);

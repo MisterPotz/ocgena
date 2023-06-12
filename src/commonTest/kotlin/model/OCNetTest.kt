@@ -43,6 +43,7 @@ class OCNetTest {
                     put("p1", 10)
                 }
             )
+            .withOcNetType(ocNetType = OcNetType.AALST)
             .withInputOutput(
                 InputOutputPlaces.build {
                     inputPlaces("p1")
@@ -114,6 +115,7 @@ class OCNetTest {
                     put("p2", 4)
                 }
             )
+            .withOcNetType(OcNetType.AALST)
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
@@ -180,6 +182,7 @@ class OCNetTest {
                     put("p2", 4)
                 }
             )
+            .withOcNetType(OcNetType.AALST)
             .withInputOutput(inputOutputPlaces)
             .withTimeIntervals(
                 IntervalFunction.create {

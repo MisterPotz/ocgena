@@ -1,7 +1,15 @@
 package model.typea
 
+import kotlinx.serialization.Serializable
 import model.Arc
 import model.PetriNode
+import model.SerializableAtom
+
+@Serializable
+data class SerializableVariableArcTypeA(
+    val fromId : String?,
+    val toId : String?,
+) : SerializableAtom
 
 data class VariableArcTypeA(
     override val id: String,
@@ -10,6 +18,10 @@ data class VariableArcTypeA(
     // TODO: sets up the allowed multiplicity dynamically, probably needs some parameters
 //    private val _multiplicity : () -> Int,
 ) : Arc() {
+
+    override val serializableAtom: SerializableAtom by lazy {
+        SerializableVariableArcTypeA(fromId = tailNode?.id, toId = arrowNode?.id)
+    }
 
     override fun copyWithTailAndArrow(newTail: PetriNode, newArrow: PetriNode): Arc {
         return copy(

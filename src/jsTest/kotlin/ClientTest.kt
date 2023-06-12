@@ -1,9 +1,10 @@
+import ast.OcNet
 import config.*
 import error.Error
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.*
-import kotlinx.js.jso
 import model.OcDotParseResult
 import model.OcNetType
 import simulation.client.*
@@ -29,23 +30,14 @@ class ClientTest {
     }
 
     fun createSimConfig(): SimulationConfig {
-        return createConfig(
-            inputPlacesConfig = InputPlacesConfig("p1"),
-            outputPlacesConfig = OutputPlacesConfig("p3"),
-            ocNetTypeConfig = OCNetTypeConfig.from(OcNetType.TYPE_A),
-            labelMappingConfig = LabelMappingConfig(
-                jso {
-                    t1 = "Initialization"
-                    t2 = "Execution"
-                }
-            ),
-            initialMarkingConfig = InitialMarkingConfig(
-                jso {
-                    p1 = 4
-                }
-            ),
-            // place type config
-            // transition config
+        return createConfigFast(
+            ocNetTypeConfig = OcNetType.AALST,
+            initialMarkingConfig = "p1: 3;",
+            inputPlaces = "p1",
+            outputPlaces = "p3",
+            labelMapping = "t1: Initialization; t2: Execution",
+            defaultTransitionIntervals = "default: d[1,1] min[2,2]",
+            transitionsIntervalsMap = "t1: d[1,1] min[1,2]",
         )
     }
 
@@ -79,6 +71,7 @@ class ClientTest {
                 }
             }
         )
+        client.loggingEnabled = false
         client.start()
         client.updateOcDot(ocDot)
         client.updateConfig(simulationConfig)
@@ -111,6 +104,7 @@ class ClientTest {
                 }
             }
         )
+        client.loggingEnabled = true
         client.start()
         client.updateOcDot(ocDot)
         client.updateConfig(simulationConfig)
@@ -123,7 +117,8 @@ class ClientTest {
 
         val simTaskFactory = client.createClientSimTaskFactory()
         val htmlStringBuilderWriter = HtmlDebugTraceBuilderWriter()
-        val ocelWriter = OcelWriter()
+        val ocelWriter = OcelWriter {
+        }
 
         var invoked = false
 
@@ -149,5 +144,40 @@ class ClientTest {
         simTask.launch()
         advanceUntilIdle()
         assertTrue(invoked)
+    }
+
+    @Test
+    fun syncTestLaunch() {
+        val simulationConfig = createSimConfig()
+        val ocDot = createOcDot()
+
+        var successObserved = false
+        val client = Client(
+            object : OnReadinessCallback {
+                override fun ocDotParseResult(ocDotParseResult: OcDotParseResult) {
+                }
+                override fun onCurrentErrorsChange(errors: Array<Error>?) {
+                }
+                override fun readyToCalc(boolean: Boolean) {
+                }
+            }
+        )
+//        client.loggingEnabled = false
+        client.updateConfig(simulationConfig);
+        client.updateOcDot(ocDot)
+        val factory = client.createClientSimTaskFactory()!!
+        val task = factory.create(
+            simTaskClientCallback
+            = createSimpleClientCallback(onExecutionFinish = {
+//                invoked = true
+            }),
+            htmlTraceFileWriter = null,
+            ansiTraceWriter = CallbackStringWriter { it ->
+                   println(it)
+            },
+            ocelWriter = null,
+            onSimulationStatusUpdate = {
+            })
+        task.launch()
     }
 }

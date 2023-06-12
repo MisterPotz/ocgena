@@ -3,7 +3,7 @@ import { BehaviorSubject, Subject, tap } from 'rxjs';
 import { OcDotContent, SimulationConfig } from './domain';
 import { produce } from 'immer';
 import { red, reset, yellow } from 'renderer/allotment-components/panel';
-
+import * as rxjs from 'rxjs'
 export type SimulationClientStatus = {
   canLaunchNewSimulation: boolean;
   ongoingSimulation: boolean;
@@ -12,14 +12,14 @@ export type SimulationClientStatus = {
 export class ProjectSingleSimulationExecutor {
   private simulationClient = new simulation.client.Client(
     simulation.client.toOnReadinessCallback({
-      readyToCalc: (ready) => {
+      readyToCalc: (ready: boolean) => {
         this.simulationReadiness$.next(ready);
       },
       ocDotParseResult: (ocDotParseResult: model.OcDotParseResult) => {
         console.log(ocDotParseResult)
       },
       onCurrentErrorsChange: (errors) => {
-          console.log("have currently these errors: " + errors?.map((eror) =>  `${Object.keys(eror)} ${eror.message}`)?.join('\n'));
+          console.log("have currently these errors: " + errors?.map((eror: { message?: any; }) =>  `${Object.keys(eror)} ${eror.message}`)?.join('\n'));
           if (errors) {
             this.errors$.next(this.buildErrorMessageChunk(errors))
           } else {
@@ -27,7 +27,7 @@ export class ProjectSingleSimulationExecutor {
           }
       },
     } )
-  );
+    );
 
   private buildErrorMessageChunk(errors : error.Error[]) {
     return errors.map(
@@ -54,6 +54,7 @@ export class ProjectSingleSimulationExecutor {
   private executionTraceLineWriter: (line: string) => void;
   private simTaskClientCallback: simulation.client.JsSimTaskClientCallback
   private resultingOcel : (any: any) => void;
+  private currentCalculation: rxjs.Subscription | undefined
 
   constructor(executionTraceLineWriter : (line: string)=>void, 
             simTaskClientCallback: simulation.client.JsSimTaskClientCallback,
@@ -62,7 +63,8 @@ export class ProjectSingleSimulationExecutor {
     this.startClient();
     this.executionTraceLineWriter = executionTraceLineWriter;
     this.simTaskClientCallback = simTaskClientCallback;
-    this.resultingOcel = resultingOcel
+    this.resultingOcel = resultingOcel;
+    this.simulationClient.loggingEnabled = true;
   } 
   
   private startClient() {
@@ -121,20 +123,26 @@ export class ProjectSingleSimulationExecutor {
   }
 
   tryStartSimulation() {
-    if (!this.isLaunchAllowed()) return;
+    if (!this.isLaunchAllowed() || (this.currentCalculation && !this.currentCalculation.closed)) return;
 
     let simTaskFactory = this.simulationClient.createClientSimTaskFactory();
 
-    if (simTaskFactory != null) {
-      let newSimulationTask = simTaskFactory.create(
-        this.createSimStatusListener(),
-        this.createSimTaskClientCallback(),
-        this.createHtmlTraceWriter(),
-        this.createAnsiTraceWriter(),
-        this.createOcelWriter()
-      );
-      this.startSimulation(newSimulationTask);
-    }
+    let observable = new rxjs.Observable((observer) => {
+      if (simTaskFactory != null) {
+        let newSimulationTask = simTaskFactory.create(
+          this.createSimStatusListener(),
+          this.createSimTaskClientCallback(),
+          this.createHtmlTraceWriter(),
+          this.createAnsiTraceWriter(),
+          this.createOcelWriter()
+        );
+        this.startSimulation(newSimulationTask);
+        observer.complete();
+      }
+    }).pipe(
+      rxjs.observeOn(rxjs.asyncScheduler)
+    );
+    this.currentCalculation = observable.subscribe()
   }
 
   private startSimulation(simulationTask : simulation.client.ClientSimTask) {
@@ -158,6 +166,7 @@ export class ProjectSingleSimulationExecutor {
 
   private createOcelWriter(): simulation.client.OcelWriter {
     return new simulation.client.OcelWriter((ocel) => {
+
       this.resultingOcel(ocel)
     });
   }

@@ -7,6 +7,8 @@ interface OCNetElements {
 
     val arcs: Arcs
 
+    val allArcs : List<Arc>
+
     val allPetriNodes: List<PetriNode>
 
     val objectTypes : ObjectTypes

@@ -17,14 +17,14 @@ class OcNetCreator(
 ) {
     fun create(ocNetType: OcNetType): SimulatableComposedOcNet<*> {
         return when(ocNetType) {
-            OcNetType.TYPE_A -> {
+            OcNetType.AALST -> {
                 SimulatableOcNetTypeA(
                     coreOcNet,
                     arcMultiplicity = ArcMultiplicityTypeA(coreOcNet.arcs),
                     intervalFunction = timeIntervalFunction
                 )
             }
-            OcNetType.TYPE_L -> {
+            OcNetType.LOMAZOVA -> {
                 SimulatableOcNetTypeL(
                     coreOcNet,
                     arcMultiplicity = object : ExpressionArcMultiplicity {

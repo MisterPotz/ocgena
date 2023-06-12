@@ -1,8 +1,16 @@
 package model.typel
 
+import kotlinx.serialization.Serializable
 import model.Arc
 import model.PetriNode
+import model.SerializableAtom
 
+@Serializable
+data class SerializableArcTypeL(
+    val fromId : String?,
+    val toId : String?,
+    val expression: String
+) : SerializableAtom
 data class VariableArcTypeL(
     override val id: String,
     override var arrowNode: PetriNode?,
@@ -11,6 +19,10 @@ data class VariableArcTypeL(
 ) : Arc() {
     val variable
         get() = expression.variable
+
+    override val serializableAtom: SerializableAtom by lazy {
+        SerializableArcTypeL(fromId = tailNode?.id, toId = arrowNode?.id, expression = expression.stringExpr)
+    }
 
     override fun copyWithTailAndArrow(newTail: PetriNode, newArrow: PetriNode): Arc {
         return copy(

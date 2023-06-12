@@ -12,6 +12,8 @@ export type OcelConsoleState = {
   canExport: boolean;
 };
 
+export type OcelObj = any 
+
 export class OcelConsole implements ProjectWindow {
   readonly title: string = 'Generated OCEL';
   isOpened: boolean = false;
@@ -27,9 +29,9 @@ export class OcelConsole implements ProjectWindow {
   state$ = new BehaviorSubject<OcelConsoleState>({
     canExport: false,
   });
-  onExport : (savedFile : SavedFile) => void;
+  onExport : (savedFile : OcelObj) => void;
 
-  constructor(onExport: (savedFile: SavedFile) => void) {
+  constructor(onExport: (savedFile: OcelObj) => void) {
     this.onExport = onExport
   }
 
@@ -47,13 +49,9 @@ export class OcelConsole implements ProjectWindow {
 
   readonly onExportClick = () => {
     console.log('exporting ocel, current value ' + this.currentOcel)
-    let contents = JSON.stringify(this.currentOcel)
+    // let contents = JSON.stringify(this.currentOcel)
 
-    this.onExport({
-      extension: "json",
-      fileType: "OCEL JSON",
-      contents: contents,
-    })
+    this.onExport(this.currentOcel)
   }
 
   clean() {

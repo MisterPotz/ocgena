@@ -31,7 +31,6 @@ interface Logger {
     val loggingEnabled: Boolean
 
     fun onStart()
-
     fun onInitialMarking(marking: ObjectMarking)
     fun onFinalMarking(marking: ObjectMarking)
     fun onEnd()

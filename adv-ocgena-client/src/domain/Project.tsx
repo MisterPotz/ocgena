@@ -13,7 +13,7 @@ import {
 } from './domain';
 import { GraphvizView } from './views/GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
-import { ClickHandler, EditorHolder, ModelEditor } from './views/ModelEditor';
+import { EditorHolder, ModelEditor } from './views/ModelEditor';
 import {
   ProjectSingleSimulationExecutor,
   SimulationClientStatus,
@@ -23,25 +23,19 @@ import {
   StructureWithTabs,
   StructureParent,
   ProjectWindowManager,
-  WindowsMap,
 } from './StructureNode';
 import { produce } from 'immer';
 import * as yaml from 'js-yaml';
-import Ajv from 'ajv';
 import {
-  TimeRangeClass,
   createAjv,
-  simconfigSchema,
   simconfigSchemaId,
 } from 'simconfig/simconfig_yaml';
 import { SimConfigCreator } from '../simconfig/SimConfigCreator';
 import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
 import { ErrorConsole } from './views/ErrorConsole';
-import { error, model, simulation } from 'ocgena';
+import { simulation } from 'ocgena';
 import { ExecutionConsole } from './views/ExecutionConsole';
-import { OcelConsole } from './views/OcelConsole';
-import { SavedFile } from 'main/main';
-import { appService } from 'renderer/AppService';
+import { OcelConsole, OcelObj } from './views/OcelConsole';
 
 export type ProjectState = {
   canStartSimulation: boolean;
@@ -50,6 +44,41 @@ export type ProjectState = {
   windowStructure: StructureNode<ProjectWindow>;
 };
 
+export class SimConfigMapper { 
+  private ajv = createAjv();
+
+  private simConfigCreator = new SimConfigCreator();
+
+  convertRawSimConfigToSimConfig(
+    rawSimConfig: string
+  ): SimulationConfig | null {
+    let yamlObj: any;
+
+    try {
+      yamlObj = yaml.load(rawSimConfig);
+    } catch (e) {
+      console.log('oops, yaml error ' + e);
+      return null;
+    }
+
+    console.log(
+      'Project: convertRawSimConfigToSimConfig: yamlObj: ' +
+        JSON.stringify(yamlObj)
+    );
+
+    let isValid = this.ajv.validate(simconfigSchemaId, yamlObj);
+
+    if (!isValid) {
+      console.log(
+        'Project: convertRawSimConfigToSimConfig: have errors: ' +
+          JSON.stringify(this.ajv.errors)
+      );
+      return null;
+    }
+
+    return this.simConfigCreator.createFromObj(yamlObj);
+  }
+}
 export interface ProjectWindowProvider {
   getProjectWindow(projectWindowId: ProjectWindowId): ProjectWindow | undefined;
 }
@@ -92,9 +121,7 @@ export class Project implements ProjectWindowProvider {
   private initialState;
   readonly projectState$;
   private projectWindowManager;
-  private ajv = createAjv();
-
-  private simConfigCreator = new SimConfigCreator();
+  private simConfigMapper = new SimConfigMapper();
 
   constructor() {
     this.initialState = this.createInitialState();
@@ -108,12 +135,14 @@ export class Project implements ProjectWindowProvider {
     );
     this.errorConsole = new ErrorConsole();
     this.executionConsole = new ExecutionConsole();
-    this.ocelConsole = new OcelConsole((savedFile: SavedFile) => {
+    this.ocelConsole = new OcelConsole((ocelObj: OcelObj) => {
       console.log('requesting ocel save')
-      window.electron.ipcRenderer.sendMessage('save-the-current-file', [
-        savedFile
+
+      window.electron.ipcRenderer.sendMessage('transform-ocel', [
+        ocelObj
       ]);
     })
+    this.simConfigMapper = new SimConfigMapper();
 
     this.projectWindowManager = this.createProjectWindowManager();
     this.startProcessingProjectState();
@@ -195,9 +224,9 @@ export class Project implements ProjectWindowProvider {
       )
       .subscribe((newConfig) => {
         this.projectSimulationExecutor.updateSimulationConfig(newConfig);
-        console.log(
-          'new successfully mapped config ' + JSON.stringify(newConfig)
-        );
+        // console.log(
+        //   'new successfully mapped config ' + JSON.stringify(newConfig)
+        // );
       });
 
     this.simulationConfigEditor.getEditorCurrentInput$().subscribe((input) => {
@@ -277,29 +306,7 @@ export class Project implements ProjectWindowProvider {
   ): SimulationConfig | null {
     let yamlObj: any;
 
-    try {
-      yamlObj = yaml.load(rawSimConfig);
-    } catch (e) {
-      console.log('oops, yaml error ' + e);
-      return null;
-    }
-
-    console.log(
-      'Project: convertRawSimConfigToSimConfig: yamlObj: ' +
-        JSON.stringify(yamlObj)
-    );
-
-    let isValid = this.ajv.validate(simconfigSchemaId, yamlObj);
-
-    if (!isValid) {
-      console.log(
-        'Project: convertRawSimConfigToSimConfig: have errors: ' +
-          JSON.stringify(this.ajv.errors)
-      );
-      return null;
-    }
-
-    return this.simConfigCreator.createFromObj(yamlObj);
+    return this.simConfigMapper.convertRawSimConfigToSimConfig(rawSimConfig)
   }
 
   private convertRawOcDotToDot(rawOcDot: string): string | null {
@@ -371,10 +378,6 @@ export class Project implements ProjectWindowProvider {
       windowStructure: this.createSimpleStructure(),
       // windowStructure: this.createInitialStructure()
     };
-  }
-
-  startSimulation() {
-    this.projectSimulationExecutor.tryStartSimulation();
   }
 
   createSimulationArgument(): SimulationArgument {

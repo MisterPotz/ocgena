@@ -10,13 +10,13 @@ import model.utils.ElementsIdCreator
 
 class ArcConversionCreator(private val conversionEntitiesCreator: ConversionEntitiesCreator) {
     val elementsIdCreator = ElementsIdCreator()
-
+    val compiler = Compiler()
 
     fun retrieveExpressionFromParams(edgeOpParams: EdgeOpParams): Expression {
         if (edgeOpParams.type == OpParamsTypes.Number) {
-            return object : Expression(variable = null, stringExpr = null) {
+            return object : Expression(variable = null, stringExpr = edgeOpParams.asDynamic().value.toString()) {
                 override fun substitute(variableValue: Int): Int {
-                    return edgeOpParams.asDynamic().value
+                    return edgeOpParams.asDynamic().value.toString().toInt()
                 }
             }
         } else {
