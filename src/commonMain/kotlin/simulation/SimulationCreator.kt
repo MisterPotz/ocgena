@@ -16,7 +16,7 @@ data class SerializableSimulationParams(
     val intervalFunction: SerializableIntervalFunction,
     val initialMarking: ImmutableObjectMarking,
     val timeoutSec: Long?,
-    val randomSeed: Long?,
+    val randomSeed: Int?,
     val useRandom: Boolean = true,
 //    val labelMapping: LabelMapping,
 ) {
@@ -27,7 +27,7 @@ data class SimulationParams(
     val templateOcNet: SimulatableComposedOcNet<*>,
     val initialMarking: ObjectMarking,
     val timeoutSec: Long?,
-    val randomSeed: Long?,
+    val randomSeed: Int?,
     val useRandom: Boolean = true,
     val labelMapping: LabelMapping,
     val objectTokenGenerator: ObjectTokenGenerator,
@@ -52,6 +52,7 @@ class SimulationCreator(
     private val simulationParams: SimulationParams,
     private val executionConditions: ExecutionConditions,
     private val logger: LoggerFactory = LoggerFactoryDefault,
+    private val dumpState: Boolean = false
 ) {
     fun createSimulationTask(): SimulationTask {
         val copy = simulationParams.templateOcNet
@@ -72,7 +73,8 @@ class SimulationCreator(
             transitionInstanceOccurenceDeltaSelector = TransitionInstanceOccurenceDeltaSelector(
                 random,
                 intervalFunction = copy.intervalFunction
-            )
+            ),
+            dumpState = dumpState
         )
     }
 }

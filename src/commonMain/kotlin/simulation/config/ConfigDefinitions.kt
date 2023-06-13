@@ -196,6 +196,23 @@ interface TransitionIntervals {
     val minOccurrenceInterval: TimeRange
 }
 
+class GenerationConfig(val defaultGeneration : TimeRange)
+@OptIn(ExperimentalJsExport::class)
+@JsExport
+class RandomConfig(val turnOn: Boolean = true,val seed : Int? = null) : Config() {
+    override val type: ConfigEnum = ConfigEnum.RANDOM
+
+    companion object {
+        fun fastCreate(string: String): RandomConfig {
+            val map = parseStringToMap(string)
+            return RandomConfig(
+                map["turnOn"]?.toBoolean() ?: true,
+                seed = map["seed"]?.toInt()
+            )
+        }
+    }
+}
+
 fun createConfigFast(
     ocNetTypeConfig: OcNetType,
     inputPlaces: String,
@@ -204,6 +221,7 @@ fun createConfigFast(
     defaultTransitionIntervals: String? = null,
     transitionsIntervalsMap : String? = null,
     labelMapping: String? = null,
+    randomSetting: String? = null
 ) : SimulationConfig {
     return createConfig(
         ocNetTypeConfig = OCNetTypeConfig(ocNetTypeConfig),
@@ -223,7 +241,8 @@ fun createConfig(
     outputPlacesConfig: OutputPlacesConfig,
     initialMarkingConfig: InitialMarkingConfig,
     transitionIntervalsConfig : TransitionsConfig? = null,
-    labelMappingConfig: LabelMappingConfig? = null
+    labelMappingConfig: LabelMappingConfig? = null,
+    randomConfig: RandomConfig? = null
 ): SimulationConfig {
     return SimulationConfig(
         buildList {
@@ -236,6 +255,9 @@ fun createConfig(
             }
             if (labelMappingConfig != null) {
                 add(labelMappingConfig)
+            }
+            if (randomConfig != null) {
+                add(randomConfig)
             }
         }.toTypedArray()
     )

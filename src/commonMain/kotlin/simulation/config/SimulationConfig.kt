@@ -30,5 +30,6 @@ enum class ConfigEnum {
     //    OBJECT_TYPES,
     INITIAL_MARKING,
     TRANSITIONS,
-    OC_TYPE
+    OC_TYPE,
+    RANDOM
 }

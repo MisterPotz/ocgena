@@ -20,7 +20,7 @@ import kotlin.time.toDuration
 
 @Serializable
 data class SerializableSimulationState(
-    val currentTime : Time,
+    val currentTime: Time,
     val state: SimulatableComposedOcNet.SerializableState,
 )
 
@@ -29,9 +29,10 @@ class SimulationTask(
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
     private val bindingSelector: BindingSelector,
-    private val tokenSelector : TokenSelector,
-    private val transitionDurationSelector : TransitionDurationSelector,
+    private val tokenSelector: TokenSelector,
+    private val transitionDurationSelector: TransitionDurationSelector,
     private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
+    private val dumpState: Boolean = false,
 ) {
     private val ocNet = simulationParams.templateOcNet
     private val simulationTime = SimulationTime()
@@ -64,7 +65,16 @@ class SimulationTask(
         transitionDurationSelector = transitionDurationSelector,
         nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector,
         dumpState = {
-            println("\r\ndump after step state: ${simulationState.currentStep}: \r\n${dumpState().replace("\n", "\r\n")}")
+            if (dumpState) {
+                println(
+                    "\r\ndump after step state: ${simulationState.currentStep}: \r\n${
+                        dumpState().replace(
+                            "\n",
+                            "\r\n"
+                        )
+                    }"
+                )
+            }
         }
     )
 
@@ -79,15 +89,23 @@ class SimulationTask(
         }
     }
 
-    private fun run() {
-        var stepIndex: Int = 0
+    private var stepIndex: Int = 0
+    private val oneStepGranularity = 5
+    var finishRequested = false;
+    fun isFinished() : Boolean {
+        return executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
+                || simulationState.isFinished()
+                || finishRequested
+    }
 
-        simulationState.onStart()
-        val maxSteps = 10000
+    fun finish() {
+        finishRequested = true
+    }
+    private fun runStep() {
+//        val maxSteps = 10000
+        var stepsCounter = 0
         while (
-            !executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
-            && !simulationState.isFinished()
-            && stepIndex < maxSteps
+            !isFinished() && (stepsCounter++ < oneStepGranularity)
         ) {
             simulationState.currentStep = stepIndex
             simulationState.onNewStep()
@@ -120,26 +138,53 @@ class SimulationTask(
         }
     }
 
-
-    private fun dumpState() : String {
-        return yaml.encodeToString(SerializableSimulationState(simulationTime.globalTime, state.toSerializable())).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+    private fun dumpState(): String {
+//        return yaml.encodeToString(SerializableSimulationState(simulationTime.globalTime, state.toSerializable()))
+//            .replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+        return ""
     }
 
-    private fun dumpInput() : String {
-        return yaml.encodeToString(simulationParams.toSerializable()).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+    private fun dumpInput(): String {
+//        return yaml.encodeToString(simulationParams.toSerializable()).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+        return ""
     }
 
-    fun prepareAndRun() {
+    fun prepareRun() {
         logger.onStart()
-        println("onStart dump net: ${dumpInput().replace("\n", "\n\r")}")
-        prepare()
-        println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
-        logger.onInitialMarking(state.pMarking)
-        run()
-        logger.onFinalMarking(state.pMarking)
-        println("onFinish dump state: ${dumpState()}")
+        // always dump net with
+        if (dumpState) {
+            println("onStart dump net: ${dumpInput().replace("\n", "\n\r")}")
+        }
 
-        logger.onEnd()
+        prepare()
+
+        if (dumpState) {
+            println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
+        }
+        logger.onInitialMarking(state.pMarking)
+
+        simulationState.onStart()
+    }
+
+    fun doRunStep() : Boolean {
+        runStep()
+        if (isFinished()) {
+            logger.onFinalMarking(state.pMarking)
+            if (dumpState) {
+                println("onFinish dump state: ${dumpState()}")
+            }
+            println("sending logger onEnd")
+            logger.onEnd()
+            return true
+        }
+        return false
+    }
+
+    fun prepareAndRunAll() {
+        prepareRun()
+        while(!isFinished()) {
+            doRunStep()
+        }
     }
 }
 

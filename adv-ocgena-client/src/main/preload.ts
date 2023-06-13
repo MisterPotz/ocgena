@@ -15,7 +15,17 @@ export type Channels =
   | 'reload'
   | 'parsed-oc-dot'
   | 'processed-oc-dot-errors'
-  | 'transform-ocel';
+  | 'transform-ocel'
+  | 'write-html-console'
+  | 'write-ansi-console'
+  | 'write-ocel-console'
+  | 'write-simulation-status'   
+  | 'write-error-console' 
+  | 'launch-sim'
+  | 'stop-sim'
+  | 'update-ocdot'
+  | 'update-simconfig'
+  ;
 
 const electronHandler = {
   ipcRenderer: {

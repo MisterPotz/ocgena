@@ -280,6 +280,6 @@
       "!**/**",
       "src/main/**"
     ],
-    "logLevel": "quiet"
+    "logLevel": "verbose"
   }
 }

@@ -22,6 +22,7 @@ class Client(
     private val scope = MyCoroutineScope()
     private val currentErrors = MutableStateFlow<List<Error>?>(null)
     var loggingEnabled = true
+    var dumpState = false
 
     fun updateOcDot(ocDot: String) {
         println("Client.kt: updateOcDot")
@@ -45,7 +46,8 @@ class Client(
         return ClientSimTaskFactoryImpl(
             staticCoreOcNet = model.ocNet ?: return null,
             config = processedSimulationConfig,
-            loggingEnabled = loggingEnabled
+            loggingEnabled = loggingEnabled,
+            dumpState = dumpState
         )
     }
 
@@ -73,7 +75,8 @@ class Client(
         return ClientSimTaskFactoryImpl(
             staticCoreOcNet = model.ocNet ?: return null,
             config = processedSimulationConfig,
-            loggingEnabled = loggingEnabled
+            loggingEnabled = loggingEnabled,
+            dumpState = dumpState
         )
     }
 

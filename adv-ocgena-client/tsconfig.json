@@ -1,4 +1,32 @@
 {
+  // Most ts-node options can be specified here using their programmatic names.
+  "ts-node": {
+    // It is faster to skip typechecking.
+    // Remove if you want ts-node to do typechecking.
+    "transpileOnly": true,
+
+    "files": true,
+
+    "compilerOptions": {
+      "incremental": true,
+      "target": "es2021",
+      "module": "commonjs",
+      "lib": ["dom", "es2021"],
+      "jsx": "react-jsx",
+      "strict": true,
+      "sourceMap": true,
+      "baseUrl": "./src",
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "allowSyntheticDefaultImports": true,
+      "resolveJsonModule": true,
+      "allowJs": true,
+      "outDir": ".erb/dll"
+      // compilerOptions specified here will override those declared below,
+      // but *only* in ts-node.  Useful if you want ts-node and tsc to use
+      // different options with a single tsconfig.json.
+    }
+  },
   "compilerOptions": {
     "incremental": true,
     "target": "es2021",

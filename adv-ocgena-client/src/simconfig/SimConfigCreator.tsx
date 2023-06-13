@@ -5,11 +5,15 @@ import {
   OC_NET_DEFINITION,
   OUTPUT_PLACES,
   PLACE_TYPING,
-  TRANSITIONS_CONFIG, TimeRangeType,
+  RANDOM,
+  TRANSITIONS_CONFIG
+} from './LABEL_MAPPING';
+import {
+  TimeRangeType,
   TransitionIntervalsType,
   TransitionsConfig,
   TransitionsConfigType
-} from 'simconfig/simconfig_yaml';
+} from './TimeRange';
 import { simulation, config, model } from 'ocgena';
 
 export type SimConfigObj = any;
@@ -28,11 +32,27 @@ export class SimConfigCreator {
       this.createPlaceTyping(obj),
       this.createLabelMapping(obj),
       this.createInitialMarking(obj),
-      this.createTransitionsConfig(obj)
+      this.createTransitionsConfig(obj),
+      this.createRandomConfig(obj)
     ].filter(this.notEmpty);
 
     let simConfig = new simulation.config.SimulationConfig(configs);
     return simConfig;
+  }
+  
+  createRandomConfig(obj: any) {
+    if (!this.checkObjectIsPresent(RANDOM, obj)) {
+        return null
+    }
+
+    try {
+      let turnOn = obj[RANDOM]['turnOn']
+      let seed = obj[RANDOM]['seed'] as number
+
+      return new config.RandomConfig(turnOn, seed)
+    } catch(e) {
+      return new config.RandomConfig()
+    }
   }
 
   private createInputPlacesConfig(

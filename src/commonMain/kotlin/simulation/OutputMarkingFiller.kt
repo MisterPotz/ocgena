@@ -62,12 +62,6 @@ class OutputMarkingFiller(
             inputMarking
         )
 
-        val unfilledMarking = yaml.encodeToString(outputMarking.toImmutableMarking())
-
-        println("unfilled marking: \r\n${unfilledMarking.replace("\n","\r\n")}")
-        return complementUnfilledPlaces(outputMarking).also {
-            val complemented = yaml.encodeToString(it)
-            println("complemented marking: \r\n${complemented.replace("\n","\r\n")}")
-        }
+        return complementUnfilledPlaces(outputMarking)
     }
 }

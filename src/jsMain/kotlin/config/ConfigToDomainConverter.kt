@@ -20,8 +20,14 @@ actual class SimulationConfigProcessor actual constructor(
             type = getOcNetType(),
             initialPlainMarking = getInitialMarking(),
             intervalFunction = getIntervalFunction(),
-            labelMapping = getLabelMapping()
+            labelMapping = getLabelMapping(),
+            randomSettings = getRandomSettings()
         )
+    }
+
+    private fun getRandomSettings(): RandomConfig {
+        return simulationConfig.getConfig(ConfigEnum.RANDOM) as? RandomConfig
+            ?: return RandomConfig()
     }
 
     private fun getPlaceTyping(): PlaceTyping {

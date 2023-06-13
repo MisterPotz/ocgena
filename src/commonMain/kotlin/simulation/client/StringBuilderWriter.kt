@@ -46,19 +46,25 @@ class HtmlDebugTraceBuilderWriter(private val strinbBuilderWriter: StringBuilder
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 class HtmlDebugTraceCallbackBuilderWriter(
-    private val lineWriter: (String) -> Unit,
+    private val immediateWriter: (String) -> Unit,
+    private val onEndWriter : (String) -> Unit,
+    private val limit : Int,
     private val strinbBuilderWriter: StringBuilderWriter = StringBuilderWriter()
 ) :
     Writer {
+    var counter  = 0
     fun collect(): String {
-        return HtmlExecutionTraceGenerator(strinbBuilderWriter.collect()).generate()
+        return strinbBuilderWriter.collect()
     }
 
     override fun writeLine(line: String) {
-        lineWriter.invoke(line)
+        if (counter > limit) return
+        counter++
+        immediateWriter.invoke(line)
+        strinbBuilderWriter.writeLine(line)
     }
 
     override fun end() {
-
+        onEndWriter(collect())
     }
 }

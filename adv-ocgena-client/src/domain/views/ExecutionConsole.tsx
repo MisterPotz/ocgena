@@ -1,11 +1,13 @@
 import { Observable, Subject } from 'rxjs';
 import { useObservableState } from 'observable-hooks';
 import Graph from 'renderer/components/Graph';
-import { ProjectWindow } from '../domain';
+import { ProjectWindow } from '../../main/domain';
 import { ProjectWindowManager } from '../StructureNode';
 import { Panel } from 'renderer/allotment-components/panel';
 import XtermComponent from 'renderer/allotment-components/xterm';
 import { Console } from 'renderer/allotment-components/console';
+import Anser from 'anser';
+import { red } from '../../main/red';
 
 
 export class ExecutionConsole implements ProjectWindow {
@@ -29,9 +31,25 @@ export class ExecutionConsole implements ProjectWindow {
     }
   
     writeLines(lines: string[]) {
-      this.outputLine$.next(lines)
+      console.log("execution lines length %d", lines.length)
+      if (lines.length >= 999 || !this.countNewLines(lines[0], 1000)) {
+        console.log("slicing the output")
+        this.outputLine$.next([`<div>${Anser.ansiToHtml(`${red}Output was truncated`)}</div>`, ...lines.slice(0, 999)])
+      } else {
+        this.outputLine$.next(lines)
+      }
     }
   
+    countNewLines(str : string, limit: number) {
+      let count = 0;
+      for(let i = 0; i < str.length && count < limit; i++) {
+          if (str[i] === '\n') {
+              count++;
+          }
+      }
+      return count < limit;
+    }
+
     clean() {
       this.outputLine$.next(undefined);
     }

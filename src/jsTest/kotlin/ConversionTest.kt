@@ -4,6 +4,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import model.OcNetType
 import model.PlaceType
+import simulation.LoggerFactoryDefault
 import simulation.SimpleExecutionConditions
 import simulation.SimulationCreator
 import simulation.config.SimulationConfig
@@ -42,9 +43,9 @@ class ConversionTest {
         assertEquals(inputOutputPlaces["p6"], PlaceType.OUTPUT)
         assertEquals(inputOutputPlaces["p7"], PlaceType.OUTPUT)
 
-        assertEquals(placetyping["p1"].id, "ot1")
-        assertEquals(placetyping["p3"].id, "ot2")
-        assertEquals(placetyping["p4"].id, "ot3")
+        assertEquals(placetyping["p1"].id, "ot")
+        assertEquals(placetyping["p3"].id, "ot")
+        assertEquals(placetyping["p4"].id, "ot")
     }
 
     @Test
@@ -117,9 +118,11 @@ class ConversionTest {
         val simulationCreator = SimulationCreator(
             simulationParams = simulationParams,
             executionConditions = SimpleExecutionConditions(),
+            logger =  LoggerFactoryDefault,
+            dumpState = false
         )
         val simulationTask = simulationCreator.createSimulationTask()
 
-        simulationTask.prepareAndRun()
+        simulationTask.prepareRun()
     }
 }

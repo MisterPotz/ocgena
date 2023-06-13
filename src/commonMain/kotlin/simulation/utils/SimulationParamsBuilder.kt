@@ -14,8 +14,8 @@ fun createParams(ocNet: StaticCoreOcNet, config: ProcessedSimulationConfig) : Si
         .withLabelMapping(config.labelMapping)
         .withOcNetType(config.type)
         .withTimeIntervals(config.intervalFunction)
-        .withRandomSeed(42L)
-        .useRandom(false)
+        .withRandomSeed(config.randomSettings.seed)
+        .useRandom(config.randomSettings.turnOn)
     return simulationParamsBuilder.build()
 }
 
@@ -25,7 +25,7 @@ open class SimulationParamsBuilder(
     private var inputOutputPlaces: InputOutputPlaces? = null
     private var initialMarking : ObjectMarking? = null
     private var timeIntervalFunction : IntervalFunction? = null
-    private var randomSeed : Long? = null
+    private var randomSeed : Int? = null
     private var useRandom : Boolean = true
     private var placeTyping : PlaceTyping? = null
     private var objectTokenGenerator = ObjectTokenGenerator()
@@ -63,7 +63,7 @@ open class SimulationParamsBuilder(
         return this
     }
 
-    fun withRandomSeed(randomSeed : Long?) : SimulationParamsBuilder {
+    fun withRandomSeed(randomSeed : Int?) : SimulationParamsBuilder {
         this.randomSeed = randomSeed
         return this
     }

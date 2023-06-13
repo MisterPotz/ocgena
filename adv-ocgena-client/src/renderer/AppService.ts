@@ -1,9 +1,23 @@
 import { Project } from 'domain/Project';
-import { FileType } from 'main/preload';
+import { Channels, FileType } from 'main/preload';
 import { ModelFiles, SavedFile, SuccessfullySavedFile } from 'main/main';
-
+import { SimulationClientStatus } from '../main/shared'
 export class AppService {
-  private openedProject = new Project();
+
+  private openedProject = new Project(
+    (ocdot : string | null) => {
+      window.electron.ipcRenderer.sendMessage('update-ocdot' as Channels, [ocdot])
+    },
+    (simConfig : string | null) => {
+      window.electron.ipcRenderer.sendMessage('update-simconfig' as Channels, [simConfig])
+    },
+    () => {
+      window.electron.ipcRenderer.sendMessage('launch-sim', [])
+    },
+    () => {
+      window.electron.ipcRenderer.sendMessage('stop-sim' as Channels, [])
+    }
+  );
 
   getActiveProject(): Project {
     return this.openedProject;
@@ -15,6 +29,11 @@ export class AppService {
 
   onClickStart() {
     this.openedProject.onClickStart();
+  }
+
+  onClickStop(): void {
+    console.log("on click stop")
+    this.openedProject.onClickStop();
   }
 
   openFile(fileType: FileType) {
@@ -39,6 +58,18 @@ export class AppService {
   }
 
   initialize() {
+    window.electron.ipcRenderer.on('write-ocel-console', (ocel: any) => {
+      this.openedProject.writeOcelConsole(ocel);
+    })
+    window.electron.ipcRenderer.on('write-html-console', (htmlLines: string[] | undefined | any) => {
+      this.openedProject.writeHtmlConsole(htmlLines)
+    })
+    window.electron.ipcRenderer.on('write-error-console', (errors: string[] | undefined | any) => {
+      this.openedProject.writeErrors(errors)
+    })
+    window.electron.ipcRenderer.on('write-simulation-status', (simulationStatus: SimulationClientStatus | any) => {
+      this.openedProject.updateSimulationStatus(simulationStatus)
+    })
     window.electron.ipcRenderer.on(
       'file-opened',
       (fileName, fileContents, fileType) => {

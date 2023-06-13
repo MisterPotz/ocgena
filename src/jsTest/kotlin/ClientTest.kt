@@ -141,7 +141,7 @@ class ClientTest {
 
         assertNotNull(simTask, "expected successfully created simulation task")
 
-        simTask.launch()
+        while (!simTask.performStep()) {}
         advanceUntilIdle()
         assertTrue(invoked)
     }
@@ -178,6 +178,8 @@ class ClientTest {
             ocelWriter = null,
             onSimulationStatusUpdate = {
             })
-        task.launch()
+        while (!task.performStep()) {
+
+        }
     }
 }

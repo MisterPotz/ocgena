@@ -3,7 +3,7 @@ import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 import { Observable } from 'rxjs';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { EditorDelegate } from './EditorDelegate';
-import { ProjectWindow, ProjectWindowId } from '../domain';
+import { ProjectWindow, ProjectWindowId } from '../../main/domain';
 import { ProjectWindowManager } from '../StructureNode';
 import { trimIndent } from 'ocdot-parser/lib/exts';
 

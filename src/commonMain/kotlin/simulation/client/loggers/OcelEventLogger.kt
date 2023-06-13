@@ -12,7 +12,6 @@ import simulation.SimulatableComposedOcNet
 import simulation.SimulationTime
 import simulation.client.OcelParams
 import simulation.client.OcelWriter
-import simulation.yaml
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -29,7 +28,7 @@ class OcelEventLogger(
     val labelMapping: LabelMapping,
     val ocelWriter: OcelWriter,
     private val timmeStampMapper: TimeStampMapper = TimeStampMapper()
-) : StubLogger() {
+) : DefaultLogger() {
 
     private val eventLog = EventLog()
 

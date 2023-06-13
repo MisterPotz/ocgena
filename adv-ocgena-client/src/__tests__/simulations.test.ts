@@ -2,7 +2,6 @@ import { exampleModel } from 'domain/views/ModelEditor';
 import { exampleConfiguration as exampleConfiguration } from 'simconfig/simconfig_yaml';
 import * as yaml from 'js-yaml';
 import ocgena, { simulation } from 'ocgena';
-import { ProjectSingleSimulationExecutor } from 'domain/ProjectSingleSimulationExecutor';
 import { defer } from 'rxjs';
 import { SimConfigMapper } from 'domain/Project';
 

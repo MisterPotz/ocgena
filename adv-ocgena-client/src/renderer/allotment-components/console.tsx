@@ -135,6 +135,6 @@ export const Console = ({
 //   }, []);
 
   return (
-    <div className={`${styles.console} h-full w-full overflow-auto text-sm text-black text-opacity-90`} ref={containerRef}></div>
+    <div className={`${styles.console} h-full w-full overflow-scroll text-sm text-black ps-3 text-opacity-90`} ref={containerRef}></div>
   );
 };

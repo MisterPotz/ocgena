@@ -56,6 +56,7 @@ export const MainScreen = ({
         onClickStart={() => { 
           appService.onClickStart()
         }}
+        onClickStop={() => appService.onClickStop()}
         onClickRefresh={() => { }}
         onOpenNewFile={(fileType : FileType) => {
           console.log("opening new file of type %s", fileType);

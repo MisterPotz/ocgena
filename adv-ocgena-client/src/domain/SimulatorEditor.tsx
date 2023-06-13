@@ -4,11 +4,10 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { SchemasSettings, setDiagnosticsOptions } from 'monaco-yaml';
 import { Uri } from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorDelegate } from "./views/EditorDelegate";
-import { ProjectWindow, ProjectWindowId } from "./domain";
+import { ProjectWindow, ProjectWindowId } from "../main/domain";
 import { ProjectWindowManager } from "./StructureNode";
 import { ClickHandler, EditorHolder, OpenedFile } from "./views/ModelEditor";
-import { modelUri, exampleConfiguration, setupYamlLanguageServer } from "simconfig/simconfig_yaml";
-
+import { exampleConfiguration, setupYamlLanguageServer, modelUri } from "../simconfig/simconfig_yaml";
 
 
 export class SimulatorEditor implements ProjectWindow, EditorHolder {

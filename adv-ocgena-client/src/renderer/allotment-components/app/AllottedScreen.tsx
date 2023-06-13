@@ -21,7 +21,7 @@ import {
   ProjectWindow,
   ProjectWindowId,
   ProjectWindowStructure,
-} from 'domain/domain';
+} from 'main/domain';
 import {
   StructureNode,
   StructureParent,
@@ -234,6 +234,7 @@ export type AllottedScreenProps = {
   projectState?: ProjectState;
   // projectWindowStructure?: ProjectWindowStructure;
   onClickStart: () => void;
+  onClickStop : ()=> void;
   onOpenNewFile: (fileType: FileType) => void;
   onClickRefresh: () => void;
   onActivityChanged: (activity: number) => void;
@@ -247,6 +248,7 @@ export const AllottedScreen = ({
   primarySideBar,
   primarySideBarPosition,
   secondarySideBar,
+  onClickStop,
   projectState,
   onOpenNewFile,
   onClickStart,
@@ -302,6 +304,7 @@ export const AllottedScreen = ({
               ? projectState.startButtonMode
               : 'disabled'
           }
+          onClickStop={onClickStop}
           onClickStart={onClickStart}
           onClickRefresh={onClickRefresh}
           onOpenNewFile={onOpenNewFile}

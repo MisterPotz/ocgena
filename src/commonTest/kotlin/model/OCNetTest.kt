@@ -64,11 +64,13 @@ class OCNetTest {
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsBuilder.build(),
             executionConditions = SimpleExecutionConditions(),
-            logger = LoggerFactoryDefault
+            logger = LoggerFactoryDefault,
+            dumpState = false
         )
-        simulatorCreator
+
+        val task = simulatorCreator
             .createSimulationTask()
-            .prepareAndRun()
+            .prepareAndRunAll()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -132,7 +134,7 @@ class OCNetTest {
                     )
                 }
             )
-            .withRandomSeed(randomSeed = 42L)
+            .withRandomSeed(randomSeed = 42)
             .useRandom(true)
 
         val simulatorCreator = SimulationCreator(
@@ -142,7 +144,7 @@ class OCNetTest {
         )
         simulatorCreator
             .createSimulationTask()
-            .prepareAndRun()
+            .prepareAndRunAll()
     }
 
 
@@ -200,7 +202,7 @@ class OCNetTest {
                     )
                 }
             )
-            .withRandomSeed(randomSeed = 42L)
+            .withRandomSeed(randomSeed = 42)
             .useRandom(false)
 
         val simulatorCreator = SimulationCreator(
@@ -210,6 +212,6 @@ class OCNetTest {
         )
         simulatorCreator
             .createSimulationTask()
-            .prepareAndRun()
+            .prepareAndRunAll()
     }
 }
