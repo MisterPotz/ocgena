@@ -1,4 +1,5 @@
 import {
+  GENERATION,
   INITIAL_MARKING,
   INPUT_PLACES,
   LABEL_MAPPING,
@@ -9,6 +10,8 @@ import {
   TRANSITIONS_CONFIG
 } from './LABEL_MAPPING';
 import {
+  GenerationConfig,
+  GenerationConfigType,
   TimeRangeType,
   TransitionIntervalsType,
   TransitionsConfig,
@@ -33,11 +36,36 @@ export class SimConfigCreator {
       this.createLabelMapping(obj),
       this.createInitialMarking(obj),
       this.createTransitionsConfig(obj),
-      this.createRandomConfig(obj)
+      this.createRandomConfig(obj),
+      this.createGenerationConfig(obj)
     ].filter(this.notEmpty);
 
     let simConfig = new simulation.config.SimulationConfig(configs);
     return simConfig;
+  }
+
+  createGenerationConfig(obj: any) { 
+    if (!this.checkObjectIsPresent(GENERATION, obj)) {
+      return null 
+    }
+
+    try {
+      let generationConfig = obj[GENERATION]
+      if (this.generationConfigChecker(generationConfig)) {
+        let defaultTimeRange;
+
+        if (generationConfig.default) { 
+          defaultTimeRange = this.convertTimeRange(generationConfig.default)
+        }
+
+        return config.toGenerationConfig(
+          generationConfig.generationTargets || {},
+          defaultTimeRange
+        )
+      }
+    } catch(e) {
+      return null
+    }
   }
   
   createRandomConfig(obj: any) {
@@ -173,6 +201,11 @@ export class SimConfigCreator {
     }
     return otherc
   }
+
+  private generationConfigChecker = (
+    input: any
+  ): input is GenerationConfigType => GenerationConfig.is(input);
+
 
   private transitionConfigChecker = (
     input: any

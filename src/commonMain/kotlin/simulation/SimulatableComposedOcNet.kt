@@ -1,6 +1,5 @@
 package simulation
 
-import kotlinx.serialization.KSerializer
 import model.*
 import model.time.IntervalFunction
 import simulation.time.TransitionOccurrenceAllowedTimes

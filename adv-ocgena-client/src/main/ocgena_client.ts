@@ -54,7 +54,9 @@ export class SimConfigMapper {
         return null;
       }
 
-      return this.simConfigCreator.createFromObj(yamlObj);
+      let simConfig = this.simConfigCreator.createFromObj(yamlObj);
+      console.log('created simconfig %s', simConfig.serialize());
+      return simConfig
     } catch (e) {
       return null;
     }

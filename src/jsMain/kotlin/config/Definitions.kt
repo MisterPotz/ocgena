@@ -44,6 +44,20 @@ external interface JsTransitionIntervals {
     val minOccurrenceInterval: TimeRange
 }
 
+@JsExport
+fun toGenerationConfig(
+    transitionsToGenerationTargets : dynamic,
+    defaultTimeRange: TimeRange?,
+) : Config {
+    return GenerationConfig(
+        placeIdToGenerationTarget = buildMap {
+            for (key in Object.keys(transitionsToGenerationTargets as Any)) {
+                put(key, transitionsToGenerationTargets[key] as Int)
+            }
+        },
+        defaultGeneration = defaultTimeRange,
+    )
+}
 
 @JsExport
 fun toTransitionIntervals(jsTransitionIntervals: JsTransitionIntervals) : TransitionIntervals = object : TransitionIntervals {

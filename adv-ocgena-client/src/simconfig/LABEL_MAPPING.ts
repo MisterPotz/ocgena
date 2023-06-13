@@ -6,3 +6,4 @@ export const LABEL_MAPPING = 'labelMapping';
 export const INITIAL_MARKING = 'initialMarking';
 export const TRANSITIONS_CONFIG = 'transitionsConfig';
 export const RANDOM = "random"
+export const GENERATION = "generation"

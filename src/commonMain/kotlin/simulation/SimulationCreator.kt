@@ -1,11 +1,13 @@
 package simulation
 
+import config.GenerationConfig
 import kotlinx.serialization.Serializable
 import model.*
 import model.time.SerializableIntervalFunction
 import simulation.random.BindingSelector
 import simulation.random.RandomFactory
 import simulation.random.TokenSelector
+import simulation.time.TokenGenerationTimeSelector
 import simulation.time.TransitionDurationSelector
 import simulation.time.TransitionInstanceOccurenceDeltaSelector
 
@@ -31,6 +33,7 @@ data class SimulationParams(
     val useRandom: Boolean = true,
     val labelMapping: LabelMapping,
     val objectTokenGenerator: ObjectTokenGenerator,
+    val generationConfig: GenerationConfig?,
 ) {
     val ocNetType: OcNetType
         get() = templateOcNet.ocNetType
@@ -74,7 +77,8 @@ class SimulationCreator(
                 random,
                 intervalFunction = copy.intervalFunction
             ),
-            dumpState = dumpState
+            tokenNextTimeSelector = TokenGenerationTimeSelector(random),
+            dumpState = dumpState,
         )
     }
 }

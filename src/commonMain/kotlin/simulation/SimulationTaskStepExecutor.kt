@@ -1,7 +1,8 @@
 package simulation
 
-import simulation.time.TransitionInstanceOccurenceDeltaSelector
+import config.GenerationConfig
 import model.ObjectMarking
+import model.PlaceTyping
 import model.Time
 import simulation.binding.ActiveTransitionMarkingFinisher
 import simulation.binding.EnabledBinding
@@ -9,7 +10,9 @@ import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
+import simulation.time.TokenGenerationTimeSelector
 import simulation.time.TransitionDurationSelector
+import simulation.time.TransitionInstanceOccurenceDeltaSelector
 
 
 class SimulationTaskStepExecutor(
@@ -23,6 +26,11 @@ class SimulationTaskStepExecutor(
     private val logger: Logger,
     private val simulationTime: SimulationTime,
     private val simulationState: SimulationState,
+    private val generationConfig: GenerationConfig?,
+    private val nextTimeSelector: TokenGenerationTimeSelector,
+    private val tokenGenerator: ObjectTokenGenerator,
+    private val placeTyping: PlaceTyping,
+    private val generationQueue: GenerationQueue,
     private val dumpState: () -> Unit
 ) {
 
@@ -51,10 +59,19 @@ class SimulationTaskStepExecutor(
     fun executeStep() {
         findAndFinishEndedTransitions()
 
+        generateNewTokensAndPlanNextGeneration()
+
         findAndStartEnabledTransitions()
 
         shiftByMinimalSomethingChangingTime()
         dumpState()
+    }
+
+    private fun generateNewTokensAndPlanNextGeneration() {
+        val markingToAdd = generationQueue.generateTokensAsMarkingAndReplan()
+        if (markingToAdd != null) {
+            state.pMarking += markingToAdd
+        }
     }
 
     private fun findAndStartEnabledTransitions() {
@@ -91,19 +108,31 @@ class SimulationTaskStepExecutor(
 
     private fun shiftByMinimalSomethingChangingTime() {
         val timeUntilNextFinishA = resolveTimeUntilNextTransitionFinish()
-        val shiftingTime = timeUntilNextFinishA ?: resolveTimeUntilATransitionIsEnabled()
+        val timeUntilNextEnabledTransition = resolveTimeUntilATransitionIsEnabled()
+        val timeUntilNewTokenGenerated = resolveTimeUntilNextTokenGeneration()
 
+        val times = listOf(timeUntilNextFinishA, timeUntilNextEnabledTransition, timeUntilNewTokenGenerated)
+
+        val minimumTime = times.filterNotNull().minOrNull()
 
         simulationState.onHasPlannedTransitions(
-            hasPlannedTransitions = shiftingTime != null
+            hasPlannedTransitions = timeUntilNextEnabledTransition != null
         )
+        simulationState.onHasPlannedTokens(timeUntilNewTokenGenerated != null)
 
-        if (shiftingTime != null) {
-            shiftGlobalTime(shiftingTime)
-            shiftActiveTransitionsByTime(shiftingTime)
-            shiftTransitionAllowedTime(shiftingTime)
-            logger.onTimeShift(shiftingTime)
+        if (minimumTime != null) {
+            shiftGlobalTime(minimumTime)
+            shiftActiveTransitionsByTime(minimumTime)
+            shiftTransitionAllowedTime(minimumTime)
+            generationQueue.shiftTime(minimumTime)
+            logger.onTimeShift(minimumTime)
         }
+    }
+
+    private fun resolveTimeUntilNextTokenGeneration(): Time? {
+
+        val time = generationQueue.getTimeUntilNextPlanned()
+        return time
     }
 
     private fun resolveTimeUntilNextTransitionFinish(): Time? {

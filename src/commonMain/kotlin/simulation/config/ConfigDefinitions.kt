@@ -14,16 +14,27 @@ import kotlin.js.JsExport
 @JsExport()
 class InputPlacesConfig(val inputPlaces: String) : Config() {
     override val type = ConfigEnum.INPUT_PLACES
+    override fun toSerializable(): Any {
+        return "[input places: $inputPlaces]"
+    }
 }
 
 @JsExport
 class OutputPlacesConfig(val outputPlaces: String) : Config() {
     override val type = ConfigEnum.OUTPUT_PLACES
+    override fun toSerializable(): Any {
+        return "[output places: $outputPlaces]"
+    }
 }
 
 @JsExport
 class OCNetTypeConfig(val ocNetType: OcNetType) : Config() {
     override val type = ConfigEnum.OC_TYPE
+
+    override fun toSerializable(): Any {
+        return "[ocnettype: $ocNetType]"
+    }
+
     companion object {
         fun from(ocNetType: OcNetType) : OCNetTypeConfig {
             return OCNetTypeConfig(ocNetType)
@@ -65,6 +76,16 @@ class PlaceTypingConfig(private val objectTypeIdToPlaceId: Map<String, String>) 
         return objectTypeIdToPlaceId.keys.toList()
     }
 
+    override fun toSerializable(): Any {
+        return objectTypeIdToPlaceId.entries.joinToString(
+            separator = "; ",
+            prefix = "[place typing: ",
+            postfix = "]"
+        ) {
+            "${it.key}: ${it.value};"
+        }
+    }
+
     fun forObjectType(objectTypeId: ObjectTypeId): String {
         return objectTypeIdToPlaceId[objectTypeId] as String
     }
@@ -80,6 +101,15 @@ class PlaceTypingConfig(private val objectTypeIdToPlaceId: Map<String, String>) 
 
 class LabelMappingConfig(val placeIdToLabel: Map<String, String>) : Config() {
     override val type = ConfigEnum.LABEL_MAPPING
+    override fun toSerializable(): Any {
+        return placeIdToLabel.entries.joinToString(
+            separator = "; ",
+            prefix = "[label mapping: ",
+            postfix = "]"
+        ) {
+            "${it.key}: ${it.value};"
+        }
+    }
 
     companion object {
         fun fastCreate(string: String) : LabelMappingConfig {
@@ -92,6 +122,9 @@ class InitialMarkingConfig(
     val placeIdToInitialMarking: Map<String, Int> /* map place id to initial marking (int) */
 ) : Config() {
     override val type = ConfigEnum.INITIAL_MARKING
+    override fun toSerializable(): Any {
+        TODO("Not yet implemented")
+    }
 
     companion object {
         fun fastCreate(string : String) : InitialMarkingConfig {
@@ -148,6 +181,13 @@ fun mapToTransitionsIntervals(map: Map<String, List<String>>) : TransitionInterv
         override val minOccurrenceInterval: TimeRange = TimeRangeClass(map["min"]!!.map { it.toInt() }.toTypedArray())
     }
 }
+fun TimeRange.customString(): String {
+    return "[$start, $end]"
+}
+
+fun TransitionIntervals.customString(): String {
+    return "d${duration.customString()}; min${minOccurrenceInterval.customString()}"
+}
 
 class TransitionsConfig(
     val defaultTransitionInterval : TransitionIntervals?,
@@ -155,6 +195,16 @@ class TransitionsConfig(
 ) : Config() {
     fun getTransitionConfig(transitionId: TransitionId): TransitionIntervals {
         return transitionsToIntervals[transitionId] as TransitionIntervals
+    }
+
+    override fun toSerializable(): Any {
+        return "[default transition interval: ${defaultTransitionInterval?.customString()} ] " + transitionsToIntervals.entries.joinToString(
+            separator = "; ",
+            prefix = "[transitions intervals: ",
+            postfix = "]"
+        ) {
+            "${it.key}: ${it.value};"
+        }
     }
 
     override val type = ConfigEnum.TRANSITIONS
@@ -196,11 +246,39 @@ interface TransitionIntervals {
     val minOccurrenceInterval: TimeRange
 }
 
-class GenerationConfig(val defaultGeneration : TimeRange)
+class GenerationConfig(
+    val defaultGeneration : TimeRange?,
+    val placeIdToGenerationTarget: Map<String, Int> /* map place id to initial marking (int) */
+    ) : Config() {
+    override val type: ConfigEnum = ConfigEnum.GENERATION
+
+    override fun toSerializable(): Any {
+        return "[default generation: ${defaultGeneration?.customString()} ] " + placeIdToGenerationTarget.entries.joinToString(
+            separator = "; ",
+            prefix = "[transitions intervals: ",
+            postfix = "]"
+        ) {
+            "${it.key}: ${it.value};"
+        }
+    }
+    companion object {
+        fun fastCreate(defaultGeneration: String?, placeIdToGenerationTarget: String?) : GenerationConfig {
+            return GenerationConfig(
+                defaultGeneration = defaultGeneration?.let { parseInterval(it) },
+                placeIdToGenerationTarget = placeIdToGenerationTarget?.let { parseStringToMapInt(it) } ?: mapOf()
+            )
+        }
+    }
+}
+
+
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 class RandomConfig(val turnOn: Boolean = true,val seed : Int? = null) : Config() {
     override val type: ConfigEnum = ConfigEnum.RANDOM
+    override fun toSerializable(): Any {
+        return "[random turnOn: $turnOn; seed: $seed]"
+    }
 
     companion object {
         fun fastCreate(string: String): RandomConfig {
@@ -213,6 +291,14 @@ class RandomConfig(val turnOn: Boolean = true,val seed : Int? = null) : Config()
     }
 }
 
+fun parseInterval(string: String) : TimeRange {
+    val values = string
+        .removePrefix("[")
+        .removeSuffix("]")
+        .split(",")
+        .map { it.trim().toInt() }.toTypedArray()
+    return TimeRangeClass(values)
+}
 fun createConfigFast(
     ocNetTypeConfig: OcNetType,
     inputPlaces: String,
@@ -221,7 +307,9 @@ fun createConfigFast(
     defaultTransitionIntervals: String? = null,
     transitionsIntervalsMap : String? = null,
     labelMapping: String? = null,
-    randomSetting: String? = null
+    randomSetting: String? = null,
+    defaultGenerationRange : String? = null,
+    generationTargets : String? = null
 ) : SimulationConfig {
     return createConfig(
         ocNetTypeConfig = OCNetTypeConfig(ocNetTypeConfig),
@@ -232,7 +320,8 @@ fun createConfigFast(
             defaultTransitionIntervals,
             transitionsIntervalsMap
         ),
-        labelMappingConfig = labelMapping?.let { LabelMappingConfig.fastCreate(it) }
+        labelMappingConfig = labelMapping?.let { LabelMappingConfig.fastCreate(it) },
+        generationConfig = GenerationConfig.fastCreate(defaultGenerationRange, generationTargets)
     )
 }
 fun createConfig(
@@ -242,7 +331,8 @@ fun createConfig(
     initialMarkingConfig: InitialMarkingConfig,
     transitionIntervalsConfig : TransitionsConfig? = null,
     labelMappingConfig: LabelMappingConfig? = null,
-    randomConfig: RandomConfig? = null
+    randomConfig: RandomConfig? = null,
+    generationConfig: GenerationConfig? = null
 ): SimulationConfig {
     return SimulationConfig(
         buildList {
@@ -258,6 +348,9 @@ fun createConfig(
             }
             if (randomConfig != null) {
                 add(randomConfig)
+            }
+            if (generationConfig != null) {
+                add(generationConfig)
             }
         }.toTypedArray()
     )

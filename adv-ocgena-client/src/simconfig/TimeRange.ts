@@ -15,6 +15,7 @@ export class TimeRangeClass {
     return this.timeRange[1];
   }
 }
+
 const TransitionIntervals = t.type({
   duration: TimeRange,
   minOccurrenceInterval: TimeRange,
@@ -22,8 +23,16 @@ const TransitionIntervals = t.type({
 
 export type TransitionIntervalsType = t.TypeOf<typeof TransitionIntervals>;
 
-export const TransitionsConfig = t.type({
+export const TransitionsConfig = t.partial({
   defaultTransitionInterval: t.union([TransitionIntervals, t.undefined]),
-  transitionsToIntervals: t.record(t.string, TransitionIntervals),
+  transitionsToIntervals: t.union([t.record(t.string, TransitionIntervals), t.undefined]),
 });
+
 export type TransitionsConfigType = t.TypeOf<typeof TransitionsConfig>;
+
+export const GenerationConfig = t.partial({
+  default: t.union([TimeRange, t.undefined]),
+  generationTargets: t.union([t.record(t.string, t.number), t.undefined])
+})
+
+export type GenerationConfigType = t.TypeOf<typeof GenerationConfig>;

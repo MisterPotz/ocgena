@@ -1,5 +1,6 @@
 package simulation.utils
 
+import config.GenerationConfig
 import model.*
 import model.time.IntervalFunction
 import model.utils.OcNetCreator
@@ -16,12 +17,14 @@ fun createParams(ocNet: StaticCoreOcNet, config: ProcessedSimulationConfig) : Si
         .withTimeIntervals(config.intervalFunction)
         .withRandomSeed(config.randomSettings.seed)
         .useRandom(config.randomSettings.turnOn)
+        .withGenerationConfig(config.generationConfig)
     return simulationParamsBuilder.build()
 }
 
 open class SimulationParamsBuilder(
     private val ocNet: StaticCoreOcNet
 ) {
+    private var generationConfig: GenerationConfig? = null
     private var inputOutputPlaces: InputOutputPlaces? = null
     private var initialMarking : ObjectMarking? = null
     private var timeIntervalFunction : IntervalFunction? = null
@@ -87,12 +90,18 @@ open class SimulationParamsBuilder(
             randomSeed = randomSeed,
             useRandom = useRandom,
             objectTokenGenerator = objectTokenGenerator,
-            labelMapping = labelMapping ?: LabelMapping()
+            labelMapping = labelMapping ?: LabelMapping(),
+            generationConfig = generationConfig
         )
     }
 
     fun withInputOutput(build: InputOutputPlaces): SimulationParamsBuilder {
         this.inputOutputPlaces = build
+        return this
+    }
+
+    fun withGenerationConfig(generationConfig: GenerationConfig): SimulationParamsBuilder {
+        this.generationConfig = generationConfig
         return this
     }
 }

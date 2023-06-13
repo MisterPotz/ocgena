@@ -13,6 +13,7 @@ import simulation.binding.ActiveTransitionFinisherImpl
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
+import simulation.time.TokenGenerationTimeSelector
 import simulation.time.TransitionDurationSelector
 import simulation.time.TransitionInstanceOccurenceDeltaSelector
 import kotlin.time.DurationUnit
@@ -32,6 +33,7 @@ class SimulationTask(
     private val tokenSelector: TokenSelector,
     private val transitionDurationSelector: TransitionDurationSelector,
     private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
+    private val tokenNextTimeSelector: TokenGenerationTimeSelector,
     private val dumpState: Boolean = false,
 ) {
     private val ocNet = simulationParams.templateOcNet
@@ -42,6 +44,15 @@ class SimulationTask(
 
     private val runningSimulatableOcNet = RunningSimulatableOcNet(ocNet, state)
     private val simulationState = SimulationState()
+    val generationQueue = simulationParams.generationConfig?.let {
+        NormalGenerationQueue(
+            generationConfig = it,
+            nextTimeSelector = tokenNextTimeSelector,
+            placeTyping = ocNet.coreOcNet.placeTyping,
+            tokenGenerator = simulationParams.objectTokenGenerator,
+        )
+    } ?: DumbGenerationQueue()
+
     private val stepExecutor = SimulationTaskStepExecutor(
         ocNet,
         state,
@@ -62,8 +73,14 @@ class SimulationTask(
         simulationTime = simulationTime,
         logger = logger,
         tokenSelector = tokenSelector,
+
         transitionDurationSelector = transitionDurationSelector,
         nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector,
+        generationConfig = simulationParams.generationConfig,
+        nextTimeSelector = tokenNextTimeSelector,
+        tokenGenerator = simulationParams.objectTokenGenerator,
+        placeTyping = ocNet.coreOcNet.placeTyping,
+        generationQueue = generationQueue,
         dumpState = {
             if (dumpState) {
                 println(
@@ -87,6 +104,7 @@ class SimulationTask(
             val nextAllowedTime = transitionInstanceOccurenceDeltaSelector.getNewNextOccurrenceTime(transition)
             state.tTimes.setNextAllowedTime(transition, nextAllowedTime)
         }
+        generationQueue.planTokenGenerationForEveryone()
     }
 
     private var stepIndex: Int = 0
@@ -101,6 +119,7 @@ class SimulationTask(
     fun finish() {
         finishRequested = true
     }
+
     private fun runStep() {
 //        val maxSteps = 10000
         var stepsCounter = 0

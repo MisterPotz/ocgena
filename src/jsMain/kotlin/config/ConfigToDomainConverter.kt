@@ -1,7 +1,9 @@
 package config
 
-import kotlinx.js.Object
-import model.*
+import model.InputOutputPlaces
+import model.LabelMapping
+import model.OcNetType
+import model.PlaceTyping
 import model.time.IntervalFunction
 import model.time.TransitionTimes
 import simulation.PlainMarking
@@ -21,8 +23,13 @@ actual class SimulationConfigProcessor actual constructor(
             initialPlainMarking = getInitialMarking(),
             intervalFunction = getIntervalFunction(),
             labelMapping = getLabelMapping(),
-            randomSettings = getRandomSettings()
+            randomSettings = getRandomSettings(),
+            generationConfig = getGenerationConfig()
         )
+    }
+
+    private fun getGenerationConfig(): GenerationConfig {
+        return simulationConfig.getConfig(ConfigEnum.GENERATION) as? GenerationConfig ?: return GenerationConfig(defaultGeneration = null, mapOf())
     }
 
     private fun getRandomSettings(): RandomConfig {

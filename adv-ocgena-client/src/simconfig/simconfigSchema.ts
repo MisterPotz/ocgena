@@ -7,6 +7,7 @@ import {
   INITIAL_MARKING,
   TRANSITIONS_CONFIG,
   RANDOM,
+  GENERATION,
 } from './LABEL_MAPPING';
 
 export {
@@ -21,6 +22,7 @@ export {
 
 export const simconfigSchemaId = 'http://myserver/sim-config.json';
 export const timeIntervalSchemaId = 'http://myserver/transition-interval.json';
+export const integerRangeSchemaId = 'http://myserver/time-range.json';
 
 export const simconfigSchema = {
   // Id of the first schema
@@ -93,12 +95,25 @@ export const simconfigSchema = {
             type: 'integer'
           }
         }
+      },
+      [GENERATION] : {
+        type: 'object',
+        properties: {
+          default: {
+            $ref: integerRangeSchemaId
+          },
+          generationTargets: {
+            type: 'object',
+            additionalProperties: {
+              type: 'integer'
+            }
+          }
+        }
       }
     },
   },
 };
 
-export const integerRangeSchemaId = 'http://myserver/time-range.json';
 export const integerRangeSchema = {
   // Id of the first schema
   uri: integerRangeSchemaId,
