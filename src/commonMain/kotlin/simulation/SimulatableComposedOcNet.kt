@@ -19,6 +19,7 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
 
     fun fullCopy() : T
 
+    interface SerializableState
 
     interface State {
         val tMarking: ActiveTransitionMarking
@@ -27,5 +28,6 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
 
         fun toHtmlLines() : List<String>
 
+        fun toSerializable() : SerializableState
     }
 }

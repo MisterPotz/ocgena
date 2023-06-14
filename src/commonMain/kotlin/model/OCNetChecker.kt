@@ -35,6 +35,7 @@ class OCNetChecker(
             arcs = ocNetElements.arcs,
             allPetriNodes = ocNetElements.allPetriNodes,
             placeTyping = placeTyping,
+            allArcs = ocNetElements.allArcs
         )
     }
 

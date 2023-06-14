@@ -1,8 +1,10 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { OCDotToDOTConverter } from 'ocdot/converter';
+import { OCDotToDOTConverter } from '../ocdot/converter';
 import { PeggySyntaxError } from 'ocdot-parser/lib/ocdot.peggy';
 import { AST } from 'ocdot-parser';
 import * as rxops from 'rxjs/operators';
+import { ErrorsMessage, HtmlMessage, IPCMesage, LaunchMessage, OcelMessage, SimulationClientStatus, SimulationStatusMessage, isIpcMessage } from '../main/shared';
+
 import {
   OcDotContent,
   ProjectWindowStructure,
@@ -10,38 +12,21 @@ import {
   SimulationArgument,
   ProjectWindowId,
   SimulationConfig,
-} from './domain';
+} from '../main/domain';
 import { GraphvizView } from './views/GraphvizView';
 import { SimulatorEditor } from './SimulatorEditor';
-import { ClickHandler, EditorHolder, ModelEditor } from './views/ModelEditor';
-import {
-  ProjectSingleSimulationExecutor,
-  SimulationClientStatus,
-} from './ProjectSingleSimulationExecutor';
+import { EditorHolder, ModelEditor } from './views/ModelEditor';
 import {
   StructureNode,
   StructureWithTabs,
   StructureParent,
   ProjectWindowManager,
-  WindowsMap,
 } from './StructureNode';
 import { produce } from 'immer';
-import * as yaml from 'js-yaml';
-import Ajv from 'ajv';
-import {
-  TimeRangeClass,
-  createAjv,
-  simconfigSchema,
-  simconfigSchemaId,
-} from 'simconfig/simconfig_yaml';
-import { SimConfigCreator } from '../simconfig/SimConfigCreator';
 import { StartButtonMode } from 'renderer/allotment-components/actions-bar';
 import { ErrorConsole } from './views/ErrorConsole';
-import { error, model, simulation } from 'ocgena';
 import { ExecutionConsole } from './views/ExecutionConsole';
-import { OcelConsole } from './views/OcelConsole';
-import { SavedFile } from 'main/main';
-import { appService } from 'renderer/AppService';
+import { OcelConsole, OcelObj } from './views/OcelConsole';
 
 export type ProjectState = {
   canStartSimulation: boolean;
@@ -50,11 +35,43 @@ export type ProjectState = {
   windowStructure: StructureNode<ProjectWindow>;
 };
 
+
 export interface ProjectWindowProvider {
   getProjectWindow(projectWindowId: ProjectWindowId): ProjectWindow | undefined;
 }
 
 export class Project implements ProjectWindowProvider {
+
+  updateSimulationStatus(simulationStatus: SimulationClientStatus) {
+    if (!simulationStatus) return;
+    this.simulationClientStatus$.next(simulationStatus)
+  }
+  writeErrors(errors: string[] | undefined) {
+    this.errors$.next(errors)
+  }
+
+  writeHtmlConsole(htmlLines: string[] | undefined) {
+    if (htmlLines) {
+      this.executionConsole.writeLines(htmlLines)
+    } else {
+      this.executionConsole.clean();
+    }
+  }
+
+  writeOcelConsole(ocel: any) {
+    this.ocelConsole.clean();
+    this.ocelConsole.ocel = ocel;
+  }
+
+  readonly errors$ = new BehaviorSubject<string[] | undefined>(undefined);
+  readonly simulationClientStatus$ =
+    new BehaviorSubject<SimulationClientStatus>({
+      canLaunchNewSimulation: false,
+      ongoingSimulation: false,
+    });
+
+
+
   private graphvizLoading = new Subject<boolean>();
   private graphvizDot = new Subject<string>();
   private internalOcDotEditorSubject$ = new Subject<string>();
@@ -66,40 +83,28 @@ export class Project implements ProjectWindowProvider {
   readonly errorConsole;
   readonly executionConsole;
   readonly ocelConsole;
-
-  private projectSimulationExecutor = new ProjectSingleSimulationExecutor(
-    (line: string) => {
-      this.executionConsole.writeLine(line)
-    },
-    {
-      onExecutionFinish: () => {
-        console.log('execution finished');
-      },
-      onExecutionStart: () => {
-        console.log('execution started');
-      },
-      onExecutionTimeout: () => {
-        console.log('execution timeout');
-      },
-    } as simulation.client.JsSimTaskClientCallback,
-    (any : any) => {
-      console.log('received ocel from executor')
-      if (!any) return
-      this.ocelConsole.ocel = any
-    }
-  );
-
+  
   private initialState;
   readonly projectState$;
   private projectWindowManager;
-  private ajv = createAjv();
 
-  private simConfigCreator = new SimConfigCreator();
+  private updateOcDot: (ocdot: string | null) => void                     
+  private updateSimConfig: (simConfi: string | null) => void 
+  private launchSimulation: () => void
+  private stopSimulation : () => void;
 
-  constructor() {
+  constructor(
+    updateOcDot: (ocdot: string | null) => void,
+    updateSimConfig: (simConfi: string | null) => void,
+    launchSimulation: () => void ,
+    stopSimulation : () => void
+  ) {
+    this.updateOcDot = updateOcDot;
+    this.updateSimConfig = updateSimConfig;
+    this.launchSimulation = launchSimulation;
     this.initialState = this.createInitialState();
     this.projectState$ = new BehaviorSubject<ProjectState>(this.initialState);
-
+    this.stopSimulation = stopSimulation
     this.modelEditor = new ModelEditor(ModelEditor.id);
     this.simulationConfigEditor = new SimulatorEditor();
     this.graphvizView = new GraphvizView(
@@ -108,13 +113,13 @@ export class Project implements ProjectWindowProvider {
     );
     this.errorConsole = new ErrorConsole();
     this.executionConsole = new ExecutionConsole();
-    this.ocelConsole = new OcelConsole((savedFile: SavedFile) => {
+    this.ocelConsole = new OcelConsole((ocelObj: OcelObj) => {
       console.log('requesting ocel save')
-      window.electron.ipcRenderer.sendMessage('save-the-current-file', [
-        savedFile
+
+      window.electron.ipcRenderer.sendMessage('transform-ocel', [
+        ocelObj
       ]);
     })
-
     this.projectWindowManager = this.createProjectWindowManager();
     this.startProcessingProjectState();
     this.startProcessingOcDotInput();
@@ -149,7 +154,7 @@ export class Project implements ProjectWindowProvider {
   }
 
   private startObservingErrors() {
-    this.projectSimulationExecutor.errors$
+    this.errors$
       .pipe(rxops.debounceTime(200))
       .subscribe((errors: string[] | undefined) => {
         console.log("Project: received new errors " + errors)
@@ -187,17 +192,12 @@ export class Project implements ProjectWindowProvider {
   private startProcessingSimConfigInput() {
     this.internalSimConfigEditorInput$
       .pipe(
-        rxops.debounceTime(500),
-        rxops.map((rawSimConfig) => {
-          console.log('accepting sim config value ' + rawSimConfig);
-          return this.convertRawSimConfigToSimConfig(rawSimConfig);
-        })
+        rxops.debounceTime(500)
       )
       .subscribe((newConfig) => {
-        this.projectSimulationExecutor.updateSimulationConfig(newConfig);
-        console.log(
-          'new successfully mapped config ' + JSON.stringify(newConfig)
-        );
+        console.log('accepting sim config value ' + newConfig);
+
+        this.updateSimConfig(newConfig)
       });
 
     this.simulationConfigEditor.getEditorCurrentInput$().subscribe((input) => {
@@ -206,12 +206,14 @@ export class Project implements ProjectWindowProvider {
   }
 
   private startObservingSimulationStatus() {
-    this.getCanStartSimulationObservable()
+    this.simulationClientStatus$
       .pipe(rxops.debounceTime(500), rxops.distinctUntilChanged())
       .subscribe((newValue) => {
         let currentProjectState = this.projectState$.getValue();
         let newProjectState = produce(currentProjectState, (draft) => {
           draft.canStartSimulation = newValue.canLaunchNewSimulation;
+          draft.isSimulating = newValue.ongoingSimulation;
+          
           let valueMode: StartButtonMode = 'disabled';
 
           if (!newValue.canLaunchNewSimulation && !newValue.ongoingSimulation) {
@@ -253,7 +255,16 @@ export class Project implements ProjectWindowProvider {
     if (buttonMode == 'start') {
       console.log("starting new simulation, g'luck to us all");
       this.executionConsole.clean();
-      this.projectSimulationExecutor.tryStartSimulation();
+      this.launchSimulation();
+    }
+  }
+
+  onClickStop() {
+    let currentProjectStatus = this.projectState$.getValue();
+    let isSimulating = currentProjectStatus.isSimulating;
+    console.log('stop button clicked');
+    if (isSimulating) {
+      this.stopSimulation();
     }
   }
 
@@ -269,37 +280,7 @@ export class Project implements ProjectWindowProvider {
 
   private onNewOcDotContents(onNewOcDotContents: OcDotContent | null) {
     this.showLoading();
-    this.projectSimulationExecutor.updateModel(onNewOcDotContents);
-  }
-
-  private convertRawSimConfigToSimConfig(
-    rawSimConfig: string
-  ): SimulationConfig | null {
-    let yamlObj: any;
-
-    try {
-      yamlObj = yaml.load(rawSimConfig);
-    } catch (e) {
-      console.log('oops, yaml error ' + e);
-      return null;
-    }
-
-    console.log(
-      'Project: convertRawSimConfigToSimConfig: yamlObj: ' +
-        JSON.stringify(yamlObj)
-    );
-
-    let isValid = this.ajv.validate(simconfigSchemaId, yamlObj);
-
-    if (!isValid) {
-      console.log(
-        'Project: convertRawSimConfigToSimConfig: have errors: ' +
-          JSON.stringify(this.ajv.errors)
-      );
-      return null;
-    }
-
-    return this.simConfigCreator.createFromObj(yamlObj);
+    this.updateOcDot(onNewOcDotContents)
   }
 
   private convertRawOcDotToDot(rawOcDot: string): string | null {
@@ -373,10 +354,6 @@ export class Project implements ProjectWindowProvider {
     };
   }
 
-  startSimulation() {
-    this.projectSimulationExecutor.tryStartSimulation();
-  }
-
   createSimulationArgument(): SimulationArgument {
     let simConfig = this.simulationConfigEditor.collectSimulationConfig();
     let modelConfig = this.modelEditor.collectOcDot();
@@ -387,9 +364,6 @@ export class Project implements ProjectWindowProvider {
     };
   }
 
-  getCanStartSimulationObservable(): Observable<SimulationClientStatus> {
-    return this.projectSimulationExecutor.simulationClientStatus$;
-  }
 
   getGraphvizObservable(): Observable<string> {
     return this.graphvizDot;

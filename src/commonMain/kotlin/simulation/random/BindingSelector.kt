@@ -5,7 +5,7 @@ import simulation.binding.EnabledBinding
 import kotlin.random.Random
 
 class RandomFactory {
-    fun create(randomSeed: Long?): Random {
+    fun create(randomSeed: Int?): Random {
         return randomSeed?.let { Random(randomSeed) } ?: Random
     }
 }

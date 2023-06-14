@@ -1,5 +1,6 @@
 package simulation.utils
 
+import config.GenerationConfig
 import model.*
 import model.time.IntervalFunction
 import model.utils.OcNetCreator
@@ -14,18 +15,20 @@ fun createParams(ocNet: StaticCoreOcNet, config: ProcessedSimulationConfig) : Si
         .withLabelMapping(config.labelMapping)
         .withOcNetType(config.type)
         .withTimeIntervals(config.intervalFunction)
-        .withRandomSeed(42L)
-        .useRandom(false)
+        .withRandomSeed(config.randomSettings.seed)
+        .useRandom(config.randomSettings.turnOn)
+        .withGenerationConfig(config.generationConfig)
     return simulationParamsBuilder.build()
 }
 
 open class SimulationParamsBuilder(
     private val ocNet: StaticCoreOcNet
 ) {
+    private var generationConfig: GenerationConfig? = null
     private var inputOutputPlaces: InputOutputPlaces? = null
     private var initialMarking : ObjectMarking? = null
     private var timeIntervalFunction : IntervalFunction? = null
-    private var randomSeed : Long? = null
+    private var randomSeed : Int? = null
     private var useRandom : Boolean = true
     private var placeTyping : PlaceTyping? = null
     private var objectTokenGenerator = ObjectTokenGenerator()
@@ -63,7 +66,7 @@ open class SimulationParamsBuilder(
         return this
     }
 
-    fun withRandomSeed(randomSeed : Long?) : SimulationParamsBuilder {
+    fun withRandomSeed(randomSeed : Int?) : SimulationParamsBuilder {
         this.randomSeed = randomSeed
         return this
     }
@@ -87,12 +90,18 @@ open class SimulationParamsBuilder(
             randomSeed = randomSeed,
             useRandom = useRandom,
             objectTokenGenerator = objectTokenGenerator,
-            labelMapping = labelMapping ?: LabelMapping()
+            labelMapping = labelMapping ?: LabelMapping(),
+            generationConfig = generationConfig
         )
     }
 
     fun withInputOutput(build: InputOutputPlaces): SimulationParamsBuilder {
         this.inputOutputPlaces = build
+        return this
+    }
+
+    fun withGenerationConfig(generationConfig: GenerationConfig): SimulationParamsBuilder {
+        this.generationConfig = generationConfig
         return this
     }
 }

@@ -2,9 +2,9 @@ import config.*
 import converter.FullModelBuilder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import kotlinx.js.jso
 import model.OcNetType
 import model.PlaceType
+import simulation.LoggerFactoryDefault
 import simulation.SimpleExecutionConditions
 import simulation.SimulationCreator
 import simulation.config.SimulationConfig
@@ -21,13 +21,7 @@ class ConversionTest {
             arrayOf(
                 InputPlacesConfig("p1 p2 p3 p4"),
                 OutputPlacesConfig("p5 p6 p7"),
-                PlaceTypingConfig(
-                    jso {
-                        ot1 = "p1 p2 p5"
-                        ot2 = "p3 p6"
-                        ot3 = "p4 p7"
-                    }
-                )
+                PlaceTypingConfig.fastCreate("ot1 = p1 p2 p5; ot2 = p3 p6; ot3 = p4 p7;")
             )
         )
         val configToDomainConverter = SimulationConfigProcessor(
@@ -49,9 +43,9 @@ class ConversionTest {
         assertEquals(inputOutputPlaces["p6"], PlaceType.OUTPUT)
         assertEquals(inputOutputPlaces["p7"], PlaceType.OUTPUT)
 
-        assertEquals(placetyping["p1"].id, "ot1")
-        assertEquals(placetyping["p3"].id, "ot2")
-        assertEquals(placetyping["p4"].id, "ot3")
+        assertEquals(placetyping["p1"].id, "ot")
+        assertEquals(placetyping["p3"].id, "ot")
+        assertEquals(placetyping["p4"].id, "ot")
     }
 
     @Test
@@ -60,12 +54,8 @@ class ConversionTest {
             arrayOf(
                 InputPlacesConfig("p1"),
                 OutputPlacesConfig("p3"),
-                PlaceTypingConfig(
-                    jso {
-                        ot1 = "p1 p2 p3"
-                    }
-                ),
-                OCNetTypeConfig(OcNetType.TYPE_A)
+                PlaceTypingConfig.fastCreate("ot1 = p1 p2 p3;"),
+                OCNetTypeConfig(OcNetType.AALST)
             )
         )
         val processedSimulationConfig = processConfig(simulationConfig)
@@ -93,23 +83,12 @@ class ConversionTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun checkSimulation() = runTest {
-        val simulationConfig = createConfig(
-            inputPlacesConfig = InputPlacesConfig("p1"),
-            outputPlacesConfig = OutputPlacesConfig("p3"),
-            ocNetTypeConfig =  OCNetTypeConfig.from(OcNetType.TYPE_A),
-            labelMappingConfig = LabelMappingConfig(
-                jso {
-                    t1 = "Initialization"
-                    t2 = "Execution"
-                }
-            ),
-            initialMarkingConfig = InitialMarkingConfig(
-                jso {
-                    p1 = 4
-                }
-            ),
-            // place type config
-            // transition config
+        val simulationConfig = createConfigFast(
+            inputPlaces ="p1",
+            outputPlaces = "p3",
+            ocNetTypeConfig = OcNetType.AALST,
+            labelMapping = "t1: Initialization; t2: Execution",
+            initialMarkingConfig = "p1: 4",
         )
         val processedSimulationConfig = processConfig(simulationConfig)
 
@@ -139,9 +118,11 @@ class ConversionTest {
         val simulationCreator = SimulationCreator(
             simulationParams = simulationParams,
             executionConditions = SimpleExecutionConditions(),
+            logger =  LoggerFactoryDefault,
+            dumpState = false
         )
         val simulationTask = simulationCreator.createSimulationTask()
 
-        simulationTask.prepareAndRun()
+        simulationTask.prepareRun()
     }
 }

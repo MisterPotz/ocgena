@@ -1,5 +1,6 @@
 package model
 
+import kotlinx.serialization.Serializable
 import utils.toIds
 
 class InputOutputPlaces(private val entries: Map<PlaceId, PlaceType>) {
@@ -74,10 +75,23 @@ class InputOutputPlaces(private val entries: Map<PlaceId, PlaceType>) {
     }
 }
 
+@Serializable
+data class SerializablePlaceTyping(
+    val defaultObjectType: ObjectType,
+    val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
+)
+
 class PlaceTyping(
     private val defaultObjectType: ObjectType,
     private val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
 ) {
+
+    fun toSerializable() :SerializablePlaceTyping {
+        return SerializablePlaceTyping(
+            defaultObjectType = defaultObjectType,
+            placeIdToObjectType = placeIdToObjectType
+        )
+    }
 
     fun toObjectTypes() : ObjectTypes {
         return ObjectTypes(allObjectTypes().toList())

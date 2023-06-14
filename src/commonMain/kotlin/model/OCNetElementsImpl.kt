@@ -7,6 +7,7 @@ class OCNetElementsImpl(
     override val arcs : Arcs,
     override val objectTypes: ObjectTypes,
     override val placeTyping: PlaceTyping,
+    override val allArcs: List<Arc>,
 ): OCNetElements {
     override val allPetriNodes : List<PetriNode> = buildList {
         addAll(places)

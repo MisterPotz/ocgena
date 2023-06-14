@@ -1,5 +1,7 @@
 package simulation
 
+import config.GenerationConfig
+import config.RandomConfig
 import model.InputOutputPlaces
 import model.LabelMapping
 import model.OcNetType
@@ -13,4 +15,7 @@ class ProcessedSimulationConfig(
     val initialPlainMarking: PlainMarking,
     val intervalFunction: IntervalFunction,
     val labelMapping : LabelMapping,
+    val randomSettings: RandomConfig,
+    val generationConfig: GenerationConfig,
 )
+

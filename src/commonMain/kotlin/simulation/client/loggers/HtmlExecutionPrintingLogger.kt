@@ -14,7 +14,7 @@ import utils.print
 class HtmlExecutionPrintingLogger(
     override val loggingEnabled: Boolean,
     val labelMapping: LabelMapping,
-    val writer: Writer
+    val writer: Writer,
 ) : Logger {
 
     fun write(string: String) {

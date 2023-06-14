@@ -8,18 +8,37 @@
  * When running `npm run build` or `npm run build:main`, this file is compiled to
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
-import { app, BrowserWindow, shell, ipcMain, dialog, screen, clipboard } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  ipcMain,
+  dialog,
+  screen,
+  clipboard,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 import { Channels, FileType } from './preload';
-import { unknown } from 'io-ts';
 import * as fs from 'fs';
 import path from 'path';
-import { model } from 'ocgena';
-import { OpenedFile } from 'domain/views/ModelEditor';
-import { async } from 'rxjs';
+import { JsonOcelExporter } from '../ocel/json_ocel_exporter';
+import { SimulationConfig } from './domain';
+import { Worker } from 'worker_threads';
+import { ErrorsMessage, HtmlMessage, IPCMesage, LaunchMessage, OcDotUpdateMessage, OcelMessage, SimConfigUpdateMessage, SimulationClientStatus, SimulationStatusMessage, StopMessage, isIpcMessage } from './shared';
+
+console.log(`${__dirname} ${process.resourcesPath}`);
+fs.readdir(__dirname, function (err, files) {
+  if (err) {
+    console.error('Error getting directory information.');
+  } else {
+    files.forEach(function (file) {
+      console.log(file);
+    });
+  }
+});
 
 class AppUpdater {
   constructor() {
@@ -52,8 +71,120 @@ export type SavedFile = {
   defaultDirPath?: string;
 };
 
-export const mainService = {
-  handleOpenRequest: (args: unknown[]) => {
+
+
+let childProcess: Worker | undefined;
+
+const listenar = (resolve: (value: any) => void) => {
+  return (message: any) => {
+    console.log('received message of service readiness');
+    resolve(message);
+  };
+};
+
+function waitForMessage(): Promise<any> {
+  return new Promise((resolve) => {
+    // Listen for the 'message' event from the child process
+    childProcess?.on('message', listenar(resolve));
+  });
+}
+
+export class MainService {
+  createExecutionProcess = async () => {
+    if (!childProcess) {
+      console.log("spawning child")
+      if (app.isPackaged) {
+        
+        childProcess = new Worker(
+          path.join(__dirname, 'ocgena_client.js')
+        );
+      } else {
+        childProcess = new Worker(
+          path.resolve(__dirname, './ocgena_client.import.js')
+          // require.resolve('ts-node/register/transpile-only'),
+          // {
+          //   workerData: {
+          //     filename: path.resolve(__dirname, './ocgena_client.ts'),
+          //   },
+          // }
+        );
+      }
+      
+
+
+      // waitForMessage();
+      // childProcess.removeListener('message', listenar);
+      // childProcess.stdout?.on('data', (data) => {
+      //   console.log(data.toString());
+      // });
+
+      childProcess.on('message', (message) => {
+        if (!isIpcMessage(message))  {
+          console.log("unknown message in main: %s", message)
+        }
+        console.log('received ipc message of type %s', message.type);
+
+        switch (message.type) {
+          case 'ocel':
+            this.sendOcelToRenderer((message as OcelMessage).ocel);
+            break;
+          case 'execution-state':
+            this.sendSimulationStatusToRenderer(
+              (message as SimulationStatusMessage).simulationStatus
+            );
+            break;
+          case 'ansi':
+            // this.send((message as SimulationStatusMessage).simulationStatus)
+            break;
+          case 'html':
+            this.sendHtmlToRenderer((message as HtmlMessage).htmlLines);
+            break;
+          case 'errors':
+            this.sendErrorsToRenderer((message as ErrorsMessage).errors);
+            break;
+          default:
+            break;
+        }
+      });
+      childProcess.postMessage({ message: 'Hi' });
+    }
+  };
+  handleSimulationConfigUpdate = (
+    simulationConfig: string | null
+  ) => {
+    childProcess?.postMessage({
+      type: 'update-simconfig',
+      rawSimConfig: simulationConfig,
+    } as SimConfigUpdateMessage);
+  };
+  handleOcDotUpdate = (ocdot: string | null) => {
+    childProcess?.postMessage({ type: 'update-ocdot', ocdot } as OcDotUpdateMessage);
+  };
+  handleLaunch = () => {
+    childProcess?.postMessage({ type: 'launch-sim' } as LaunchMessage);
+  };
+  handleStop = () => {
+    console.log("posting simulation stop")
+    childProcess?.postMessage({ type: 'stop-sim' } as StopMessage);
+  };
+  sendOcelToRenderer = (ocel: any) => {
+    mainWindow?.webContents?.send('write-ocel-console' as Channels, ocel);
+  };
+  sendHtmlToRenderer = (htmlLines: string[] | undefined) => {
+    mainWindow?.webContents?.send('write-html-console' as Channels, htmlLines);
+  };
+  sendErrorsToRenderer = (errors: string[] | undefined) => {
+    mainWindow?.webContents?.send('write-error-console' as Channels, errors);
+  };
+  sendSimulationStatusToRenderer = (
+    simulationStatus: SimulationClientStatus
+  ) => {
+    mainWindow?.webContents?.send(
+      'write-simulation-status' as Channels,
+      simulationStatus
+    );
+  };
+  handleOpenRequest = (args: unknown[]) => {
     if (!(args && args[0])) {
       return;
     }
@@ -68,28 +199,28 @@ export const mainService = {
         getSimConfigFileFromUser(mainWindow!);
         break;
     }
-  },
-  handleSaveAllShortcutRequest: (args: unknown[]) => {
+  };
+  handleSaveAllShortcutRequest = (args: unknown[]) => {
     // request the front about their file
     let window = mainWindow;
     if (!window) {
       return;
     }
     window.webContents.send('save-all-shortcut' as Channels);
-  },
-  handleSaveCurrentFileRequest: (args: unknown[]) => {
+  };
+  handleSaveCurrentFileRequest = (args: unknown[]) => {
     let window = mainWindow;
     if (!window) return;
     window.webContents.send('save-the-current-file' as Channels);
-  },
-  handleSaveCurrentFileResponse: (args: unknown[]) => {
+  };
+  handleSaveCurrentFileResponse = (args: unknown[]) => {
     if (!(args && args[0])) {
       return;
     }
     let savedFile = args[0] as SavedFile;
     saveFileOrOpenSaveDialog(savedFile);
-  },
-  handleSaveResponse: (args: unknown[]) => {
+  };
+  handleSaveResponse = (args: unknown[]) => {
     if (!(args && args[0])) {
       return;
     }
@@ -106,9 +237,10 @@ export const mainService = {
     if (modelFiles.simConfig && modelFiles.simConfigFilePath) {
       saveFile(modelFiles.simConfigFilePath, modelFiles.simConfig);
     }
-  },
-};
+  };
+}
 
+export const mainService = new MainService();
 const saveFileOrOpenSaveDialog = async (savedFile: SavedFile) => {
   if (savedFile.fileName && fs.existsSync(savedFile.fileName)) {
     saveFile(savedFile.fileName, savedFile.contents ? savedFile.contents : '');
@@ -137,7 +269,7 @@ const saveFileOrOpenSaveDialog = async (savedFile: SavedFile) => {
 export type SuccessfullySavedFile = {
   fileName: string;
   contents: string;
-  extension: string,
+  extension: string;
 };
 
 const saveFile = (filePath: string, fileContents: string) => {
@@ -151,13 +283,16 @@ const saveFile = (filePath: string, fileContents: string) => {
     if (error) {
       console.log(`An error occurred: ${error.message}`);
     } else {
-
-      let extension = path.extname(filePath)
-      extension = extension.substring(1, extension.length)
+      let extension = path.extname(filePath);
+      extension = extension.substring(1, extension.length);
 
       mainWindow!.webContents.send(
         'saved-current-file' as Channels,
-        { fileName: filePath, contents: fileContents, extension } as SuccessfullySavedFile
+        {
+          fileName: filePath,
+          contents: fileContents,
+          extension,
+        } as SuccessfullySavedFile
       );
 
       console.log('File saved successfully!');
@@ -179,14 +314,48 @@ ipcMain.on('save-the-current-file' as Channels, (event, args: unknown[]) => {
 
 ipcMain.on('copy' as Channels, (event, args: unknown[]) => {
   if (!(args && args[0])) {
-    return 
+    return;
   }
   clipboard.writeText(args[0] as string);
-})
+});
+
+ipcMain.on('transform-ocel' as Channels, (event, args: unknown[]) => {
+  if (!(args && args[0])) {
+    return;
+  }
+
+  let ocelObj = args[0];
+
+  let resultString = JsonOcelExporter.apply(ocelObj);
+
+  mainWindow?.webContents?.send('transform-ocel' as Channels, resultString);
+});
+
+ipcMain.on('update-ocdot' as Channels, (event, argsArr) => {
+  console.log('in main update-ocdot %s', argsArr);
+  mainService.handleOcDotUpdate((argsArr[0] as string) || null);
+});
+ipcMain.on('update-simconfig' as Channels, (event, argsArr) => {
+  console.log('in main update-simconfig %s', argsArr);
+  if (!(argsArr)) {
+    return;
+  }
+
+  mainService.handleSimulationConfigUpdate(
+    (argsArr[0] as string) || null
+  );
+});
+ipcMain.on('launch-sim' as Channels, (event, ...args: unknown[]) => {
+  console.log('in main launch-sim');
+  mainService.handleLaunch();
+});
+ipcMain.on('stop-sim' as Channels, (event, ...args: unknown[]) => {
+  console.log('in main stop-sim');
+  mainService.handleStop();
+});
 
 const openFile = (window: BrowserWindow, file: string, fileType: FileType) => {
   const fileContents = fs.readFileSync(file).toString();
-  console.log(fileContents);
   window.webContents.send('file-opened', file, fileContents, fileType);
 };
 
@@ -249,13 +418,13 @@ const installExtensions = async () => {
 
 export function createDevToolWindow(win: Electron.BrowserWindow) {
   // Create a new window for the DevTools
-  
+
   const displays = screen.getAllDisplays();
   let externalDisplay = displays.find((display) => {
     return display.bounds.x !== 0 || display.bounds.y !== 0;
   });
 
-  let devTools : BrowserWindow
+  let devTools: BrowserWindow;
   if (externalDisplay) {
     devTools = new BrowserWindow({
       x: externalDisplay.bounds.x + 50,
@@ -263,7 +432,6 @@ export function createDevToolWindow(win: Electron.BrowserWindow) {
       width: 1800,
       height: 1000,
       title: 'OCGena - DevTools',
-  
     });
   } else {
     devTools = new BrowserWindow({
@@ -279,9 +447,9 @@ export function createDevToolWindow(win: Electron.BrowserWindow) {
 
   // Resize the DevTools window
 
-  devTools.on('ready-to-show',() => {
+  devTools.on('ready-to-show', () => {
     devTools.webContents.closeDevTools();
-  })
+  });
   devTools.webContents.closeDevTools();
 }
 
@@ -337,10 +505,13 @@ const createWindow = async () => {
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
 
+  await mainService.createExecutionProcess();
+
   mainWindow.on('ready-to-show', () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
+
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
       mainWindow.webContents.closeDevTools();

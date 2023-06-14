@@ -1,11 +1,20 @@
 package model
 
+import kotlinx.serialization.Serializable
+
+
+@Serializable
+data class SerializableNormalArc(val fromId : String?, val toId : String?) : SerializableAtom
+
 data class NormalArc(
     override val id: String,
     override var arrowNode: PetriNode?,
     override var tailNode: PetriNode?,
     val multiplicity: Int = 1,
 ) : Arc() {
+    override val serializableAtom: SerializableAtom by lazy {
+        SerializableNormalArc(fromId = tailNode?.id, toId = arrowNode?.id)
+    }
 
     override fun isSameArcType(other: Arc): Boolean {
         return other is NormalArc

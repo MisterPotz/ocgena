@@ -2,9 +2,10 @@ package simulation
 
 class SimulationState() {
     private var current: BySteps? = null
+    var currentStep : Int = -1
 
     fun onStart() {
-        current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false)
+        current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false, noPlannedTokenGenerations = false)
     }
 
     fun onNewStep() {
@@ -21,13 +22,20 @@ class SimulationState() {
         current!!.noPlannedTransitions = !hasPlannedTransitions
     }
 
+    fun onHasPlannedTokens(hasPlannedTokensToGenerate : Boolean) {
+        require(current != null && current?.noPlannedTokenGenerations == null)
+        current!!.noPlannedTokenGenerations = !hasPlannedTokensToGenerate
+    }
     fun isFinished(): Boolean {
         require(current != null)
-        return current!!.noPlannedTransitions!! && current!!.noEnabledTransitions!!
+        return current!!.noPlannedTransitions!!
+                && current!!.noEnabledTransitions!!
+                && current!!.noPlannedTokenGenerations!!
     }
 
     private class BySteps(
         var noEnabledTransitions: Boolean? = null,
         var noPlannedTransitions: Boolean? = null,
+        var noPlannedTokenGenerations : Boolean? = null
     )
 }

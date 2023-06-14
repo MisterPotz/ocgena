@@ -3,7 +3,7 @@ import {
   ProjectWindow,
   ProjectWindowId,
   ProjectWindowStructure,
-} from './domain';
+} from '../main/domain';
 import { ProjectWindowProvider } from './Project';
 import { produce } from 'immer';
 import { EditorHolder } from './views/ModelEditor';

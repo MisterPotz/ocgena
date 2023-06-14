@@ -1,18 +1,23 @@
-import { OcDotContent, ProjectWindowStructure } from 'domain/domain';
-import { ProjectSingleSimulationExecutor } from 'domain/ProjectSingleSimulationExecutor';
-import { Project, ProjectState } from 'domain/Project';
-import { AST } from 'ocdot-parser';
-import { PeggySyntaxError } from 'ocdot-parser/lib/ocdot.peggy';
-import { OCDotToDOTConverter } from 'ocdot/converter';
-import { Observable, Subject } from 'rxjs';
-import * as rxops from 'rxjs/operators';
-import { FileType } from 'main/preload';
-import { unknown } from 'io-ts';
+import { Project } from 'domain/Project';
+import { Channels, FileType } from 'main/preload';
 import { ModelFiles, SavedFile, SuccessfullySavedFile } from 'main/main';
-import path from 'path';
-
+import { SimulationClientStatus } from '../main/shared'
 export class AppService {
-  private openedProject = new Project();
+
+  private openedProject = new Project(
+    (ocdot : string | null) => {
+      window.electron.ipcRenderer.sendMessage('update-ocdot' as Channels, [ocdot])
+    },
+    (simConfig : string | null) => {
+      window.electron.ipcRenderer.sendMessage('update-simconfig' as Channels, [simConfig])
+    },
+    () => {
+      window.electron.ipcRenderer.sendMessage('launch-sim', [])
+    },
+    () => {
+      window.electron.ipcRenderer.sendMessage('stop-sim' as Channels, [])
+    }
+  );
 
   getActiveProject(): Project {
     return this.openedProject;
@@ -24,6 +29,11 @@ export class AppService {
 
   onClickStart() {
     this.openedProject.onClickStart();
+  }
+
+  onClickStop(): void {
+    console.log("on click stop")
+    this.openedProject.onClickStop();
   }
 
   openFile(fileType: FileType) {
@@ -48,6 +58,18 @@ export class AppService {
   }
 
   initialize() {
+    window.electron.ipcRenderer.on('write-ocel-console', (ocel: any) => {
+      this.openedProject.writeOcelConsole(ocel);
+    })
+    window.electron.ipcRenderer.on('write-html-console', (htmlLines: string[] | undefined | any) => {
+      this.openedProject.writeHtmlConsole(htmlLines)
+    })
+    window.electron.ipcRenderer.on('write-error-console', (errors: string[] | undefined | any) => {
+      this.openedProject.writeErrors(errors)
+    })
+    window.electron.ipcRenderer.on('write-simulation-status', (simulationStatus: SimulationClientStatus | any) => {
+      this.openedProject.updateSimulationStatus(simulationStatus)
+    })
     window.electron.ipcRenderer.on(
       'file-opened',
       (fileName, fileContents, fileType) => {
@@ -117,6 +139,17 @@ export class AppService {
         }
       }
     );
+    window.electron.ipcRenderer.on('transform-ocel', (...args : unknown[]) => {
+      if (!(args && args[0] && args[0] as string)) {
+        return;
+      }
+      let savedFile : SavedFile = {
+        extension : "jsonocel",
+        fileType: "OCEL JSON",
+        contents: args[0] as string,
+      } 
+      window.electron.ipcRenderer.sendMessage('save-the-current-file', [savedFile])
+    });
     window.electron.ipcRenderer.on(
       'save-all-shortcut',
       (...args: unknown[]) => {

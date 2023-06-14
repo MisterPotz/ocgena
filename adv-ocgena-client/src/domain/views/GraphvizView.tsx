@@ -1,7 +1,7 @@
 import { Observable, debounce, debounceTime, delay } from "rxjs";
 import { useObservableState } from "observable-hooks";
 import Graph from "renderer/components/Graph";
-import { ProjectWindow } from "../domain";
+import { ProjectWindow } from "../../main/domain";
 import { ProjectWindowManager } from "../StructureNode";
 
 

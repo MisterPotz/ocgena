@@ -12,6 +12,18 @@ class SimulationConfigStore() {
     val simulationConfigFlow: MutableStateFlow<ProcessedSimulationConfig?> = MutableStateFlow(null)
     val simulationConfigTransformationErrors : MutableStateFlow<List<Error>?> = MutableStateFlow(null)
 
+    fun mapSimulationConfigSafely(simulationConfig: SimulationConfig) : ProcessedSimulationConfig? {
+        val configProcessingResult = runCatching {
+            processConfig(simulationConfig)
+        }
+        val processedConfig = if (configProcessingResult.isSuccess) {
+            configProcessingResult.getOrThrow()
+        } else {
+            null
+        }
+        return processedConfig
+    }
+
     fun updatePlainConfig(simulationConfig: SimulationConfig) {
         val configProcessingResult = runCatching {
             processConfig(simulationConfig)

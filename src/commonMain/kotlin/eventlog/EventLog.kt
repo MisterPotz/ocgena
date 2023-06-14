@@ -2,8 +2,6 @@ package eventlog
 
 import model.ObjectToken
 import model.ObjectType
-import simulation.client.OcelWriter
-import simulation.client.Writer
 
 typealias AttributeNames = List<String>
 typealias ObjectTypes = MutableList<ObjectType>

@@ -21,6 +21,8 @@ class Client(
     private val clientNotifier = ClientNotifier(callback, modelCreator, readinessDeducer)
     private val scope = MyCoroutineScope()
     private val currentErrors = MutableStateFlow<List<Error>?>(null)
+    var loggingEnabled = true
+    var dumpState = false
 
     fun updateOcDot(ocDot: String) {
         println("Client.kt: updateOcDot")
@@ -32,17 +34,49 @@ class Client(
         configStore.updatePlainConfig(simulationConfigStore)
     }
 
-    fun createClientSimTaskFactory() : ClientSimTaskFactory? {
-        val ocNet = modelCreator.builtModelFlow.value?.ocNet
-        val simConfig = configStore.simulationConfigFlow.value
 
-        if (ocNet == null || simConfig == null) {
-            return null
-        }
+
+    fun createFactoryFromData(
+        ocDot: String,
+        simulationConfig: SimulationConfig,
+    ): ClientSimTaskFactory? {
+        val processedSimulationConfig = configStore.mapSimulationConfigSafely(simulationConfig) ?: return null
+        val model = modelCreator.createModelSafely(ocDot, processedSimulationConfig) ?: return null
 
         return ClientSimTaskFactoryImpl(
-            staticCoreOcNet = ocNet,
-            config = simConfig,
+            staticCoreOcNet = model.ocNet ?: return null,
+            config = processedSimulationConfig,
+            loggingEnabled = loggingEnabled,
+            dumpState = dumpState
+        )
+    }
+
+//    fun createClientSimTaskFactory(): ClientSimTaskFactory? {
+//        val ocNet = modelCreator.builtModelFlow.value?.ocNet
+//        val simConfig = configStore.simulationConfigFlow.value
+//
+//        if (ocNet == null || simConfig == null) {
+//            return null
+//        }
+//
+//        return ClientSimTaskFactoryImpl(
+//            staticCoreOcNet = ocNet,
+//            config = simConfig,
+//            loggingEnabled = loggingEnabled
+//        )
+//    }
+
+    fun createClientSimTaskFactory(): ClientSimTaskFactory? {
+        // take latest values
+        val processedSimulationConfig = configStore.simulationConfigFlow.value ?: return null
+        val model = modelCreator.createModelSafely(ocDotStore.ocDotFlow.value ?: return null, processedSimulationConfig)
+            ?: return null
+
+        return ClientSimTaskFactoryImpl(
+            staticCoreOcNet = model.ocNet ?: return null,
+            config = processedSimulationConfig,
+            loggingEnabled = loggingEnabled,
+            dumpState = dumpState
         )
     }
 

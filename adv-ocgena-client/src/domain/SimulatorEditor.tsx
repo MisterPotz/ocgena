@@ -4,11 +4,10 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { SchemasSettings, setDiagnosticsOptions } from 'monaco-yaml';
 import { Uri } from "monaco-editor/esm/vs/editor/editor.api";
 import { EditorDelegate } from "./views/EditorDelegate";
-import { ProjectWindow, ProjectWindowId } from "./domain";
+import { ProjectWindow, ProjectWindowId } from "../main/domain";
 import { ProjectWindowManager } from "./StructureNode";
 import { ClickHandler, EditorHolder, OpenedFile } from "./views/ModelEditor";
-import { modelUri, setupTemplate, setupYamlLanguageServer } from "simconfig/simconfig_yaml";
-
+import { exampleConfiguration, setupYamlLanguageServer, modelUri } from "../simconfig/simconfig_yaml";
 
 
 export class SimulatorEditor implements ProjectWindow, EditorHolder {
@@ -46,7 +45,7 @@ export class SimulatorEditor implements ProjectWindow, EditorHolder {
         editorCreator={(htmlElement : HTMLElement) => {
             // The uri is used for the schema file match.
 
-            const value = setupTemplate;
+            const value = exampleConfiguration;
 
             setupYamlLanguageServer();
 
@@ -54,7 +53,7 @@ export class SimulatorEditor implements ProjectWindow, EditorHolder {
                 automaticLayout: true,
                 model: monaco.editor.createModel(value, 'yaml', modelUri)
             });
-            this.editorDelegate.onNewEditorInput(setupTemplate)
+            this.editorDelegate.onNewEditorInput(exampleConfiguration)
 
             return newEditor;
         }}

@@ -4,6 +4,7 @@ import utils.print
 
 
 class ObjectMarking(val placesToObjectTokens: MutableMap<PlaceId, MutableSet<ObjectToken>> = mutableMapOf()) {
+
     operator fun get(place: PlaceId): MutableSet<ObjectToken>? {
         return placesToObjectTokens[place]
     }

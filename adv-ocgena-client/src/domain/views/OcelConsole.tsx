@@ -1,16 +1,20 @@
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { useObservableState } from 'observable-hooks';
 import Graph from 'renderer/components/Graph';
-import { ProjectWindow } from '../domain';
+import { ProjectWindow } from '../../main/domain';
 import { ProjectWindowManager } from '../StructureNode';
 import { Console } from 'renderer/allotment-components/console';
 import { SavedFile } from 'main/main';
 import { useState } from 'react';
 import { produce } from 'immer';
+import { red, reset } from 'main/red';
+import Anser from 'anser';
 
 export type OcelConsoleState = {
   canExport: boolean;
 };
+
+export type OcelObj = any;
 
 export class OcelConsole implements ProjectWindow {
   readonly title: string = 'Generated OCEL';
@@ -27,34 +31,40 @@ export class OcelConsole implements ProjectWindow {
   state$ = new BehaviorSubject<OcelConsoleState>({
     canExport: false,
   });
-  onExport : (savedFile : SavedFile) => void;
+  onExport: (savedFile: OcelObj) => void;
 
-  constructor(onExport: (savedFile: SavedFile) => void) {
-    this.onExport = onExport
+  constructor(onExport: (savedFile: OcelObj) => void) {
+    this.onExport = onExport;
   }
 
   set ocel(ocel: any) {
-    console.log("setting ocel " + ocel)
     this.currentOcel = ocel;
-    console.log('current ocel ' + this.currentOcel)
+    if (Object.keys(this.currentOcel['ocel:events']).length > 300) {
+      console.log('Log size is too big to be displayed.');
+      this.outputLine$.next([
+        Anser.ansiToHtml(
+          `<div>${red}Log size is too big to be displayed.${reset}</div>`
+        ),
+      ]);
+    } else {
+      this.outputLine$.next([
+        JSON.stringify(this.currentOcel, undefined, 4).substring(0, 1000),
+        Anser.ansiToHtml(`<div>${red}...${reset}</div>`),
+        Anser.ansiToHtml(`<div>${red}Export to see full JSON${reset}</div>`),
+      ]);
+    }
 
-    this.outputLine$.next([JSON.stringify(this.currentOcel)])
     let newState = produce(this.state$.getValue(), (draft) => {
-      draft.canExport = this.currentOcel != null
-    })
-    this.state$.next(newState)
+      draft.canExport = this.currentOcel != null;
+    });
+    this.state$.next(newState);
   }
 
   readonly onExportClick = () => {
-    console.log('exporting ocel, current value ' + this.currentOcel)
-    let contents = JSON.stringify(this.currentOcel)
+    // let contents = JSON.stringify(this.currentOcel)
 
-    this.onExport({
-      extension: "json",
-      fileType: "OCEL JSON",
-      contents: contents,
-    })
-  }
+    this.onExport(this.currentOcel);
+  };
 
   clean() {
     this.outputLine$.next(undefined);
@@ -64,36 +74,42 @@ export class OcelConsole implements ProjectWindow {
     onSizeChangeObservable: Observable<number[]>,
     visible: boolean
   ) => {
-    const state = useObservableState(this.state$)
+    const state = useObservableState(this.state$);
 
     return (
       <div className="flex h-full w-full flex-col">
         <div
-          className={`flex flex-grow-0 h-9 flex-row items-start justify-start bg-zinc-50`}
+          className={`flex h-12 flex-grow-0 flex-row items-start justify-start bg-zinc-50 pb-3`}
         >
-            <button
-              disabled={!state.canExport}
-              onClick={this.onExportClick}
-              className={`
+          <button
+            disabled={!state.canExport}
+            onClick={this.onExportClick}
+            className={`
             relative
             flex
             flex-row 
-            rounded-none
-            bg-transparent
+            rounded-sm
+            ml-4
+            border-solid
+            border-1
+            bg-white
+            border-black
+            border-opacity-20
+            hover:bg-zinc-200
             px-2
             shadow-none
             transition-colors
             duration-300
             ease-in-out
            `}
-            >
-              <div className={`relative pe-1 ps-1 text-xs text-black`}>
-                Export OCEL
-              </div>
-            </button>
+          >
+            <div className={`relative pe-1 ps-1 text-xs text-black`}>
+              Export OCEL
+            </div>
+          </button>
         </div>
 
-        <div className="w-full flex-grow">
+        <div className="h-full w-full flex-grow">
           <Console
             sizeChange$={onSizeChangeObservable}
             outputLine$={this.outputLine$}

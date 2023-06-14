@@ -1,10 +1,25 @@
 package model
 
+import kotlinx.serialization.Serializable
+
 enum class PlaceType {
     NORMAL,
     INPUT,
     OUTPUT
 }
+
+@Serializable
+data class SerializablePlace(val id : String) : SerializableAtom{
+
+}
+
+//interface SerializableAtomFactory {
+//    fun create(
+//        placeTyping: PlaceTyping,
+//        labelMapping: LabelMapping,
+//
+//    )
+//}
 
 data class Place(
     override val id: PlaceId,
@@ -17,6 +32,9 @@ data class Place(
     private val transitionToArc : MutableMap<Transition, Arc> = mutableMapOf()
 
     var tokens: Int = 0
+    override val serializableAtom by lazy {
+        SerializablePlace(id)
+    }
 
     fun getArcForTransition(transition: Transition) : Arc? {
         return transitionToArc[transition]

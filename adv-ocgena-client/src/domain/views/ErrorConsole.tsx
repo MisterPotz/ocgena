@@ -1,7 +1,7 @@
 import { Observable, Subject } from 'rxjs';
 import { useObservableState } from 'observable-hooks';
 import Graph from 'renderer/components/Graph';
-import { ProjectWindow } from '../domain';
+import { ProjectWindow } from '../../main/domain';
 import { ProjectWindowManager } from '../StructureNode';
 import { Panel } from 'renderer/allotment-components/panel';
 import XtermComponent from 'renderer/allotment-components/xterm';

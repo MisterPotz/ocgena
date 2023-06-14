@@ -2,6 +2,7 @@ package eventlog
 
 import model.*
 import simulation.client.OcelParams
+import simulation.client.loggers.TimeStampMapper
 import utils.print
 
 
@@ -33,7 +34,8 @@ class ActivityOccurrenceRegistry(
 
 class ModelToEventLogConverter(
     private val labelMapping: LabelMapping,
-    private val ocelParams: OcelParams
+    private val ocelParams: OcelParams,
+    private val timeStampMapper: TimeStampMapper
 ) {
     private val objects: MutableList<ObjectToken> = mutableListOf()
     private val logBothStartAndEnd : Boolean = ocelParams.logBothStartAndEnd
@@ -58,7 +60,7 @@ class ModelToEventLogConverter(
             return Event(
                 eventId = idOfActivityStart(transition),
                 activity = nameOfActivityStart(transition),
-                timestamp = activeTransition.startedAt.toString(),
+                timestamp = timeStampMapper.mapTime(activeTransition.startedAt),
                 oMap = activeTransition.lockedObjectTokens.allTokens().map { it.name },
                 vMap = mutableMapOf()
             )
@@ -70,7 +72,7 @@ class ModelToEventLogConverter(
         val transition = executedBinding.finishedTransition.transition
         return Event(
             activity = nameOfActivityEnd(transition),
-            timestamp = executedBinding.finishedTime.print(),
+            timestamp = timeStampMapper.mapTime(executedBinding.finishedTime),
             oMap = executedBinding.producedMap.allTokens().map { it.name },
             eventId = idOfActivityEnd(transition),
             vMap = mutableMapOf()

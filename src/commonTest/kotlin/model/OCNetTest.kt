@@ -43,6 +43,7 @@ class OCNetTest {
                     put("p1", 10)
                 }
             )
+            .withOcNetType(ocNetType = OcNetType.AALST)
             .withInputOutput(
                 InputOutputPlaces.build {
                     inputPlaces("p1")
@@ -63,11 +64,13 @@ class OCNetTest {
         val simulatorCreator = SimulationCreator(
             simulationParams = simulationParamsBuilder.build(),
             executionConditions = SimpleExecutionConditions(),
-            logger = LoggerFactoryDefault
+            logger = LoggerFactoryDefault,
+            dumpState = false
         )
-        simulatorCreator
+
+        val task = simulatorCreator
             .createSimulationTask()
-            .prepareAndRun()
+            .prepareAndRunAll()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -114,6 +117,7 @@ class OCNetTest {
                     put("p2", 4)
                 }
             )
+            .withOcNetType(OcNetType.AALST)
             .withTimeIntervals(
                 IntervalFunction.create {
                     put(
@@ -130,7 +134,7 @@ class OCNetTest {
                     )
                 }
             )
-            .withRandomSeed(randomSeed = 42L)
+            .withRandomSeed(randomSeed = 42)
             .useRandom(true)
 
         val simulatorCreator = SimulationCreator(
@@ -140,7 +144,7 @@ class OCNetTest {
         )
         simulatorCreator
             .createSimulationTask()
-            .prepareAndRun()
+            .prepareAndRunAll()
     }
 
 
@@ -180,6 +184,7 @@ class OCNetTest {
                     put("p2", 4)
                 }
             )
+            .withOcNetType(OcNetType.AALST)
             .withInputOutput(inputOutputPlaces)
             .withTimeIntervals(
                 IntervalFunction.create {
@@ -197,7 +202,7 @@ class OCNetTest {
                     )
                 }
             )
-            .withRandomSeed(randomSeed = 42L)
+            .withRandomSeed(randomSeed = 42)
             .useRandom(false)
 
         val simulatorCreator = SimulationCreator(
@@ -207,6 +212,6 @@ class OCNetTest {
         )
         simulatorCreator
             .createSimulationTask()
-            .prepareAndRun()
+            .prepareAndRunAll()
     }
 }

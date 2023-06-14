@@ -1,15 +1,22 @@
 import {
+  GENERATION,
   INITIAL_MARKING,
   INPUT_PLACES,
   LABEL_MAPPING,
   OC_NET_DEFINITION,
   OUTPUT_PLACES,
   PLACE_TYPING,
-  TRANSITIONS_CONFIG, TimeRangeType,
+  RANDOM,
+  TRANSITIONS_CONFIG
+} from './LABEL_MAPPING';
+import {
+  GenerationConfig,
+  GenerationConfigType,
+  TimeRangeType,
   TransitionIntervalsType,
   TransitionsConfig,
   TransitionsConfigType
-} from 'simconfig/simconfig_yaml';
+} from './TimeRange';
 import { simulation, config, model } from 'ocgena';
 
 export type SimConfigObj = any;
@@ -28,11 +35,52 @@ export class SimConfigCreator {
       this.createPlaceTyping(obj),
       this.createLabelMapping(obj),
       this.createInitialMarking(obj),
-      this.createTransitionsConfig(obj)
+      this.createTransitionsConfig(obj),
+      this.createRandomConfig(obj),
+      this.createGenerationConfig(obj)
     ].filter(this.notEmpty);
 
     let simConfig = new simulation.config.SimulationConfig(configs);
     return simConfig;
+  }
+
+  createGenerationConfig(obj: any) { 
+    if (!this.checkObjectIsPresent(GENERATION, obj)) {
+      return null 
+    }
+
+    try {
+      let generationConfig = obj[GENERATION]
+      if (this.generationConfigChecker(generationConfig)) {
+        let defaultTimeRange;
+
+        if (generationConfig.default) { 
+          defaultTimeRange = this.convertTimeRange(generationConfig.default)
+        }
+
+        return config.toGenerationConfig(
+          generationConfig.generationTargets || {},
+          defaultTimeRange
+        )
+      }
+    } catch(e) {
+      return null
+    }
+  }
+  
+  createRandomConfig(obj: any) {
+    if (!this.checkObjectIsPresent(RANDOM, obj)) {
+        return null
+    }
+
+    try {
+      let turnOn = obj[RANDOM]['turnOn']
+      let seed = obj[RANDOM]['seed'] as number
+
+      return new config.RandomConfig(turnOn, seed)
+    } catch(e) {
+      return new config.RandomConfig()
+    }
   }
 
   private createInputPlacesConfig(
@@ -64,7 +112,7 @@ export class SimConfigCreator {
     let value: model.OcNetType;
 
     try {
-      value = model.OcNetType.valueOf(obj[OC_NET_DEFINITION]);
+      value = model.OcNetType.valueOf((obj[OC_NET_DEFINITION] as string).toUpperCase());
     } catch (e) {
       return null;
     }
@@ -74,31 +122,36 @@ export class SimConfigCreator {
 
   private createPlaceTyping(
     obj: SimConfigObj
-  ): config.PlaceTypingConfig | null {
+  ): simulation.config.Config | null {
     if (!this.checkObjectIsPresent(PLACE_TYPING, obj)) {
       return null;
     }
-    return new config.PlaceTypingConfig(obj[PLACE_TYPING]);
+    return config.toPlaceTypingConfig(obj[PLACE_TYPING]);
   }
 
   private createLabelMapping(
     obj: SimConfigObj
-  ): config.LabelMappingConfig | null {
+  ): simulation.config.Config | null {
     if (!this.checkObjectIsPresent(LABEL_MAPPING, obj)) {
       return null;
     }
 
-    return new config.LabelMappingConfig(obj[LABEL_MAPPING]);
+    return config.toLabelMappingConfig(obj[LABEL_MAPPING]);
   }
 
   private createInitialMarking(
     obj: SimConfigObj
-  ): config.InitialMarkingConfig | null {
+  ): simulation.config.Config | null {
     if (!this.checkObjectIsPresent(INITIAL_MARKING, obj)) {
       return null;
     }
-
-    return new config.InitialMarkingConfig(obj[INITIAL_MARKING]);
+    let initialMarking 
+    try {
+      initialMarking = config.toInitialMarkingConfig(obj[INITIAL_MARKING])
+    } catch(e) { 
+      return null
+    }
+    return initialMarking
   }
 
   private checkObjectIsPresent(
@@ -131,7 +184,7 @@ export class SimConfigCreator {
 
   private convertTransitionInterval(
     transitionIntervals: TransitionIntervalsType
-  ): config.TransitionIntervals {
+  ): config.TransitionIntervals | null {
     let item = {
       duration: this.convertTimeRange(transitionIntervals.duration),
       minOccurrenceInterval: this.convertTimeRange(
@@ -139,8 +192,20 @@ export class SimConfigCreator {
       ),
     } as config.JsTransitionIntervals;
 
-    return config.toTransitionIntervals(item);
+    let otherc;
+
+    try {
+      otherc = config.toTransitionIntervals(item);
+    } catch(e) { 
+      return null
+    }
+    return otherc
   }
+
+  private generationConfigChecker = (
+    input: any
+  ): input is GenerationConfigType => GenerationConfig.is(input);
+
 
   private transitionConfigChecker = (
     input: any
@@ -148,7 +213,7 @@ export class SimConfigCreator {
 
   private createTransitionsConfig(
     obj: SimConfigObj
-  ): config.TransitionsConfig | null {
+  ): simulation.config.Config | null {
     if (!this.checkObjectIsPresent(TRANSITIONS_CONFIG, obj)) {
       return null;
     }
@@ -158,9 +223,12 @@ export class SimConfigCreator {
       let defaultTransition: config.TransitionIntervals | undefined = undefined;
 
       if (transitionsConfig.defaultTransitionInterval) {
-        defaultTransition = this.convertTransitionInterval(
+        let ihatetypescript = this.convertTransitionInterval(
           transitionsConfig.defaultTransitionInterval
         );
+        if (ihatetypescript) { 
+          defaultTransition = ihatetypescript
+        }
       }
 
       let transitionsToIntervals: {
@@ -169,14 +237,17 @@ export class SimConfigCreator {
 
       if (transitionsConfig.transitionsToIntervals) {
         for (let key in transitionsConfig.transitionsToIntervals) {
+
           let value = this.convertTransitionInterval(
             transitionsConfig.transitionsToIntervals[key]
           );
-          transitionsToIntervals[key] = value;
+          if (value) { 
+            transitionsToIntervals[key] = value;
+          }
         }  
       }
       
-      return new config.TransitionsConfig(
+      return config.toTransitionsConfig(
         defaultTransition,
         transitionsToIntervals
       );

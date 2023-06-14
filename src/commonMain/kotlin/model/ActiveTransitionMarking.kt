@@ -1,6 +1,12 @@
 package model
 
+import kotlinx.serialization.Serializable
 
+
+@Serializable
+data class SerializableActiveTransitionMarking(
+    val transitionsToTMarkingValue : Map<TransitionId, SerializableActiveFiringTransitions>
+)
 class ActiveTransitionMarking() {
     private val transitionsToTMarkingValue = mutableMapOf<Transition, ActiveFiringTransitions>()
 
@@ -8,6 +14,16 @@ class ActiveTransitionMarking() {
         return transitionsToTMarkingValue[transition]
     }
 
+
+    fun toSerializable(): SerializableActiveTransitionMarking {
+        return SerializableActiveTransitionMarking(
+            buildMap {
+                for (i in transitionsToTMarkingValue.keys) {
+                    put(i.id, transitionsToTMarkingValue[i]!!.toSerializable())
+                }
+            }
+        )
+    }
     fun shiftByTime(time: Time) {
         transitionsToTMarkingValue.forEach { entry ->
             entry.value.shiftByTime(time)

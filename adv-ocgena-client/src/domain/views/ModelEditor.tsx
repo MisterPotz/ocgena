@@ -3,7 +3,7 @@ import { isOcDotRegistered, registerOcDot } from 'renderer/ocdot/OcDotMonarch';
 import { Observable } from 'rxjs';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import { EditorDelegate } from './EditorDelegate';
-import { ProjectWindow, ProjectWindowId } from '../domain';
+import { ProjectWindow, ProjectWindowId } from '../../main/domain';
 import { ProjectWindowManager } from '../StructureNode';
 import { trimIndent } from 'ocdot-parser/lib/exts';
 
@@ -11,7 +11,7 @@ export interface ClickHandler {
   clickTab(projectWindowId: ProjectWindowId): void;
 }
 
-const exampleModel = trimIndent(`
+export const exampleModel = trimIndent(`
   ocnet {
     places { 
       p1 [color=green] p2 p3

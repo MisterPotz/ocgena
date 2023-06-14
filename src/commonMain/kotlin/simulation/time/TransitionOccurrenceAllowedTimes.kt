@@ -1,12 +1,27 @@
 package simulation.time
 
+import kotlinx.serialization.Serializable
+import model.SerializableTransition
 import model.Time
 import model.Transition
+import model.TransitionId
 import utils.print
+
+@Serializable
+class SerializableTransitionOccurrenceAllowedTimes(val transitionsToNextTimes : Map<TransitionId, Time>)
 
 class TransitionOccurrenceAllowedTimes {
     private val transitionsToNextTimes = mutableMapOf<Transition, Time>()
 
+    fun toSerializable() : SerializableTransitionOccurrenceAllowedTimes {
+        return SerializableTransitionOccurrenceAllowedTimes(
+            buildMap {
+                for (i in transitionsToNextTimes.keys) {
+                    put(i.id, transitionsToNextTimes[i]!!)
+                }
+            }
+        )
+    }
     fun shiftByTime(time: Time) {
         for (i in transitionsToNextTimes.keys) {
             val currentValue = transitionsToNextTimes[i]!!

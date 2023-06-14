@@ -1,10 +1,21 @@
 package model
 
+import kotlinx.serialization.Serializable
 import model.utils.NodesCacherVisitorDFS
 import model.utils.PetriNodesCopyTask
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
+@Serializable
+data class SerializableCoreOcNet(
+    val inputPlaces: List<SerializablePlace>,
+    val outputPlaces: List<SerializablePlace>,
+    val allPlaces : List<SerializablePlace>,
+    val transitions : List<SerializableTransition>,
+    val objectTypes : List<ObjectType>,
+    val arcs : List<SerializableAtom>,
+    val placeTyping : SerializablePlaceTyping,
+)
 
 /**
  * the net, formed with passed arguments, must already be consistent
@@ -12,43 +23,31 @@ import kotlin.js.JsExport
 class StaticCoreOcNet(
     val inputPlaces: Places,
     val outputPlaces: Places,
+    override val allArcs : List<Arc>,
     override val places: Places,
     override val transitions: Transitions,
     override val objectTypes: ObjectTypes,
     override val arcs: Arcs,
+
     override val allPetriNodes: List<PetriNode>,
     override val placeTyping: PlaceTyping,
 ) : OCNetElements {
-
     override fun toString(): String {
         return "OCNet(inputPlaces=$inputPlaces, outputPlaces=$outputPlaces, objectTypes=$objectTypes)"
     }
 
-    private val labelToNode: MutableMap<String, PetriNode> = mutableMapOf()
-
-    fun fullCopy(): StaticCoreOcNet {
-        val allNodesCacher = NodesCacherVisitorDFS()
-        allNodesCacher.collectAllNodes(this)
-        val cachedNodes = allNodesCacher.getCachedNodes()
-        val copyTask = PetriNodesCopyTask(cachedPetriNodes = cachedNodes)
-        val copied = copyTask.performAndGetCopiedNodes()
-
-        val createdInputPlaces = inputPlaces.map {
-            copied.getCachedFor(it) as Place
-        }
-        val createdOutputPlaces = outputPlaces.map {
-            copied.getCachedFor(it) as Place
-        }
-        return StaticCoreOcNet(
-            inputPlaces = Places(places = createdInputPlaces),
-            outputPlaces = Places(createdOutputPlaces),
-            places = Places(copied.allNodes().filterIsInstance<Place>()),
-            transitions = Transitions(copied.allNodes().filterIsInstance<Transition>()),
+    fun dumpSerializable() : SerializableCoreOcNet {
+        return SerializableCoreOcNet(
+            inputPlaces = inputPlaces.map { it.serializableAtom },
+            outputPlaces = outputPlaces.map { it.serializableAtom },
+            allPlaces = places.map { it.serializableAtom },
+            transitions = transitions.map { it.serializableAtom },
             objectTypes = objectTypes,
-            arcs = arcs,
-            allPetriNodes = allPetriNodes,
-            placeTyping = placeTyping,
+            arcs = allArcs.map { it.serializableAtom },
+            placeTyping = placeTyping.toSerializable()
         )
     }
+
+    private val labelToNode: MutableMap<String, PetriNode> = mutableMapOf()
 }
 

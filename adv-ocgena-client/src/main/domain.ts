@@ -1,8 +1,6 @@
 import { simulation } from "ocgena";
 import { Observable } from "rxjs";
-import { GraphvizPane } from "renderer/allotment-components/graphviz-pane";
-import { useObservable } from "observable-hooks";
-import { StructureNode } from "./StructureNode";
+import { StructureNode } from "../domain/StructureNode";
 
 export type OcDotContent = string
 export type SimulationConfig = simulation.config.SimulationConfig

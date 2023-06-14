@@ -5,23 +5,37 @@ import eventlog.ModelToEventLogConverter
 import model.ActiveFiringTransition
 import model.ExecutedBinding
 import model.LabelMapping
+import model.Time
+import model.time.formatMillisToUTCString
+import model.time.getSmartCurrentTime
 import simulation.SimulatableComposedOcNet
 import simulation.SimulationTime
 import simulation.client.OcelParams
 import simulation.client.OcelWriter
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+
+class TimeStampMapper(private val baseTimeMillis: Long = getSmartCurrentTime()) {
+    fun mapTime(time: Time) : String {
+        val resultTime = baseTimeMillis.toDuration(DurationUnit.MILLISECONDS) + (time.toDuration(DurationUnit.MINUTES))
+        return formatMillisToUTCString(resultTime)
+    }
+}
 
 class OcelEventLogger(
     private val ocelParams: OcelParams,
     loggingEnabled: Boolean,
     val labelMapping: LabelMapping,
     val ocelWriter: OcelWriter,
-) : StubLogger() {
+    private val timmeStampMapper: TimeStampMapper = TimeStampMapper()
+) : DefaultLogger() {
 
     private val eventLog = EventLog()
 
     private val modelToEventLogConverter = ModelToEventLogConverter(
         labelMapping = labelMapping,
-        ocelParams = ocelParams
+        ocelParams = ocelParams,
+        timeStampMapper = timmeStampMapper,
     )
     override val loggingEnabled: Boolean = loggingEnabled
     override fun onExecutionStepStart(

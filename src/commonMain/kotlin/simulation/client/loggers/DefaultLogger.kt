@@ -8,7 +8,7 @@ import simulation.Logger
 import simulation.SimulatableComposedOcNet
 import simulation.SimulationTime
 
-abstract class StubLogger : Logger {
+abstract class DefaultLogger : Logger {
     override val loggingEnabled: Boolean = false
     override fun onStart() {
 

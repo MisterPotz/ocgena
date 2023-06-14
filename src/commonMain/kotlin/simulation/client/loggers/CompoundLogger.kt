@@ -13,8 +13,10 @@ class CompoundLogger(
     val loggers: Array<Logger>
 ) : Logger {
     private inline fun log(crossinline block: Logger.() -> Unit) {
-        for (i in loggers) {
-            i.block()
+        if (loggingEnabled) {
+            for (i in loggers) {
+                i.block()
+            }
         }
     }
 

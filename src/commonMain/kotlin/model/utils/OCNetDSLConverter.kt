@@ -131,6 +131,7 @@ class OCNetDSLConverter(
             places = Places(createdPlaces),
             transitions = Transitions(createdTransitions),
             arcs = Arcs(),
+            allArcs = createdArcs,
             objectTypes =  ObjectTypes(foundObjectTypes.values.toList()),
             placeTyping = placeTyping
         )

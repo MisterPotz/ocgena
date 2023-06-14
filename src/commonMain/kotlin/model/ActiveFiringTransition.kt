@@ -1,5 +1,6 @@
 package model
 
+import kotlinx.serialization.Serializable
 import utils.html.color
 import utils.html.indentLines
 import utils.ANSI_CYAN
@@ -7,6 +8,17 @@ import utils.ANSI_RESET
 import utils.ANSI_YELLOW
 import utils.font
 import utils.print
+
+@Serializable
+data class SerializableActiveFiringTransition(
+    val transition: SerializableTransition,
+    val lockTimeByLatestObjectToken: Time,
+    val relativeTimePassedSinceLock: Time,
+    val duration: Int,
+    val startedAt: Time,
+    val tokenSynchronizationTime: Time,
+    val lockedObjectTokens: ImmutableObjectMarking,
+)
 
 data class ActiveFiringTransition(
     val transition: Transition,
@@ -17,6 +29,18 @@ data class ActiveFiringTransition(
     val tokenSynchronizationTime: Time,
     val lockedObjectTokens: ImmutableObjectMarking,
 ) {
+
+    fun toSerializable(): SerializableActiveFiringTransition {
+        return SerializableActiveFiringTransition(
+            transition = transition.serializableAtom,
+            lockTimeByLatestObjectToken,
+            relativeTimePassedSinceLock,
+            duration,
+            startedAt,
+            tokenSynchronizationTime,
+            lockedObjectTokens
+        )
+    }
 
     fun timeLeftUntilFinish(): Time {
         return (duration - relativeTimePassedSinceLock).coerceAtLeast(0)
@@ -29,7 +53,7 @@ data class ActiveFiringTransition(
         """.trimMargin()
     }
 
-    fun prettyPrintHtmlLinesState() : List<String> {
+    fun prettyPrintHtmlLinesState(): List<String> {
         return buildList {
             add(
                 color(

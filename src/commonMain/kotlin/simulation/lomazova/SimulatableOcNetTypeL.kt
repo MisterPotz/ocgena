@@ -11,7 +11,7 @@ class SimulatableOcNetTypeL(
     override val arcMultiplicity: ExpressionArcMultiplicity,
     override val intervalFunction: IntervalFunction,
 ) : SimulatableComposedOcNet<SimulatableOcNetTypeL> {
-    override val ocNetType: OcNetType = OcNetType.TYPE_L
+    override val ocNetType: OcNetType = OcNetType.LOMAZOVA
     override fun createInitialState(): SimulatableComposedOcNet.State {
         TODO("Not yet implemented")
     }

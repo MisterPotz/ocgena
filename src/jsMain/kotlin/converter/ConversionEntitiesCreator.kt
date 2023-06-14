@@ -34,7 +34,8 @@ class ConversionEntitiesCreator(val placeTyping: PlaceTyping) {
             transitions = Transitions(transition.values.toList()),
             arcs = Arcs(),
             objectTypes = ObjectTypes(placeTyping.toObjectTypes()),
-            placeTyping = placeTyping
+            placeTyping = placeTyping,
+            allArcs = arcs
         )
     }
 

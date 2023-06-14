@@ -1,7 +1,6 @@
 package simulation.client
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import model.*
 import simulation.*
 import simulation.client.loggers.*
@@ -104,9 +103,11 @@ interface ClientSimTaskFactory {
     ): ClientSimTask
 }
 
-class ClientSimTaskFactoryImpl (
+class ClientSimTaskFactoryImpl(
     private val staticCoreOcNet: StaticCoreOcNet,
     private val config: ProcessedSimulationConfig,
+    private val loggingEnabled: Boolean,
+    private val dumpState: Boolean = false
 ) : ClientSimTaskFactory {
     override fun create(
         onSimulationStatusUpdate : (ClientSimTaskStatus) -> Unit,
@@ -117,7 +118,7 @@ class ClientSimTaskFactoryImpl (
     ): ClientSimTask {
         return ClientSimTaskImpl(
             loggerWrapper = DefaultSimTaskLoggerWrapper(
-                loggingEnabled = true,
+                loggingEnabled = loggingEnabled,
                 simTaskClientCallback = simTaskClientCallback,
                 htmlTraceFileWriter = htmlTraceFileWriter,
                 ansiTraceWriter = ansiTraceWriter,
@@ -125,7 +126,8 @@ class ClientSimTaskFactoryImpl (
             ),
             staticCoreOcNet = staticCoreOcNet,
             config = config,
-            onSimulationStatusUpdate = onSimulationStatusUpdate
+            onSimulationStatusUpdate = onSimulationStatusUpdate,
+            dumpState = dumpState
         )
     }
 }
@@ -143,6 +145,11 @@ enum class ClientSimTaskStatus {
 interface ClientSimTask {
     val status : ClientSimTaskStatus
 
+    fun finish()
+    fun performStep(): Boolean
+
+    fun prepareAndRun()
+
     fun finished() : Boolean {
         return status == ClientSimTaskStatus.FINISHED
     }
@@ -151,7 +158,6 @@ interface ClientSimTask {
 
     fun isJustCreated() = status == ClientSimTaskStatus.JUST_CREATED
 
-    fun launch()
 }
 
 class ClientSimTaskImpl(
@@ -159,7 +165,7 @@ class ClientSimTaskImpl(
     private val staticCoreOcNet: StaticCoreOcNet,
     private val config: ProcessedSimulationConfig,
     private val loggerWrapper: SimTaskLoggerWrapper,
-
+    private val dumpState : Boolean,
     ) : ClientSimTask {
     private var _status : ClientSimTaskStatus = ClientSimTaskStatus.JUST_CREATED
     init {
@@ -168,6 +174,10 @@ class ClientSimTaskImpl(
     override val status: ClientSimTaskStatus
         get() = _status
 
+    override fun finish() {
+        task.finish()
+    }
+
     private fun notifyStatus() {
         onSimulationStatusUpdate(status)
     }
@@ -175,12 +185,13 @@ class ClientSimTaskImpl(
     private val simulationCreator = SimulationCreator(
         simulationParams = createParams(staticCoreOcNet, config),
         executionConditions = SimpleExecutionConditions(),
+        dumpState = dumpState,
         logger = object : LoggerFactory {
             override fun create(labelMapping: LabelMapping): Logger {
                 return CompoundLogger(
                     loggingEnabled = true,
                     loggers = arrayOf(
-                        object : StubLogger() {
+                        object : DefaultLogger() {
                             override fun onEnd() {
                                 _status = ClientSimTaskStatus.FINISHED
                                 notifyStatus()
@@ -197,13 +208,28 @@ class ClientSimTaskImpl(
 
     private var jobba: Job? = null
 
-    override fun launch() {
-        if (jobba?.isActive == true) return
-        _status = ClientSimTaskStatus.EXECUTING
-        notifyStatus()
 
-        jobba = myCoroutineScope.launch {
-            task.prepareAndRun()
+    override fun prepareAndRun() {
+        while(!performStep()) { }
+    }
+
+    override fun performStep(): Boolean {
+        return when (_status) {
+            ClientSimTaskStatus.JUST_CREATED -> {
+                _status = ClientSimTaskStatus.EXECUTING
+                notifyStatus()
+                task.prepareRun()
+                false
+            }
+
+            ClientSimTaskStatus.EXECUTING -> {
+                task.doRunStep()
+                false;
+            }
+
+            ClientSimTaskStatus.FINISHED -> {
+                true
+            }
         }
     }
 }

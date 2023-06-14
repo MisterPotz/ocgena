@@ -1,7 +1,14 @@
 package model.time
 
+import kotlinx.serialization.Serializable
 import model.Transition
 import model.TransitionId
+
+@Serializable
+data class SerializableIntervalFunction(
+    val defaultTransitionTimes: SerializableTransitionTimes?,
+    val transitionToFiringTime: Map<TransitionId, SerializableTransitionTimes> = mutableMapOf(),
+)
 
 class IntervalFunction(
     private val defaultTransitionTimes: TransitionTimes?,
@@ -9,6 +16,17 @@ class IntervalFunction(
 ) {
     operator fun get(transition: Transition): TransitionTimes {
         return transitionToFiringTime[transition.id] ?: defaultTransitionTimes!!
+    }
+
+    fun toSerializable(): SerializableIntervalFunction {
+        return SerializableIntervalFunction(
+            defaultTransitionTimes = defaultTransitionTimes?.serializable,
+            transitionToFiringTime = buildMap {
+                for (i in transitionToFiringTime.keys) {
+                    put(i, transitionToFiringTime[i]!!.serializable)
+                }
+            }
+        )
     }
 
     companion object {

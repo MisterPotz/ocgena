@@ -8,7 +8,7 @@ import dsl.OCNetFacadeBuilder
 import model.*
 
 actual class OCDotToDomainConverter actual constructor(
-    private val conversionParams: ConversionParams,
+    val conversionParams: ConversionParams,
 ) {
     private val initialMarking = ObjectMarking()
     val conversionContainer = ConversionEntitiesCreator(
@@ -21,7 +21,6 @@ actual class OCDotToDomainConverter actual constructor(
         val placeTyping = conversionParams.placeTyping
         val inputOutputPlaces = conversionParams.inputOutputPlaces
         val dslElementsContainer = conversionParams.dslElementsContainer
-
 
         for (astPlace in dslElementsContainer.savedPlaces) {
             val placeLabel = astPlace.key

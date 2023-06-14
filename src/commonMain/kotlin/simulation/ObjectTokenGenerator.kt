@@ -30,7 +30,7 @@ class SingleTypeObjectTokenGenerator(
             id = idIssuer.newIntId(),
             name = idIssuer.lastLabelId,
             type = type,
-            ovmap = EmptyObjectValuesMap,
+            ovmap = EmptyObjectValuesMap(),
         )
     }
 }
