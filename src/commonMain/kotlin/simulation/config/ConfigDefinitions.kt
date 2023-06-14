@@ -10,7 +10,6 @@ import simulation.config.SimulationConfig
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
-
 @JsExport()
 class InputPlacesConfig(val inputPlaces: String) : Config() {
     override val type = ConfigEnum.INPUT_PLACES
@@ -123,7 +122,13 @@ class InitialMarkingConfig(
 ) : Config() {
     override val type = ConfigEnum.INITIAL_MARKING
     override fun toSerializable(): Any {
-        TODO("Not yet implemented")
+        return placeIdToInitialMarking.entries.joinToString(
+            separator = "; ",
+            prefix = "[initial marking: ",
+            postfix = "]"
+        ) {
+            "${it.key}: ${it.value};"
+        }
     }
 
     companion object {
@@ -355,4 +360,3 @@ fun createConfig(
         }.toTypedArray()
     )
 }
-

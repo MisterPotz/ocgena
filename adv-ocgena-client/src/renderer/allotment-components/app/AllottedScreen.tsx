@@ -313,7 +313,7 @@ export const AllottedScreen = ({
 
       <Allotment.Pane>
         <Allotment>
-          <Allotment.Pane
+      {/*     <Allotment.Pane
             key="activityBar"
             minSize={48}
             maxSize={48}
@@ -332,7 +332,7 @@ export const AllottedScreen = ({
                 onActivityChanged(index);
               }}
             />
-          </Allotment.Pane>
+          </Allotment.Pane> */}
           {/* {primarySideBarPosition === "left" ? sidebar : auxiliarySidebar} */}
           <Allotment.Pane
             key="content"
