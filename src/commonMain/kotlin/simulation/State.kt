@@ -1,14 +1,9 @@
 package simulation
 
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import model.*
-import model.time.IntervalFunction
-import model.time.SerializableIntervalFunction
-import simulation.time.SerializableTransitionOccurrenceAllowedTimes
 import utils.html.indentLines
 import utils.html.underline
-import simulation.time.TransitionOccurrenceAllowedTimes
 
 @Serializable
 data class SerializableState(

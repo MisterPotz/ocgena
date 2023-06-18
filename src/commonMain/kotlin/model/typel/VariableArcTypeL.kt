@@ -11,6 +11,7 @@ data class SerializableArcTypeL(
     val toId : String?,
     val expression: String
 ) : SerializableAtom
+
 data class VariableArcTypeL(
     override val id: String,
     override var arrowNode: PetriNode?,

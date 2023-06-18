@@ -116,7 +116,7 @@ _edge_subgraph = _ id:_edge_subgraph_id _ "{" _body:cluster_statements? __ "}" {
   const body = _body ?? [ ];
   return id
     ? { type: 'edge_subgraph', id, body, location: location() }
-    : { type: 'edge_subgraph', body, location: location() };
+    : { type: 'edge_subgraph',     body, location: location() };
 }
 
 // _edge_target_group
@@ -245,70 +245,73 @@ RootExpression = "(" _  expression:Expression _ ")" {
 
 Expression
   = head:Term tail:(ExpressionOp)* {
-  	return { 
-    	head,
-      tail
+    return {
+      values: [...head.values, ...(tail ? tail.flatMap((a: any) => a.values) : [])],
+      ops: [...head.ops, ...(tail ? tail.flatMap((a: any) => a.ops) : [])]
     }
  }
     
 ExpressionOp 
 	= _ op:("+" / "-") _ target:Term {
-    return  { 
-       op,
-       target
+    return {
+      values: [...target.values],
+      ops: [op, ...target.ops]
     }
 }
 
 TermOp 
 	= _ op:("*" / "/") _ target:Factor { 
-	return { 
-      op,
-      target
-    };
+  return {
+    values: [...( target ? target.values: [])],
+    ops: [op, ...(target ? target.ops : [])]
+  }
 }
 
 Term
   = head:UnaryOp tail:(TermOp)* {
-  	return {
-      head, 
-      tail
+    return {
+      values: [...head.values, ...(tail ? tail.flatMap((a: any) => a.values) : [])],
+      ops: [...head.ops, ...(tail ? tail.flatMap((a: any) => a.ops) : [])]
     }
 }
 
 Factor
-  = "(" _ expr:Expression _ ")" { return expr; }
-  / Integer
-  / Variable
+  = "(" _ expr:Expression _ ")" {
+    return {
+      values: expr.values,
+      ops: ["(",...expr.ops, ")"]
+    }
+  }
+  / integer:Integer { 
+    return {
+      values: [integer],
+      ops: []
+    }
+  }
+  / variable:Variable { 
+    return {
+      values: [variable],
+      ops: []
+    }
+  }
 
 UnaryOp 
   = _ sign:("+" / "-")? _ value:(Factor) _ {
-    if (!sign && sign == "+") {
+    if (sign) {
+      return {
+        values: [...value.values ],
+        ops: [ sign,...value.ops    ]
+      }
+    } else {
       return value
-    }
-
-    return {
-      head : { 
-        head: 0,
-        tail: []
-      },
-      tail : [
-        {
-          sign,
-          target: value
-        }
-      ]
     }
   }
 
 Integer "integer"
-  = _ [0-9]+ { return { head: parseInt(text(), 10), tail: [] } }
+  = _ [0-9]+ { return parseInt(text(), 10) }
   
 Variable "variable"
- = _ [a-zA-Z]+ { return { 
-  head: { variable: text(), },
-    tail: [] 
-  } 
-}
+ = _ [a-zA-Z]+ { return text() }
 
 _literal
   = QUOTED_STRING

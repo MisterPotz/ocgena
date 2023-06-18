@@ -1,4 +1,4 @@
-package simulation.time
+package simulation
 
 import config.TimeRange
 import model.Time

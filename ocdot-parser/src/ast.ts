@@ -9,6 +9,12 @@ import { prependIndent } from './exts';
  * @alpha
  */
 export namespace AST {
+
+  export type MathExpression = {
+    values: (string | number)[],
+    ops : string[]
+  }
+
   export type FileRange = _FileRange;
   type ValueOf<T> = T[keyof T];
 
@@ -163,14 +169,10 @@ export namespace AST {
     variable : string
   }
 
-  export interface ExpressionOp {
-    op : "*" | "+" | "-" | "/",
-    target : Expression
-  }
+  export type ExpressionOp = "*" | "+" | "-" | "/"
 
-  export interface Expression { 
-    head : Expression | number | Variable
-    tail : ExpressionOp[]
+  export interface Expression extends MathExpression { 
+
   }
 
   export interface RootExpression extends EdgeOpParams, Expression { 
@@ -537,22 +539,43 @@ export namespace AST {
       }
     }
 
-    protected stringifyExpressionOp(expressionOp : ExpressionOp) : string { 
-      let op = expressionOp.op
-      let expression = this.stringifyExpressionElement(expressionOp.target)
-      return `${op} ${expression}`
-    }
+    // protected stringifyExpressionOp(expressionOp : ExpressionOp) : string { 
+    //   let op = expressionOp.op
+    //   let expression = this.stringifyExpressionElement(expressionOp.target)
+    //   return `${op} ${expression}`
+    // }
 
     public stringifyExpression(expression : Expression) : string {
-      let arr = [ ]
-      if (expression.tail.length == 0 && !isExpression(expression.head)) {
-        return this.stringifyExpressionElement(expression.head);
+      let opIndex = expression.ops.length - 1
+      let valueIndex = expression.values.length - 1
+
+      let string = ""
+      while (opIndex >= 0 || valueIndex >= 0) {
+        let op = expression.ops[opIndex] 
+        while (opIndex >= 0) {
+          op = expression.ops[opIndex]
+          let foundParentheses = undefined
+          if ((foundParentheses && op === foundParentheses) || (!foundParentheses && (op === "(" || op === ")"))) {
+            foundParentheses = op;
+            string = op + string
+            opIndex--;
+          } else {
+            break;
+          }
+        }
+
+        let value = expression.values[valueIndex]
+        string = value + string 
+        valueIndex--;
+
+        if (opIndex < 0) continue;
+
+        // consume the op
+        op = expression.ops[opIndex] 
+        string = op + string
+        opIndex--;
       }
-      arr.push(this.stringifyExpressionElement(expression.head))
-      for (let i = 0; i < expression.tail.length; i++) {
-        arr.push(this.stringifyExpressionOp(expression.tail[i]))
-      }
-      return "(" + arr.join(' ') + ")";
+      return "(" + string + ")";
     }
 
     protected printEdgeOpParams(edgeOpParams : EdgeOpParams) : string {

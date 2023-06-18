@@ -6,7 +6,7 @@ import model.typea.ArcMultiplicityTypeA
 import model.typel.ExpressionArcMultiplicity
 import simulation.PMarkingProvider
 import simulation.random.TokenSelector
-import simulation.time.TransitionOccurrenceAllowedTimes
+import simulation.TransitionOccurrenceAllowedTimes
 import simulation.typea.EnabledBindingTypeAResolver
 
 class EnabledBindingResolverFactory(

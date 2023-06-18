@@ -8,8 +8,8 @@ import model.typea.ArcMultiplicityTypeA
 import model.typel.ArcExpression
 import model.typel.ExpressionArcMultiplicity
 import simulation.SimulatableComposedOcNet
-import simulation.lomazova.SimulatableOcNetTypeL
 import simulation.typea.SimulatableOcNetTypeA
+import simulation.typel.SimulatableOcNetTypeL
 
 class OcNetCreator(
     private val coreOcNet: StaticCoreOcNet,

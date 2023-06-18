@@ -1,7 +1,6 @@
-package simulation.time
+package simulation
 
 import kotlinx.serialization.Serializable
-import model.SerializableTransition
 import model.Time
 import model.Transition
 import model.TransitionId

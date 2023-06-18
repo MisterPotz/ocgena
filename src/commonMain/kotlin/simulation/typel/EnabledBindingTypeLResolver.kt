@@ -1,4 +1,4 @@
-package simulation.typea
+package simulation.typel
 
 import model.*
 import model.typea.ArcMultiplicityTypeA
@@ -9,15 +9,13 @@ import simulation.binding.EnabledBindingResolver
 import simulation.binding.EnabledBindingWithTokens
 import simulation.random.TokenSelector
 
-
-class EnabledBindingTypeAResolver(
+class EnabledBindingTypeLResolver(
     private val pMarkingProvider: PMarkingProvider,
     private val arcMultiplicity: ArcMultiplicityTypeA,
     val arcs: Arcs,
     private val tokenSelector: TokenSelector,
     private val tTimes: TransitionOccurrenceAllowedTimes
 ) : EnabledBindingResolver {
-
     private val pMarking : ObjectMarking
         get() = pMarkingProvider.pMarking
 

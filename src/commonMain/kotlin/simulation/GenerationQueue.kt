@@ -7,7 +7,6 @@ import model.ImmutableObjectMarking
 import model.PlaceId
 import model.PlaceTyping
 import model.Time
-import simulation.time.TokenGenerationTimeSelector
 
 interface GenerationQueue {
     fun shiftTime(time: Time)

@@ -1,4 +1,4 @@
-package simulation.lomazova
+package simulation.typel
 
 import model.OcNetType
 import model.time.IntervalFunction

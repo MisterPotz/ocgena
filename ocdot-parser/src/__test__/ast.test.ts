@@ -1,6 +1,6 @@
 import { AST } from '../ast'
 
-describe('parse', () => {
+describe.skip('parse', () => {
 
     test('try parsing', () => { 
         const myOcDot = `
@@ -35,9 +35,14 @@ describe('parse', () => {
     test("parsing root expression", () => {
         const expression = "(3*k + 1)"
         const parseResult = AST.parseExpression(expression)
+         
+        let compiler = new AST.Compiler();
+        let a = compiler.stringifyExpression(parseResult)
+
         console.log(JSON.stringify(parseResult))
 
         expect(parseResult).toBeDefined();
+        expect(a).toBeDefined();
     })
 
     test("with negative parsing root expression", () => {

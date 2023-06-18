@@ -1,4 +1,4 @@
-package simulation.time
+package simulation
 
 import model.Time
 import model.Transition

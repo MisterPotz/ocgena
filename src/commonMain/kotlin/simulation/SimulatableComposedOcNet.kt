@@ -2,7 +2,6 @@ package simulation
 
 import model.*
 import model.time.IntervalFunction
-import simulation.time.TransitionOccurrenceAllowedTimes
 
 interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     val coreOcNet: StaticCoreOcNet

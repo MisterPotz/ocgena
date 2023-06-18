@@ -2,11 +2,7 @@ package simulation
 
 import model.ActiveFiringTransition
 import model.ActiveTransitionMarking
-import model.Time
 import simulation.binding.EnabledBindingWithTokens
-import simulation.time.TransitionDurationSelector
-import simulation.time.TransitionInstanceOccurenceDeltaSelector
-import simulation.time.TransitionOccurrenceAllowedTimes
 
 class TransitionTokensLocker(
     private val pMarkingProvider: PMarkingProvider,
