@@ -415,8 +415,7 @@ function peg$parse(input: string, options?: ParseOptions) {
   };
   const peg$c81 = function (head: any, tail: any): any {
     return {
-      values: [...head.values, ...(tail ? tail.flatMap((a: any) => a.values) : [])],
-      ops: [...head.ops, ...(tail ? tail.flatMap((a: any) => a.ops) : [])],
+      infix: [...head.infix, ...(tail ? tail.flatMap((a: any) => a.infix) : [])],
     };
   };
   const peg$c82 = '+';
@@ -425,8 +424,7 @@ function peg$parse(input: string, options?: ParseOptions) {
   const peg$c85 = peg$literalExpectation('-', false);
   const peg$c86 = function (op: any, target: any): any {
     return {
-      values: [...target.values],
-      ops: [op, ...target.ops],
+      infix: [op, ...target.infix],
     };
   };
   const peg$c87 = '*';
@@ -435,42 +433,38 @@ function peg$parse(input: string, options?: ParseOptions) {
   const peg$c90 = peg$literalExpectation('/', false);
   const peg$c91 = function (op: any, target: any): any {
     return {
-      values: [...(target ? target.values : [])],
-      ops: [op, ...(target ? target.ops : [])],
+      infix: [op, ...target.infix],
     };
   };
   const peg$c92 = function (head: any, tail: any): any {
     return {
-      values: [...head.values, ...(tail ? tail.flatMap((a: any) => a.values) : [])],
-      ops: [...head.ops, ...(tail ? tail.flatMap((a: any) => a.ops) : [])],
+      infix: [...head.infix, ...(tail ? tail.flatMap((a: any) => a.infix) : [])],
     };
   };
   const peg$c93 = function (expr: any): any {
     return {
-      values: expr.values,
-      ops: ['(', ...expr.ops, ')'],
+      infix: ['(', ...expr.infix, ')'],
     };
   };
   const peg$c94 = function (integer: any): any {
     return {
-      values: [integer],
-      ops: [],
+      infix: [integer],
     };
   };
   const peg$c95 = function (variable: any): any {
     return {
-      values: [variable],
-      ops: [],
+      infix: [variable],
     };
   };
   const peg$c96 = function (sign: any, value: any): any {
     if (sign) {
       return {
-        values: [...value.values],
-        ops: [sign, ...value.ops],
+        infix: [sign, ...value.infix],
       };
     } else {
-      return value;
+      return {
+        infix: [...value.infix],
+      };
     }
   };
   const peg$c97 = peg$otherExpectation('integer');

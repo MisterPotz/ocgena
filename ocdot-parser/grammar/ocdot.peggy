@@ -246,52 +246,51 @@ RootExpression = "(" _  expression:Expression _ ")" {
 Expression
   = head:Term tail:(ExpressionOp)* {
     return {
-      values: [...head.values, ...(tail ? tail.flatMap((a: any) => a.values) : [])],
-      ops: [...head.ops, ...(tail ? tail.flatMap((a: any) => a.ops) : [])]
+      infix: [
+        ...head.infix, 
+        ...(tail ? tail.flatMap((a: any) => a.infix) : [])
+      ]
     }
  }
     
 ExpressionOp 
 	= _ op:("+" / "-") _ target:Term {
     return {
-      values: [...target.values],
-      ops: [op, ...target.ops]
+      infix: [op, ...target.infix]
     }
 }
 
-TermOp 
+TermOp
 	= _ op:("*" / "/") _ target:Factor { 
-  return {
-    values: [...( target ? target.values: [])],
-    ops: [op, ...(target ? target.ops : [])]
-  }
+    return {
+      infix: [op, ...target.infix]
+    }
 }
 
 Term
   = head:UnaryOp tail:(TermOp)* {
     return {
-      values: [...head.values, ...(tail ? tail.flatMap((a: any) => a.values) : [])],
-      ops: [...head.ops, ...(tail ? tail.flatMap((a: any) => a.ops) : [])]
+      infix: [
+        ...head.infix,
+        ...(tail ? tail.flatMap((a: any) => a.infix) : [])
+      ]
     }
 }
 
 Factor
   = "(" _ expr:Expression _ ")" {
     return {
-      values: expr.values,
-      ops: ["(",...expr.ops, ")"]
+      infix: ["(", ...expr.infix, ")"] 
     }
   }
   / integer:Integer { 
     return {
-      values: [integer],
-      ops: []
+      infix: [integer]
     }
   }
   / variable:Variable { 
     return {
-      values: [variable],
-      ops: []
+      infix: [variable]
     }
   }
 
@@ -299,11 +298,12 @@ UnaryOp
   = _ sign:("+" / "-")? _ value:(Factor) _ {
     if (sign) {
       return {
-        values: [...value.values ],
-        ops: [ sign,...value.ops    ]
+        infix: [sign, ...value.infix]
       }
     } else {
-      return value
+      return {
+        infix: [...value.infix]
+      }
     }
   }
 

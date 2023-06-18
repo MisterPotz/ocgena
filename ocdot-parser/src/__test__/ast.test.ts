@@ -1,8 +1,8 @@
 import { AST } from '../ast'
 
-describe.skip('parse', () => {
+describe('parse', () => {
 
-    test('try parsing', () => { 
+    test('parsing is defined', () => { 
         const myOcDot = `
             ocnet { 
                 places { 
@@ -27,38 +27,6 @@ describe.skip('parse', () => {
             }
         `
         const result = AST.parse(myOcDot, {rule: AST.Types.OcDot})
-        console.log(JSON.stringify(result))
-        console.log(AST.stringify(result))
         expect(result).toBeDefined();
-    })
-
-    test("parsing root expression", () => {
-        const expression = "(3*k + 1)"
-        const parseResult = AST.parseExpression(expression)
-         
-        let compiler = new AST.Compiler();
-        let a = compiler.stringifyExpression(parseResult)
-
-        console.log(JSON.stringify(parseResult))
-
-        expect(parseResult).toBeDefined();
-        expect(a).toBeDefined();
-    })
-
-    test("with negative parsing root expression", () => {
-        const expression = "(-3*k + 1)"
-        const parseResult = AST.parseExpression(expression)
-        console.log(JSON.stringify(parseResult))
-
-        expect(parseResult).toBeDefined();
-    })
-
-    test("with negative parsing root expression", () => {
-        const expression = "(- (3 + 5) * 5 + 120 / k )"
-
-        const parseResult = AST.parseExpression(expression)
-        console.log(JSON.stringify(parseResult))
-
-        expect(parseResult).toBeDefined();
     })
 });

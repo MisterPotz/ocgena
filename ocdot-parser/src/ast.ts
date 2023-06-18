@@ -11,8 +11,7 @@ import { prependIndent } from './exts';
 export namespace AST {
 
   export type MathExpression = {
-    values: (string | number)[],
-    ops : string[]
+    infix: (string | number)[]
   }
 
   export type FileRange = _FileRange;
@@ -546,36 +545,7 @@ export namespace AST {
     // }
 
     public stringifyExpression(expression : Expression) : string {
-      let opIndex = expression.ops.length - 1
-      let valueIndex = expression.values.length - 1
-
-      let string = ""
-      while (opIndex >= 0 || valueIndex >= 0) {
-        let op = expression.ops[opIndex] 
-        while (opIndex >= 0) {
-          op = expression.ops[opIndex]
-          let foundParentheses = undefined
-          if ((foundParentheses && op === foundParentheses) || (!foundParentheses && (op === "(" || op === ")"))) {
-            foundParentheses = op;
-            string = op + string
-            opIndex--;
-          } else {
-            break;
-          }
-        }
-
-        let value = expression.values[valueIndex]
-        string = value + string 
-        valueIndex--;
-
-        if (opIndex < 0) continue;
-
-        // consume the op
-        op = expression.ops[opIndex] 
-        string = op + string
-        opIndex--;
-      }
-      return "(" + string + ")";
+      return expression.infix.join('')
     }
 
     protected printEdgeOpParams(edgeOpParams : EdgeOpParams) : string {
