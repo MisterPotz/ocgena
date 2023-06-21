@@ -10,7 +10,7 @@ on:
   push:
     branches: ["master"]
     paths:
-      - "docs/**"
+      - "adv-ocgena-client/docs/**"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -43,7 +43,7 @@ jobs:
           ruby-version: '3.1' # Not needed with a .ruby-version file
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
-          working-directory: '${{ github.workspace }}/docs'
+          working-directory: '${{ github.workspace }}/adv-ocgena-client/docs'
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
@@ -56,7 +56,7 @@ jobs:
         # Automatically uploads an artifact from the './_site' directory by default
         uses: actions/upload-pages-artifact@v1
         with:
-          path: "docs/_site/"
+          path: "adv-ocgena-client/docs/_site/"
 
   # Deployment job
   deploy:
