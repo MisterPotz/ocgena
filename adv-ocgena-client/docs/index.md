@@ -9,24 +9,41 @@ nav_order: 0
 Simplify the study of intricate business processes and the generation of object-centric event logs for a smoother research experience.
 {: .fs-6 .fw-300 }
 
-{: .warning }
-> OCGENA is still under heavy development and is going through early iterations. All latest releases can be found at the [repository](https://github.com/MisterPotz/ocgena).
+{: .note }
+> OCGENA is under development and is planned to have more features. All latest releases can be found at the [repository](https://github.com/MisterPotz/ocgena).
 
 Welcome!
 
+**OCGENA** is a tool designed to simulate Object-Centric Petri nets, which enables these use cases:
+1. Business process designers can model their processes in the new OC-net notation and run simulations
+2. Researchers can generate object-centric event-logs to evaluate new object-centric process mining algorithms.
 
-**OCGENA** is a tool designed to simulate Object-Centric Petri nets, providing valuable insights and enabling researchers and developers to test and evaluate new OC algorithms. Here you will find comprehensive information about the tool, its features, and how to use it.
+Here you will find comprehensive information about the tool, its features, and how to use it.
 
-## Getting Started
+## Features
+- Simulation of Object-Centric Petri Nets
+- Generation of event-logs which can be used to evaluate Object-Centric process-mining algorithms
+- Definition of Object-Centric Petri Nets with DSL based on DOT (OCDOT) in embedded user-friendly editor
+- Auto-rendering of OC-net as you type
+- Configuration of simulations with YAML files
+- Embedded editor support for configuration files with auto-completion of available parameters
+- Auto-reporting of any configuration/model consistency errors
+- Standard text editor features for saving and opening configuration and model files
 
-This section is dedicated to providing you with the necessary steps to set up and run the OCGENA project.
+## Screenshots
+![GUI](./assets/ui.png)
 
-[Prerequisites]
+{: .text-center }
+_User Interface of OCGENA_
 
-[Installation]
+![Model](./assets/model.png)
 
-[How to run a simulation]
+{: .text-center}
+_Definition of OC-net in OCDOT_
+
+
 
 ## About
 
-Background and context about the OCGENA project, its development, and its contributors.
+This project was done by *Alexander S. Gornostaev* as coursework on topic "Object-Centric Petri Net Simulator" at the Higher School of Economics with the help of the PAIS Lab.
+The project supervisor is *Alexey A. Mitsyuk*.

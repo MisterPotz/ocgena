@@ -1,6 +1,17 @@
 package converter
 
 import ast.*
+import utils.ExpressionNode
+
+class ExpressionTreeResolver(private val parentExpressionNode: ExpressionNode) {
+    val variable by lazy {
+
+    }
+
+//    private fun findVariable(expressionNode: ExpressionNode): String {
+//        if (expressionNode.data.toIntOrNull() == nul
+//    }
+}
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
@@ -23,7 +34,9 @@ class ExpressionExecutor(private val rootExpression: RootExpression) {
         PLUS("+"), DIV("/"), MULT("*"), MINUS("-");
 
         companion object {
-            private val ops = Op.values().fold(mutableMapOf<String, Op>()) { accum, op -> accum[op.stringOp] = op; accum }
+            private val ops =
+                Op.values().fold(mutableMapOf<String, Op>()) { accum, op -> accum[op.stringOp] = op; accum }
+
             fun convert(op: String): Op {
                 return ops[op]!!
             }

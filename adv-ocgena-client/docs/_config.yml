@@ -3,6 +3,7 @@ description: A tool to study object-centric business process and generate object
 theme: just-the-docs
 
 url: https://just-the-docs.github.io
+url: https://misterpotz.github.io/ocgena 
 
 color_scheme: light
 
@@ -17,6 +18,9 @@ callouts:
   warning:
     title: Warning
     color: red
+  note:
+    title: Note
+    color: yellow
   construction:
     title: Under construction
     color: yellow

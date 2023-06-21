@@ -18,7 +18,7 @@ class TransitionOccurrenceAllowedTimes {
                 for (i in transitionsToNextTimes.keys) {
                     put(i.id, transitionsToNextTimes[i]!!)
                 }
-            }wo
+            }
         )
     }
     fun shiftByTime(time: Time) {

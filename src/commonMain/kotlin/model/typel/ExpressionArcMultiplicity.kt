@@ -4,7 +4,6 @@ import model.Arc
 import model.ArcMultiplicity
 import model.Arcs
 import model.NormalArc
-import model.typea.ArcMultiplicityTypeA
 import model.typea.VariableArcTypeA
 
 interface ExpressionArcMultiplicity : ArcMultiplicity {
@@ -22,13 +21,11 @@ class ArcMultiplicityTypeL(val arcs : Arcs) : ArcMultiplicity {
         }
     }
 
-    data class DependentVariable()
-
     fun getMultiplicity(arc: Arc, ) : Int {
         return when (arc) {
             is NormalArc -> arc.multiplicity
             is VariableArcTypeA -> 1
-            is VariableArcTypeL -> ???
+            is VariableArcTypeL -> TODO()
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
     }
@@ -78,6 +75,7 @@ class ArcMultiplicityTypeL(val arcs : Arcs) : ArcMultiplicity {
                 }
                 is VariableExpression -> Wrong(toString() + "+ " + transferAmount.toString())
                 is Wrong -> Wrong(toString() + "+ " + transferAmount.toString())
+                SimpleVariable -> TODO()
             }
         }
     }
