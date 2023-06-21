@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: docs
+        working-directory: adv-ocgena-client/docs
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -44,6 +44,10 @@ jobs:
           bundler-cache: true # runs 'bundle install' and caches installed gems automatically
           cache-version: 0 # Increment this number if you need to re-download cached gems
           working-directory: '${{ github.workspace }}/adv-ocgena-client/docs'
+      - name: Add platform to bundle lockfile
+        run: |
+          bundle lock --add-platform x86_64-linux
+          bundle install
       - name: Add platform to bundle lockfile
         run: bundle lock --add-platform x86_64-linux
       - name: Setup Pages
