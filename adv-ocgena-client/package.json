@@ -115,7 +115,6 @@
     "observable-hooks": "^4.2.1",
     "ocdot-parser": "file:../ocdot-parser",
     "ocgena": "file:../build/js/packages/ocgena",
-    "ocgena-client": "file:../ocgena-client",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.1",

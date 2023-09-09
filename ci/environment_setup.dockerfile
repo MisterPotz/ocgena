@@ -39,9 +39,20 @@ SHELL ["/bin/bash", "-c"]
 
 RUN curl -s "https://get.sdkman.io" | bash && \
     source $HOME/.sdkman/bin/sdkman-init.sh &&\
-    sdk install java 17.0.8-ms && \
+    sdk install java 11.0.20-ms && \
     sdk install gradle
 
+
 ADD --chmod=777 . "/ocgena"
+
+RUN cd /ocgena/adv-ocgena-client/docs \
+  && bundle install \
+  && bundle exec jekyll serve
+
+RUN cd /ocgena \
+  && gradle \
+  && gradle compileDevelopmentExecutableKotlinJs \
+  && cd adv-ocgena-client \
+  && npm install && npm package
 
 CMD [ "/bin/bash", "-i" ]
