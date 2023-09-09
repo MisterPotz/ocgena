@@ -4,6 +4,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LANG 'en_US.UTF-8'
 
 RUN apt-get update -yqq && apt-get update -yqq && apt-get install -y \
+  bash \
   curl \
   expect \
   git \
@@ -27,17 +28,20 @@ RUN apt-get update -yqq && apt-get update -yqq && apt-get install -y \
 
 RUN echo "$HOME"
 
-RUN groupadd -g 1000 -r jenkins && \
-  groupadd -g 999 -r docker && \
-  groupadd -g 994 -r dockerroot && \
-  useradd --create-home -d "/home/jenkins" -u 1000 -r -g jenkins -G docker,dockerroot jenkins
+# RUN groupadd -g 1000 -r jenkins && \
+#   groupadd -g 999 -r docker && \
+#   groupadd -g 994 -r dockerroot && \
+#   useradd --create-home -d "/home/jenkins" -u 1000 -r -g jenkins -G docker,dockerroot jenkins
 
-USER jenkins
+# USER jenkins
+
+SHELL ["/bin/bash", "-c"]
 
 RUN curl -s "https://get.sdkman.io" | bash && \
-    source "$HOME/.sdkman/bin/sdkman-init.sh" &&\
+    source $HOME/.sdkman/bin/sdkman-init.sh &&\
     sdk install java 17.0.8-ms && \
     sdk install gradle
 
-# RUN mkdir "/sdk"
-# RUN chown -R jenkins "/sdk"
+ADD --chmod=777 . "/ocgena"
+
+CMD [ "/bin/bash", "-i" ]
