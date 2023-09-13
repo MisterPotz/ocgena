@@ -22,6 +22,8 @@ RUN apt-get update -yqq && apt-get update -yqq && apt-get install -y \
   vim \
   openssh-client \
   locales \
+  ruby-full \
+  build-essential \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
@@ -40,19 +42,21 @@ SHELL ["/bin/bash", "-c"]
 RUN curl -s "https://get.sdkman.io" | bash && \
     source $HOME/.sdkman/bin/sdkman-init.sh &&\
     sdk install java 11.0.20-ms && \
-    sdk install gradle
+    sdk install gradle && \
+    gem install bundler 
 
+RUN apt-get update -yqq && apt-get install -y ruby-full && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ADD --chmod=777 . "/ocgena"
 
 RUN cd /ocgena/adv-ocgena-client/docs \
   && bundle install \
-  && bundle exec jekyll serve
+  && bundle exec jekyll build
 
-RUN cd /ocgena \
-  && gradle \
-  && gradle compileDevelopmentExecutableKotlinJs \
-  && cd adv-ocgena-client \
-  && npm install && npm package
+# RUN cd /ocgena \
+#   && gradle \
+#   && gradle compileDevelopmentExecutableKotlinJs \
+#   && cd adv-ocgena-client \
+#   && npm install && npm package
 
 CMD [ "/bin/bash", "-i" ]
