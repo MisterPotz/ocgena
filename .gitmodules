@@ -1,0 +1,3 @@
+[submodule "ocgena-ci"]
+	path = ocgena-ci
+	url = git@github.com:MisterPotz/ocgena-ci.git

@@ -1,1 +1,0 @@
-FROM environment_setup
