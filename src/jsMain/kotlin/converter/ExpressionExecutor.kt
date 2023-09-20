@@ -1,17 +1,7 @@
 package converter
 
 import ast.*
-import utils.ExpressionNode
 
-class ExpressionTreeResolver(private val parentExpressionNode: ExpressionNode) {
-    val variable by lazy {
-
-    }
-
-//    private fun findVariable(expressionNode: ExpressionNode): String {
-//        if (expressionNode.data.toIntOrNull() == nul
-//    }
-}
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
