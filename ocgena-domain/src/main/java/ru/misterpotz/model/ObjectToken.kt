@@ -11,11 +11,13 @@ class EmptyObjectValuesMap : ObjectValuesMap {
     }
 }
 
-typealias Time = Int
+typealias Time = Long
+
+typealias ObjectTokenId = Long
 
 @Serializable
 data class ObjectToken(
-    val id : Long,
+    val id: Long,
     val name: String,
     val type: ObjectType,
     val ovmap: ObjectValuesMap = EmptyObjectValuesMap(),

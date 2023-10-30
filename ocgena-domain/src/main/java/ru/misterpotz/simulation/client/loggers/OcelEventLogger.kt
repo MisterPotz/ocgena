@@ -28,7 +28,7 @@ class OcelEventLogger(
     val labelMapping: LabelMapping,
     val ocelWriter: OcelWriter,
     private val timmeStampMapper: TimeStampMapper = TimeStampMapper()
-) : DefaultLogger() {
+) : NoOpLogger() {
 
     private val eventLog = EventLog()
 
@@ -43,14 +43,14 @@ class OcelEventLogger(
         state: SimulatableComposedOcNet.State,
         simulationTime: SimulationTime
     ) = Unit
-    override fun onTransitionEnded(executedBinding: ExecutedBinding) {
+    override fun onEndTransition(executedBinding: ExecutedBinding) {
         val event = modelToEventLogConverter.convertToEventEnd(executedBinding)
         eventLog.recordEvent(event)
         val objects = modelToEventLogConverter.getObjects(executedBinding)
         eventLog.recordObjects(objects)
     }
 
-    override fun onTransitionStart(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: ActiveFiringTransition) {
         val event = modelToEventLogConverter.convertToEventStart(transition)
         val objects = modelToEventLogConverter.getObjects(transition)
         eventLog.recordObjects(objects)

@@ -1,6 +1,6 @@
 package simulation
 
-import model.ObjectMarking
+import ru.misterpotz.model.ObjectMarking
 import model.Time
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.marking.PMarkingProvider
@@ -161,7 +161,7 @@ class SimulationTaskStepExecutor @Inject constructor(
     private fun findAndStartEnabledTransitions() {
         var enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
 
-        logger.onTransitionStartSectionStart()
+        logger.beforeStartingNewTransitions()
 
         if (enabledBindings.isEmpty()) {
             simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = false)

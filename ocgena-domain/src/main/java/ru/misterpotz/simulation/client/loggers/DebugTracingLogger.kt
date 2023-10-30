@@ -4,6 +4,7 @@ import eventlog.ActivityOccurrenceRegistry
 import eventlog.EventLog
 import eventlog.ModelToEventLogConverter
 import model.*
+import ru.misterpotz.model.ObjectMarking
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
@@ -69,17 +70,17 @@ class DebugTracingLogger(
         mprintln("""ending transitions:""".indent(2))
     }
 
-    override fun onTransitionStartSectionStart() {
+    override fun beforeStartingNewTransitions() {
         mprintln("""starting transitions:""".indent(2))
     }
 
-    override fun onTransitionEnded(executedBinding: ExecutedBinding) {
+    override fun onEndTransition(executedBinding: ExecutedBinding) {
         val event = modelToEventLogConverter.convertToEventEnd(executedBinding)
         eventLog.recordEvent(event)
         mprintln(executedBinding.prettyPrintExecuted().indentMargin(3, margin = "x"))
     }
 
-    override fun onTransitionStart(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: ActiveFiringTransition) {
         mprintln(transition.prettyPrintStarted().trimMargin().indentMargin(3))
     }
 }

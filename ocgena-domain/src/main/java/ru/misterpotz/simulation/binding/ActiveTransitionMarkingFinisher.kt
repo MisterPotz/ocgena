@@ -2,8 +2,8 @@ package simulation.binding
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import model.ImmutableObjectMarking
-import model.ObjectMarking
+import ru.misterpotz.model.ImmutableObjectMarking
+import ru.misterpotz.model.ObjectMarking
 import simulation.Logger
 import simulation.SimulationStateProvider
 import javax.inject.Inject
@@ -36,7 +36,7 @@ class ActiveTransitionFinisherImpl @Inject constructor(
             producedMap = markingForOutputPlaces,
             finishedTime = simulationTime.globalTime
         )
-        logger.onTransitionEnded(executedBinding)
+        logger.onEndTransition(executedBinding)
     }
 
     private fun getMarkingForOutputPlaces(activeFiringTransition: ActiveFiringTransition): ImmutableObjectMarking {

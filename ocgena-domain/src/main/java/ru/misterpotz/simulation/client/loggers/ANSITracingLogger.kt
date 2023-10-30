@@ -2,24 +2,44 @@ package simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import model.ObjectMarking
+import ru.misterpotz.model.ObjectMarking
 import model.Time
-import ru.misterpotz.simulation.di.LoggingConfiguration
+import ru.misterpotz.simulation.logging.LogConfiguration
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
 import simulation.client.Writer
 import utils.*
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 
-@OptIn(ExperimentalJsExport::class)
-@JsExport
 class ANSITracingLogger(
     override val loggingEnabled: Boolean,
-    val loggingConfiguration: LoggingConfiguration,
+    val loggingConfiguration: LogConfiguration,
     val writer: Writer,
 ) : Logger {
+
+
+    fun onStart() {
+
+    }
+    fun afterInitialMarking()
+
+    fun onExecutionNewStepStart()
+
+    fun beforeStartingNewTransitions()
+    fun onStartTransition(transition: ActiveFiringTransition)
+    fun afterStartingNewTransitions()
+
+    fun beforeEndingTransitions()
+    fun onEndTransition(executedBinding: ExecutedBinding)
+    fun afterEndingTransitions()
+
+    fun onExecutionStepFinish(newTimeDelta: Time)
+
+    fun afterFinalMarking()
+
+    fun onTimeout()
+
+    fun onEnd()
 
     override fun onTimeout() {
         writer.writeLine("execution timeout")
@@ -31,15 +51,21 @@ class ANSITracingLogger(
 
     override fun onFinalMarking(marking: ObjectMarking) {
         writer.writeLine("""${background("125")}final marking:$ANSI_RESET""".indent(1))
-        writer.writeLine(marking.toString().indentMargin(2, "${
-            background("125")
-        }#$ANSI_RESET"))
+        writer.writeLine(
+            marking.toString().indentMargin(
+                2, "${
+                    background("125")
+                }#$ANSI_RESET"
+            )
+        )
     }
 
     override fun onInitialMarking(marking: ObjectMarking) {
-        writer.writeLine("""${
-            background("23")
-        }initial marking:$ANSI_RESET""".indent(1))
+        writer.writeLine(
+            """${
+                background("23")
+            }initial marking:$ANSI_RESET""".indent(1)
+        )
         writer.writeLine(marking.toString().indentMargin(2, "#"))
     }
 
@@ -48,7 +74,7 @@ class ANSITracingLogger(
     }
 
     override fun onTimeShift(delta: Time) {
-        writer.writeLine("${font(ANSI_PINK)}on time shift ${background("128")}+${ delta.print()}$ANSI_RESET".indent(2))
+        writer.writeLine("${font(ANSI_PINK)}on time shift ${background("128")}+${delta.print()}$ANSI_RESET".indent(2))
     }
 
     override fun onExecutionStepStart(
@@ -66,15 +92,15 @@ class ANSITracingLogger(
         writer.writeLine("""ending transitions:""".indent(2))
     }
 
-    override fun onTransitionStartSectionStart() {
+    override fun beforeStartingNewTransitions() {
         writer.writeLine("""starting transitions:""".indent(2))
     }
 
-    override fun onTransitionEnded(executedBinding: ExecutedBinding) {
+    override fun onEndTransition(executedBinding: ExecutedBinding) {
         writer.writeLine(executedBinding.prettyPrintExecuted().indentMargin(3, margin = "x"))
     }
 
-    override fun onTransitionStart(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: ActiveFiringTransition) {
         writer.writeLine(transition.prettyPrintStarted().trimMargin().indentMargin(3))
     }
 }

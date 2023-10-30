@@ -2,7 +2,7 @@ package simulation
 
 import config.GenerationConfig
 import config.TimeRange
-import model.ImmutableObjectMarking
+import ru.misterpotz.model.ImmutableObjectMarking
 import model.PlaceId
 import model.PlaceTyping
 import model.Time

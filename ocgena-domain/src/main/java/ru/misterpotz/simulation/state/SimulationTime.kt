@@ -3,7 +3,7 @@ package ru.misterpotz.simulation.state
 import model.Time
 import utils.print
 
-class SimulationTime(globalTime : Time = 0) {
+class SimulationTime(globalTime : Time = 0L) {
     var globalTime = globalTime
         private set
 

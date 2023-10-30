@@ -2,7 +2,7 @@ package ru.misterpotz.simulation.config
 
 import config.GenerationConfig
 import model.LabelMapping
-import model.ObjectMarking
+import ru.misterpotz.model.ObjectMarking
 import model.OcNetType
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import simulation.ObjectTokenGenerator

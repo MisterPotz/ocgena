@@ -194,7 +194,7 @@ class ClientSimTaskImpl(
                 return CompoundLogger(
                     loggingEnabled = true,
                     loggers = arrayOf(
-                        object : DefaultLogger() {
+                        object : NoOpLogger() {
                             override fun onEnd() {
                                 _status = ClientSimTaskStatus.FINISHED
                                 notifyStatus()

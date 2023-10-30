@@ -38,7 +38,7 @@ class TransitionTokensLocker(
             transition = transition,
             time = newNextAllowedTime
         )
-        logger.onTransitionStart(transition = tMarkingValue)
+        logger.onStartTransition(transition = tMarkingValue)
     }
 
     private fun lockTokensInPMarking(enabledBindingWithTokens: EnabledBindingWithTokens) {

@@ -4,6 +4,7 @@ import config.GenerationConfig
 import model.*
 import model.time.IntervalFunction
 import model.utils.OcNetCreator
+import ru.misterpotz.model.ObjectMarking
 import ru.misterpotz.simulation.marking.PlainMarking
 import ru.misterpotz.simulation.config.SimulationConfig
 import simulation.*

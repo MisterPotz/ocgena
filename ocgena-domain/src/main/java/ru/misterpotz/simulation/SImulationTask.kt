@@ -10,7 +10,7 @@ import model.typel.SerializableArcTypeL
 import net.mamoe.yamlkt.Yaml
 import net.mamoe.yamlkt.YamlBuilder
 import ru.misterpotz.simulation.config.SimulationConfig
-import ru.misterpotz.simulation.di.DevelopmentDebugConfig
+import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.state.SerializableState
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
@@ -139,7 +139,7 @@ class SimulationTask @Inject constructor(
         if (developmentDebugConfig.dumpState) {
             println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
         }
-        logger.onInitialMarking(state.pMarking)
+        logger.afterInitialMarking(state.pMarking)
 
         simulationStepState.onStart()
     }
@@ -147,7 +147,7 @@ class SimulationTask @Inject constructor(
     fun doRunStep(): Boolean {
         runStep()
         if (isFinished()) {
-            logger.onFinalMarking(state.pMarking)
+            logger.afterFinalMarking(state.pMarking)
             if (developmentDebugConfig.dumpState) {
                 println("onFinish dump state: ${dumpState()}")
             }

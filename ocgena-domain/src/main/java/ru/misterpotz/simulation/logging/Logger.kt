@@ -31,27 +31,25 @@ object LoggerFactoryFileDefault : LoggerFactory {
 
 
 interface Logger {
-    val loggingEnabled: Boolean
 
     fun onStart()
-    fun onInitialMarking(marking: ObjectMarking)
-    fun onFinalMarking(marking: ObjectMarking)
-    fun onEnd()
+    fun afterInitialMarking()
+
+    fun onExecutionNewStepStart()
+
+    fun beforeStartingNewTransitions()
+    fun onStartTransition(transition: ActiveFiringTransition)
+    fun afterStartingNewTransitions()
+
+    fun beforeEndingTransitions()
+    fun onEndTransition(executedBinding: ExecutedBinding)
+    fun afterEndingTransitions()
+
+    fun onExecutionStepFinish(newTimeDelta: Time)
+
+    fun afterFinalMarking()
+
     fun onTimeout()
 
-    fun onTimeShift(delta: Time)
-
-    abstract fun onExecutionStepStart(
-        stepIndex: Int,
-        state: SimulatableComposedOcNet.State,
-        simulationTime: SimulationTime
-    )
-
-    fun onTransitionEndSectionStart()
-
-    fun onTransitionStartSectionStart()
-
-    fun onTransitionEnded(executedBinding: ExecutedBinding)
-
-    fun onTransitionStart(transition: ActiveFiringTransition)
+    fun onEnd()
 }

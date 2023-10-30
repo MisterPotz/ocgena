@@ -1,11 +1,11 @@
 package simulation.client
 
 import model.Time
-import simulation.client.loggers.DefaultLogger
+import simulation.client.loggers.NoOpLogger
 
 class CallbackLogger(
     private val simTaskClientCallback: SimTaskClientCallback
-) : DefaultLogger() {
+) : NoOpLogger() {
     override fun onStart() {
         simTaskClientCallback.onExecutionStart()
     }

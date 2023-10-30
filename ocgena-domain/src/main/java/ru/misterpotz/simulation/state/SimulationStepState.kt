@@ -2,7 +2,7 @@ package ru.misterpotz.simulation.state
 
 class SimulationStepState() {
     private var current: BySteps? = null
-    var currentStep : Int = -1
+    var currentStep: Long = -1
 
     fun onStart() {
         current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false, noPlannedTokenGenerations = false)
@@ -22,10 +22,11 @@ class SimulationStepState() {
         current!!.noPlannedTransitions = !hasPlannedTransitions
     }
 
-    fun onHasPlannedTokens(hasPlannedTokensToGenerate : Boolean) {
+    fun onHasPlannedTokens(hasPlannedTokensToGenerate: Boolean) {
         require(current != null && current?.noPlannedTokenGenerations == null)
         current!!.noPlannedTokenGenerations = !hasPlannedTokensToGenerate
     }
+
     fun isFinished(): Boolean {
         require(current != null)
         return current!!.noPlannedTransitions!!
@@ -36,6 +37,6 @@ class SimulationStepState() {
     private class BySteps(
         var noEnabledTransitions: Boolean? = null,
         var noPlannedTransitions: Boolean? = null,
-        var noPlannedTokenGenerations : Boolean? = null
+        var noPlannedTokenGenerations: Boolean? = null
     )
 }

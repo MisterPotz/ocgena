@@ -1,7 +1,8 @@
 package simulation.client.loggers
 
 import model.*
-import ru.misterpotz.simulation.di.LoggingConfiguration
+import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.simulation.logging.LogConfiguration
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
@@ -14,7 +15,7 @@ import utils.print
 
 class HtmlExecutionPrintingLogger(
     override val loggingEnabled: Boolean,
-    val loggingConfiguration: LoggingConfiguration,
+    val loggingConfiguration: LogConfiguration,
     val labelMapping: LabelMapping,
     val writer: Writer,
 ) : Logger {
@@ -111,11 +112,11 @@ class HtmlExecutionPrintingLogger(
         write(indentLinesRoot(2, bold("ending transitions:")))
     }
 
-    override fun onTransitionStartSectionStart() {
+    override fun beforeStartingNewTransitions() {
         write(indentLinesRoot(2, bold("starting transitions:")))
     }
 
-    override fun onTransitionEnded(executedBinding: ExecutedBinding) {
+    override fun onEndTransition(executedBinding: ExecutedBinding) {
         write(
             indentLinesRoot(
                 3,
@@ -125,7 +126,7 @@ class HtmlExecutionPrintingLogger(
         )
     }
 
-    override fun onTransitionStart(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: ActiveFiringTransition) {
         write(
             indentLinesRoot(
                 3,

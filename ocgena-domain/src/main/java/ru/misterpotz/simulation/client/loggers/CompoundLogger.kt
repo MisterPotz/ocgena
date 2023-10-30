@@ -2,7 +2,7 @@ package simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import model.ObjectMarking
+import ru.misterpotz.model.ObjectMarking
 import model.Time
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
@@ -56,16 +56,16 @@ class CompoundLogger(
         log { onTransitionEndSectionStart() }
     }
 
-    override fun onTransitionStartSectionStart() {
-        log { onTransitionStartSectionStart() }
+    override fun beforeStartingNewTransitions() {
+        log { beforeStartingNewTransitions() }
     }
 
-    override fun onTransitionEnded(executedBinding: ExecutedBinding) {
-        log { onTransitionEnded(executedBinding) }
+    override fun onEndTransition(executedBinding: ExecutedBinding) {
+        log { onEndTransition(executedBinding) }
     }
 
-    override fun onTransitionStart(transition: ActiveFiringTransition) {
-        log { onTransitionStart(transition) }
+    override fun onStartTransition(transition: ActiveFiringTransition) {
+        log { onStartTransition(transition) }
     }
 
 }

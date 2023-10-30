@@ -1,15 +1,12 @@
 package ru.misterpotz.simulation.di
 
-import dagger.Binds
-import dagger.BindsInstance
-import dagger.Component
-import dagger.Module
-import dagger.Provides
-import kotlinx.serialization.Serializable
+import dagger.*
 import kotlinx.serialization.json.Json
 import model.LabelMapping
 import model.OcNetType
 import ru.misterpotz.simulation.config.SimulationConfig
+import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.simulation.logging.LogConfiguration
 import ru.misterpotz.simulation.transition.TransitionDurationSelector
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
 import simulation.*
@@ -142,7 +139,7 @@ abstract class SimulationModule {
     fun provideLoggerFactory(
         developmentDebugConfig: DevelopmentDebugConfig,
         loggingWriters: LoggerWriters,
-        loggingConfiguration: LoggingConfiguration,
+        loggingConfiguration: LogConfiguration,
         simulationConfig: SimulationConfig,
     ): LoggerFactory {
         val labelMapping = simulationConfig.labelMapping
@@ -184,46 +181,6 @@ interface SimulationComponentDependencies {
     val json: Json
 }
 
-enum class LogEvent {
-    STARTED_TRANSITIONS,
-    ENDED_TRANSITIONS,
-    CURRENT_STATE_PMARKING_REPORTED,
-    CURRENT_STATE_TRANSITIONS_ALLOWED_TIME_REPORTED,
-    CURRENT_STATE_TMARKING_REPORTED,
-    FINAL_STATE_REPORTED,
-    SIM_TIME_SHIFT_REPORTED
-}
-
-@Serializable
-data class LoggingEvent(
-    val step : Long,
-    val logEvent: LogEvent,
-    val startedTransitions
-)
-
-class DevelopmentDebugConfig(
-    val developmentLoggersEnabled : Boolean = true,
-    val dumpState: Boolean = false
-)
-
-class CurrentStateLog(
-    val includeOngoingTransitions: Boolean,
-    val includeNextTransitionAllowedTiming: Boolean,
-    val includePlaceMarking: Boolean
-)
-
-class TransitionsLog(
-    val includeStartingTransitions: Boolean,
-    val includeEndingTransitions: Boolean
-)
-
-class LoggingConfiguration(
-    val currentStateLog: CurrentStateLog,
-    val transitionsLog: TransitionsLog,
-)
-class EnvironmentSettings(
-    val logging `
-)
 
 @SimulationScope
 @Component(

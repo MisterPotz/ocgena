@@ -2,7 +2,7 @@ package simulation.typea
 
 import model.ActiveFiringTransition
 import model.Arcs
-import model.ImmutableObjectMarking
+import ru.misterpotz.model.ImmutableObjectMarking
 import model.PlaceTyping
 import simulation.ObjectTokenGenerator
 import simulation.ObjectTokenMoverFactory

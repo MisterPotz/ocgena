@@ -2,7 +2,7 @@ package simulation
 
 import dsl.PatternIdCreator
 import model.EmptyObjectValuesMap
-import model.ObjectMarking
+import ru.misterpotz.model.ObjectMarking
 import model.ObjectToken
 import model.ObjectType
 import model.PlaceTyping

@@ -1,6 +1,7 @@
 package model
 
 import kotlinx.serialization.Serializable
+import ru.misterpotz.model.ImmutableObjectMarking
 import utils.html.color
 import utils.html.indentLines
 import utils.ANSI_CYAN
