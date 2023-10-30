@@ -1,11 +1,12 @@
 package simulation
 
 import model.ObjectMarking
-import model.PlaceTyping
 import model.Time
+import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.marking.PMarkingProvider
-import ru.misterpotz.simulation.state.SimulationState
+import ru.misterpotz.simulation.state.SimulationStepState
 import ru.misterpotz.simulation.state.SimulationTime
+import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.transition.TransitionDurationSelector
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
@@ -18,23 +19,106 @@ import simulation.random.BindingSelector
 import simulation.random.TokenSelector
 import javax.inject.Inject
 
+interface SimulationTaskStepExecutorFactory {
+    fun createSimulationTaskStepExecutor(dumpStateCallback: () -> Unit): SimulationTaskStepExecutor
+}
+
+class SimulationTaskStepExecutorFactoryImpl @Inject constructor(
+    private val simulationConfig: SimulationConfig,
+    private val simulationStateProvider: SimulationStateProvider,
+    private val bindingSelector: BindingSelector,
+    private val tokenSelector: TokenSelector,
+    private val transitionDurationSelector: TransitionDurationSelector,
+    private val nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
+    private val pMarkingProvider: SimulationTaskStepExecutor.StatePMarkingProvider,
+    private val transitionFinisher: ActiveTransitionMarkingFinisher,
+    private val logger: Logger,
+    private val generationQueue: GenerationQueue,
+) : SimulationTaskStepExecutorFactory {
+    override fun createSimulationTaskStepExecutor(dumpState: () -> Unit): SimulationTaskStepExecutor {
+        return SimulationTaskStepExecutor(
+            simulationConfig = simulationConfig,
+            simulationStateProvider = simulationStateProvider,
+            bindingSelector = bindingSelector,
+            tokenSelector = tokenSelector,
+            transitionDurationSelector = transitionDurationSelector,
+            nextTransitionOccurenceTimeSelector = nextTransitionOccurenceTimeSelector,
+            pMarkingProvider = pMarkingProvider,
+            transitionFinisher = transitionFinisher,
+            logger = logger,
+            generationQueue = generationQueue,
+            dumpState = dumpState
+        )
+    }
+
+}
+
+enum class Status {
+    EXECUTING,
+    FINISHED
+}
+
+interface SimulationStateProvider {
+    val status: Status
+    fun getOcNetState(): SimulatableComposedOcNet.State
+    fun getSimulationTime(): SimulationTime
+    fun getSimulationStepState(): SimulationStepState
+    fun runningSimulatableOcNet(): RunningSimulatableOcNet
+    fun markFinished()
+}
+
+class SimulationStateProviderImpl @Inject constructor(
+    private val simulationConfig: SimulationConfig
+) : SimulationStateProvider {
+    val state = simulationConfig.templateOcNet.createInitialState()
+    val simulationTime = SimulationTime()
+    private val simulationStepState = SimulationStepState()
+    private val runningSimulatableOcNet = RunningSimulatableOcNet(simulationConfig.templateOcNet, state)
+    override var status: Status = Status.EXECUTING
+
+    override fun getOcNetState(): SimulatableComposedOcNet.State {
+        return state
+    }
+
+
+    override fun getSimulationTime(): SimulationTime {
+        return simulationTime
+    }
+
+    override fun getSimulationStepState(): SimulationStepState {
+        return simulationStepState
+    }
+
+    override fun runningSimulatableOcNet(): RunningSimulatableOcNet {
+        return runningSimulatableOcNet
+    }
+
+    override fun markFinished() {
+        status = Status.FINISHED
+    }
+}
+
 class SimulationTaskStepExecutor @Inject constructor(
-    ocNet: SimulatableComposedOcNet<*>,
-    private val state: SimulatableComposedOcNet.State,
+    simulationConfig: SimulationConfig,
+    private val simulationStateProvider: SimulationStateProvider,
     private val bindingSelector: BindingSelector,
     tokenSelector: TokenSelector,
     transitionDurationSelector: TransitionDurationSelector,
     nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
+    pMarkingProvider: StatePMarkingProvider,
     private val transitionFinisher: ActiveTransitionMarkingFinisher,
     private val logger: Logger,
-    private val simulationTime: SimulationTime,
-    private val simulationState: SimulationState,
-    val placeTyping: PlaceTyping,
     private val generationQueue: GenerationQueue,
     private val dumpState: () -> Unit
 ) {
+    val ocNet = simulationConfig.templateOcNet
+    val state: SimulatableComposedOcNet.State
+        get() = simulationStateProvider.getOcNetState()
+    val simulationTime get() = simulationStateProvider.getSimulationTime()
+    val simulationStepState get() = simulationStateProvider.getSimulationStepState()
 
-    private val pMarkingProvider = StatePMarkingProvider(state = state)
+    val placeTyping get() = ocNet.coreOcNet.placeTyping
+
     private val enabledBindingResolverFactory: EnabledBindingResolverFactory = EnabledBindingResolverFactory(
         ocNet.arcMultiplicity,
         arcs = ocNet.coreOcNet.arcs,
@@ -80,10 +164,10 @@ class SimulationTaskStepExecutor @Inject constructor(
         logger.onTransitionStartSectionStart()
 
         if (enabledBindings.isEmpty()) {
-            simulationState.onHasEnabledTransitions(hasEnabledTransitions = false)
+            simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = false)
             return
         }
-        simulationState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
+        simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
 
         while (enabledBindings.isNotEmpty()) {
             val selectedBinding = bindingSelector.selectBinding(enabledBindings)
@@ -115,10 +199,10 @@ class SimulationTaskStepExecutor @Inject constructor(
 
         val minimumTime = times.filterNotNull().minOrNull()
 
-        simulationState.onHasPlannedTransitions(
+        simulationStepState.onHasPlannedTransitions(
             hasPlannedTransitions = timeUntilNextEnabledTransition != null
         )
-        simulationState.onHasPlannedTokens(timeUntilNewTokenGenerated != null)
+        simulationStepState.onHasPlannedTokens(timeUntilNewTokenGenerated != null)
 
         if (minimumTime != null) {
             shiftGlobalTime(minimumTime)
@@ -141,7 +225,7 @@ class SimulationTaskStepExecutor @Inject constructor(
         return earliestFinishActiveTransition?.timeLeftUntilFinish()
     }
 
-    private fun resolveTimeUntilATransitionIsEnabled() : Time? {
+    private fun resolveTimeUntilATransitionIsEnabled(): Time? {
         val tTimes = state.tTimes
 
         val earliestTransitionEnablingTime = tTimes.earliestNonZeroTime()
@@ -162,9 +246,10 @@ class SimulationTaskStepExecutor @Inject constructor(
         simulationTime.shiftByDelta(time)
     }
 
-    class StatePMarkingProvider(val state: SimulatableComposedOcNet.State) : PMarkingProvider {
+    class StatePMarkingProvider @Inject constructor(private val stateProvider: SimulationStateProvider) :
+        PMarkingProvider {
         override val pMarking: ObjectMarking
-            get() = state.pMarking
+            get() = stateProvider.getOcNetState().pMarking
 
     }
 }

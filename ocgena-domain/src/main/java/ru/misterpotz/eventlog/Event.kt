@@ -12,5 +12,5 @@ data class Event(
     val oMap: ObjectsLists,
     @Transient
     val vMap: ValuesMap = mapOf(),
-) {
+) : java.io.Serializable {
 }

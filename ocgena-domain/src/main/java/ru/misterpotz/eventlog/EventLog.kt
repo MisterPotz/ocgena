@@ -6,6 +6,7 @@ import model.ObjectType
 typealias AttributeNames = List<String>
 typealias ObjectTypes = MutableList<ObjectType>
 
+@Deprecated("collecting everything into runtime memory is extremely bad idea. Think twice.")
 class EventLog() {
     val events = mutableListOf<Event>()
     val objects: MutableSet<ObjectToken> = mutableSetOf()

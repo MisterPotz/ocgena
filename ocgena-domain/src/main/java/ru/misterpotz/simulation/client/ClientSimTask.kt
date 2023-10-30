@@ -5,7 +5,6 @@ import model.*
 import ru.misterpotz.simulation.config.SimulationConfig
 import simulation.*
 import simulation.client.loggers.*
-import simulation.utils.createParams
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
@@ -40,6 +39,12 @@ fun createSimpleClientCallback(
 interface SimTaskLoggerWrapper {
     fun createLogger(labelMapping: LabelMapping): Logger
 }
+
+class LoggerWriters(
+    val ansiWriter: Writer?,
+    val ocelWriter : OcelWriter?,
+    val additionalLoggers : List<Logger>
+)
 
 class DefaultSimTaskLoggerWrapper(
     private val loggingEnabled: Boolean,
@@ -184,9 +189,6 @@ class ClientSimTaskImpl(
     }
 
     private val simulationCreator = SimulationCreator(
-        simulationParams = config,
-        executionConditions = SimpleExecutionConditions(),
-        dumpState = dumpState,
         logger = object : LoggerFactory {
             override fun create(labelMapping: LabelMapping): Logger {
                 return CompoundLogger(

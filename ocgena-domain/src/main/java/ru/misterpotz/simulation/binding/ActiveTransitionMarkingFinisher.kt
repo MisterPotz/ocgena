@@ -5,7 +5,8 @@ import model.ExecutedBinding
 import model.ImmutableObjectMarking
 import model.ObjectMarking
 import simulation.Logger
-import ru.misterpotz.simulation.state.SimulationTime
+import simulation.SimulationStateProvider
+import javax.inject.Inject
 
 interface ActiveTransitionMarkingFinisher {
     val pMarking: ObjectMarking
@@ -14,12 +15,14 @@ interface ActiveTransitionMarkingFinisher {
 }
 
 
-class ActiveTransitionFinisherImpl(
-    override val pMarking: ObjectMarking,
+class ActiveTransitionFinisherImpl @Inject constructor(
     private val inputToOutputPlaceResolver: InputToOutputPlaceResolver,
     private val logger: Logger,
-    private val simulationTime: SimulationTime,
-): ActiveTransitionMarkingFinisher {
+    private val simulationStateProvider: SimulationStateProvider
+) : ActiveTransitionMarkingFinisher {
+    val simulationTime get() = simulationStateProvider.getSimulationTime()
+    override val pMarking get() = simulationStateProvider.getOcNetState().pMarking
+
     override fun finishActiveTransition(activeFiringTransition: ActiveFiringTransition) {
         val markingForOutputPlaces = getMarkingForOutputPlaces(activeFiringTransition)
 
@@ -36,7 +39,7 @@ class ActiveTransitionFinisherImpl(
         logger.onTransitionEnded(executedBinding)
     }
 
-    private fun getMarkingForOutputPlaces(activeFiringTransition: ActiveFiringTransition) : ImmutableObjectMarking {
+    private fun getMarkingForOutputPlaces(activeFiringTransition: ActiveFiringTransition): ImmutableObjectMarking {
         return inputToOutputPlaceResolver.createOutputMarking(activeFiringTransition)
     }
 }

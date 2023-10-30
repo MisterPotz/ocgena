@@ -2,20 +2,22 @@ package simulation
 
 import config.GenerationConfig
 import config.TimeRange
-import config.TimeRangeClass
 import model.ImmutableObjectMarking
 import model.PlaceId
 import model.PlaceTyping
 import model.Time
+import ru.misterpotz.simulation.config.SimulationConfig
+import javax.inject.Inject
 
 interface GenerationQueue {
     fun shiftTime(time: Time)
-    fun generateTokensAsMarkingAndReplan() : ImmutableObjectMarking?
-    fun getTimeUntilNextPlanned() : Time?
+    fun generateTokensAsMarkingAndReplan(): ImmutableObjectMarking?
+    fun getTimeUntilNextPlanned(): Time?
 
     fun planTokenGenerationForEveryone()
 }
-class DumbGenerationQueue() : GenerationQueue{
+
+class NoOpGenerationQueue() : GenerationQueue {
     override fun shiftTime(time: Time) {
 
     }
@@ -31,26 +33,49 @@ class DumbGenerationQueue() : GenerationQueue{
     override fun planTokenGenerationForEveryone() {
 
     }
-
 }
+
+interface GenerationQueueFactory {
+    fun createGenerationQueue(simulationConfig: SimulationConfig): GenerationQueue
+}
+
+class GenerationQueueFactoryImpl @Inject constructor(
+    private val tokenGenerationTimeSelector: TokenGenerationTimeSelector,
+) : GenerationQueueFactory {
+    override fun createGenerationQueue(simulationConfig: SimulationConfig): GenerationQueue {
+        val ocNet = simulationConfig.templateOcNet
+
+        return simulationConfig.generationConfig?.let {
+            NormalGenerationQueue(
+                generationConfig = it,
+                nextTimeSelector = tokenGenerationTimeSelector,
+                placeTyping = ocNet.coreOcNet.placeTyping,
+                tokenGenerator = simulationConfig.objectTokenGenerator,
+            )
+        } ?: NoOpGenerationQueue()
+    }
+}
+
 class NormalGenerationQueue(
     private val generationConfig: GenerationConfig,
     private val nextTimeSelector: TokenGenerationTimeSelector,
     val placeTyping: PlaceTyping,
     private val tokenGenerator: ObjectTokenGenerator,
-    private val defaultGenerationInterval : TimeRangeClass? = null
+    private val defaultGenerationInterval: TimeRange? = null
 ) : GenerationQueue {
 
-    private val placeGenerators : Map<PlaceId, PlaceGenerator> = buildMap {
+    private val placeGenerators: Map<PlaceId, PlaceGenerator> = buildMap {
         for ((i, value) in generationConfig.placeIdToGenerationTarget) {
-            put(i, PlaceGenerator(
-                placeId = i,
-                mustTotallyGenerate = value,
-                timeRange = generationConfig.defaultGeneration
-                    ?: defaultGenerationInterval
-                    ?: continue,
-                nextGenerationHappensIn = null
-            ))
+            put(
+                i, PlaceGenerator(
+                    placeId = i,
+                    mustTotallyGenerate = value,
+                    timeRange = generationConfig.defaultGeneration
+                        ?: defaultGenerationInterval
+                        ?: continue,
+                    nextGenerationHappensIn = null
+                )
+            )
         }
     }
 
@@ -60,7 +85,7 @@ class NormalGenerationQueue(
         }
     }
 
-    override fun generateTokensAsMarkingAndReplan() : ImmutableObjectMarking? {
+    override fun generateTokensAsMarkingAndReplan(): ImmutableObjectMarking? {
         val map = buildMap {
             for ((id, generator) in placeGenerators) {
                 if (generator.mustGenerateNow()) {
@@ -79,8 +104,8 @@ class NormalGenerationQueue(
         return null
     }
 
-    override fun getTimeUntilNextPlanned() : Time? {
-        var minTime : Time? = null
+    override fun getTimeUntilNextPlanned(): Time? {
+        var minTime: Time? = null
 
         for ((id, generator) in placeGenerators) {
             if (generator.hasPlannedToken()) {
@@ -103,12 +128,12 @@ class NormalGenerationQueue(
     }
 
     class PlaceGenerator(
-        val placeId : String,
-        val mustTotallyGenerate : Int,
+        val placeId: String,
+        val mustTotallyGenerate: Int,
         val timeRange: TimeRange,
         var nextGenerationHappensIn: Time?,
     ) {
-        var generated : Int = 0
+        var generated: Int = 0
         fun shiftTime(time: Time) {
             val nextGenerationHappensIn = nextGenerationHappensIn ?: return
             this.nextGenerationHappensIn = (nextGenerationHappensIn - time).coerceAtLeast(0)
@@ -118,19 +143,19 @@ class NormalGenerationQueue(
             return nextGenerationHappensIn != null
         }
 
-        fun mustGenerateNow() : Boolean {
+        fun mustGenerateNow(): Boolean {
             return nextGenerationHappensIn == 0
         }
 
-        fun mustPlan() : Boolean {
+        fun mustPlan(): Boolean {
             return generated < mustTotallyGenerate && !hasPlannedToken()
         }
 
-        fun plan(inTime : Time)  {
+        fun plan(inTime: Time) {
             nextGenerationHappensIn = inTime
         }
 
-        fun markAsNewGenerated() : Boolean {
+        fun markAsNewGenerated(): Boolean {
             if (nextGenerationHappensIn != null) {
                 nextGenerationHappensIn = null
                 generated++

@@ -10,7 +10,7 @@ import ru.misterpotz.simulation.state.SimulationTime
 
 class CompoundLogger(
     override val loggingEnabled: Boolean,
-    val loggers: Array<Logger>
+    val loggers: List<Logger>
 ) : Logger {
     private inline fun log(crossinline block: Logger.() -> Unit) {
         if (loggingEnabled) {

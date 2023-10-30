@@ -9,20 +9,12 @@ import model.typea.SerializableVariableArcTypeA
 import model.typel.SerializableArcTypeL
 import net.mamoe.yamlkt.Yaml
 import net.mamoe.yamlkt.YamlBuilder
-import ru.misterpotz.simulation.state.SerializableState
 import ru.misterpotz.simulation.config.SimulationConfig
-import ru.misterpotz.simulation.state.SimulationState
-import ru.misterpotz.simulation.state.SimulationTime
-import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
+import ru.misterpotz.simulation.di.DevelopmentDebugConfig
+import ru.misterpotz.simulation.state.SerializableState
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.transition.TransitionDurationSelector
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
-import simulation.binding.ActiveTransitionFinisherImpl
-import simulation.binding.BindingOutputMarkingResolverFactory
-import simulation.random.BindingSelector
-import simulation.random.TokenSelector
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
+import javax.inject.Inject
 
 @Serializable
 data class SerializableSimulationState(
@@ -30,63 +22,31 @@ data class SerializableSimulationState(
     val state: SimulatableComposedOcNet.SerializableState,
 )
 
-class SimulationTask(
+class SimulationTask @Inject constructor(
     private val simulationParams: SimulationConfig,
+    simulationTaskStepExecutorFactory: SimulationTaskStepExecutorFactory,
+    private val simulationStateProvider: SimulationStateProvider,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
-    private val bindingSelector: BindingSelector,
-    private val tokenSelector: TokenSelector,
-    private val transitionDurationSelector: TransitionDurationSelector,
     private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
-    private val tokenNextTimeSelector: TokenGenerationTimeSelector,
-    private val dumpState: Boolean = false,
+    private val generationQueue: GenerationQueue,
+    private val developmentDebugConfig: DevelopmentDebugConfig,
 ) {
-    private val ocNet = simulationParams.templateOcNet
-    private val simulationTime = SimulationTime()
-    private val initialMarking = simulationParams.initialMarking
-    private val duration = (simulationParams.timeoutSec ?: 30L).toDuration(DurationUnit.SECONDS)
-    private val state = ocNet.createInitialState()
+    private val ocNet get() = simulationParams.templateOcNet
+    private val simulationTime get() = simulationStateProvider.getSimulationTime()
+    private val initialMarking get() = simulationParams.initialMarking
+    private val state get() = simulationStateProvider.getOcNetState()
+    private val simulationStepState get() = simulationStateProvider.getSimulationStepState()
+    private val runningSimulatableOcNet get() = simulationStateProvider.runningSimulatableOcNet()
 
-    private val runningSimulatableOcNet = RunningSimulatableOcNet(ocNet, state)
-    private val simulationState = SimulationState()
-    val generationQueue = simulationParams.generationConfig?.let {
-        NormalGenerationQueue(
-            generationConfig = it,
-            nextTimeSelector = tokenNextTimeSelector,
-            placeTyping = ocNet.coreOcNet.placeTyping,
-            tokenGenerator = simulationParams.objectTokenGenerator,
-        )
-    } ?: DumbGenerationQueue()
+    private var stepIndex: Int = 0
+    private val oneStepGranularity = 5
+    var finishRequested = false;
 
-    private val stepExecutor = SimulationTaskStepExecutor(
-        ocNet,
-        state,
-        bindingSelector,
-        tokenSelector = tokenSelector,
-        transitionDurationSelector = transitionDurationSelector,
-        nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector,
-        transitionFinisher = ActiveTransitionFinisherImpl(
-            state.pMarking,
-            inputToOutputPlaceResolver = BindingOutputMarkingResolverFactory(
-                arcs = ocNet.coreOcNet.arcs,
-                ocNetType = ocNet.ocNetType,
-                placeTyping = ocNet.coreOcNet.placeTyping,
-                objectTokenGenerator = simulationParams.objectTokenGenerator,
-                objectTokenMoverFactory = ObjectTokenMoverFactory(tokenSelector, ocNetType = simulationParams.ocNetType)
-            ).create(),
-            logger,
-            simulationTime
-        ),
-        logger = logger,
-
-        simulationTime = simulationTime,
-        simulationState = simulationState,
-        placeTyping = ocNet.coreOcNet.placeTyping,
-        generationQueue = generationQueue
-    ) {
-        if (dumpState) {
+    private val stepExecutor = simulationTaskStepExecutorFactory.createSimulationTaskStepExecutor {
+        if (developmentDebugConfig.dumpState) {
             println(
-                "\r\ndump after step state: ${simulationState.currentStep}: \r\n${
+                "\r\ndump after step state: ${simulationStepState.currentStep}: \r\n${
                     dumpState().replace(
                         "\n",
                         "\r\n"
@@ -108,12 +68,10 @@ class SimulationTask(
         generationQueue.planTokenGenerationForEveryone()
     }
 
-    private var stepIndex: Int = 0
-    private val oneStepGranularity = 5
-    var finishRequested = false;
-    fun isFinished() : Boolean {
+
+    fun isFinished(): Boolean {
         return executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
-                || simulationState.isFinished()
+                || simulationStepState.isFinished()
                 || finishRequested
     }
 
@@ -127,8 +85,8 @@ class SimulationTask(
         while (
             !isFinished() && (stepsCounter++ < oneStepGranularity)
         ) {
-            simulationState.currentStep = stepIndex
-            simulationState.onNewStep()
+            simulationStepState.currentStep = stepIndex
+            simulationStepState.onNewStep()
 
             logger.onExecutionStepStart(stepIndex, state, simulationTime)
 
@@ -172,29 +130,31 @@ class SimulationTask(
     fun prepareRun() {
         logger.onStart()
         // always dump net with
-        if (dumpState) {
+        if (developmentDebugConfig.dumpState) {
             println("onStart dump net: ${dumpInput().replace("\n", "\n\r")}")
         }
 
         prepare()
 
-        if (dumpState) {
+        if (developmentDebugConfig.dumpState) {
             println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
         }
         logger.onInitialMarking(state.pMarking)
 
-        simulationState.onStart()
+        simulationStepState.onStart()
     }
 
-    fun doRunStep() : Boolean {
+    fun doRunStep(): Boolean {
         runStep()
         if (isFinished()) {
             logger.onFinalMarking(state.pMarking)
-            if (dumpState) {
+            if (developmentDebugConfig.dumpState) {
                 println("onFinish dump state: ${dumpState()}")
             }
             println("sending logger onEnd")
+            simulationStateProvider.markFinished()
             logger.onEnd()
+
             return true
         }
         return false
@@ -202,7 +162,7 @@ class SimulationTask(
 
     fun prepareAndRunAll() {
         prepareRun()
-        while(!isFinished()) {
+        while (!isFinished()) {
             doRunStep()
         }
     }

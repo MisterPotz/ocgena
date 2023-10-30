@@ -1,7 +1,6 @@
 package simulation
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import model.*
@@ -131,26 +130,6 @@ class SimulationTask(
             stepExecutor.executeStep()
 
             stepIndex++
-        }
-    }
-
-    val json = Json {
-        prettyPrint = true
-        serializersModule = SerializersModule {
-            polymorphic(baseClass = SerializableAtom::class) {
-                subclass(SerializablePlace::class, SerializablePlace.serializer())
-                subclass(SerializableTransition::class, SerializableTransition.serializer())
-                subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
-                subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
-                subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
-            }
-
-            polymorphic(SimulatableComposedOcNet.SerializableState::class) {
-                subclass(SerializableState::class, SerializableState.serializer())
-            }
-            polymorphic(ObjectValuesMap::class) {
-                subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
-            }
         }
     }
 

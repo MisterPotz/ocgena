@@ -2,9 +2,10 @@ package simulation
 
 import config.TimeRange
 import model.Time
+import javax.inject.Inject
 import kotlin.random.Random
 
-class TokenGenerationTimeSelector (
+class TokenGenerationTimeSelector @Inject constructor(
     private val random: Random?,
 ) {
     fun get(interval : TimeRange): Time {

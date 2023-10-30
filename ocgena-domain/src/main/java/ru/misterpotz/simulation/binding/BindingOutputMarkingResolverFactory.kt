@@ -1,20 +1,26 @@
 package simulation.binding
 
-import model.Arcs
 import model.OcNetType
-import model.PlaceTyping
-import simulation.ObjectTokenGenerator
+import ru.misterpotz.simulation.config.SimulationConfig
 import simulation.ObjectTokenMoverFactory
 import simulation.typea.BindingOutputMarkingTypeAResolver
+import javax.inject.Inject
 
-class BindingOutputMarkingResolverFactory(
-    private val arcs: Arcs,
-    private val ocNetType: OcNetType,
-    private val placeTyping: PlaceTyping,
-    private val objectTokenGenerator: ObjectTokenGenerator,
+interface BindingOutputMarkingResolverFactory {
+    fun create(): InputToOutputPlaceResolver
+}
+
+class BindingOutputMarkingResolverFactoryImpl @Inject constructor(
+    private val simulationConfig: SimulationConfig,
     private val objectTokenMoverFactory: ObjectTokenMoverFactory
-) {
-    fun create() : InputToOutputPlaceResolver {
+) : BindingOutputMarkingResolverFactory {
+    private val ocNet = simulationConfig.templateOcNet
+    private val ocNetType get() = simulationConfig.ocNetType
+    private val arcs get() = ocNet.coreOcNet.arcs
+    private val placeTyping get() = ocNet.coreOcNet.placeTyping
+    private val objectTokenGenerator get() = simulationConfig.objectTokenGenerator
+
+    override fun create(): InputToOutputPlaceResolver {
         return when (ocNetType) {
             OcNetType.AALST -> BindingOutputMarkingTypeAResolver(
                 arcs = arcs,
@@ -22,6 +28,7 @@ class BindingOutputMarkingResolverFactory(
                 objectTokenGenerator = objectTokenGenerator,
                 objectTokenMoverFactory = objectTokenMoverFactory
             )
+
             OcNetType.LOMAZOVA -> TODO("I.A.Lomazova specification is yet to be done")
         }
     }

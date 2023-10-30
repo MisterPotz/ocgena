@@ -1,14 +1,26 @@
 package simulation.client
 
 import eventlog.Event
-import eventlog.EventLog
 import model.ObjectToken
+import model.ObjectType
 
-
-expect class OcelWriter {
-    fun collect() : Any
-    fun write(eventLog: EventLog)
+interface OcelWriter {
     fun writeEvent(event: Event)
     fun writeObjectToken(objectToken: ObjectToken)
-//    fun writeObjectType(objectType: ObjectType)
+    fun writeObjectType(objectType : ObjectType)
+}
+
+class DebugOcelWriter() : OcelWriter {
+    val json =
+    override fun writeEvent(event: Event) {
+        TODO("Not yet implemented")
+    }
+
+    override fun writeObjectToken(objectToken: ObjectToken) {
+        TODO("Not yet implemented")
+    }
+
+    override fun writeObjectType(objectType: ObjectType) {
+        TODO("Not yet implemented")
+    }
 }

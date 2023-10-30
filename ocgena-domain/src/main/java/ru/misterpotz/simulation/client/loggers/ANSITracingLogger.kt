@@ -4,6 +4,7 @@ import model.ActiveFiringTransition
 import model.ExecutedBinding
 import model.ObjectMarking
 import model.Time
+import ru.misterpotz.simulation.di.LoggingConfiguration
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
@@ -16,6 +17,7 @@ import kotlin.js.JsExport
 @JsExport
 class ANSITracingLogger(
     override val loggingEnabled: Boolean,
+    val loggingConfiguration: LoggingConfiguration,
     val writer: Writer,
 ) : Logger {
 

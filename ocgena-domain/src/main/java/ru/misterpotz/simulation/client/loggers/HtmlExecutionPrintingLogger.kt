@@ -1,6 +1,7 @@
 package simulation.client.loggers
 
 import model.*
+import ru.misterpotz.simulation.di.LoggingConfiguration
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
@@ -13,6 +14,7 @@ import utils.print
 
 class HtmlExecutionPrintingLogger(
     override val loggingEnabled: Boolean,
+    val loggingConfiguration: LoggingConfiguration,
     val labelMapping: LabelMapping,
     val writer: Writer,
 ) : Logger {

@@ -8,8 +8,9 @@ import ru.misterpotz.simulation.marking.PMarkingProvider
 import simulation.random.TokenSelector
 import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
 import simulation.typea.EnabledBindingTypeAResolver
+import javax.inject.Inject
 
-class EnabledBindingResolverFactory(
+class EnabledBindingResolverFactory @Inject constructor(
     private val arcMultiplicity: ArcMultiplicity,
     private val arcs : Arcs,
     private val pMarkingProvider : PMarkingProvider,

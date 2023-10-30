@@ -2,7 +2,7 @@ package model
 
 import kotlinx.serialization.Serializable
 
-interface ObjectValuesMap
+interface ObjectValuesMap : java.io.Serializable
 
 @Serializable
 class EmptyObjectValuesMap : ObjectValuesMap {

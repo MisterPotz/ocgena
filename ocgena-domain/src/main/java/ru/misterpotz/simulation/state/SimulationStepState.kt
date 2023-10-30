@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.state
 
-class SimulationState() {
+class SimulationStepState() {
     private var current: BySteps? = null
     var currentStep : Int = -1
 
