@@ -1,0 +1,3 @@
+package converter
+
+interface ObjectHolder
