@@ -7,6 +7,9 @@ import { FileRange as _FileRange } from './ocdot.peggy';
  * @alpha
  */
 export declare namespace AST {
+    export type MathExpression = {
+        infix: (string | number)[];
+    };
     export type FileRange = _FileRange;
     type ValueOf<T> = T[keyof T];
     /**
@@ -131,13 +134,8 @@ export declare namespace AST {
     export interface Variable {
         variable: string;
     }
-    export interface ExpressionOp {
-        op: "*" | "+" | "-" | "/";
-        target: Expression;
-    }
-    export interface Expression {
-        head: Expression | number | Variable;
-        tail: ExpressionOp[];
+    export type ExpressionOp = "*" | "+" | "-" | "/";
+    export interface Expression extends MathExpression {
     }
     export interface RootExpression extends EdgeOpParams, Expression {
         type: typeof OpParamsTypes.Expression;
@@ -366,7 +364,6 @@ export declare namespace AST {
         protected printOcDot(ast: AST.OcDot): string;
         protected printEdge(ast: AST.Edge): string;
         protected stringifyExpressionElement(head: Expression | number | Variable): string;
-        protected stringifyExpressionOp(expressionOp: ExpressionOp): string;
         stringifyExpression(expression: Expression): string;
         protected printEdgeOpParams(edgeOpParams: EdgeOpParams): string;
         protected printEdgeRHSElement(edgeRHSElement: EdgeRHSElement): string;

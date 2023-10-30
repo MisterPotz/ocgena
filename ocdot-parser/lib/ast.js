@@ -173,21 +173,8 @@ var AST;
                 return head.toString();
             }
         }
-        stringifyExpressionOp(expressionOp) {
-            let op = expressionOp.op;
-            let expression = this.stringifyExpressionElement(expressionOp.target);
-            return `${op} ${expression}`;
-        }
         stringifyExpression(expression) {
-            let arr = [];
-            if (expression.tail.length == 0 && !isExpression(expression.head)) {
-                return this.stringifyExpressionElement(expression.head);
-            }
-            arr.push(this.stringifyExpressionElement(expression.head));
-            for (let i = 0; i < expression.tail.length; i++) {
-                arr.push(this.stringifyExpressionOp(expression.tail[i]));
-            }
-            return "(" + arr.join(' ') + ")";
+            return expression.infix.join('');
         }
         printEdgeOpParams(edgeOpParams) {
             if (isEdgeOpParamsExpression(edgeOpParams)) {
