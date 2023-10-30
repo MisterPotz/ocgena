@@ -4,7 +4,8 @@ import eventlog.ActivityOccurrenceRegistry
 import eventlog.EventLog
 import eventlog.ModelToEventLogConverter
 import model.*
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.Time
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
@@ -23,8 +24,6 @@ class DebugTracingLogger(
         ocelParams = OcelParams(logBothStartAndEnd = false),
         timeStampMapper = TimeStampMapper()
     )
-    override val loggingEnabled: Boolean
-        get() = true
 
     override fun onTimeout() {
         mprintln("execution timeout")

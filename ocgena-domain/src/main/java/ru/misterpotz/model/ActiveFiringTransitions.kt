@@ -1,6 +1,7 @@
 package model
 
 import kotlinx.serialization.Serializable
+import ru.misterpotz.model.marking.Time
 
 @Serializable
 class SerializableActiveFiringTransitions(val tMarkingValues : List<SerializableActiveFiringTransition>) {

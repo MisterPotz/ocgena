@@ -2,8 +2,8 @@ package simulation.binding
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import ru.misterpotz.model.ImmutableObjectMarking
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 import simulation.Logger
 import simulation.SimulationStateProvider
 import javax.inject.Inject

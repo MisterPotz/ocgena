@@ -4,9 +4,18 @@ import dagger.*
 import kotlinx.serialization.json.Json
 import model.LabelMapping
 import model.OcNetType
+import ru.misterpotz.model.marking.ObjectTokenSet
+import ru.misterpotz.model.marking.ObjectTokenSetMap
+import ru.misterpotz.simulation.client.loggers.LogEventSerializedLogger
+import ru.misterpotz.simulation.client.loggers.StepAggregatingLogCreator
+import ru.misterpotz.simulation.client.loggers.StepAggregatingLogReceiver
+import ru.misterpotz.simulation.client.loggers.StepAggregatingLogger
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.LogConfiguration
+import ru.misterpotz.simulation.queue.GenerationQueue
+import ru.misterpotz.simulation.queue.GenerationQueueFactory
+import ru.misterpotz.simulation.queue.GenerationQueueFactoryImpl
 import ru.misterpotz.simulation.transition.TransitionDurationSelector
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
 import simulation.*
@@ -21,7 +30,7 @@ import kotlin.random.Random
 
 
 @Module
-abstract class SimulationModule {
+internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun tokenSelector(tokenSelector: TokenSelectorImpl): TokenSelector
@@ -134,6 +143,10 @@ abstract class SimulationModule {
     abstract fun activeTransitionFinisher(activeTransitionFinisherImpl: ActiveTransitionFinisherImpl):
             ActiveTransitionMarkingFinisher
 
+    @Binds
+    @SimulationScope
+    abstract fun objectTokenSet(objectTokenSet: ObjectTokenSetMap): ObjectTokenSet
+
     @Provides
     @SimulationScope
     fun provideLoggerFactory(
@@ -141,39 +154,51 @@ abstract class SimulationModule {
         loggingWriters: LoggerWriters,
         loggingConfiguration: LogConfiguration,
         simulationConfig: SimulationConfig,
+        simulationStateProvider: SimulationStateProvider,
+        aggregatingLogReceiver: StepAggregatingLogReceiver,
+        stepAggregatingLogCreator: StepAggregatingLogCreator
     ): LoggerFactory {
         val labelMapping = simulationConfig.labelMapping
 
-        return CompoundLogger(
-            loggingEnabled = true,
-            loggers = buildList {
-                SimTaskLoggerWrapper()
-                val htmlDebugTraceLogger = htmlTraceFileWriter?.let {
-                    HtmlExecutionPrintingLogger(
-                        loggingEnabled = loggingEnabled,
-                        labelMapping = labelMapping,
-                        writer = it,
-                    )
-                }
-
-                val ansiTraceLogger = ansiTraceWriter?.let {
-                    ANSITracingLogger(
-                        loggingEnabled,
-                        writer = it
-                    )
-                }
-
-                val ocelEventLogger = ocelWriter?.let {
-                    OcelEventLogger(
-                        ocelParams = OcelParams(logBothStartAndEnd = false),
-                        loggingEnabled = false,
-                        labelMapping = labelMapping,
-                        ocelWriter = it
-                    )
-                }
-                addAll(loggingWriters.additionalLoggers)
+        return object : LoggerFactory {
+            override fun create(labelMapping: LabelMapping): Logger {
+                return StepAggregatingLogger(
+                    logReceiver = aggregatingLogReceiver,
+                    stepAggregatingLogCreator,
+                )
             }
-        )
+        }
+
+//        return CompoundLogger(
+//            loggingEnabled = true,
+//            loggers = buildList {
+//                SimTaskLoggerWrapper()
+//                val htmlDebugTraceLogger = htmlTraceFileWriter?.let {
+//                    HtmlExecutionPrintingLogger(
+//                        loggingEnabled = loggingEnabled,
+//                        labelMapping = labelMapping,
+//                        writer = it,
+//                    )
+//                }
+//
+//                val ansiTraceLogger = ansiTraceWriter?.let {
+//                    ANSITracingLogger(
+//                        loggingEnabled,
+//                        writer = it
+//                    )
+//                }
+//
+//                val ocelEventLogger = ocelWriter?.let {
+//                    OcelEventLogger(
+//                        ocelParams = OcelParams(logBothStartAndEnd = false),
+//                        loggingEnabled = false,
+//                        labelMapping = labelMapping,
+//                        ocelWriter = it
+//                    )
+//                }
+//                addAll(loggingWriters.additionalLoggers)
+//            }
+//        )
     }
 }
 
@@ -198,6 +223,7 @@ interface SimulationComponent {
             @BindsInstance loggerFactory: LoggerFactory,
             @BindsInstance randomFactory: RandomFactory,
             @BindsInstance developmentDebugConfig: DevelopmentDebugConfig,
+            @BindsInstance stepAggregatingLogReceiver: StepAggregatingLogReceiver
         ): SimulationComponent
     }
 }

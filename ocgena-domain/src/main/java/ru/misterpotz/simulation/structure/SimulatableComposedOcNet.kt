@@ -2,7 +2,7 @@ package ru.misterpotz.simulation.structure
 
 import model.*
 import model.time.IntervalFunction
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
 
 interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {

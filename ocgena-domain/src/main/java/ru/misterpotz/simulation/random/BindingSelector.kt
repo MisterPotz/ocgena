@@ -1,6 +1,6 @@
 package simulation.random
 
-import model.ObjectToken
+import ru.misterpotz.model.marking.ObjectToken
 import simulation.binding.EnabledBinding
 import kotlin.random.Random
 

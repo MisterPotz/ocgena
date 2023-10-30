@@ -1,6 +1,6 @@
 package simulation.client
 
-import model.Time
+import ru.misterpotz.model.marking.Time
 import simulation.client.loggers.NoOpLogger
 
 class CallbackLogger(

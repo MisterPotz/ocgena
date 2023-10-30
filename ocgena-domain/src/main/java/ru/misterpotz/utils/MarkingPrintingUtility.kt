@@ -1,9 +1,9 @@
 package ru.misterpotz.utils
 
 import model.*
-import ru.misterpotz.model.*
-import ru.misterpotz.model.ImmutableObjectMarkingMap
-import ru.misterpotz.model.ObjectMarkingMap
+import ru.misterpotz.model.marking.*
+import ru.misterpotz.model.marking.ImmutableObjectMarkingMap
+import ru.misterpotz.model.marking.ObjectMarkingMap
 import utils.print
 import javax.inject.Inject
 

@@ -1,8 +1,7 @@
 package simulation
 
 import model.*
-import ru.misterpotz.simulation.state.SimulationTime
-import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
+import ru.misterpotz.model.marking.Time
 import simulation.client.loggers.DebugTracingLogger
 
 interface LoggerFactory {

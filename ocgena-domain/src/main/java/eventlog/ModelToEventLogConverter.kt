@@ -1,6 +1,7 @@
 package eventlog
 
 import model.*
+import ru.misterpotz.model.marking.ObjectToken
 import simulation.client.OcelParams
 import simulation.client.loggers.TimeStampMapper
 

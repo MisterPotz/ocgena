@@ -1,6 +1,7 @@
-package model
+package ru.misterpotz.model.marking
 
 import kotlinx.serialization.Serializable
+import model.ObjectType
 
 interface ObjectValuesMap : java.io.Serializable
 

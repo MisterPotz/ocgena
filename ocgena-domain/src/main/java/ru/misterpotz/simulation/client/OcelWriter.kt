@@ -1,7 +1,7 @@
 package simulation.client
 
 import eventlog.Event
-import model.ObjectToken
+import ru.misterpotz.model.marking.ObjectToken
 import model.ObjectType
 
 interface OcelWriter {

@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.logging
 
-class LogConfigurationx(
+class LogConfiguration(
     val currentStateLog: CurrentStateLogConfiguration,
     val transitionsLog: TransitionsLogConfiguration,
 )

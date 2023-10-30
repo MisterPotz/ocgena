@@ -1,10 +1,9 @@
 package model
 
-import ru.misterpotz.model.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
 import utils.html.color
 import utils.html.indentLines
 import utils.*
-
 
 data class ExecutedBinding(
     val finishedTransition: ActiveFiringTransition,

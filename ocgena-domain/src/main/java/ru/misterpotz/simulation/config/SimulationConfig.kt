@@ -2,14 +2,15 @@ package ru.misterpotz.simulation.config
 
 import config.GenerationConfig
 import model.LabelMapping
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 import model.OcNetType
+import ru.misterpotz.model.marking.ImmutableObjectMarking
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import simulation.ObjectTokenGenerator
 
 data class SimulationConfig(
     val templateOcNet: SimulatableComposedOcNet<*>,
-    val initialMarking: ObjectMarking,
+    val initialMarking: ImmutableObjectMarking,
     val timeoutSec: Long?,
     val randomSeed: Int?,
     val useRandom: Boolean = true,

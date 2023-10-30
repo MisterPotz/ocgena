@@ -1,6 +1,5 @@
-package ru.misterpotz.model
+package ru.misterpotz.model.marking
 
-import model.ObjectTokenId
 import model.PlaceId
 
 interface ObjectMarkingDelta {

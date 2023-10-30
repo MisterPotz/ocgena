@@ -1,7 +1,7 @@
 package ru.misterpotz.simulation.state
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.model.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
 import model.SerializableActiveTransitionMarking
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.transition.SerializableTransitionOccurrenceAllowedTimes

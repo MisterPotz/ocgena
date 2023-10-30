@@ -2,95 +2,97 @@ package ru.misterpotz.simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import ru.misterpotz.model.ObjectMarking
-import model.Time
-import ru.misterpotz.simulation.logging.LogEvent
+import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LoggingEvent
 import simulation.Logger
-import simulation.SimulationStateProvider
 import javax.inject.Inject
 
-interface StepAggregatingLogReceiver {
-    fun onEvent(loggingEvent: LoggingEvent)
-}
-
-class TransitionStartLoggerDelegate {
-    val objectMarkingDelta : ObjectMarking
-
-    fun applyDelta(objectMarkingDelta  : ObjectMarking.Delta) {
-
-    }
-}
 class StepAggregatingLogger @Inject constructor(
-    val logReceiver: StepAggregatingLogReceiver,
-    val simulationStateProvider: SimulationStateProvider
+    private val logReceiver: StepAggregatingLogReceiver,
+    private val stepAggregatingLogCreator: StepAggregatingLogCreator,
 ) : Logger {
-    val step get() = simulationStateProvider.getSimulationStepState().currentStep
-    val simTime get() = simulationStateProvider.getSimulationTime().globalTime
-    val currentPMarking get() = simulationStateProvider.getOcNetState().pMarking
+
+    private fun logIfCreates(block : StepAggregatingLogCreator.() -> LoggingEvent?) {
+        stepAggregatingLogCreator.block()?.let {
+            logReceiver.onEvent(it)
+        }
+    }
 
     override fun onStart() {
-        logReceiver.onEvent(
-            LoggingEvent(
-                step,
-                logEvent = LogEvent.SIMULATION_START,
-                simTime = simTime,
-                currentMarking = currentPMarking,
-            )
-        )
+        logIfCreates {
+            onStart()
+        }
     }
 
     override fun afterInitialMarking() {
-        logReceiver.onEvent(
-            LoggingEvent(
-
-            )
-        )
-        TODO("Not yet implemented")
+        logIfCreates {
+            afterInitialMarking()
+        }
     }
 
     override fun onExecutionNewStepStart() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            onExecutionNewStepStart()
+        }
     }
 
     override fun beforeStartingNewTransitions() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            beforeEndingTransitions()
+        }
     }
 
     override fun onStartTransition(transition: ActiveFiringTransition) {
-        TODO("Not yet implemented")
+        logIfCreates {
+            onStartTransition(transition)
+        }
     }
 
     override fun afterStartingNewTransitions() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            afterStartingNewTransitions()
+        }
     }
 
     override fun beforeEndingTransitions() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            beforeEndingTransitions()
+        }
     }
 
     override fun onEndTransition(executedBinding: ExecutedBinding) {
-        TODO("Not yet implemented")
+        logIfCreates {
+            onEndTransition(executedBinding)
+        }
     }
 
     override fun afterEndingTransitions() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            afterEndingTransitions()
+        }
     }
 
     override fun onExecutionStepFinish(newTimeDelta: Time) {
-        TODO("Not yet implemented")
+        logIfCreates {
+            onExecutionStepFinish(newTimeDelta)
+        }
     }
 
     override fun afterFinalMarking() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            afterFinalMarking()
+        }
     }
 
     override fun onTimeout() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            onTimeout()
+        }
     }
 
     override fun onEnd() {
-        TODO("Not yet implemented")
+        logIfCreates {
+            onTimeout()
+        }
     }
-
 }

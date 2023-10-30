@@ -5,7 +5,7 @@ import eventlog.ModelToEventLogConverter
 import model.ActiveFiringTransition
 import model.ExecutedBinding
 import model.LabelMapping
-import model.Time
+import ru.misterpotz.model.marking.Time
 import model.time.formatMillisToUTCString
 import model.time.getSmartCurrentTime
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
@@ -37,7 +37,6 @@ class OcelEventLogger(
         ocelParams = ocelParams,
         timeStampMapper = timmeStampMapper,
     )
-    override val loggingEnabled: Boolean = loggingEnabled
     override fun onExecutionStepStart(
         stepIndex: Int,
         state: SimulatableComposedOcNet.State,

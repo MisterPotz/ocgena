@@ -2,8 +2,8 @@ package simulation.typea
 
 import model.*
 import model.typea.VariableArcTypeA
-import ru.misterpotz.model.ImmutableObjectMarking
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 import simulation.ObjectTokenMover
 import simulation.random.TokenSelector
 import simulation.utils.TokenCollectorByTypeAndArc

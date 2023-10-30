@@ -1,7 +1,7 @@
 package ru.misterpotz.simulation.state
 
 import model.ActiveTransitionMarking
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
 import utils.html.indentLines

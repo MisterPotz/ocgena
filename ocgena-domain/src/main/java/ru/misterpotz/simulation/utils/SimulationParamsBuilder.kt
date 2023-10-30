@@ -4,7 +4,8 @@ import config.GenerationConfig
 import model.*
 import model.time.IntervalFunction
 import model.utils.OcNetCreator
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.simulation.marking.PlainMarking
 import ru.misterpotz.simulation.config.SimulationConfig
 import simulation.*
@@ -14,7 +15,7 @@ open class SimulationParamsBuilder(
 ) {
     private var generationConfig: GenerationConfig? = null
     private var inputOutputPlaces: InputOutputPlaces? = null
-    private var initialMarking : ObjectMarking? = null
+    private var initialMarking : ImmutableObjectMarking? = null
     private var timeIntervalFunction : IntervalFunction? = null
     private var randomSeed : Int? = null
     private var useRandom : Boolean = true

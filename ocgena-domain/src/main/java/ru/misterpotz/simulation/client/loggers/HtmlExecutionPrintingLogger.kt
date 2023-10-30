@@ -1,7 +1,8 @@
 package simulation.client.loggers
 
 import model.*
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LogConfiguration
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet

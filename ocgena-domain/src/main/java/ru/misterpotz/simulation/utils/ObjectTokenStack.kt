@@ -1,6 +1,6 @@
 package simulation.utils
 
-import model.ObjectToken
+import ru.misterpotz.model.marking.ObjectToken
 
 class ObjectTokenStack(objectTokens : List<ObjectToken> ) {
     private val objectTokens : MutableList<ObjectToken> = objectTokens.toMutableList()

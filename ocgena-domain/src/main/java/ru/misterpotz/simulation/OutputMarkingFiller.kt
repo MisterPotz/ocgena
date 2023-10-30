@@ -3,8 +3,8 @@ package simulation
 import model.*
 import model.typea.VariableArcTypeA
 import model.typel.VariableArcTypeL
-import ru.misterpotz.model.ImmutableObjectMarking
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 
 
 class OutputMarkingFiller(

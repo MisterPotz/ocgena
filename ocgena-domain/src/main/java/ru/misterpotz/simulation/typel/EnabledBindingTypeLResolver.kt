@@ -2,8 +2,9 @@ package simulation.typel
 
 import model.*
 import model.typea.ArcMultiplicityTypeA
-import ru.misterpotz.model.ImmutableObjectMarking
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.ObjectToken
 import ru.misterpotz.simulation.marking.PMarkingProvider
 import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
 import simulation.binding.EnabledBinding

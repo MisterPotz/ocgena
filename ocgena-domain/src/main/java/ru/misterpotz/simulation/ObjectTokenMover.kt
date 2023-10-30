@@ -1,8 +1,8 @@
 package simulation
 
 import model.*
-import ru.misterpotz.model.ImmutableObjectMarking
-import ru.misterpotz.model.ObjectMarking
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.ObjectMarking
 
 abstract class ObjectTokenMover {
     abstract fun tryFillOutputPlacesNormalArcs(

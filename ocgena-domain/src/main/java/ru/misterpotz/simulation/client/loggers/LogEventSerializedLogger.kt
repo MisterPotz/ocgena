@@ -2,8 +2,8 @@ package ru.misterpotz.simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import ru.misterpotz.model.ObjectMarking
-import model.Time
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import simulation.SimulationStateProvider

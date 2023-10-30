@@ -1,7 +1,7 @@
 package simulation.binding
 
-import ru.misterpotz.model.ImmutableObjectMarking
-import model.Time
+import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.model.marking.Time
 import model.Transition
 import kotlin.math.abs
 

@@ -1,7 +1,6 @@
-package ru.misterpotz.model
+package ru.misterpotz.model.marking
 
 import ext.copyWithValueTransformMutable
-import model.ObjectTokenId
 import model.PlaceId
 
 interface ImmutableObjectMarking : ObjectMarkingDelta {
@@ -12,7 +11,7 @@ interface ImmutableObjectMarking : ObjectMarkingDelta {
     fun toMutable(): ObjectMarking
 }
 
-fun ImmutableObjectMarking(placesToObjectTokens: Map<PlaceId, Set<ObjectTokenId>>): ImmutableObjectMarking {
+fun <S : Set<ObjectTokenId>> ImmutableObjectMarking(placesToObjectTokens: Map<PlaceId, S>): ImmutableObjectMarking {
     return ImmutableObjectMarkingMap(placesToObjectTokens)
 }
 

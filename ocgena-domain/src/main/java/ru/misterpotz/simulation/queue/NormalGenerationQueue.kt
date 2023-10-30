@@ -1,66 +1,17 @@
-package simulation
+package ru.misterpotz.simulation.queue
 
 import config.GenerationConfig
 import config.TimeRange
-import ru.misterpotz.model.ImmutableObjectMarking
 import model.PlaceId
 import model.PlaceTyping
-import model.Time
-import ru.misterpotz.simulation.config.SimulationConfig
-import javax.inject.Inject
-
-interface GenerationQueue {
-    fun shiftTime(time: Time)
-    fun generateTokensAsMarkingAndReplan(): ImmutableObjectMarking?
-    fun getTimeUntilNextPlanned(): Time?
-
-    fun planTokenGenerationForEveryone()
-}
-
-class NoOpGenerationQueue() : GenerationQueue {
-    override fun shiftTime(time: Time) {
-
-    }
-
-    override fun generateTokensAsMarkingAndReplan(): ImmutableObjectMarking? {
-        return null
-    }
-
-    override fun getTimeUntilNextPlanned(): Time? {
-        return null
-    }
-
-    override fun planTokenGenerationForEveryone() {
-
-    }
-}
-
-interface GenerationQueueFactory {
-    fun createGenerationQueue(simulationConfig: SimulationConfig): GenerationQueue
-}
-
-class GenerationQueueFactoryImpl @Inject constructor(
-    private val tokenGenerationTimeSelector: TokenGenerationTimeSelector,
-) : GenerationQueueFactory {
-    override fun createGenerationQueue(simulationConfig: SimulationConfig): GenerationQueue {
-        val ocNet = simulationConfig.templateOcNet
-
-        return simulationConfig.generationConfig?.let {
-            NormalGenerationQueue(
-                generationConfig = it,
-                nextTimeSelector = tokenGenerationTimeSelector,
-                placeTyping = ocNet.coreOcNet.placeTyping,
-                tokenGenerator = simulationConfig.objectTokenGenerator,
-            )
-        } ?: NoOpGenerationQueue()
-    }
-}
+import ru.misterpotz.model.marking.*
+import simulation.TokenGenerationTimeSelector
 
 class NormalGenerationQueue(
     private val generationConfig: GenerationConfig,
     private val nextTimeSelector: TokenGenerationTimeSelector,
     val placeTyping: PlaceTyping,
-    private val tokenGenerator: ObjectTokenGenerator,
+    private val tokenGenerationFacade: TokenGenerationFacade,
     private val defaultGenerationInterval: TimeRange? = null
 ) : GenerationQueue {
 
@@ -68,7 +19,6 @@ class NormalGenerationQueue(
         for ((i, value) in generationConfig.placeIdToGenerationTarget) {
             put(
                 i, PlaceGenerator(
-                    placeId = i,
                     mustTotallyGenerate = value,
                     timeRange = generationConfig.defaultGeneration
                         ?: defaultGenerationInterval
@@ -85,14 +35,24 @@ class NormalGenerationQueue(
         }
     }
 
-    override fun generateTokensAsMarkingAndReplan(): ImmutableObjectMarking? {
+    private fun generateTokenIfCan(placeId: PlaceId): ObjectToken? {
+        val generator = placeGenerators[placeId]!!
+
+        return if (generator.mustGenerateNow()) {
+            val placeType = placeTyping[placeId]
+            generator.markAsNewGenerated()
+            tokenGenerationFacade.generate(placeType)
+        } else null
+    }
+
+    override fun generateTokensAsMarkingAndReplan(): ObjectMarkingDelta? {
         val map = buildMap {
             for ((id, generator) in placeGenerators) {
-                if (generator.mustGenerateNow()) {
-                    val placeType = placeTyping[id]
-                    put(id, setOf(tokenGenerator.generate(placeType)))
-                    generator.markAsNewGenerated()
+
+                generateTokenIfCan(id)?.let { objectToken ->
+                    put(id, setOf(objectToken.id))
                 }
+
                 if (generator.mustPlan()) {
                     generator.plan(nextTimeSelector.get(generator.timeRange))
                 }
@@ -109,11 +69,9 @@ class NormalGenerationQueue(
 
         for ((id, generator) in placeGenerators) {
             if (generator.hasPlannedToken()) {
-                minTime = if (minTime == null) {
-                    generator.nextGenerationHappensIn!!
-                } else {
-                    minTime.coerceAtMost(generator.nextGenerationHappensIn!!)
-                }
+                minTime = minTime
+                    ?.coerceAtMost(generator.nextGenerationHappensIn!!)
+                    ?: generator.nextGenerationHappensIn!!
             }
         }
         return minTime
@@ -127,8 +85,7 @@ class NormalGenerationQueue(
         }
     }
 
-    class PlaceGenerator(
-        val placeId: String,
+    private class PlaceGenerator(
         val mustTotallyGenerate: Int,
         val timeRange: TimeRange,
         var nextGenerationHappensIn: Time?,
@@ -144,7 +101,7 @@ class NormalGenerationQueue(
         }
 
         fun mustGenerateNow(): Boolean {
-            return nextGenerationHappensIn == 0
+            return nextGenerationHappensIn == 0L
         }
 
         fun mustPlan(): Boolean {

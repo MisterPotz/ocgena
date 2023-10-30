@@ -2,11 +2,10 @@ package simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import model.Time
+import ru.misterpotz.model.marking.Time
 import simulation.Logger
 
 abstract class NoOpLogger : Logger {
-    override val loggingEnabled: Boolean = false
 
     override fun onStart() {
 

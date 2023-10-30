@@ -1,11 +1,12 @@
 package simulation
 
 import dsl.PatternIdCreator
-import model.EmptyObjectValuesMap
-import ru.misterpotz.model.ObjectMarking
-import model.ObjectToken
+import ru.misterpotz.model.marking.EmptyObjectValuesMap
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.ObjectToken
 import model.ObjectType
 import model.PlaceTyping
+import ru.misterpotz.model.marking.ImmutableObjectMarking
 import ru.misterpotz.simulation.marking.PlainMarking
 
 class ObjectTokenGenerator() {
@@ -42,8 +43,8 @@ class ObjectMarkingFromPlainCreator(
     private val generator: ObjectTokenGenerator,
 ) {
 
-    fun create(): ObjectMarking {
-        return ObjectMarking(
+    fun create(): ImmutableObjectMarking {
+        return ImmutableObjectMarking(
             buildMap {
                 for (place in plainMarking.allPlaces()) {
                     put(place, buildSet<ObjectToken> {

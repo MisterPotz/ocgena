@@ -1,9 +1,10 @@
 package simulation
 
-import ru.misterpotz.model.ObjectMarking
-import model.Time
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.marking.PMarkingProvider
+import ru.misterpotz.simulation.queue.GenerationQueue
 import ru.misterpotz.simulation.state.SimulationStepState
 import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.simulation.structure.RunningSimulatableOcNet

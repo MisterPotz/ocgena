@@ -9,8 +9,12 @@ import model.typea.SerializableVariableArcTypeA
 import model.typel.SerializableArcTypeL
 import net.mamoe.yamlkt.Yaml
 import net.mamoe.yamlkt.YamlBuilder
+import ru.misterpotz.model.marking.EmptyObjectValuesMap
+import ru.misterpotz.model.marking.ObjectValuesMap
+import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.simulation.queue.GenerationQueue
 import ru.misterpotz.simulation.state.SerializableState
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
@@ -39,7 +43,7 @@ class SimulationTask @Inject constructor(
     private val simulationStepState get() = simulationStateProvider.getSimulationStepState()
     private val runningSimulatableOcNet get() = simulationStateProvider.runningSimulatableOcNet()
 
-    private var stepIndex: Int = 0
+    private var stepIndex: Long = 0
     private val oneStepGranularity = 5
     var finishRequested = false;
 
@@ -59,7 +63,7 @@ class SimulationTask @Inject constructor(
     private fun prepare() {
         ocNet.initialize()
 
-        state.pMarking += initialMarking
+        state.pMarking.plus(initialMarking)
 
         for (transition in ocNet.coreOcNet.transitions) {
             val nextAllowedTime = transitionInstanceOccurenceDeltaSelector.getNewNextOccurrenceTime(transition)
@@ -87,11 +91,8 @@ class SimulationTask @Inject constructor(
         ) {
             simulationStepState.currentStep = stepIndex
             simulationStepState.onNewStep()
-
-            logger.onExecutionStepStart(stepIndex, state, simulationTime)
-
+            logger.onExecutionNewStepStart()
             stepExecutor.executeStep()
-
             stepIndex++
         }
     }
@@ -139,7 +140,7 @@ class SimulationTask @Inject constructor(
         if (developmentDebugConfig.dumpState) {
             println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
         }
-        logger.afterInitialMarking(state.pMarking)
+        logger.afterInitialMarking()
 
         simulationStepState.onStart()
     }

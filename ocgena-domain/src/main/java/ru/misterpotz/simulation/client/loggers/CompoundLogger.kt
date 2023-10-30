@@ -2,21 +2,18 @@ package simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
-import ru.misterpotz.model.ObjectMarking
-import model.Time
+import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.model.marking.Time
 import simulation.Logger
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
 
 class CompoundLogger(
-    override val loggingEnabled: Boolean,
     val loggers: List<Logger>
 ) : Logger {
     private inline fun log(crossinline block: Logger.() -> Unit) {
-        if (loggingEnabled) {
-            for (i in loggers) {
-                i.block()
-            }
+        for (i in loggers) {
+            i.block()
         }
     }
 

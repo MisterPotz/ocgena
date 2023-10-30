@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.transition
 
-import model.Time
+import ru.misterpotz.model.marking.Time
 import model.Transition
 import utils.print
 

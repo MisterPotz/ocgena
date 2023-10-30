@@ -1,7 +1,7 @@
 package ru.misterpotz.simulation.transition
 
 import kotlinx.serialization.Serializable
-import model.Time
+import ru.misterpotz.model.marking.Time
 import model.TransitionId
 
 @Serializable
