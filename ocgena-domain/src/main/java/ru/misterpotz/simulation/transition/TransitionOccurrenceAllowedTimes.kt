@@ -2,21 +2,26 @@ package ru.misterpotz.simulation.transition
 
 import ru.misterpotz.model.marking.Time
 import model.Transition
-import utils.print
+import model.TransitionId
 
-class TransitionOccurrenceAllowedTimes {
-    private val transitionsToNextTimes = mutableMapOf<Transition, Time>()
+interface TransitionOccurrenceAllowedTimes {
+    fun increaseSimTime(time: Time)
+    fun earliestNonZeroTime(): Time?
+    fun isAllowedToBeEnabled(transition: TransitionId): Boolean
+    fun setNextAllowedTime(transition: TransitionId, time: Time)
+}
 
-    fun toSerializable() : SerializableTransitionOccurrenceAllowedTimes {
-        return SerializableTransitionOccurrenceAllowedTimes(
-            buildMap {
-                for (i in transitionsToNextTimes.keys) {
-                    put(i.id, transitionsToNextTimes[i]!!)
-                }
-            }
-        )
-    }
-    fun shiftByTime(time: Time) {
+fun TransitionOccurrenceAllowedTimes(transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf())
+        : TransitionOccurrenceAllowedTimes {
+    return TransitionOccurrenceAllowedTimesMap(transitionsToNextTimes)
+}
+
+internal class TransitionOccurrenceAllowedTimesMap(
+    private val transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf()
+) :
+    TransitionOccurrenceAllowedTimes {
+
+    override fun increaseSimTime(time: Time) {
         for (i in transitionsToNextTimes.keys) {
             val currentValue = transitionsToNextTimes[i]!!
 
@@ -24,29 +29,21 @@ class TransitionOccurrenceAllowedTimes {
         }
     }
 
-    fun earliestNonZeroTime() : Time? {
-        return transitionsToNextTimes.filter { it.value > 0 }.minByOrNull {
-            it.value
-        }?.value?.takeIf { it > 0 }
+    override fun earliestNonZeroTime(): Time? {
+        return transitionsToNextTimes.values.fold(null) { accum: Time?, right: Time ->
+            if (right > 0 || (accum != null && accum > right)) {
+                right
+            } else {
+                accum
+            }
+        }
+    }
+    
+    override fun isAllowedToBeEnabled(transition: TransitionId): Boolean {
+        return transitionsToNextTimes[transition] == 0L
     }
 
-    fun isAllowedToBeEnabled(transition: Transition) : Boolean {
-        return (transitionsToNextTimes[transition] == 0)
-    }
-
-    fun setNextAllowedTime(transition: Transition, time: Time) {
+    override fun setNextAllowedTime(transition: TransitionId, time: Time) {
         transitionsToNextTimes[transition] = time
-    }
-
-    fun prettyPrintState(): String {
-        return transitionsToNextTimes.keys.joinToString(separator = "\n") {
-            """${it.id} permitted in ${transitionsToNextTimes[it]?.print()}"""
-        }
-    }
-
-    fun htmlLines() : List<String> {
-        return transitionsToNextTimes.keys.map {
-            """${it.id} permitted in ${transitionsToNextTimes[it]?.print()}"""
-        }
     }
 }

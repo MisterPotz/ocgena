@@ -146,7 +146,7 @@ class SimulationTaskStepExecutor @Inject constructor(
 
         generateNewTokensAndPlanNextGeneration()
 
-        findAndStartEnabledTransitions()
+        findAndStartEnabledTransitionActivities()
 
         shiftByMinimalSomethingChangingTime()
         dumpState()
@@ -155,11 +155,11 @@ class SimulationTaskStepExecutor @Inject constructor(
     private fun generateNewTokensAndPlanNextGeneration() {
         val markingToAdd = generationQueue.generateTokensAsMarkingAndReplan()
         if (markingToAdd != null) {
-            state.pMarking += markingToAdd
+            state.pMarking.plus(markingToAdd)
         }
     }
 
-    private fun findAndStartEnabledTransitions() {
+    private fun findAndStartEnabledTransitionActivities() {
         var enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
 
         logger.beforeStartingNewTransitions()
@@ -179,16 +179,19 @@ class SimulationTaskStepExecutor @Inject constructor(
 
             enabledBindings = bindingsCollector.findEnabledBindings()
         }
+
+        logger.afterStartingNewTransitions()
     }
 
     private fun findAndFinishEndedTransitions() {
         val tMarking = state.tMarking
         val endedTransitions = tMarking.getAndPopEndedTransitions()
 
-        logger.onTransitionEndSectionStart()
+        logger.beforeEndingTransitions()
         for (transition in endedTransitions) {
             transitionFinisher.finishActiveTransition(transition)
         }
+        logger.afterEndingTransitions()
     }
 
     private fun shiftByMinimalSomethingChangingTime() {
@@ -210,7 +213,6 @@ class SimulationTaskStepExecutor @Inject constructor(
             shiftActiveTransitionsByTime(minimumTime)
             shiftTransitionAllowedTime(minimumTime)
             generationQueue.shiftTime(minimumTime)
-            logger.onTimeShift(minimumTime)
         }
     }
 
@@ -240,7 +242,7 @@ class SimulationTaskStepExecutor @Inject constructor(
 
     private fun shiftTransitionAllowedTime(time: Time) {
         val tTimes = state.tTimes
-        tTimes.shiftByTime(time)
+        tTimes.increaseSimTime(time)
     }
 
     private fun shiftGlobalTime(time: Time) {

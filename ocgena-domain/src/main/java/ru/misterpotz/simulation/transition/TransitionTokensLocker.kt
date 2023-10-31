@@ -1,7 +1,7 @@
 package ru.misterpotz.simulation.transition
 
-import model.ActiveFiringTransition
-import model.ActiveTransitionMarking
+import model.OngoingActivity
+import model.TransitionActivitiesMarking
 import simulation.Logger
 import ru.misterpotz.simulation.marking.PMarkingProvider
 import ru.misterpotz.simulation.state.SimulationTime
@@ -9,7 +9,7 @@ import simulation.binding.EnabledBindingWithTokens
 
 class TransitionTokensLocker(
     private val pMarkingProvider: PMarkingProvider,
-    private val tMarking: ActiveTransitionMarking,
+    private val tMarking: TransitionActivitiesMarking,
     private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
     private val transitionDurationSelector: TransitionDurationSelector,
     private val tTimes: TransitionOccurrenceAllowedTimes,
@@ -23,7 +23,7 @@ class TransitionTokensLocker(
             transition
         )
 
-        val tMarkingValue = ActiveFiringTransition.create(
+        val tMarkingValue = OngoingActivity.create(
             transition = transition,
             lockedObjectTokens = enabledBindingWithTokens.involvedObjectTokens,
             duration = randomSelectedDuration,
@@ -42,7 +42,7 @@ class TransitionTokensLocker(
     }
 
     private fun lockTokensInPMarking(enabledBindingWithTokens: EnabledBindingWithTokens) {
-        pMarkingProvider.pMarking -= enabledBindingWithTokens.involvedObjectTokens
+        pMarkingProvider.pMarking.minus(enabledBindingWithTokens.involvedObjectTokens)
     }
 
     fun lockTokensAndRecordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {

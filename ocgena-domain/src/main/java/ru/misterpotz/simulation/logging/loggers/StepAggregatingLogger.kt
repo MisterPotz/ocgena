@@ -1,6 +1,6 @@
-package ru.misterpotz.simulation.client.loggers
+package ru.misterpotz.simulation.logging.loggers
 
-import model.ActiveFiringTransition
+import model.OngoingActivity
 import model.ExecutedBinding
 import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LoggingEvent
@@ -42,7 +42,7 @@ class StepAggregatingLogger @Inject constructor(
         }
     }
 
-    override fun onStartTransition(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: OngoingActivity) {
         logIfCreates {
             onStartTransition(transition)
         }

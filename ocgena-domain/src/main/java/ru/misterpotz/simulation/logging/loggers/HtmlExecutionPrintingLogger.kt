@@ -3,7 +3,7 @@ package simulation.client.loggers
 import model.*
 import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.model.marking.Time
-import ru.misterpotz.simulation.client.loggers.CurrentSimulationDelegate
+import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.utils.MarkingPrintingUtility
@@ -107,7 +107,7 @@ class HtmlExecutionPrintingLogger @Inject constructor(
         )
         write(indentLinesRoot(indentation = 2, bold("current state: ")))
 
-        write(indentLinesRoot(indentation = 3, state.toHtmlLines(), marginSymbol = "*"))
+//        write(indentLinesRoot(indentation = 3, state.toHtmlLines(), marginSymbol = "*"))
     }
 
     fun onTransitionEndSectionStart() {
@@ -128,7 +128,7 @@ class HtmlExecutionPrintingLogger @Inject constructor(
         )
     }
 
-    override fun onStartTransition(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: OngoingActivity) {
         write(
             indentLinesRoot(
                 3,

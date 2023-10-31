@@ -1,8 +1,6 @@
 package simulation
 
-import config.GenerationConfig
 import model.ObjectMarking
-import model.PlaceTyping
 import model.Time
 import simulation.binding.ActiveTransitionMarkingFinisher
 import simulation.binding.EnabledBinding
@@ -13,20 +11,16 @@ import simulation.random.TokenSelector
 
 
 class SimulationTaskStepExecutor(
-    private val ocNet: SimulatableComposedOcNet<*>,
+    ocNet: SimulatableComposedOcNet<*>,
     private val state: SimulatableComposedOcNet.State,
     private val bindingSelector: BindingSelector,
-    private val tokenSelector: TokenSelector,
-    private  val transitionDurationSelector: TransitionDurationSelector,
-    private val nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
+    tokenSelector: TokenSelector,
+    transitionDurationSelector: TransitionDurationSelector,
+    nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
     private val transitionFinisher: ActiveTransitionMarkingFinisher,
     private val logger: Logger,
     private val simulationTime: SimulationTime,
     private val simulationState: SimulationState,
-    private val generationConfig: GenerationConfig?,
-    private val nextTimeSelector: TokenGenerationTimeSelector,
-    private val tokenGenerator: ObjectTokenGenerator,
-    private val placeTyping: PlaceTyping,
     private val generationQueue: GenerationQueue,
     private val dumpState: () -> Unit
 ) {
@@ -98,6 +92,7 @@ class SimulationTaskStepExecutor(
         val endedTransitions = tMarking.getAndPopEndedTransitions()
 
         logger.onTransitionEndSectionStart()
+
         for (transition in endedTransitions) {
             transitionFinisher.finishActiveTransition(transition)
         }

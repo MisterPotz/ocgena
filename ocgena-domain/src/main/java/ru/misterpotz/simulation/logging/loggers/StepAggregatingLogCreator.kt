@@ -1,26 +1,11 @@
-package ru.misterpotz.simulation.client.loggers
+package ru.misterpotz.simulation.logging.loggers
 
-import model.ActiveFiringTransition
+import model.OngoingActivity
 import model.ExecutedBinding
-import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LogEvent
 import ru.misterpotz.simulation.logging.LoggingEvent
-import simulation.SimulationStateProvider
 import javax.inject.Inject
-
-interface CurrentSimulationDelegate {
-    val step: Long
-    val simTime: Time
-    val currentPMarking: ObjectMarking
-}
-
-class CurrentSimulationDelegateImpl @Inject constructor(private val simulationStateProvider: SimulationStateProvider) :
-    CurrentSimulationDelegate {
-    override val step get() = simulationStateProvider.getSimulationStepState().currentStep
-    override val simTime get() = simulationStateProvider.getSimulationTime().globalTime
-    override val currentPMarking get() = simulationStateProvider.getOcNetState().pMarking
-}
 
 class StepAggregatingLogCreator @Inject constructor(
     private val transitionStartLoggerDelegate: TransitionStartLoggerDelegate,
@@ -30,9 +15,9 @@ class StepAggregatingLogCreator @Inject constructor(
 
     fun onStart(): LoggingEvent {
         return LoggingEvent(
-            step,
+            currentStep,
             logEvent = LogEvent.SIMULATION_START,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = null,
         )
     }
@@ -41,18 +26,18 @@ class StepAggregatingLogCreator @Inject constructor(
         val currentMarking = currentPMarking
 
         return LoggingEvent(
-            step,
+            currentStep,
             logEvent = LogEvent.INITIAL_MARKING,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = currentMarking.toImmutable(),
         )
     }
 
     fun onExecutionNewStepStart(): LoggingEvent {
         return LoggingEvent(
-            step = step,
+            step = currentStep,
             logEvent = LogEvent.SIMULATION_STEP_START,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = currentPMarking.toImmutable()
         )
     }
@@ -61,7 +46,7 @@ class StepAggregatingLogCreator @Inject constructor(
         return null
     }
 
-    fun onStartTransition(transition: ActiveFiringTransition): LoggingEvent? {
+    fun onStartTransition(transition: OngoingActivity): LoggingEvent? {
         transitionStartLoggerDelegate.applyDelta(
             transition.lockedObjectTokens
         )
@@ -73,9 +58,9 @@ class StepAggregatingLogCreator @Inject constructor(
         val accumulatedLockedTokens = transitionStartLoggerDelegate.getAccumulatedChange()
 
         val loggingEvent = LoggingEvent(
-            step = step,
+            step = currentStep,
             logEvent = LogEvent.STARTED_TRANSITIONS,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = null,
             lockedTokens = accumulatedLockedTokens
         )
@@ -97,9 +82,9 @@ class StepAggregatingLogCreator @Inject constructor(
         val accChange = transitionEndLoggerDelegate.getAccumulatedChange()
         transitionEndLoggerDelegate.clear()
         return LoggingEvent(
-            step = step,
+            step = currentStep,
             logEvent = LogEvent.ENDED_TRANSITIONS,
-            simTime = simTime,
+            simTime = simGlobalTime,
             unlockedTokens = accChange
         )
     }
@@ -110,27 +95,27 @@ class StepAggregatingLogCreator @Inject constructor(
 
     fun afterFinalMarking(): LoggingEvent {
         return LoggingEvent(
-            step = step,
+            step = currentStep,
             logEvent = LogEvent.INITIAL_MARKING,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = currentPMarking.toImmutable()
         )
     }
 
     fun onTimeout(): LoggingEvent {
         return LoggingEvent(
-            step = step,
+            step = currentStep,
             logEvent = LogEvent.SIMULATION_TIMEOUT,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = currentPMarking.toImmutable()
         )
     }
 
     fun onEnd(): LoggingEvent {
         return LoggingEvent(
-            step = step,
+            step = currentStep,
             logEvent = LogEvent.SIMULATION_END,
-            simTime = simTime,
+            simTime = simGlobalTime,
             currentMarking = currentPMarking.toImmutable()
 
         )

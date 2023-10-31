@@ -1,4 +1,4 @@
-package ru.misterpotz.simulation.client.loggers
+package ru.misterpotz.simulation.logging.loggers
 
 import ru.misterpotz.simulation.logging.LoggingEvent
 

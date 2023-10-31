@@ -4,19 +4,19 @@ import eventlog.ActivityOccurrenceRegistry
 import eventlog.Event
 import model.*
 import ru.misterpotz.model.marking.ObjectToken
-import simulation.client.OcelParams
+import simulation.client.OcelLogConfiguration
 import simulation.client.loggers.TimeStampMapper
 
 class ModelToEventLogConverter(
     private val labelMapping: LabelMapping,
-    private val ocelParams: OcelParams,
+    private val ocelParams: OcelLogConfiguration,
     private val timeStampMapper: TimeStampMapper
 ) {
     private val objects: MutableList<ObjectToken> = mutableListOf()
     private val logBothStartAndEnd : Boolean = ocelParams.logBothStartAndEnd
     private val occurrenceRegistry = ActivityOccurrenceRegistry(ocelParams)
 
-    fun getObjects(activeTransition: ActiveFiringTransition) : Set<ObjectToken> {
+    fun getObjects(activeTransition: OngoingActivity) : Set<ObjectToken> {
         return  buildSet {
             addAll(activeTransition.lockedObjectTokens.allTokens())
         }
@@ -28,7 +28,7 @@ class ModelToEventLogConverter(
         }
     }
 
-    fun convertToEventStart(activeTransition: ActiveFiringTransition) : Event? {
+    fun convertToEventStart(activeTransition: OngoingActivity) : Event? {
         if (logBothStartAndEnd) {
             val transition = activeTransition.transition
 

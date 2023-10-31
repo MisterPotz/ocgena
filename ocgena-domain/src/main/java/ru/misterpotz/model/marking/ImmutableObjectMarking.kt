@@ -1,9 +1,10 @@
 package ru.misterpotz.model.marking
 
+import kotlinx.serialization.Serializable
 import ru.misterpotz.ext.copyWithValueTransformMutable
 import model.PlaceId
 
-interface ImmutableObjectMarking : ObjectMarkingDelta {
+interface ImmutableObjectMarking : ObjectMarkingDelta, java.io.Serializable {
     val tokensIterator: Iterator<ObjectTokenId>
     override operator fun get(placeId: PlaceId): Set<ObjectTokenId>?
     override val keys: Set<PlaceId>
@@ -15,7 +16,8 @@ fun <S : Set<ObjectTokenId>> ImmutableObjectMarking(placesToObjectTokens: Map<Pl
     return ImmutableObjectMarkingMap(placesToObjectTokens)
 }
 
-internal class ImmutableObjectMarkingMap(val placesToObjectTokens: Map<PlaceId, Set<ObjectTokenId>>) :
+@Serializable
+internal data class ImmutableObjectMarkingMap(val placesToObjectTokens: Map<PlaceId, Set<ObjectTokenId>>) :
     ImmutableObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {

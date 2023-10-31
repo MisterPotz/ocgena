@@ -6,7 +6,7 @@ import utils.html.indentLines
 import utils.*
 
 data class ExecutedBinding(
-    val finishedTransition: ActiveFiringTransition,
+    val finishedTransition: OngoingActivity,
     val finishedTime: Int,
     val consumedMap: ImmutableObjectMarking,
     val producedMap: ImmutableObjectMarking,

@@ -1,21 +1,11 @@
 package simulation
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import model.*
-import model.typea.SerializableVariableArcTypeA
-import model.typel.SerializableArcTypeL
 import net.mamoe.yamlkt.Yaml
-import net.mamoe.yamlkt.YamlBuilder
-import ru.misterpotz.model.marking.EmptyObjectValuesMap
-import ru.misterpotz.model.marking.ObjectValuesMap
 import ru.misterpotz.model.marking.Time
-import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.simulation.queue.GenerationQueue
-import ru.misterpotz.simulation.state.SerializableState
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
 import javax.inject.Inject
@@ -27,7 +17,7 @@ data class SerializableSimulationState(
 )
 
 class SimulationTask @Inject constructor(
-    private val simulationParams: SimulationConfig,
+    private val yaml: Yaml,
     simulationTaskStepExecutorFactory: SimulationTaskStepExecutorFactory,
     private val simulationStateProvider: SimulationStateProvider,
     private val executionConditions: ExecutionConditions,
@@ -35,14 +25,8 @@ class SimulationTask @Inject constructor(
     private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
     private val generationQueue: GenerationQueue,
     private val developmentDebugConfig: DevelopmentDebugConfig,
-) {
-    private val ocNet get() = simulationParams.templateOcNet
-    private val simulationTime get() = simulationStateProvider.getSimulationTime()
-    private val initialMarking get() = simulationParams.initialMarking
-    private val state get() = simulationStateProvider.getOcNetState()
-    private val simulationStepState get() = simulationStateProvider.getSimulationStepState()
-    private val runningSimulatableOcNet get() = simulationStateProvider.runningSimulatableOcNet()
-
+    private val currentStateDelegate: CurrentSimulationDelegate
+) : CurrentSimulationDelegate by currentStateDelegate {
     private var stepIndex: Long = 0
     private val oneStepGranularity = 5
     var finishRequested = false;
@@ -97,16 +81,7 @@ class SimulationTask @Inject constructor(
         }
     }
 
-    private fun dumpState(): String {
-//        return yaml.encodeToString(SerializableSimulationState(simulationTime.globalTime, state.toSerializable()))
-//            .replace(Regex("\\n[\\s\\r]*\\n"), "\n")
-        return ""
-    }
-
-    private fun dumpInput(): String {
-//        return yaml.encodeToString(simulationParams.toSerializable()).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
-        return ""
-    }
+    private fun dumpI
 
     fun prepareRun() {
         logger.onStart()
@@ -147,5 +122,6 @@ class SimulationTask @Inject constructor(
             doRunStep()
         }
     }
-}
 
+
+}

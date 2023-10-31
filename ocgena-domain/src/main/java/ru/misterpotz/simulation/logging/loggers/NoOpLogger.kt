@@ -1,6 +1,6 @@
 package simulation.client.loggers
 
-import model.ActiveFiringTransition
+import model.OngoingActivity
 import model.ExecutedBinding
 import ru.misterpotz.model.marking.Time
 import simulation.Logger
@@ -15,7 +15,7 @@ open class NoOpLogger : Logger {
     override fun onExecutionNewStepStart() {}
 
     override fun beforeStartingNewTransitions() {}
-    override fun onStartTransition(transition: ActiveFiringTransition) {}
+    override fun onStartTransition(transition: OngoingActivity) {}
     override fun afterStartingNewTransitions() {}
 
     override fun beforeEndingTransitions() {}

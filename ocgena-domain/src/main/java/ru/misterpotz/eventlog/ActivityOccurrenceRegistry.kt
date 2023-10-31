@@ -1,10 +1,10 @@
 package eventlog
 
-import simulation.client.OcelParams
+import simulation.client.OcelLogConfiguration
 
 
 class ActivityOccurrenceRegistry(
-    private val ocelParams: OcelParams
+    private val ocelParams: OcelLogConfiguration
 ){
     private var activityOccurrenceRegistry: MutableMap<String, Int> = mutableMapOf()
 

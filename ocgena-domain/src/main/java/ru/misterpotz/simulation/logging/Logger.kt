@@ -2,32 +2,6 @@ package simulation
 
 import model.*
 import ru.misterpotz.model.marking.Time
-import simulation.client.loggers.DebugTracingLogger
-
-interface LoggerFactory {
-    fun create(
-        labelMapping: LabelMapping
-    ): Logger
-}
-
-object LoggerFactoryDefault : LoggerFactory {
-    override fun create(labelMapping: LabelMapping): Logger {
-        return DebugTracingLogger(
-            labelMapping = labelMapping,
-            logCurrentState = true
-        )
-    }
-}
-
-object LoggerFactoryFileDefault : LoggerFactory {
-    override fun create(labelMapping: LabelMapping): Logger {
-        return DebugTracingLogger(
-            labelMapping = labelMapping,
-            logCurrentState = true
-        )
-    }
-}
-
 
 interface Logger {
 
@@ -37,7 +11,7 @@ interface Logger {
     fun onExecutionNewStepStart()
 
     fun beforeStartingNewTransitions()
-    fun onStartTransition(transition: ActiveFiringTransition)
+    fun onStartTransition(transition: OngoingActivity)
     fun afterStartingNewTransitions()
 
     fun beforeEndingTransitions()

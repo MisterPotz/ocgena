@@ -1,5 +1,5 @@
 package simulation.client
 
-class OcelParams(
+class OcelLogConfiguration(
     val logBothStartAndEnd: Boolean
 )

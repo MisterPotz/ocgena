@@ -23,12 +23,8 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     interface SerializableState
 
     interface State {
-        val tMarking: ActiveTransitionMarking
+        val tMarking: TransitionActivitiesMarking
         val pMarking: ObjectMarking
         val tTimes: TransitionOccurrenceAllowedTimes
-
-        fun toHtmlLines() : List<String>
-
-        fun toSerializable() : SerializableState
     }
 }

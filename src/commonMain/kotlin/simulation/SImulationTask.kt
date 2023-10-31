@@ -53,6 +53,9 @@ class SimulationTask(
         ocNet,
         state,
         bindingSelector,
+        tokenSelector = tokenSelector,
+        transitionDurationSelector = transitionDurationSelector,
+        nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector,
         transitionFinisher = ActiveTransitionFinisherImpl(
             state.pMarking,
             inputToOutputPlaceResolver = BindingOutputMarkingResolverFactory(
@@ -65,31 +68,23 @@ class SimulationTask(
             logger,
             simulationTime
         ),
-        simulationState = simulationState,
-        simulationTime = simulationTime,
         logger = logger,
-        tokenSelector = tokenSelector,
 
-        transitionDurationSelector = transitionDurationSelector,
-        nextTransitionOccurenceTimeSelector = transitionInstanceOccurenceDeltaSelector,
-        generationConfig = simulationParams.generationConfig,
-        nextTimeSelector = tokenNextTimeSelector,
-        tokenGenerator = simulationParams.objectTokenGenerator,
-        placeTyping = ocNet.coreOcNet.placeTyping,
-        generationQueue = generationQueue,
-        dumpState = {
-            if (dumpState) {
-                println(
-                    "\r\ndump after step state: ${simulationState.currentStep}: \r\n${
-                        dumpState().replace(
-                            "\n",
-                            "\r\n"
-                        )
-                    }"
-                )
-            }
+        simulationTime = simulationTime,
+        simulationState = simulationState,
+        generationQueue = generationQueue
+    ) {
+        if (dumpState) {
+            println(
+                "\r\ndump after step state: ${simulationState.currentStep}: \r\n${
+                    dumpState().replace(
+                        "\n",
+                        "\r\n"
+                    )
+                }"
+            )
         }
-    )
+    }
 
     private fun prepare() {
         ocNet.initialize()

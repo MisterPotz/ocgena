@@ -12,18 +12,8 @@ import utils.font
 import utils.print
 
 @Serializable
-data class SerializableActiveFiringTransition(
-    val transition: SerializableTransition,
-    val lockTimeByLatestObjectToken: Time,
-    val relativeTimePassedSinceLock: Time,
-    val duration: Int,
-    val startedAt: Time,
-    val tokenSynchronizationTime: Time,
-    val lockedObjectTokens: ImmutableObjectMarking,
-)
-
-data class ActiveFiringTransition(
-    val transition: Transition,
+data class OngoingActivity(
+    val transition: TransitionId,
     val lockTimeByLatestObjectToken: Time,
     val relativeTimePassedSinceLock: Time,
     val duration: Int,
@@ -31,19 +21,6 @@ data class ActiveFiringTransition(
     val tokenSynchronizationTime: Time,
     val lockedObjectTokens: ImmutableObjectMarking,
 ) {
-
-    fun toSerializable(): SerializableActiveFiringTransition {
-        return SerializableActiveFiringTransition(
-            transition = transition.serializableAtom,
-            lockTimeByLatestObjectToken,
-            relativeTimePassedSinceLock,
-            duration,
-            startedAt,
-            tokenSynchronizationTime,
-            lockedObjectTokens
-        )
-    }
-
     fun timeLeftUntilFinish(): Time {
         return (duration - relativeTimePassedSinceLock).coerceAtLeast(0)
     }
@@ -131,13 +108,13 @@ data class ActiveFiringTransition(
             duration: Time,
             startedAt: Time,
             tokenSynchronizationTime: Time,
-        ): ActiveFiringTransition {
+        ): OngoingActivity {
             val nonEmptyPlaces = lockedObjectTokens.nonEmptyPlaces()
             require(nonEmptyPlaces.isNotEmpty())
             val allTokens = lockedObjectTokens.allTokens()
 
             val lockTimeByLatestObjectToken = allTokens.maxBy { it.ownPathTime }.ownPathTime
-            val activeFiringTransition = ActiveFiringTransition(
+            val activeFiringTransition = OngoingActivity(
                 transition = transition,
                 lockTimeByLatestObjectToken = lockTimeByLatestObjectToken,
                 relativeTimePassedSinceLock = 0,

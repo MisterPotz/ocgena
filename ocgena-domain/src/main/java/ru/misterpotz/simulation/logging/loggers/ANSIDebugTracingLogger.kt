@@ -1,17 +1,36 @@
 package simulation.client.loggers
 
-import model.ActiveFiringTransition
+import model.OngoingActivity
 import model.ExecutedBinding
+import net.mamoe.yamlkt.Yaml
 import ru.misterpotz.model.marking.Time
-import ru.misterpotz.simulation.client.loggers.CurrentSimulationDelegate
+import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
+import simulation.SerializableSimulationState
 import simulation.client.Writer
 import utils.*
 import javax.inject.Inject
 
 class ANSIDebugTracingLogger @Inject constructor(
     private val currentSimulationDelegate: CurrentSimulationDelegate,
+    val yaml: Yaml,
+    val developmentDebugConfig: DevelopmentDebugConfig,
     val writer: Writer,
 ) : NoOpLogger(), CurrentSimulationDelegate by currentSimulationDelegate {
+    private fun dumpState(): String {
+        return yaml.encodeToString(
+            SerializableSimulationState(
+                simGlobalTime,
+                state.toSerializable()
+            )
+        )
+            .replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+    }
+
+    private fun dumpInput(): String {
+        return yaml.encodeToString(simulationParams.toSerializable()).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+    }
+
     override fun onStart() {
         writer.writeLine("execution started")
     }
@@ -26,8 +45,8 @@ class ANSIDebugTracingLogger @Inject constructor(
     }
 
     override fun onExecutionNewStepStart() {
-        writer.writeLine("${background("24")}${font("51")}execution step: $step".indent(1, "\t"))
-        writer.writeLine("""${font(ANSI_ORANGE)}time: ${background("57")}$simTime""".indent(2, "\t"))
+        writer.writeLine("${background("24")}${font("51")}execution step: $currentStep".indent(1, "\t"))
+        writer.writeLine("""${font(ANSI_ORANGE)}time: ${background("57")}$simGlobalTime""".indent(2, "\t"))
         writer.writeLine("""current state: """.indent(2, prefix = ""))
         // TODO: output ongoing transitions in a state as well
         writer.writeLine(currentPMarking.toString().indentMargin(3, margin = "*"))
@@ -37,7 +56,7 @@ class ANSIDebugTracingLogger @Inject constructor(
         writer.writeLine("""starting transitions:""".indent(2, "\t"))
     }
 
-    override fun onStartTransition(transition: ActiveFiringTransition) {
+    override fun onStartTransition(transition: OngoingActivity) {
         writer.writeLine(transition.prettyPrintStarted().trimMargin().indentMargin(3))
     }
 

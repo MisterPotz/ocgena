@@ -45,14 +45,6 @@ class ActiveTransitionMarking() {
         return transitionEntry?.value?.getWithEarliestFinishTime()
     }
 
-    fun getEndedTransitions(): Collection<ActiveFiringTransition> {
-        return transitionsToTMarkingValue.values.fold(mutableListOf<ActiveFiringTransition>()) { accum, transitions ->
-            val endedTransitions = transitions.getEndedTransitions()
-            accum.addAll(endedTransitions)
-            return@fold accum
-        }
-    }
-
     fun getAndPopEndedTransitions(): Collection<ActiveFiringTransition> {
         val mutableList = mutableListOf<ActiveFiringTransition>()
         for (key in transitionsToTMarkingValue.keys.toList()) {
