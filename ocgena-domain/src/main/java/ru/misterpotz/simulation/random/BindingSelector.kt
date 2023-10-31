@@ -1,7 +1,10 @@
 package simulation.random
 
 import ru.misterpotz.model.marking.ObjectToken
+import ru.misterpotz.model.marking.ObjectTokenId
 import simulation.binding.EnabledBinding
+import java.util.SortedSet
+import java.util.TreeSet
 import kotlin.random.Random
 
 interface RandomFactory {
@@ -28,9 +31,9 @@ class BindingSelectorImpl(
 
 interface TokenSelector {
     fun getTokensFromSet(
-        set: Set<ObjectToken>,
+        set: SortedSet<ObjectTokenId>,
         amount: Int
-    ): Set<ObjectToken>
+    ): SortedSet<ObjectTokenId>
 
     fun shuffleTokens(tokens: List<ObjectToken>): List<ObjectToken>
 }
@@ -38,17 +41,14 @@ interface TokenSelector {
 class TokenSelectorImpl(
     private val random: Random?
 ) : TokenSelector {
-    override fun getTokensFromSet(
-        set: Set<ObjectToken>,
-        amount: Int
-    ): Set<ObjectToken> {
+    override fun getTokensFromSet(set: SortedSet<ObjectTokenId>, amount: Int): SortedSet<ObjectTokenId> {
         return random?.let {
-            set.shuffled(random = it).take(amount).toSet()
+            set.shuffled(random = it)
+                .take(amount)
+                .toSortedSet()
         } ?: set
-            .toList()
-            .sortedBy { it.id }
             .take(amount)
-            .toSet()
+            .toSortedSet()
     }
 
     override fun shuffleTokens(tokens: List<ObjectToken>): List<ObjectToken> {

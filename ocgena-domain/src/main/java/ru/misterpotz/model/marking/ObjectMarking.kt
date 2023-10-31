@@ -2,11 +2,13 @@ package ru.misterpotz.model.marking
 
 import ru.misterpotz.ext.copyWithValueTransform
 import model.PlaceId
+import java.util.SortedSet
+import java.util.TreeSet
 
 interface ObjectMarking {
     val tokensIterator: Iterator<ObjectTokenId>
-    operator fun get(place: PlaceId): MutableSet<ObjectTokenId>?
-    operator fun set(place: PlaceId, tokens: Set<ObjectTokenId>?)
+    operator fun get(place: PlaceId): SortedSet<ObjectTokenId>?
+    operator fun set(place: PlaceId, tokens: SortedSet<ObjectTokenId>?)
     fun removePlace(placeId: PlaceId)
     fun plus(delta: ObjectMarkingDelta)
     fun minus(delta: ObjectMarkingDelta)
@@ -15,7 +17,7 @@ interface ObjectMarking {
     fun clear()
 }
 
-internal class ObjectMarkingMap(val placesToObjectTokens: MutableMap<PlaceId, MutableSet<ObjectTokenId>> = mutableMapOf()) :
+internal class ObjectMarkingMap(val placesToObjectTokens: MutableMap<PlaceId, SortedSet<ObjectTokenId>> = mutableMapOf()) :
     ObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {
@@ -26,11 +28,11 @@ internal class ObjectMarkingMap(val placesToObjectTokens: MutableMap<PlaceId, Mu
             }
         }
 
-    override fun get(place: PlaceId): MutableSet<ObjectTokenId>? {
+    override fun get(place: PlaceId): SortedSet<ObjectTokenId>? {
         return placesToObjectTokens[place]
     }
 
-    override fun set(place: PlaceId, tokens: Set<ObjectTokenId>?) {
+    override fun set(place: PlaceId, tokens: SortedSet<ObjectTokenId>?) {
         placesToObjectTokens.getOrElse(place) {
             mutableSetOf()
         }.addAll(tokens ?: return)
@@ -69,6 +71,6 @@ internal class ObjectMarkingMap(val placesToObjectTokens: MutableMap<PlaceId, Mu
     }
 }
 
-fun ObjectMarking(placesToObjectTokens: MutableMap<PlaceId, MutableSet<ObjectTokenId>> = mutableMapOf()): ObjectMarking {
+fun ObjectMarking(placesToObjectTokens: MutableMap<PlaceId, SortedSet<ObjectTokenId>> = mutableMapOf()): ObjectMarking {
     return ObjectMarkingMap(placesToObjectTokens)
 }

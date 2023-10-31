@@ -1,34 +1,31 @@
 package simulation.binding
 
-import model.OngoingActivity
 import model.ExecutedBinding
+import model.TransitionInstance
 import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.ObjectMarking
 import simulation.Logger
 import simulation.SimulationStateProvider
 import javax.inject.Inject
 
-interface ActiveTransitionMarkingFinisher {
-    val pMarking: ObjectMarking
-
-    fun finishActiveTransition(activeFiringTransition: OngoingActivity)
+interface TransitionInstanceFinisher {
+    fun finishActiveTransition(activeFiringTransition: TransitionInstance)
 }
 
-
-class ActiveTransitionFinisherImpl @Inject constructor(
+class TransitionInstanceFinisherImpl @Inject constructor(
     private val inputToOutputPlaceResolver: InputToOutputPlaceResolver,
     private val logger: Logger,
     private val simulationStateProvider: SimulationStateProvider
-) : ActiveTransitionMarkingFinisher {
-    val simulationTime get() = simulationStateProvider.getSimulationTime()
-    override val pMarking get() = simulationStateProvider.getOcNetState().pMarking
+) : TransitionInstanceFinisher {
+    private val simulationTime get() = simulationStateProvider.getSimulationTime()
+    private val pMarking get() = simulationStateProvider.getOcNetState().pMarking
 
-    override fun finishActiveTransition(activeFiringTransition: OngoingActivity) {
+    override fun finishActiveTransition(activeFiringTransition: TransitionInstance) {
         val markingForOutputPlaces = getMarkingForOutputPlaces(activeFiringTransition)
 
-        markingForOutputPlaces.shiftTokenTime(tokenTimeDelta = activeFiringTransition.duration)
+        // TODO: think what to do with the synchronization time
+//        markingForOutputPlaces.shiftTokenTime(tokenTimeDelta = activeFiringTransition.duration)
 
-        pMarking += markingForOutputPlaces
+        pMarking.plus(markingForOutputPlaces)
 
         val executedBinding = ExecutedBinding(
             activeFiringTransition,
@@ -39,7 +36,7 @@ class ActiveTransitionFinisherImpl @Inject constructor(
         logger.onEndTransition(executedBinding)
     }
 
-    private fun getMarkingForOutputPlaces(activeFiringTransition: OngoingActivity): ImmutableObjectMarking {
+    private fun getMarkingForOutputPlaces(activeFiringTransition: TransitionInstance): ImmutableObjectMarking {
         return inputToOutputPlaceResolver.createOutputMarking(activeFiringTransition)
     }
 }

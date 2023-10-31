@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.logging.loggers
 
-import model.OngoingActivity
+import model.TransitionInstance
 import model.ExecutedBinding
 import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LoggingEvent
@@ -42,7 +42,7 @@ class StepAggregatingLogger @Inject constructor(
         }
     }
 
-    override fun onStartTransition(transition: OngoingActivity) {
+    override fun onStartTransition(transition: TransitionInstance) {
         logIfCreates {
             onStartTransition(transition)
         }

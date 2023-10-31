@@ -1,13 +1,11 @@
 package simulation
 
 import kotlinx.serialization.Serializable
-import net.mamoe.yamlkt.Yaml
 import ru.misterpotz.model.marking.Time
-import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.simulation.queue.GenerationQueue
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
+import ru.misterpotz.simulation.transition.TransitionInstanceNextCreationTimeGenerator
 import javax.inject.Inject
 
 @Serializable
@@ -17,47 +15,32 @@ data class SerializableSimulationState(
 )
 
 class SimulationTask @Inject constructor(
-    private val yaml: Yaml,
-    simulationTaskStepExecutorFactory: SimulationTaskStepExecutorFactory,
     private val simulationStateProvider: SimulationStateProvider,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
-    private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
+    private val activityAllowedTimeSelector: TransitionInstanceNextCreationTimeGenerator,
     private val generationQueue: GenerationQueue,
-    private val developmentDebugConfig: DevelopmentDebugConfig,
-    private val currentStateDelegate: CurrentSimulationDelegate
+    private val currentStateDelegate: CurrentSimulationDelegate,
+    private val stepExecutor: SimulationTaskStepExecutor,
 ) : CurrentSimulationDelegate by currentStateDelegate {
     private var stepIndex: Long = 0
     private val oneStepGranularity = 5
     var finishRequested = false;
 
-    private val stepExecutor = simulationTaskStepExecutorFactory.createSimulationTaskStepExecutor {
-        if (developmentDebugConfig.dumpState) {
-            println(
-                "\r\ndump after step state: ${simulationStepState.currentStep}: \r\n${
-                    dumpState().replace(
-                        "\n",
-                        "\r\n"
-                    )
-                }"
-            )
-        }
-    }
-
     private fun prepare() {
         ocNet.initialize()
 
-        state.pMarking.plus(initialMarking)
+        pMarking.plus(initialMarking)
 
         for (transition in ocNet.coreOcNet.transitions) {
-            val nextAllowedTime = transitionInstanceOccurenceDeltaSelector.getNewNextOccurrenceTime(transition)
-            state.tTimes.setNextAllowedTime(transition, nextAllowedTime)
+            val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
+            state.tTimesMarking.setNextAllowedTime(transition.id, nextAllowedTime)
         }
         generationQueue.planTokenGenerationForEveryone()
     }
 
 
-    fun isFinished(): Boolean {
+    private fun isFinished(): Boolean {
         return executionConditions.checkTerminateConditionSatisfied(runningSimulatableOcNet)
                 || simulationStepState.isFinished()
                 || finishRequested
@@ -68,7 +51,6 @@ class SimulationTask @Inject constructor(
     }
 
     private fun runStep() {
-//        val maxSteps = 10000
         var stepsCounter = 0
         while (
             !isFinished() && (stepsCounter++ < oneStepGranularity)
@@ -81,36 +63,19 @@ class SimulationTask @Inject constructor(
         }
     }
 
-    private fun dumpI
-
     fun prepareRun() {
         logger.onStart()
-        // always dump net with
-        if (developmentDebugConfig.dumpState) {
-            println("onStart dump net: ${dumpInput().replace("\n", "\n\r")}")
-        }
-
         prepare()
-
-        if (developmentDebugConfig.dumpState) {
-            println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
-        }
         logger.afterInitialMarking()
-
         simulationStepState.onStart()
     }
 
     fun doRunStep(): Boolean {
         runStep()
         if (isFinished()) {
-            logger.afterFinalMarking(state.pMarking)
-            if (developmentDebugConfig.dumpState) {
-                println("onFinish dump state: ${dumpState()}")
-            }
-            println("sending logger onEnd")
+            logger.afterFinalMarking()
             simulationStateProvider.markFinished()
             logger.onEnd()
-
             return true
         }
         return false
@@ -122,6 +87,4 @@ class SimulationTask @Inject constructor(
             doRunStep()
         }
     }
-
-
 }

@@ -2,18 +2,19 @@ package ru.misterpotz.simulation.transition
 
 import ru.misterpotz.model.marking.Time
 import model.Transition
+import model.TransitionId
 import model.time.IntervalFunction
 import kotlin.random.Random
 
-class TransitionDurationSelector(
+class TransitionInstanceDurationGenerator(
     private val random: Random?,
     private val intervalFunction: IntervalFunction,
 ) {
-    fun newDuration(transition: Transition): Time {
+    fun newDuration(transition: TransitionId): Time {
         val times = intervalFunction[transition]
         val duration = random?.let {
             times.duration.random(random)
         } ?: times.duration.first
-        return duration
+        return duration.toLong()
     }
 }

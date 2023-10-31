@@ -28,8 +28,6 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
         return (objectMarking as ImmutableObjectMarkingMap).placesToObjectTokens.let { prettyPrint(it) }
     }
 
-    private var stringBuilder = StringBuilder()
-
     fun <S : Set<ObjectTokenId>> toString(placesToObjectTokens: Map<PlaceId, S>): String {
         return placesToObjectTokens.keys.joinToString(separator = " ") { place ->
             val objectTokens = placesToObjectTokens[place]!!

@@ -1,6 +1,6 @@
 package simulation.client.loggers
 
-import model.OngoingActivity
+import model.TransitionInstance
 import model.ExecutedBinding
 import ru.misterpotz.model.marking.Time
 import simulation.Logger
@@ -30,7 +30,7 @@ class CompoundLogger(
         log { beforeStartingNewTransitions() }
     }
 
-    override fun onStartTransition(transition: OngoingActivity) {
+    override fun onStartTransition(transition: TransitionInstance) {
         log { onStartTransition(transition) }
     }
 

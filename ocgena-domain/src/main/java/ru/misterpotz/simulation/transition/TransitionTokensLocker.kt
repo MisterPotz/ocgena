@@ -1,7 +1,7 @@
 package ru.misterpotz.simulation.transition
 
-import model.OngoingActivity
-import model.TransitionActivitiesMarking
+import model.TransitionInstance
+import model.TransitionInstancesMarking
 import simulation.Logger
 import ru.misterpotz.simulation.marking.PMarkingProvider
 import ru.misterpotz.simulation.state.SimulationTime
@@ -9,21 +9,21 @@ import simulation.binding.EnabledBindingWithTokens
 
 class TransitionTokensLocker(
     private val pMarkingProvider: PMarkingProvider,
-    private val tMarking: TransitionActivitiesMarking,
-    private val transitionInstanceOccurenceDeltaSelector: TransitionInstanceOccurenceDeltaSelector,
-    private val transitionDurationSelector: TransitionDurationSelector,
-    private val tTimes: TransitionOccurrenceAllowedTimes,
+    private val tMarking: TransitionInstancesMarking,
+    private val activityAllowedTimeSelector: TransitionInstanceNextCreationTimeGenerator,
+    private val transitionInstanceDurationGenerator: TransitionInstanceDurationGenerator,
+    private val tTimes: TransitionTimesMarking,
     private val logger: Logger,
     private val simulationTime: SimulationTime,
 ) {
     private fun recordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
         val transition = enabledBindingWithTokens.transition
 
-        val randomSelectedDuration = transitionDurationSelector.newDuration(
-            transition
+        val randomSelectedDuration = transitionInstanceDurationGenerator.newDuration(
+            transition.id
         )
 
-        val tMarkingValue = OngoingActivity.create(
+        val tMarkingValue = TransitionInstance.create(
             transition = transition,
             lockedObjectTokens = enabledBindingWithTokens.involvedObjectTokens,
             duration = randomSelectedDuration,
@@ -32,10 +32,10 @@ class TransitionTokensLocker(
         )
 
         tMarking.pushTMarking(tMarkingValue)
-        val newNextAllowedTime = transitionInstanceOccurenceDeltaSelector.getNewNextOccurrenceTime(transition)
+        val newNextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
 
         tTimes.setNextAllowedTime(
-            transition = transition,
+            transition = transition.id,
             time = newNextAllowedTime
         )
         logger.onStartTransition(transition = tMarkingValue)

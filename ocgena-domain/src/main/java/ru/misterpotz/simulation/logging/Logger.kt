@@ -11,7 +11,7 @@ interface Logger {
     fun onExecutionNewStepStart()
 
     fun beforeStartingNewTransitions()
-    fun onStartTransition(transition: OngoingActivity)
+    fun onStartTransition(transition: TransitionInstance)
     fun afterStartingNewTransitions()
 
     fun beforeEndingTransitions()

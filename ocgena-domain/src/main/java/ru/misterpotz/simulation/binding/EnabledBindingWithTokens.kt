@@ -3,10 +3,11 @@ package simulation.binding
 import ru.misterpotz.model.marking.ImmutableObjectMarking
 import ru.misterpotz.model.marking.Time
 import model.Transition
+import model.TransitionId
 import kotlin.math.abs
 
 class EnabledBindingWithTokens(
-    val transition: Transition,
+    val transition: TransitionId,
     val involvedObjectTokens: ImmutableObjectMarking,
 ) {
     val synchronizationTime = calculateSynchronizationTime()

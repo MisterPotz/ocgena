@@ -1,8 +1,8 @@
 package simulation.binding
 
-import model.OngoingActivity
+import model.TransitionInstance
 import ru.misterpotz.model.marking.ImmutableObjectMarking
 
 interface InputToOutputPlaceResolver {
-    fun createOutputMarking(activeFiringTransition : OngoingActivity) : ImmutableObjectMarking
+    fun createOutputMarking(activeFiringTransition : TransitionInstance) : ImmutableObjectMarking
 }

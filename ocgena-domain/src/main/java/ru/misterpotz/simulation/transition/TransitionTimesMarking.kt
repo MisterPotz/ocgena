@@ -1,10 +1,9 @@
 package ru.misterpotz.simulation.transition
 
 import ru.misterpotz.model.marking.Time
-import model.Transition
 import model.TransitionId
 
-interface TransitionOccurrenceAllowedTimes {
+interface TransitionTimesMarking {
     fun increaseSimTime(time: Time)
     fun earliestNonZeroTime(): Time?
     fun isAllowedToBeEnabled(transition: TransitionId): Boolean
@@ -12,14 +11,14 @@ interface TransitionOccurrenceAllowedTimes {
 }
 
 fun TransitionOccurrenceAllowedTimes(transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf())
-        : TransitionOccurrenceAllowedTimes {
-    return TransitionOccurrenceAllowedTimesMap(transitionsToNextTimes)
+        : TransitionTimesMarking {
+    return TransitionTimesMarkingMap(transitionsToNextTimes)
 }
 
-internal class TransitionOccurrenceAllowedTimesMap(
+internal class TransitionTimesMarkingMap(
     private val transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf()
 ) :
-    TransitionOccurrenceAllowedTimes {
+    TransitionTimesMarking {
 
     override fun increaseSimTime(time: Time) {
         for (i in transitionsToNextTimes.keys) {

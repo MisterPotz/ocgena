@@ -6,7 +6,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration
 
-expect fun getCurrentTime(): Long
+fun getCurrentTime(): Long = System.currentTimeMillis()
+
 fun getSmartCurrentTime() : Long {
     return Clock.System.now().toEpochMilliseconds()
 }

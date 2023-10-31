@@ -1,19 +1,11 @@
 package model
 
-import kotlinx.serialization.Serializable
 import ru.misterpotz.model.marking.Time
-import kotlin.math.min
 
+class TransitionInstancesMarking() {
+    private val transitionsToTMarkingValue = mutableMapOf<TransitionId, TransitionInstancesList>()
 
-@Serializable
-data class SerializableActiveTransitionMarking(
-    val transitionsToTMarkingValue: Map<TransitionId, SerializableOngoingActivitiesList>
-)
-
-class TransitionActivitiesMarking() {
-    private val transitionsToTMarkingValue = mutableMapOf<TransitionId, OngoingActivitiesList>()
-
-    operator fun get(transitionId: TransitionId): OngoingActivitiesList? {
+    operator fun get(transitionId: TransitionId): TransitionInstancesList? {
         return transitionsToTMarkingValue[transitionId]
     }
 
@@ -23,10 +15,10 @@ class TransitionActivitiesMarking() {
         }
     }
 
-    fun getActiveTransitionWithEarliestFinish(): OngoingActivity? {
+    fun getActiveTransitionWithEarliestFinish(): TransitionInstance? {
         return transitionsToTMarkingValue
             .values
-            .fold<OngoingActivitiesList, OngoingActivity?>(null) { currentMin, ongoingActivitiesList ->
+            .fold<TransitionInstancesList, TransitionInstance?>(null) { currentMin, ongoingActivitiesList ->
                 val activityCandidate = ongoingActivitiesList.getWithEarliestFinishTime()
                 val earliestFinishTime = activityCandidate.timeLeftUntilFinish()
                 val minFinishTime = currentMin?.timeLeftUntilFinish()
@@ -38,9 +30,9 @@ class TransitionActivitiesMarking() {
                 }
             }
     }
-    
-    fun getAndPopEndedTransitions(): Collection<OngoingActivity> {
-        val mutableList = mutableListOf<OngoingActivity>()
+
+    fun getAndPopEndedTransitions(): Collection<TransitionInstance> {
+        val mutableList = mutableListOf<TransitionInstance>()
         for (key in transitionsToTMarkingValue.keys) {
             val value = transitionsToTMarkingValue[key]!!
             val endedTransitions = value.removeFinishedTransitions()
@@ -52,12 +44,11 @@ class TransitionActivitiesMarking() {
         return mutableList
     }
 
-    fun pushTMarking(ongoingActivity: OngoingActivity) {
-        val transition = ongoingActivity.transition
+    fun pushTMarking(transitionInstance: TransitionInstance) {
+        val transition = transitionInstance.transition
         val current = transitionsToTMarkingValue.getOrPut(transition) {
-            OngoingActivitiesListImpl()
+            TransitionInstancesList()
         }
-        current.add(ongoingActivity)
+        current.add(transitionInstance)
     }
 }
-

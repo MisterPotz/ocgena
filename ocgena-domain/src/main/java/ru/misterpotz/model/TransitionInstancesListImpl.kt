@@ -1,28 +1,23 @@
 package model
 
-import kotlinx.serialization.Serializable
 import ru.misterpotz.model.marking.Time
 
-@Serializable
-class SerializableOngoingActivitiesList(val tMarkingValues: List<SerializableActiveFiringTransition>)
-
-
-interface OngoingActivitiesList {
-    fun add(tMarkingValue: OngoingActivity)
+interface TransitionInstancesList {
+    fun add(tMarkingValue: TransitionInstance)
     fun shiftAllValuesByTime(time: Time)
-    fun getWithEarliestFinishTime(): OngoingActivity
-    fun removeFinishedTransitions(): List<OngoingActivity>
-    fun get
+    fun getWithEarliestFinishTime(): TransitionInstance
+    fun removeFinishedTransitions(): List<TransitionInstance>
     fun isEmpty(): Boolean
+    fun iterable() : Iterable<TransitionInstance>
 }
 
-fun OngoingActivitiesList(ongoingActivities: MutableList<OngoingActivity> = mutableListOf()): OngoingActivitiesList {
-    return OngoingActivitiesListImpl(ongoingActivities)
+fun TransitionInstancesList(ongoingActivities: MutableList<TransitionInstance> = mutableListOf()): TransitionInstancesList {
+    return TransitionInstancesListImpl(ongoingActivities)
 }
 
-internal class OngoingActivitiesListImpl(
-    private val tMarkingValues: MutableList<OngoingActivity> = mutableListOf()
-) : OngoingActivitiesList {
+internal class TransitionInstancesListImpl(
+    private val tMarkingValues: MutableList<TransitionInstance> = mutableListOf()
+) : TransitionInstancesList {
 
     fun checkConsistency() {
         for (i in 1 until tMarkingValues.indices.last) {
@@ -35,19 +30,11 @@ internal class OngoingActivitiesListImpl(
         }
     }
 
-    fun toSerializable(): SerializableOngoingActivitiesList {
-        return SerializableOngoingActivitiesList(tMarkingValues.map { it.toSerializable() })
-    }
-
-    fun prettyPrintState(): String {
-        return tMarkingValues.joinToString(separator = "\n") { it.prettyPrintState() }
-    }
-
     override fun toString(): String {
         return tMarkingValues.joinToString(separator = "\n") { it.toString() }
     }
 
-    override fun add(tMarkingValue: OngoingActivity) {
+    override fun add(tMarkingValue: TransitionInstance) {
         tMarkingValues.add(tMarkingValue)
     }
 
@@ -60,12 +47,13 @@ internal class OngoingActivitiesListImpl(
             }
         }
     }
-    override fun getWithEarliestFinishTime(): OngoingActivity {
+
+    override fun getWithEarliestFinishTime(): TransitionInstance {
         return tMarkingValues.minBy { it.timeLeftUntilFinish() }
     }
 
-    override fun removeFinishedTransitions(): List<OngoingActivity> {
-        val mutableList = mutableListOf<OngoingActivity>()
+    override fun removeFinishedTransitions(): List<TransitionInstance> {
+        val mutableList = mutableListOf<TransitionInstance>()
         for (i in tMarkingValues.indices.reversed()) {
             val shouldFinish = tMarkingValues[i].timeLeftUntilFinish() <= 0
             if (shouldFinish) {
@@ -80,7 +68,11 @@ internal class OngoingActivitiesListImpl(
         return tMarkingValues.isEmpty()
     }
 
-    fun getEndedTransitions(): List<OngoingActivity> {
+    override fun iterable(): Iterable<TransitionInstance> {
+        return tMarkingValues.asIterable()
+    }
+
+    fun getEndedTransitions(): List<TransitionInstance> {
         return tMarkingValues.filter { it.timeLeftUntilFinish() <= 0 }
     }
 }

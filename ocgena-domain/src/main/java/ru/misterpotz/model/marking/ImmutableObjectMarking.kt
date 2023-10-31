@@ -8,6 +8,7 @@ interface ImmutableObjectMarking : ObjectMarkingDelta, java.io.Serializable {
     val tokensIterator: Iterator<ObjectTokenId>
     override operator fun get(placeId: PlaceId): Set<ObjectTokenId>?
     override val keys: Set<PlaceId>
+    fun isEmpty() : Boolean
 
     fun toMutable(): ObjectMarking
 }
@@ -36,10 +37,16 @@ internal data class ImmutableObjectMarkingMap(val placesToObjectTokens: Map<Plac
         placesToObjectTokens.keys
     }
 
+    override fun isEmpty(): Boolean {
+        return placesToObjectTokens.isEmpty() || placesToObjectTokens.all {
+            it.value.isEmpty()
+        }
+    }
+
     override fun toMutable(): ObjectMarking {
         return ObjectMarking(
             placesToObjectTokens.copyWithValueTransformMutable {
-                it.toMutableSet()
+                it.toSortedSet()
             }
         )
     }

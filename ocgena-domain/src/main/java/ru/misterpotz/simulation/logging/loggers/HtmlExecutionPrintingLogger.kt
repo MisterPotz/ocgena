@@ -128,7 +128,7 @@ class HtmlExecutionPrintingLogger @Inject constructor(
         )
     }
 
-    override fun onStartTransition(transition: OngoingActivity) {
+    override fun onStartTransition(transition: TransitionInstance) {
         write(
             indentLinesRoot(
                 3,

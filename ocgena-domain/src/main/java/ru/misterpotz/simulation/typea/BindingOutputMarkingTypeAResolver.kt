@@ -1,6 +1,6 @@
 package simulation.typea
 
-import model.OngoingActivity
+import model.TransitionInstance
 import model.Arcs
 import ru.misterpotz.model.marking.ImmutableObjectMarking
 import model.PlaceTyping
@@ -16,7 +16,7 @@ class BindingOutputMarkingTypeAResolver(
     private val objectTokenMoverFactory: ObjectTokenMoverFactory
 ) : InputToOutputPlaceResolver {
 
-    override fun createOutputMarking(activeFiringTransition: OngoingActivity): ImmutableObjectMarking {
+    override fun createOutputMarking(activeFiringTransition: TransitionInstance): ImmutableObjectMarking {
         val markingFillahr = OutputMarkingFiller(
             activeFiringTransition,
             arcs = arcs,

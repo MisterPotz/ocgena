@@ -1,16 +1,20 @@
 package simulation.binding
 
-import model.Transition
+import simulation.SimulationStateProvider
+import javax.inject.Inject
 
-class EnabledBindingsCollector(
-    val transitions: List<Transition>,
-    val enabledBindingResolverFactory: EnabledBindingResolverFactory
+class EnabledBindingsCollector @Inject constructor(
+    simulationStateProvider: SimulationStateProvider,
+    enabledBindingResolverFactory: EnabledBindingResolverFactory
 ) {
+    private val transitions = simulationStateProvider.runningSimulatableOcNet().composedOcNet.coreOcNet.transitions
+
     private val enabledBindingResolver = enabledBindingResolverFactory.create()
 
+
     fun findEnabledBindings() : List<EnabledBinding> {
-        return transitions.mapNotNull {
-            enabledBindingResolver.tryGetEnabledBinding(it)
+        return transitions.mapNotNull { transition ->
+            enabledBindingResolver.tryGetEnabledBinding(transition)
         }
     }
 

@@ -6,26 +6,21 @@ import model.typea.ArcMultiplicityTypeA
 import model.typel.ExpressionArcMultiplicity
 import ru.misterpotz.simulation.marking.PMarkingProvider
 import simulation.random.TokenSelector
-import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
+import ru.misterpotz.simulation.transition.TransitionTimesMarking
+import simulation.SimulationStateProvider
 import simulation.typea.EnabledBindingTypeAResolver
 import javax.inject.Inject
+import javax.inject.Provider
 
 class EnabledBindingResolverFactory @Inject constructor(
-    private val arcMultiplicity: ArcMultiplicity,
-    private val arcs : Arcs,
-    private val pMarkingProvider : PMarkingProvider,
-    private val tokenSelector: TokenSelector,
-    private val tTimes : TransitionOccurrenceAllowedTimes,
+    private val enabledBindingTypeAResolver: Provider<EnabledBindingTypeAResolver>,
+    private val stateProvider: SimulationStateProvider,
 ) {
-    fun create() : EnabledBindingResolver {
+    fun create(): EnabledBindingResolver {
+        val arcMultiplicity = stateProvider.runningSimulatableOcNet().composedOcNet.arcMultiplicity
+
         return when (arcMultiplicity) {
-            is ArcMultiplicityTypeA -> EnabledBindingTypeAResolver(
-                pMarkingProvider,
-                arcMultiplicity,
-                arcs = arcs,
-                tokenSelector,
-                tTimes = tTimes,
-            )
+            is ArcMultiplicityTypeA -> enabledBindingTypeAResolver.get()
             is ExpressionArcMultiplicity -> TODO("I.A.Lomazova specification is yet to be done")
             else -> throw IllegalArgumentException("type ${arcMultiplicity::class.simpleName} is not supported")
         }

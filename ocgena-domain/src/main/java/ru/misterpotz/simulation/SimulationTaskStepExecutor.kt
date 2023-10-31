@@ -9,50 +9,15 @@ import ru.misterpotz.simulation.state.SimulationStepState
 import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.transition.TransitionDurationSelector
-import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
+import ru.misterpotz.simulation.transition.TransitionInstanceDurationGenerator
+import ru.misterpotz.simulation.transition.TransitionInstanceNextCreationTimeGenerator
 import ru.misterpotz.simulation.transition.TransitionTokensLocker
-import simulation.binding.ActiveTransitionMarkingFinisher
+import simulation.binding.TransitionInstanceFinisher
 import simulation.binding.EnabledBinding
-import simulation.binding.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingsCollector
 import simulation.random.BindingSelector
 import simulation.random.TokenSelector
 import javax.inject.Inject
-
-interface SimulationTaskStepExecutorFactory {
-    fun createSimulationTaskStepExecutor(dumpStateCallback: () -> Unit): SimulationTaskStepExecutor
-}
-
-class SimulationTaskStepExecutorFactoryImpl @Inject constructor(
-    private val simulationConfig: SimulationConfig,
-    private val simulationStateProvider: SimulationStateProvider,
-    private val bindingSelector: BindingSelector,
-    private val tokenSelector: TokenSelector,
-    private val transitionDurationSelector: TransitionDurationSelector,
-    private val nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
-    private val pMarkingProvider: SimulationTaskStepExecutor.StatePMarkingProvider,
-    private val transitionFinisher: ActiveTransitionMarkingFinisher,
-    private val logger: Logger,
-    private val generationQueue: GenerationQueue,
-) : SimulationTaskStepExecutorFactory {
-    override fun createSimulationTaskStepExecutor(dumpState: () -> Unit): SimulationTaskStepExecutor {
-        return SimulationTaskStepExecutor(
-            simulationConfig = simulationConfig,
-            simulationStateProvider = simulationStateProvider,
-            bindingSelector = bindingSelector,
-            tokenSelector = tokenSelector,
-            transitionDurationSelector = transitionDurationSelector,
-            nextTransitionOccurenceTimeSelector = nextTransitionOccurenceTimeSelector,
-            pMarkingProvider = pMarkingProvider,
-            transitionFinisher = transitionFinisher,
-            logger = logger,
-            generationQueue = generationQueue,
-            dumpState = dumpState
-        )
-    }
-
-}
 
 enum class Status {
     EXECUTING,
@@ -104,13 +69,13 @@ class SimulationTaskStepExecutor @Inject constructor(
     private val simulationStateProvider: SimulationStateProvider,
     private val bindingSelector: BindingSelector,
     tokenSelector: TokenSelector,
-    transitionDurationSelector: TransitionDurationSelector,
-    nextTransitionOccurenceTimeSelector: TransitionInstanceOccurenceDeltaSelector,
+    transitionInstanceDurationGenerator: TransitionInstanceDurationGenerator,
+    nextTransitionOccurenceTimeSelector: TransitionInstanceNextCreationTimeGenerator,
     pMarkingProvider: StatePMarkingProvider,
-    private val transitionFinisher: ActiveTransitionMarkingFinisher,
+    private val transitionFinisher: TransitionInstanceFinisher,
     private val logger: Logger,
     private val generationQueue: GenerationQueue,
-    private val dumpState: () -> Unit
+    private val bindingsCollector: EnabledBindingsCollector,
 ) {
     val ocNet = simulationConfig.templateOcNet
     val state: SimulatableComposedOcNet.State
@@ -120,25 +85,14 @@ class SimulationTaskStepExecutor @Inject constructor(
 
     val placeTyping get() = ocNet.coreOcNet.placeTyping
 
-    private val enabledBindingResolverFactory: EnabledBindingResolverFactory = EnabledBindingResolverFactory(
-        ocNet.arcMultiplicity,
-        arcs = ocNet.coreOcNet.arcs,
-        pMarkingProvider = pMarkingProvider,
-        tokenSelector = tokenSelector,
-        tTimes = state.tTimes
-    )
     private val transitionTokensLocker = TransitionTokensLocker(
         pMarkingProvider,
         state.tMarking,
         logger = logger,
-        tTimes = state.tTimes,
-        transitionDurationSelector = transitionDurationSelector,
+        tTimes = state.tTimesMarking,
+        transitionInstanceDurationGenerator = transitionInstanceDurationGenerator,
         simulationTime = simulationTime,
-        transitionInstanceOccurenceDeltaSelector = nextTransitionOccurenceTimeSelector,
-    )
-    private val bindingsCollector = EnabledBindingsCollector(
-        transitions = ocNet.coreOcNet.transitions,
-        enabledBindingResolverFactory = enabledBindingResolverFactory
+        activityAllowedTimeSelector = nextTransitionOccurenceTimeSelector,
     )
 
     fun executeStep() {
@@ -149,7 +103,6 @@ class SimulationTaskStepExecutor @Inject constructor(
         findAndStartEnabledTransitionActivities()
 
         shiftByMinimalSomethingChangingTime()
-        dumpState()
     }
 
     private fun generateNewTokensAndPlanNextGeneration() {
@@ -229,7 +182,7 @@ class SimulationTaskStepExecutor @Inject constructor(
     }
 
     private fun resolveTimeUntilATransitionIsEnabled(): Time? {
-        val tTimes = state.tTimes
+        val tTimes = state.tTimesMarking
 
         val earliestTransitionEnablingTime = tTimes.earliestNonZeroTime()
         return earliestTransitionEnablingTime
@@ -241,7 +194,7 @@ class SimulationTaskStepExecutor @Inject constructor(
     }
 
     private fun shiftTransitionAllowedTime(time: Time) {
-        val tTimes = state.tTimes
+        val tTimes = state.tTimesMarking
         tTimes.increaseSimTime(time)
     }
 

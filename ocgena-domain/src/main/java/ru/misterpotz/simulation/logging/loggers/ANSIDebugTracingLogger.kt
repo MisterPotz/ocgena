@@ -1,6 +1,6 @@
 package simulation.client.loggers
 
-import model.OngoingActivity
+import model.TransitionInstance
 import model.ExecutedBinding
 import net.mamoe.yamlkt.Yaml
 import ru.misterpotz.model.marking.Time
@@ -33,6 +33,16 @@ class ANSIDebugTracingLogger @Inject constructor(
 
     override fun onStart() {
         writer.writeLine("execution started")
+
+        // always dump net with
+        if (developmentDebugConfig.dumpState) {
+            println("onStart dump net: ${dumpInput().replace("\n", "\n\r")}")
+        }
+
+
+        if (developmentDebugConfig.dumpState) {
+            println("onStart dump state: ${dumpState().replace("\n", "\n\r")}")
+        }
     }
 
     override fun afterInitialMarking() {
@@ -41,22 +51,32 @@ class ANSIDebugTracingLogger @Inject constructor(
                 background("23")
             }initial marking:$ANSI_RESET""".indent(1, "\t")
         )
-        writer.writeLine(currentPMarking.toString().indentMargin(2, "#"))
+        writer.writeLine(pMarking.toString().indentMargin(2, "#"))
     }
 
     override fun onExecutionNewStepStart() {
+        if (developmentDebugConfig.dumpState) {
+            println(
+                "\r\ndump after step state: ${simulationStepState.currentStep}: \r\n${
+                    dumpState().replace(
+                        "\n",
+                        "\r\n"
+                    )
+                }"
+            )
+        }
         writer.writeLine("${background("24")}${font("51")}execution step: $currentStep".indent(1, "\t"))
         writer.writeLine("""${font(ANSI_ORANGE)}time: ${background("57")}$simGlobalTime""".indent(2, "\t"))
         writer.writeLine("""current state: """.indent(2, prefix = ""))
         // TODO: output ongoing transitions in a state as well
-        writer.writeLine(currentPMarking.toString().indentMargin(3, margin = "*"))
+        writer.writeLine(pMarking.toString().indentMargin(3, margin = "*"))
     }
 
     override fun beforeStartingNewTransitions() {
         writer.writeLine("""starting transitions:""".indent(2, "\t"))
     }
 
-    override fun onStartTransition(transition: OngoingActivity) {
+    override fun onStartTransition(transition: TransitionInstance) {
         writer.writeLine(transition.prettyPrintStarted().trimMargin().indentMargin(3))
     }
 
@@ -80,12 +100,15 @@ class ANSIDebugTracingLogger @Inject constructor(
     override fun afterFinalMarking() {
         writer.writeLine("""${background("125")}final marking:$ANSI_RESET""".indent(1, "\t"))
         writer.writeLine(
-            currentPMarking.toString().indentMargin(
+            pMarking.toString().indentMargin(
                 2, "${
                     background("125")
                 }#$ANSI_RESET"
             )
         )
+        if (developmentDebugConfig.dumpState) {
+            println("onFinish dump state: ${dumpState()}")
+        }
     }
 
     override fun onTimeout() {

@@ -8,7 +8,7 @@ import ru.misterpotz.model.marking.ObjectMarking
 
 
 class OutputMarkingFiller(
-    private val activeFiringTransition: OngoingActivity,
+    private val activeFiringTransition: TransitionInstance,
     private val arcs: Arcs,
     private val placeTyping: PlaceTyping,
     private val objectTokenGenerator: ObjectTokenGenerator,

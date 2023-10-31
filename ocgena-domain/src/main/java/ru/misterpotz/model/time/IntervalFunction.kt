@@ -14,8 +14,8 @@ class IntervalFunction(
     private val defaultTransitionTimes: TransitionTimes?,
     private val transitionToFiringTime: MutableMap<TransitionId, TransitionTimes> = mutableMapOf(),
 ) {
-    operator fun get(transition: Transition): TransitionTimes {
-        return transitionToFiringTime[transition.id] ?: defaultTransitionTimes!!
+    operator fun get(transition: TransitionId): TransitionTimes {
+        return transitionToFiringTime[transition] ?: defaultTransitionTimes!!
     }
 
     fun toSerializable(): SerializableIntervalFunction {

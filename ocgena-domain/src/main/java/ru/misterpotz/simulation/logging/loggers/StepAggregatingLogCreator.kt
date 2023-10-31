@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.logging.loggers
 
-import model.OngoingActivity
+import model.TransitionInstance
 import model.ExecutedBinding
 import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LogEvent
@@ -23,7 +23,7 @@ class StepAggregatingLogCreator @Inject constructor(
     }
 
     fun afterInitialMarking(): LoggingEvent {
-        val currentMarking = currentPMarking
+        val currentMarking = pMarking
 
         return LoggingEvent(
             currentStep,
@@ -38,7 +38,7 @@ class StepAggregatingLogCreator @Inject constructor(
             step = currentStep,
             logEvent = LogEvent.SIMULATION_STEP_START,
             simTime = simGlobalTime,
-            currentMarking = currentPMarking.toImmutable()
+            currentMarking = pMarking.toImmutable()
         )
     }
 
@@ -46,7 +46,7 @@ class StepAggregatingLogCreator @Inject constructor(
         return null
     }
 
-    fun onStartTransition(transition: OngoingActivity): LoggingEvent? {
+    fun onStartTransition(transition: TransitionInstance): LoggingEvent? {
         transitionStartLoggerDelegate.applyDelta(
             transition.lockedObjectTokens
         )
@@ -98,7 +98,7 @@ class StepAggregatingLogCreator @Inject constructor(
             step = currentStep,
             logEvent = LogEvent.INITIAL_MARKING,
             simTime = simGlobalTime,
-            currentMarking = currentPMarking.toImmutable()
+            currentMarking = pMarking.toImmutable()
         )
     }
 
@@ -107,7 +107,7 @@ class StepAggregatingLogCreator @Inject constructor(
             step = currentStep,
             logEvent = LogEvent.SIMULATION_TIMEOUT,
             simTime = simGlobalTime,
-            currentMarking = currentPMarking.toImmutable()
+            currentMarking = pMarking.toImmutable()
         )
     }
 
@@ -116,7 +116,7 @@ class StepAggregatingLogCreator @Inject constructor(
             step = currentStep,
             logEvent = LogEvent.SIMULATION_END,
             simTime = simGlobalTime,
-            currentMarking = currentPMarking.toImmutable()
+            currentMarking = pMarking.toImmutable()
 
         )
     }

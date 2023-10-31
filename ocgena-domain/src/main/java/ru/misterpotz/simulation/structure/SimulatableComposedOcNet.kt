@@ -3,7 +3,7 @@ package ru.misterpotz.simulation.structure
 import model.*
 import model.time.IntervalFunction
 import ru.misterpotz.model.marking.ObjectMarking
-import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
+import ru.misterpotz.simulation.transition.TransitionTimesMarking
 
 interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     val coreOcNet: StaticCoreOcNet
@@ -23,8 +23,8 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     interface SerializableState
 
     interface State {
-        val tMarking: TransitionActivitiesMarking
+        val tMarking: TransitionInstancesMarking
         val pMarking: ObjectMarking
-        val tTimes: TransitionOccurrenceAllowedTimes
+        val tTimesMarking: TransitionTimesMarking
     }
 }

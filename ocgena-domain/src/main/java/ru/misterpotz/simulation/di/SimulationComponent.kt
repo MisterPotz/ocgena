@@ -7,7 +7,6 @@ import model.OcNetType
 import net.mamoe.yamlkt.Yaml
 import ru.misterpotz.model.marking.ObjectTokenSet
 import ru.misterpotz.model.marking.ObjectTokenSetMap
-import ru.misterpotz.simulation.client.loggers.*
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.LogConfiguration
@@ -18,11 +17,10 @@ import ru.misterpotz.simulation.logging.loggers.StepAggregatingLogReceiver
 import ru.misterpotz.simulation.queue.GenerationQueue
 import ru.misterpotz.simulation.queue.GenerationQueueFactory
 import ru.misterpotz.simulation.queue.GenerationQueueFactoryImpl
-import ru.misterpotz.simulation.transition.TransitionDurationSelector
-import ru.misterpotz.simulation.transition.TransitionInstanceOccurenceDeltaSelector
+import ru.misterpotz.simulation.transition.TransitionInstanceDurationGenerator
+import ru.misterpotz.simulation.transition.TransitionInstanceNextCreationTimeGenerator
 import simulation.*
 import simulation.binding.*
-import simulation.client.LoggerWriters
 import simulation.random.*
 import javax.inject.Scope
 import kotlin.random.Random
@@ -76,8 +74,8 @@ internal abstract class SimulationModule {
     fun provideTransitionDurationSelector(
         random: Random,
         simulationConfig: SimulationConfig
-    ): TransitionDurationSelector {
-        return TransitionDurationSelector(
+    ): TransitionInstanceDurationGenerator {
+        return TransitionInstanceDurationGenerator(
             random,
             intervalFunction = simulationConfig.templateOcNet.intervalFunction
         )
@@ -88,8 +86,8 @@ internal abstract class SimulationModule {
     fun transitionInstanceOccurrenceDeltaSelector(
         random: Random,
         simulationConfig: SimulationConfig
-    ): TransitionInstanceOccurenceDeltaSelector {
-        return TransitionInstanceOccurenceDeltaSelector(
+    ): TransitionInstanceNextCreationTimeGenerator {
+        return TransitionInstanceNextCreationTimeGenerator(
             random,
             intervalFunction = simulationConfig.templateOcNet.intervalFunction
         )
@@ -133,18 +131,8 @@ internal abstract class SimulationModule {
 
     @Binds
     @SimulationScope
-    abstract fun simulationTaskStepExecutor(simulationTaskStepExecutor: SimulationTaskStepExecutor):
-            SimulationTaskStepExecutor
-
-    @Binds
-    @SimulationScope
-    abstract fun simTaskStepExecutorFactory(factory: SimulationTaskStepExecutorFactoryImpl):
-            SimulationTaskStepExecutorFactory
-
-    @Binds
-    @SimulationScope
-    abstract fun activeTransitionFinisher(activeTransitionFinisherImpl: ActiveTransitionFinisherImpl):
-            ActiveTransitionMarkingFinisher
+    abstract fun activeTransitionFinisher(transitionInstanceFinisherImpl: TransitionInstanceFinisherImpl):
+            TransitionInstanceFinisher
 
     @Binds
     @SimulationScope
@@ -156,14 +144,12 @@ interface SimulationComponentDependencies {
     val yaml : Yaml
 }
 
-
 @SimulationScope
 @Component(
     modules = [SimulationModule::class],
     dependencies = [SimulationComponentDependencies::class]
 )
 interface SimulationComponent {
-    fun simulationTaskExecutor(): SimulationTaskStepExecutorFactory
     fun simulationTask(): SimulationTask
 
     @Component.Factory

@@ -16,7 +16,7 @@ class ModelToEventLogConverter(
     private val logBothStartAndEnd : Boolean = ocelParams.logBothStartAndEnd
     private val occurrenceRegistry = ActivityOccurrenceRegistry(ocelParams)
 
-    fun getObjects(activeTransition: OngoingActivity) : Set<ObjectToken> {
+    fun getObjects(activeTransition: TransitionInstance) : Set<ObjectToken> {
         return  buildSet {
             addAll(activeTransition.lockedObjectTokens.allTokens())
         }
@@ -28,7 +28,7 @@ class ModelToEventLogConverter(
         }
     }
 
-    fun convertToEventStart(activeTransition: OngoingActivity) : Event? {
+    fun convertToEventStart(activeTransition: TransitionInstance) : Event? {
         if (logBothStartAndEnd) {
             val transition = activeTransition.transition
 
@@ -44,7 +44,7 @@ class ModelToEventLogConverter(
     }
 
     fun convertToEventEnd(executedBinding: ExecutedBinding): Event {
-        val transition = executedBinding.finishedTransition.transition
+        val transition = executedBinding.finishedActivity.transition
         return Event(
             activity = nameOfActivityEnd(transition),
             timestamp = timeStampMapper.mapTime(executedBinding.finishedTime),
