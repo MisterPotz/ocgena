@@ -1,4 +1,4 @@
-package ru.misterpotz.model.marking
+package ru.misterpotz.marking.objects
 
 import model.PlaceId
 import java.util.SortedSet

@@ -1,7 +1,7 @@
 package simulation
 
 import config.TimeRange
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
 import javax.inject.Inject
 import kotlin.random.Random
 

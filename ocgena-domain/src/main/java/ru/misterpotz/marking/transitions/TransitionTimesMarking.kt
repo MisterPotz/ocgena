@@ -1,7 +1,7 @@
-package ru.misterpotz.simulation.transition
+package ru.misterpotz.marking.transitions
 
-import ru.misterpotz.model.marking.Time
 import model.TransitionId
+import ru.misterpotz.marking.objects.Time
 
 interface TransitionTimesMarking {
     fun increaseSimTime(time: Time)

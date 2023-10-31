@@ -1,7 +1,7 @@
 package ru.misterpotz.utils
 
-import model.TransitionInstance
-import model.TransitionInstancesList
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.marking.transitions.TransitionInstancesList
 import utils.*
 import javax.inject.Inject
 

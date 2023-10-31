@@ -1,6 +1,6 @@
 package eventlog
 
-import ru.misterpotz.model.marking.ObjectToken
+import ru.misterpotz.marking.objects.ObjectToken
 import model.ObjectType
 
 typealias AttributeNames = List<String>

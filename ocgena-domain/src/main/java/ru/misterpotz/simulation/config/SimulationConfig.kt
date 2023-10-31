@@ -2,9 +2,8 @@ package ru.misterpotz.simulation.config
 
 import config.GenerationConfig
 import model.LabelMapping
-import ru.misterpotz.model.marking.ObjectMarking
 import model.OcNetType
-import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import simulation.ObjectTokenGenerator
 

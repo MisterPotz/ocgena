@@ -1,8 +1,8 @@
 package simulation.binding
 
-import model.ExecutedBinding
-import model.TransitionInstance
-import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.simulation.binding.ExecutedBinding
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import simulation.Logger
 import simulation.SimulationStateProvider
 import javax.inject.Inject

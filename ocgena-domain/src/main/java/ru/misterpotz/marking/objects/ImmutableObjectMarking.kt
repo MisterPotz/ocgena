@@ -1,4 +1,4 @@
-package ru.misterpotz.model.marking
+package ru.misterpotz.marking.objects
 
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ext.copyWithValueTransformMutable

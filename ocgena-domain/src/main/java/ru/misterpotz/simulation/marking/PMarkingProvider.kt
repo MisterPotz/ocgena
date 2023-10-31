@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.marking
 
-import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.marking.objects.ObjectMarking
 
 interface PMarkingProvider {
     val pMarking : ObjectMarking

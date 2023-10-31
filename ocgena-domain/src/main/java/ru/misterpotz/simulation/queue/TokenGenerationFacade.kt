@@ -1,8 +1,8 @@
 package ru.misterpotz.simulation.queue
 
 import model.ObjectType
-import ru.misterpotz.model.marking.ObjectToken
-import ru.misterpotz.model.marking.ObjectTokenSet
+import ru.misterpotz.marking.objects.ObjectToken
+import ru.misterpotz.marking.objects.ObjectTokenSet
 import ru.misterpotz.simulation.config.SimulationConfig
 import javax.inject.Inject
 

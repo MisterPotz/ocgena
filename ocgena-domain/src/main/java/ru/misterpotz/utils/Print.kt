@@ -1,6 +1,6 @@
 package utils
 
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
 
 fun String.toIds() : Collection<String> {
     return split(" ")

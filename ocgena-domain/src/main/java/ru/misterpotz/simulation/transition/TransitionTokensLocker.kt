@@ -1,7 +1,8 @@
 package ru.misterpotz.simulation.transition
 
-import model.TransitionInstance
-import model.TransitionInstancesMarking
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.marking.transitions.TransitionInstancesMarking
+import ru.misterpotz.marking.transitions.TransitionTimesMarking
 import simulation.Logger
 import ru.misterpotz.simulation.marking.PMarkingProvider
 import ru.misterpotz.simulation.state.SimulationTime

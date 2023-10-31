@@ -1,8 +1,8 @@
 package simulation.typea
 
-import model.TransitionInstance
+import ru.misterpotz.marking.transitions.TransitionInstance
 import model.Arcs
-import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import model.PlaceTyping
 import simulation.ObjectTokenGenerator
 import simulation.ObjectTokenMoverFactory

@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.state
 
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
 import utils.print
 
 class SimulationTime(globalTime : Time = 0L) {

@@ -1,10 +1,10 @@
 package ru.misterpotz.simulation.state
 
-import model.TransitionInstancesMarking
-import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.marking.transitions.TransitionInstancesMarking
+import ru.misterpotz.marking.objects.ObjectMarking
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.transition.TransitionOccurrenceAllowedTimes
-import ru.misterpotz.simulation.transition.TransitionTimesMarking
+import ru.misterpotz.marking.transitions.TransitionOccurrenceAllowedTimes
+import ru.misterpotz.marking.transitions.TransitionTimesMarking
 
 class State() : SimulatableComposedOcNet.State {
     override val tMarking: TransitionInstancesMarking = TransitionInstancesMarking()

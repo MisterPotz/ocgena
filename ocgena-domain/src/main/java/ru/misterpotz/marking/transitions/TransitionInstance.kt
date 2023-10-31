@@ -1,8 +1,9 @@
-package model
+package ru.misterpotz.marking.transitions
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.Time
+import model.TransitionId
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.Time
 import utils.ANSI_CYAN
 import utils.ANSI_YELLOW
 

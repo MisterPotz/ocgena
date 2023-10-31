@@ -1,4 +1,4 @@
-package ru.misterpotz.model.marking
+package ru.misterpotz.marking.objects
 
 interface ObjectTokenSet {
     operator fun get(objectTokenId: ObjectTokenId): ObjectToken?

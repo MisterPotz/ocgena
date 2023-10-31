@@ -1,8 +1,7 @@
 package ru.misterpotz.simulation.queue
 
-import ru.misterpotz.model.marking.Time
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.ObjectMarkingDelta
+import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.marking.objects.ObjectMarkingDelta
 
 interface GenerationQueue {
     fun shiftTime(time: Time)

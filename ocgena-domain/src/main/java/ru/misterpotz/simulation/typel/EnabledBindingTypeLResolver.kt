@@ -2,12 +2,11 @@ package simulation.typel
 
 import model.*
 import model.typea.ArcMultiplicityTypeA
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.ObjectMarking
-import ru.misterpotz.model.marking.ObjectToken
-import ru.misterpotz.model.marking.ObjectTokenId
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ObjectMarking
+import ru.misterpotz.marking.objects.ObjectTokenId
 import ru.misterpotz.simulation.marking.PMarkingProvider
-import ru.misterpotz.simulation.transition.TransitionTimesMarking
+import ru.misterpotz.marking.transitions.TransitionTimesMarking
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingResolver
 import simulation.binding.EnabledBindingWithTokens

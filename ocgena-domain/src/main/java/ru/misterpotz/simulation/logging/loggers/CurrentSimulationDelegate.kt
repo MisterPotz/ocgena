@@ -1,15 +1,15 @@
 package ru.misterpotz.simulation.logging.loggers
 
-import model.TransitionInstancesMarking
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.ObjectMarking
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.transitions.TransitionInstancesMarking
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ObjectMarking
+import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.state.SimulationStepState
 import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.transition.TransitionTimesMarking
+import ru.misterpotz.marking.transitions.TransitionTimesMarking
 import simulation.SimulationStateProvider
 import javax.inject.Inject
 

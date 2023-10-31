@@ -1,7 +1,7 @@
 package simulation.utils
 
 import model.*
-import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import simulation.random.TokenSelector
 
 class TokenCollectorByTypeAndArc(

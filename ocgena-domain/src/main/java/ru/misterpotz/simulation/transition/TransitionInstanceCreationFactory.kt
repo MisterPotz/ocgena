@@ -1,7 +1,9 @@
-package model
+package ru.misterpotz.simulation.transition
 
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.Time
+import model.TransitionId
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.marking.transitions.TransitionInstance
 import javax.inject.Inject
 
 class TransitionInstanceCreationFactory @Inject constructor() {

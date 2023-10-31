@@ -1,10 +1,9 @@
 package simulation.random
 
-import ru.misterpotz.model.marking.ObjectToken
-import ru.misterpotz.model.marking.ObjectTokenId
+import ru.misterpotz.marking.objects.ObjectToken
+import ru.misterpotz.marking.objects.ObjectTokenId
 import simulation.binding.EnabledBinding
 import java.util.SortedSet
-import java.util.TreeSet
 import kotlin.random.Random
 
 interface RandomFactory {

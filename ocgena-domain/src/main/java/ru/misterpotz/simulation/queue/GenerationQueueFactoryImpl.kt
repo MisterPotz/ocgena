@@ -1,6 +1,5 @@
 package ru.misterpotz.simulation.queue
 
-import ru.misterpotz.model.marking.ObjectTokenSet
 import ru.misterpotz.simulation.config.SimulationConfig
 import simulation.TokenGenerationTimeSelector
 import javax.inject.Inject

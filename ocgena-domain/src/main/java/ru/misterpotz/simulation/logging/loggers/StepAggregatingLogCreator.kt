@@ -1,8 +1,8 @@
 package ru.misterpotz.simulation.logging.loggers
 
-import model.TransitionInstance
-import model.ExecutedBinding
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.simulation.binding.ExecutedBinding
+import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.simulation.logging.LogEvent
 import ru.misterpotz.simulation.logging.LoggingEvent
 import javax.inject.Inject

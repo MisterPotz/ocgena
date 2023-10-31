@@ -1,6 +1,7 @@
-package model
+package ru.misterpotz.marking.transitions
 
-import ru.misterpotz.model.marking.Time
+import model.TransitionId
+import ru.misterpotz.marking.objects.Time
 
 class TransitionInstancesMarking() {
     private val transitionsToTMarkingValue = mutableMapOf<TransitionId, TransitionInstancesList>()

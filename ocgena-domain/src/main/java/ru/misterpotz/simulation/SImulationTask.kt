@@ -1,7 +1,7 @@
 package simulation
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.simulation.queue.GenerationQueue
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet

@@ -10,8 +10,8 @@ import model.typea.SerializableVariableArcTypeA
 import model.typel.SerializableArcTypeL
 import net.mamoe.yamlkt.Yaml
 import net.mamoe.yamlkt.YamlBuilder
-import ru.misterpotz.model.marking.EmptyObjectValuesMap
-import ru.misterpotz.model.marking.ObjectValuesMap
+import ru.misterpotz.marking.objects.EmptyObjectValuesMap
+import ru.misterpotz.marking.objects.ObjectValuesMap
 import ru.misterpotz.simulation.di.SimulationComponentDependencies
 import ru.misterpotz.simulation.state.SerializableState
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet

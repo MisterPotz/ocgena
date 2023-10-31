@@ -4,8 +4,7 @@ import config.GenerationConfig
 import model.*
 import model.time.IntervalFunction
 import model.utils.OcNetCreator
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.ObjectMarking
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.simulation.marking.PlainMarking
 import ru.misterpotz.simulation.config.SimulationConfig
 import simulation.*

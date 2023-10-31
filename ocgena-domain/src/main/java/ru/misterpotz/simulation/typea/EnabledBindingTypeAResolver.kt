@@ -2,8 +2,8 @@ package simulation.typea
 
 import model.*
 import model.typea.ArcMultiplicityTypeA
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.ObjectTokenId
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ObjectTokenId
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.binding.EnabledBinding
 import simulation.binding.EnabledBindingResolver

@@ -1,8 +1,8 @@
 package ru.misterpotz.simulation.logging
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.model.marking.ImmutableObjectMarking
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.Time
 
 @Serializable
 data class LoggingEvent(

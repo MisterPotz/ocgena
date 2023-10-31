@@ -2,8 +2,9 @@ package ru.misterpotz.simulation.structure
 
 import model.*
 import model.time.IntervalFunction
-import ru.misterpotz.model.marking.ObjectMarking
-import ru.misterpotz.simulation.transition.TransitionTimesMarking
+import ru.misterpotz.marking.objects.ObjectMarking
+import ru.misterpotz.marking.transitions.TransitionInstancesMarking
+import ru.misterpotz.marking.transitions.TransitionTimesMarking
 
 interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     val coreOcNet: StaticCoreOcNet

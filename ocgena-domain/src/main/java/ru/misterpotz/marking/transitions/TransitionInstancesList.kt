@@ -1,6 +1,6 @@
-package model
+package ru.misterpotz.marking.transitions
 
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
 
 interface TransitionInstancesList {
     fun add(tMarkingValue: TransitionInstance)

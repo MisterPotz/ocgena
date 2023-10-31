@@ -1,9 +1,9 @@
 package ru.misterpotz.utils
 
 import model.*
-import ru.misterpotz.model.marking.*
-import ru.misterpotz.model.marking.ImmutableObjectMarkingMap
-import ru.misterpotz.model.marking.ObjectMarkingMap
+import ru.misterpotz.marking.objects.*
+import ru.misterpotz.marking.objects.ImmutableObjectMarkingMap
+import ru.misterpotz.marking.objects.ObjectMarkingMap
 import utils.print
 import javax.inject.Inject
 
@@ -20,7 +20,7 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
         }.toString()
     }
 
-    fun prettyPrint(objectMarking: ObjectMarking): String {
+    fun prettyPrint(objectMarking: ru.misterpotz.marking.objects.ObjectMarking): String {
         return (objectMarking as ObjectMarkingMap).placesToObjectTokens.let { prettyPrint(it) }
     }
 
@@ -42,7 +42,7 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
     }
 
 
-    fun toString(objectMarking: ObjectMarking): String {
+    fun toString(objectMarking: ru.misterpotz.marking.objects.ObjectMarking): String {
         return (objectMarking as ObjectMarkingMap).placesToObjectTokens.let { toString(it) }
     }
 

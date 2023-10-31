@@ -3,7 +3,9 @@ package ru.misterpotz.eventlog
 import eventlog.ActivityOccurrenceRegistry
 import eventlog.Event
 import model.*
-import ru.misterpotz.model.marking.ObjectToken
+import ru.misterpotz.marking.objects.ObjectToken
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.simulation.binding.ExecutedBinding
 import simulation.client.OcelLogConfiguration
 import simulation.client.loggers.TimeStampMapper
 
@@ -44,7 +46,7 @@ class ModelToEventLogConverter(
     }
 
     fun convertToEventEnd(executedBinding: ExecutedBinding): Event {
-        val transition = executedBinding.finishedActivity.transition
+        val transition = executedBinding.finishedTransitionInstance.transition
         return Event(
             activity = nameOfActivityEnd(transition),
             timestamp = timeStampMapper.mapTime(executedBinding.finishedTime),

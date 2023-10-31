@@ -1,12 +1,11 @@
 package simulation
 
 import dsl.PatternIdCreator
-import ru.misterpotz.model.marking.EmptyObjectValuesMap
-import ru.misterpotz.model.marking.ObjectMarking
-import ru.misterpotz.model.marking.ObjectToken
+import ru.misterpotz.marking.objects.EmptyObjectValuesMap
+import ru.misterpotz.marking.objects.ObjectToken
 import model.ObjectType
 import model.PlaceTyping
-import ru.misterpotz.model.marking.ImmutableObjectMarking
+import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.simulation.marking.PlainMarking
 
 class ObjectTokenGenerator() {

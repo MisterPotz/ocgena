@@ -1,7 +1,8 @@
 package simulation
 
-import model.*
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.simulation.binding.ExecutedBinding
 
 interface Logger {
 

@@ -1,9 +1,8 @@
-package ru.misterpotz.model.marking
+package ru.misterpotz.marking.objects
 
 import ru.misterpotz.ext.copyWithValueTransform
 import model.PlaceId
 import java.util.SortedSet
-import java.util.TreeSet
 
 interface ObjectMarking {
     val tokensIterator: Iterator<ObjectTokenId>

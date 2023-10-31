@@ -1,9 +1,9 @@
 package simulation.client.loggers
 
-import model.TransitionInstance
-import model.ExecutedBinding
+import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.simulation.binding.ExecutedBinding
 import net.mamoe.yamlkt.Yaml
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.SerializableSimulationState

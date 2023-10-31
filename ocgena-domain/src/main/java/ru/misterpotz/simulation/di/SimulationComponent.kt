@@ -5,8 +5,8 @@ import kotlinx.serialization.json.Json
 import model.LabelMapping
 import model.OcNetType
 import net.mamoe.yamlkt.Yaml
-import ru.misterpotz.model.marking.ObjectTokenSet
-import ru.misterpotz.model.marking.ObjectTokenSetMap
+import ru.misterpotz.marking.objects.ObjectTokenSet
+import ru.misterpotz.marking.objects.ObjectTokenSetMap
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.LogConfiguration

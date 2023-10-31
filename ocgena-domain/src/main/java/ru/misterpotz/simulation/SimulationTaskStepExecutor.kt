@@ -1,7 +1,7 @@
 package simulation
 
-import ru.misterpotz.model.marking.ObjectMarking
-import ru.misterpotz.model.marking.Time
+import ru.misterpotz.marking.objects.ObjectMarking
+import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.marking.PMarkingProvider
 import ru.misterpotz.simulation.queue.GenerationQueue
