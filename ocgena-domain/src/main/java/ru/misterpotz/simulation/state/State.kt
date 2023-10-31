@@ -25,11 +25,9 @@ class State() : SimulatableComposedOcNet.State {
 
     override fun toSerializable() : SerializableState {
         return SerializableState(
-
             tMarking = tMarking.toSerializable(),
-            pMarking = pMarking.toImmutableMarking(),
+            pMarking = pMarking.toImmutable(),
             tMinTimes = tTimes.toSerializable(),
-//            intervalFunction = intervalFunction.toSerializable()
         )
     }
 

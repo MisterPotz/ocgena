@@ -45,10 +45,10 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
 
 
     fun toString(objectMarking: ObjectMarking): String {
-        return (objectMarking as ObjectMarkingMap).placesToObjectTokens.let { prettyPrint(it) }
+        return (objectMarking as ObjectMarkingMap).placesToObjectTokens.let { toString(it) }
     }
 
     fun toString(objectMarking: ImmutableObjectMarking): String {
-        return (objectMarking as ImmutableObjectMarkingMap).placesToObjectTokens.let { prettyPrint(it) }
+        return (objectMarking as ImmutableObjectMarkingMap).placesToObjectTokens.let { toString(it) }
     }
 }

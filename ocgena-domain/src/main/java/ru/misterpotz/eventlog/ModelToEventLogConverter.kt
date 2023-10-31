@@ -1,5 +1,7 @@
-package eventlog
+package ru.misterpotz.eventlog
 
+import eventlog.ActivityOccurrenceRegistry
+import eventlog.Event
 import model.*
 import ru.misterpotz.model.marking.ObjectToken
 import simulation.client.OcelParams

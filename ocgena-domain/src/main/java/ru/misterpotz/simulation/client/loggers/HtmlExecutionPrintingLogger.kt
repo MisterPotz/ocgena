@@ -3,23 +3,24 @@ package simulation.client.loggers
 import model.*
 import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.model.marking.Time
-import ru.misterpotz.simulation.logging.LogConfiguration
-import simulation.Logger
+import ru.misterpotz.simulation.client.loggers.CurrentSimulationDelegate
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.SimulationTime
+import ru.misterpotz.utils.MarkingPrintingUtility
 import simulation.client.Writer
 import utils.html.bold
 import utils.html.color
 import utils.html.indentLinesRoot
 import utils.print
+import javax.inject.Inject
 
-
-class HtmlExecutionPrintingLogger(
-    override val loggingEnabled: Boolean,
-    val loggingConfiguration: LogConfiguration,
-    val labelMapping: LabelMapping,
+@Deprecated("unmaintained and broken, left for future reference")
+class HtmlExecutionPrintingLogger @Inject constructor(
+    private val currentSimulationDelegate: CurrentSimulationDelegate,
+    private val labelMapping: LabelMapping,
+    private val printingUtility: MarkingPrintingUtility,
     val writer: Writer,
-) : Logger {
+) : NoOpLogger(), CurrentSimulationDelegate by currentSimulationDelegate {
 
     fun write(string: String) {
         writer.writeLine(string)
@@ -35,13 +36,13 @@ class HtmlExecutionPrintingLogger(
         write(indentLinesRoot(0, bold("execution started")))
     }
 
-    override fun onInitialMarking(marking: ObjectMarking) {
-        val lines = marking.toLines()
+    fun onInitialMarking(marking: ObjectMarking) {
+        val lines = printingUtility.toString(marking)
         write(indentLinesRoot(1, lines, marginSymbol = "#"))
     }
 
-    override fun onFinalMarking(marking: ObjectMarking) {
-        val lines = marking.toLines()
+    fun onFinalMarking(marking: ObjectMarking) {
+        val lines = printingUtility.toString(marking)
         write(indentLinesRoot(0, color(bold("final marking"), backgroundColor = "rgb(239, 166, 166)")))
         write(
             indentLinesRoot(
@@ -61,7 +62,7 @@ class HtmlExecutionPrintingLogger(
         write(indentLinesRoot(0, bold("execution timeout")))
     }
 
-    override fun onTimeShift(delta: Time) {
+    fun onTimeShift(delta: Time) {
         val timeText = utils.html.color(
             "+${delta.print()}", backgroundColor = "rgb(102, 3, 132)",
             fontColor = "rgb(209, 168, 208)"
@@ -77,7 +78,7 @@ class HtmlExecutionPrintingLogger(
         )
     }
 
-    override fun onExecutionStepStart(
+    fun onExecutionStepStart(
         stepIndex: Int,
         state: SimulatableComposedOcNet.State,
         simulationTime: SimulationTime
@@ -109,7 +110,7 @@ class HtmlExecutionPrintingLogger(
         write(indentLinesRoot(indentation = 3, state.toHtmlLines(), marginSymbol = "*"))
     }
 
-    override fun onTransitionEndSectionStart() {
+    fun onTransitionEndSectionStart() {
         write(indentLinesRoot(2, bold("ending transitions:")))
     }
 

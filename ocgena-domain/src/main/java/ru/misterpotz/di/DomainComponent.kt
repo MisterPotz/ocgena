@@ -8,6 +8,8 @@ import kotlinx.serialization.modules.polymorphic
 import model.*
 import model.typea.SerializableVariableArcTypeA
 import model.typel.SerializableArcTypeL
+import net.mamoe.yamlkt.Yaml
+import net.mamoe.yamlkt.YamlBuilder
 import ru.misterpotz.model.marking.EmptyObjectValuesMap
 import ru.misterpotz.model.marking.ObjectValuesMap
 import ru.misterpotz.simulation.di.SimulationComponentDependencies
@@ -38,8 +40,33 @@ class DomainModule {
             }
         }
     }
-}
 
+    @Provides
+    @DomainScope
+    fun yaml(): Yaml {
+        return Yaml {
+            this.listSerialization = YamlBuilder.ListSerialization.AUTO
+            this.mapSerialization = YamlBuilder.MapSerialization.BLOCK_MAP
+
+            serializersModule = SerializersModule {
+                polymorphic(baseClass = SerializableAtom::class) {
+                    subclass(SerializablePlace::class, SerializablePlace.serializer())
+                    subclass(SerializableTransition::class, SerializableTransition.serializer())
+                    subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
+                    subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
+                    subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
+                }
+
+                polymorphic(SimulatableComposedOcNet.SerializableState::class) {
+                    subclass(SerializableState::class, SerializableState.serializer())
+                }
+                polymorphic(ObjectValuesMap::class) {
+                    subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
+                }
+            }
+        }
+    }
+}
 
 @DomainScope
 @Component(modules = [DomainModule::class])

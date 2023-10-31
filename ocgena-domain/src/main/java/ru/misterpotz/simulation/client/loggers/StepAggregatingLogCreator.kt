@@ -2,20 +2,31 @@ package ru.misterpotz.simulation.client.loggers
 
 import model.ActiveFiringTransition
 import model.ExecutedBinding
+import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.model.marking.Time
 import ru.misterpotz.simulation.logging.LogEvent
 import ru.misterpotz.simulation.logging.LoggingEvent
 import simulation.SimulationStateProvider
 import javax.inject.Inject
 
+interface CurrentSimulationDelegate {
+    val step: Long
+    val simTime: Time
+    val currentPMarking: ObjectMarking
+}
+
+class CurrentSimulationDelegateImpl @Inject constructor(private val simulationStateProvider: SimulationStateProvider) :
+    CurrentSimulationDelegate {
+    override val step get() = simulationStateProvider.getSimulationStepState().currentStep
+    override val simTime get() = simulationStateProvider.getSimulationTime().globalTime
+    override val currentPMarking get() = simulationStateProvider.getOcNetState().pMarking
+}
+
 class StepAggregatingLogCreator @Inject constructor(
-    private val simulationStateProvider: SimulationStateProvider,
     private val transitionStartLoggerDelegate: TransitionStartLoggerDelegate,
-    private val transitionEndLoggerDelegate: TransitionEndLoggerDelegate
-) {
-    private val step get() = simulationStateProvider.getSimulationStepState().currentStep
-    private val simTime get() = simulationStateProvider.getSimulationTime().globalTime
-    private val currentPMarking get() = simulationStateProvider.getOcNetState().pMarking
+    private val transitionEndLoggerDelegate: TransitionEndLoggerDelegate,
+    private val currentSimulationDelegate: CurrentSimulationDelegate
+) : CurrentSimulationDelegate by currentSimulationDelegate {
 
     fun onStart(): LoggingEvent {
         return LoggingEvent(
@@ -77,7 +88,7 @@ class StepAggregatingLogCreator @Inject constructor(
         return null
     }
 
-    fun onEndTransition(executedBinding: ExecutedBinding) : LoggingEvent? {
+    fun onEndTransition(executedBinding: ExecutedBinding): LoggingEvent? {
         transitionEndLoggerDelegate.applyDelta(executedBinding.producedMap)
         return null
     }
@@ -93,7 +104,7 @@ class StepAggregatingLogCreator @Inject constructor(
         )
     }
 
-    fun onExecutionStepFinish(newTimeDelta: Time) : LoggingEvent? {
+    fun onExecutionStepFinish(newTimeDelta: Time): LoggingEvent? {
         return null
     }
 

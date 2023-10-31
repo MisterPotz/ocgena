@@ -1,6 +1,6 @@
 package ru.misterpotz.model.marking
 
-import ext.copyWithValueTransformMutable
+import ru.misterpotz.ext.copyWithValueTransformMutable
 import model.PlaceId
 
 interface ImmutableObjectMarking : ObjectMarkingDelta {

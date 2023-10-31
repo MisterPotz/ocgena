@@ -6,10 +6,7 @@ import model.LabelMapping
 import model.OcNetType
 import ru.misterpotz.model.marking.ObjectTokenSet
 import ru.misterpotz.model.marking.ObjectTokenSetMap
-import ru.misterpotz.simulation.client.loggers.LogEventSerializedLogger
-import ru.misterpotz.simulation.client.loggers.StepAggregatingLogCreator
-import ru.misterpotz.simulation.client.loggers.StepAggregatingLogReceiver
-import ru.misterpotz.simulation.client.loggers.StepAggregatingLogger
+import ru.misterpotz.simulation.client.loggers.*
 import ru.misterpotz.simulation.config.SimulationConfig
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.LogConfiguration
@@ -67,6 +64,10 @@ internal abstract class SimulationModule {
     @SimulationScope
     abstract fun simulationStateProvider(simulationStateProviderImpl: SimulationStateProviderImpl):
             SimulationStateProvider
+
+    @Binds
+    @SimulationScope
+    abstract fun currentSimulationDelegate(currentSimulationDelegate: CurrentSimulationDelegateImpl): CurrentSimulationDelegate
 
     @Provides
     @SimulationScope

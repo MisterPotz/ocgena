@@ -63,7 +63,7 @@ class DefaultSimTaskLoggerWrapper(
         }
 
         val ansiTraceLogger = ansiTraceWriter?.let {
-            ANSITracingLogger(
+            ANSIDebugTracingLogger(
                 loggingEnabled,
                 writer = it
             )

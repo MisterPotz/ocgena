@@ -97,26 +97,6 @@ class SimulationTask @Inject constructor(
         }
     }
 
-    val json = Json {
-        prettyPrint = true
-        serializersModule = SerializersModule {
-            polymorphic(baseClass = SerializableAtom::class) {
-                subclass(SerializablePlace::class, SerializablePlace.serializer())
-                subclass(SerializableTransition::class, SerializableTransition.serializer())
-                subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
-                subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
-                subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
-            }
-
-            polymorphic(SimulatableComposedOcNet.SerializableState::class) {
-                subclass(SerializableState::class, SerializableState.serializer())
-            }
-            polymorphic(ObjectValuesMap::class) {
-                subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
-            }
-        }
-    }
-
     private fun dumpState(): String {
 //        return yaml.encodeToString(SerializableSimulationState(simulationTime.globalTime, state.toSerializable()))
 //            .replace(Regex("\\n[\\s\\r]*\\n"), "\n")
@@ -169,24 +149,3 @@ class SimulationTask @Inject constructor(
     }
 }
 
-val yaml = Yaml {
-    this.listSerialization = YamlBuilder.ListSerialization.AUTO
-    this.mapSerialization = YamlBuilder.MapSerialization.BLOCK_MAP
-
-    serializersModule = SerializersModule {
-        polymorphic(baseClass = SerializableAtom::class) {
-            subclass(SerializablePlace::class, SerializablePlace.serializer())
-            subclass(SerializableTransition::class, SerializableTransition.serializer())
-            subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
-            subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
-            subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
-        }
-
-        polymorphic(SimulatableComposedOcNet.SerializableState::class) {
-            subclass(SerializableState::class, SerializableState.serializer())
-        }
-        polymorphic(ObjectValuesMap::class) {
-            subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
-        }
-    }
-}

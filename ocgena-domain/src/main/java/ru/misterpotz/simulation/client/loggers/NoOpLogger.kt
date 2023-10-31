@@ -5,7 +5,7 @@ import model.ExecutedBinding
 import ru.misterpotz.model.marking.Time
 import simulation.Logger
 
-abstract class NoOpLogger : Logger {
+open class NoOpLogger : Logger {
 
     override fun onStart() {
 

@@ -1,6 +1,6 @@
 package ru.misterpotz.model.marking
 
-import ext.copyWithValueTransform
+import ru.misterpotz.ext.copyWithValueTransform
 import model.PlaceId
 
 interface ObjectMarking {

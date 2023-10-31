@@ -17,5 +17,5 @@ class CallbackLogger(
         simTaskClientCallback.onExecutionFinish()
     }
 
-    override fun onTimeShift(delta: Time) = Unit
+    fun onTimeShift(delta: Time) = Unit
 }

@@ -2,7 +2,7 @@ package simulation.client.loggers
 
 import eventlog.ActivityOccurrenceRegistry
 import eventlog.EventLog
-import eventlog.ModelToEventLogConverter
+import ru.misterpotz.eventlog.ModelToEventLogConverter
 import model.*
 import ru.misterpotz.model.marking.ObjectMarking
 import ru.misterpotz.model.marking.Time

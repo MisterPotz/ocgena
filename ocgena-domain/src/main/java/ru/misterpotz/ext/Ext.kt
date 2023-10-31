@@ -1,4 +1,4 @@
-package ext
+package ru.misterpotz.ext
 
 fun <K, V, T> Map<K, V>.copyWithValueTransform(transform: (v: V) -> T): Map<K, T> {
     return mapValues {

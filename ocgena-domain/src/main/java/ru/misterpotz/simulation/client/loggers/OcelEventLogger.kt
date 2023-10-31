@@ -1,15 +1,13 @@
 package simulation.client.loggers
 
 import eventlog.EventLog
-import eventlog.ModelToEventLogConverter
 import model.ActiveFiringTransition
 import model.ExecutedBinding
 import model.LabelMapping
-import ru.misterpotz.model.marking.Time
 import model.time.formatMillisToUTCString
 import model.time.getSmartCurrentTime
-import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.state.SimulationTime
+import ru.misterpotz.eventlog.ModelToEventLogConverter
+import ru.misterpotz.model.marking.Time
 import simulation.client.OcelParams
 import simulation.client.OcelWriter
 import kotlin.time.DurationUnit
@@ -37,11 +35,6 @@ class OcelEventLogger(
         ocelParams = ocelParams,
         timeStampMapper = timmeStampMapper,
     )
-    override fun onExecutionStepStart(
-        stepIndex: Int,
-        state: SimulatableComposedOcNet.State,
-        simulationTime: SimulationTime
-    ) = Unit
     override fun onEndTransition(executedBinding: ExecutedBinding) {
         val event = modelToEventLogConverter.convertToEventEnd(executedBinding)
         eventLog.recordEvent(event)
