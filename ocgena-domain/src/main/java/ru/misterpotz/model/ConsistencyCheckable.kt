@@ -1,6 +1,9 @@
 package model
 
 import model.utils.RecursionProtector
+import ru.misterpotz.model.atoms.Arc
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.Transition
 
 interface PetriAtomVisitorDFS {
 
@@ -13,7 +16,9 @@ interface PetriAtomVisitorDFS {
     fun cleanStack()
 }
 
-abstract class AbsPetriAtomVisitorDFS : PetriAtomVisitorDFS {
+abstract class AbsPetriAtomVisitorDFS constructor(
+
+) : PetriAtomVisitorDFS {
     protected val recursionProtector = RecursionProtector()
 
     final override fun visitArc(arc: Arc) {
@@ -30,7 +35,7 @@ abstract class AbsPetriAtomVisitorDFS : PetriAtomVisitorDFS {
         recursionProtector.protectWithRecursionStack(transition) {
             val canStopParsing = doForTransitionBeforeDFS(transition)
             if (!canStopParsing) {
-                for (outputArc in transition.outputArcs) {
+                for (outputArc in transition.outputArcIds) {
                     visitArc(outputArc)
                 }
             }
@@ -42,7 +47,7 @@ abstract class AbsPetriAtomVisitorDFS : PetriAtomVisitorDFS {
         recursionProtector.protectWithRecursionStack(place) {
             val canStopParsing = doForPlaceBeforeDFS(place)
             if (!canStopParsing) {
-                for (outputArc in place.outputArcs) {
+                for (outputArc in place.outputArcIds) {
                     visitArc(outputArc)
                 }
             }

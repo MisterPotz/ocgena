@@ -1,7 +1,5 @@
 package dsl
 
-import model.PlaceType
-
 interface OCScope :
     ArcsAcceptor,
     PlaceAcceptor,

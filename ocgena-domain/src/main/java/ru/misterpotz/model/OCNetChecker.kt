@@ -2,7 +2,7 @@ package model
 
 import error.ConsistencyCheckError
 import error.ErrorLevel
-import model.utils.ConsistencyCheckPetriAtomVisitorDFS
+import ru.misterpotz.model.validators.ConsistencyCheckPetriAtomVisitorDFS
 
 class OCNetChecker(
     /**

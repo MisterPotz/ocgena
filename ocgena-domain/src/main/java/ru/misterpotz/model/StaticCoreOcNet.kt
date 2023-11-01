@@ -1,6 +1,7 @@
 package model
 
 import kotlinx.serialization.Serializable
+import ru.misterpotz.model.atoms.Arc
 
 @Serializable
 data class SerializableCoreOcNet(

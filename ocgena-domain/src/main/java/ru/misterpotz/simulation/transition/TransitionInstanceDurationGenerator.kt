@@ -1,7 +1,7 @@
 package ru.misterpotz.simulation.transition
 
 import ru.misterpotz.marking.objects.Time
-import model.TransitionId
+import ru.misterpotz.model.atoms.TransitionId
 import model.time.IntervalFunction
 import kotlin.random.Random
 

@@ -1,10 +1,14 @@
 package model
 
-interface PetriAtom {
-    val id : String
+import java.io.Serializable
+
+typealias PetriAtomId = String
+
+
+
+interface PetriAtom : Serializable {
+    val id : PetriAtomId
     fun acceptVisitor(visitor: PetriAtomVisitorDFS)
-    var subgraphIndex : Int
-    val serializableAtom: SerializableAtom
 
     companion object {
         const val UNASSIGNED_SUBGRAPH_INDEX = -1

@@ -8,7 +8,11 @@ import dsl.PlaceDSL
 import dsl.TransitionDSL
 import dsl.VariableArcDSL
 import model.*
-import model.typea.VariableArcTypeA
+import ru.misterpotz.model.arcs.VariableArcTypeA
+import ru.misterpotz.model.arcs.NormalArc
+import ru.misterpotz.model.atoms.Arc
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.Transition
 
 class OCNetDSLConverter(
     private val ocNetDSLElements: OCNetDSLElements,
@@ -25,8 +29,8 @@ class OCNetDSLConverter(
             ?: Transition(
                 id = elementsIdCreator.createTransitionId(transitionDSL),
                 label = transitionDSL.label,
-                inputArcs = mutableListOf(),
-                outputArcs = mutableListOf(),
+                inputArcIds = mutableListOf(),
+                outputArcIds = mutableListOf(),
             ).also {
                 createdTransitions.add(it)
             }
@@ -42,8 +46,8 @@ class OCNetDSLConverter(
                 Place(
                     label = elementsIdCreator.createPlaceId(placeDSL),
 //                    type = objectType,
-                    inputArcs = mutableListOf(),
-                    outputArcs = mutableListOf(),
+                    inputArcIds = mutableListOf(),
+                    outputArcIds = mutableListOf(),
                     id = placeDSL.label,
                 ).also {
                     createdPlaces.add(it)
@@ -88,7 +92,7 @@ class OCNetDSLConverter(
             is VariableArcDSL -> {
                 VariableArcTypeA(
                     arrowNode = arrowNode,
-                    tailNode = tailNode,
+                    tailNodeId = tailNode,
                     id = arcId
                 )
             }
@@ -96,7 +100,7 @@ class OCNetDSLConverter(
             is NormalArcDSL -> {
                 NormalArc(
                     arrowNode = arrowNode,
-                    tailNode = tailNode,
+                    tailNodeId = tailNode,
                     multiplicity = arcDSL.multiplicity,
                     id = arcId
                 )
@@ -106,11 +110,11 @@ class OCNetDSLConverter(
         }
 
         if (arcIsInputToNode1) {
-            node2.outputArcs.add(arc)
-            node1.inputArcs.add(arc)
+            node2.outputArcIds.add(arc)
+            node1.inputArcIds.add(arc)
         } else {
-            node1.outputArcs.add(arc)
-            node2.inputArcs.add(arc)
+            node1.outputArcIds.add(arc)
+            node2.inputArcIds.add(arc)
         }
         createdArcs.add(arc)
     }

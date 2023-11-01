@@ -1,6 +1,6 @@
 package model.utils
 
-import model.Arc
+import ru.misterpotz.model.atoms.Arc
 import model.PetriNode
 
 class PetriNodesCopyTask(private val cachedPetriNodes: CachedPetriNodes) {
@@ -29,12 +29,12 @@ class PetriNodesCopyTask(private val cachedPetriNodes: CachedPetriNodes) {
     }
 
     fun createOrFindArc(originalArc: Arc): Arc {
-        val createdTailNode = createdPetriNodes.getCachedFor(originalArc.tailNode!!)!!
+        val createdTailNode = createdPetriNodes.getCachedFor(originalArc.tailNodeId!!)!!
         val createdArrowNode = createdPetriNodes.getCachedFor(
             originalArc.arrowNode!!
         )!!
         var applicableArc: Arc? = null
-        applicableArc = createdTailNode.outputArcs.find { it.arrowNode?.label == createdArrowNode.label }
+        applicableArc = createdTailNode.outputArcIds.find { it.arrowNode?.label == createdArrowNode.label }
 
         if (applicableArc != null) {
             applicableArc.arrowNode = createdArrowNode
@@ -44,7 +44,7 @@ class PetriNodesCopyTask(private val cachedPetriNodes: CachedPetriNodes) {
             it.tailNode?.label == createdTailNode.label }
 
         if (applicableArc != null) {
-            applicableArc.tailNode = createdTailNode
+            applicableArc.tailNodeId = createdTailNode
             return applicableArc
         }
 
@@ -60,17 +60,17 @@ class PetriNodesCopyTask(private val cachedPetriNodes: CachedPetriNodes) {
         val original = cachedPetriNodes.getCachedFor(petriNode)!!
         val created = createdPetriNodes.getCachedFor(petriNode)!!
 
-        val originalInputArcs = original.inputArcs
+        val originalInputArcs = original.inputArcIds
         val newInputArcs = originalInputArcs.map {
             createOrFindArc(it)
         }
 
-        val originalOutputArcs = original.outputArcs
+        val originalOutputArcs = original.outputArcIds
         val newOutputArcs = originalOutputArcs.map {
             createOrFindArc(it)
         }
-        created.inputArcs.addAll(newInputArcs)
-        created.outputArcs.addAll(newOutputArcs)
+        created.inputArcIds.addAll(newInputArcs)
+        created.outputArcIds.addAll(newOutputArcs)
     }
 
     fun getCreatedNodes() : CachedPetriNodes {

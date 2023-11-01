@@ -8,13 +8,13 @@ import dsl.OCNetFacadeBuilder
 import model.*
 
 actual class OCDotToDomainConverter actual constructor(
-    val conversionParams: ConversionParams,
+    private val conversionParams: ConversionParams,
 ) {
     private val initialMarking = ObjectMarking()
-    val conversionContainer = ConversionEntitiesCreator(
+    private val conversionContainer = ConversionEntitiesCreator(
         conversionParams.placeTyping
     )
-    val arcConversionCreator = ArcConversionCreator(conversionContainer)
+    private val arcConversionCreator = ArcConversionCreator(conversionContainer)
 
     actual fun convert(): OCNetFacadeBuilder.BuiltOCNet {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()

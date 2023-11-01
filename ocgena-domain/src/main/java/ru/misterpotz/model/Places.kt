@@ -1,13 +1,19 @@
 package model
 
-class Places(val places: List<Place>) : List<Place> by places {
+import ru.misterpotz.model.atoms.Place
 
-    operator fun get(placeId : String) : Place {
-        return places.find { it.id == placeId }!!
-    }
-    fun reindexArcs() {
-        for (place in places) {
-            place.reindexArcs()
-        }
+interface Places {
+    operator fun get(place : PetriAtomId) : Place
+}
+
+fun Places(places: MutableMap<PetriAtomId, Place> = mutableMapOf()) : Places {
+    return PlacesMap(places)
+}
+
+internal class PlacesMap(val places: MutableMap<PetriAtomId, Place> = mutableMapOf()) : Places {
+
+    override operator fun get(place : PetriAtomId) : Place {
+        return places[place]!!
     }
 }
+

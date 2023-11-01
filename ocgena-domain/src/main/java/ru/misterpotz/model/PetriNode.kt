@@ -1,24 +1,20 @@
 package model
 
-import kotlinx.serialization.Serializable
+import ru.misterpotz.model.atoms.Arc
 
 interface SerializableAtom
 
-interface PetriNode: ConsistencyCheckable, PetriAtom {
-    val inputArcs : MutableList<Arc>
-    val outputArcs : MutableList<Arc>
-    val label : String
-
-
-    fun addInputArc(arc: Arc)
-    fun addOutputArc(arc: Arc)
-
-    fun isSameType(other : PetriNode) : Boolean
+interface PetriNode : ConsistencyCheckable, PetriAtom {
+    val label: String
+    fun isSameType(other: PetriNode): Boolean
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS)
 
-    fun reindexArcs()
+    fun getArcTo(node: PetriAtomId) : PetriAtomId
 
-    fun copyWithoutConnections() : PetriNode
+    fun getArcFrom(node: PetriAtomId) : PetriAtomId
+
+    fun copyWithoutConnections(): PetriNode
+
     companion object {
         val EMPTY = emptyList<Arc>()
     }

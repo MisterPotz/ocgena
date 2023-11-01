@@ -1,6 +1,6 @@
 package model.utils
 
-import model.Arc
+import ru.misterpotz.model.atoms.Arc
 import model.OcNetType
 import model.StaticCoreOcNet
 import model.time.IntervalFunction

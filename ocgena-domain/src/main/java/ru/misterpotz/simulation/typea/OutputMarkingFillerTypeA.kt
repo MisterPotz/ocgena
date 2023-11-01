@@ -1,11 +1,12 @@
 package ru.misterpotz.simulation.typea
 
 import model.*
-import model.typea.VariableArcTypeA
-import model.typel.VariableArcTypeL
+import ru.misterpotz.model.arcs.VariableArcTypeA
+import ru.misterpotz.model.arcs.VariableArcTypeL
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.ObjectMarking
 import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.model.arcs.NormalArc
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.LockedTokensMover
 import javax.inject.Inject

@@ -5,6 +5,7 @@ import eventlog.Event
 import model.*
 import ru.misterpotz.marking.objects.ObjectToken
 import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.model.atoms.Transition
 import ru.misterpotz.simulation.binding.ExecutedBinding
 import simulation.client.OcelLogConfiguration
 import simulation.client.loggers.TimeStampMapper

@@ -4,7 +4,7 @@ package config;
 
 import kotlinx.serialization.Serializable
 import model.ObjectTypeId
-import model.TransitionId
+import ru.misterpotz.model.atoms.TransitionId
 import simulation.config.Config
 import simulation.config.ConfigEnum
 import kotlin.js.ExperimentalJsExport

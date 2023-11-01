@@ -4,6 +4,8 @@ import model.*
 import model.typea.ArcMultiplicityTypeA
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.ObjectTokenId
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.Transition
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.binding.EnabledBinding
 import ru.misterpotz.simulation.api.interactors.EnabledBindingResolverInteractor

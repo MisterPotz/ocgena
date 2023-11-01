@@ -1,8 +1,8 @@
 package model.utils
 
 import model.AbsPetriAtomVisitorDFS
-import model.Place
-import model.Transition
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.Transition
 import model.StaticCoreOcNet
 
 class NodesCacherVisitorDFS(

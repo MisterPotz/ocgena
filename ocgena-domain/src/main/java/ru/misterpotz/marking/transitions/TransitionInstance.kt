@@ -2,8 +2,8 @@ package ru.misterpotz.marking.transitions
 
 import kotlinx.serialization.Serializable
 import model.Arcs
-import model.Place
-import model.TransitionId
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.TransitionId
 import model.Transitions
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.Time

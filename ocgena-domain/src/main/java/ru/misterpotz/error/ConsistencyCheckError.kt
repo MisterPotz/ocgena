@@ -1,9 +1,9 @@
 package error
 
-import model.Arc
+import ru.misterpotz.model.atoms.Arc
 import model.PetriAtom
-import model.Place
-import model.Transition
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.Transition
 
 fun <T : Any> List<T>.prettyPrint() : String {
     return joinToString("\n").prependIndent()

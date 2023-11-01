@@ -1,9 +1,10 @@
 package simulation.typea
 
 import model.*
-import model.typea.VariableArcTypeA
+import ru.misterpotz.model.arcs.VariableArcTypeA
 import ru.misterpotz.marking.objects.ObjectMarking
 import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.model.arcs.NormalArc
 import ru.misterpotz.simulation.api.interactors.RepeatabilityInteractor
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.LockedTokensMover

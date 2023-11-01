@@ -1,6 +1,6 @@
 package ru.misterpotz.marking.transitions
 
-import model.TransitionId
+import ru.misterpotz.model.atoms.TransitionId
 import ru.misterpotz.marking.objects.Time
 
 class TransitionInstancesMarking() {

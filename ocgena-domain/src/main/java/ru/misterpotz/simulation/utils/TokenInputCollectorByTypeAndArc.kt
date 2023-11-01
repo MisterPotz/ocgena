@@ -3,6 +3,7 @@ package simulation.utils
 import model.*
 import ru.misterpotz.marking.objects.ObjectTokenId
 import ru.misterpotz.marking.transitions.TransitionInstance
+import ru.misterpotz.model.arcs.NormalArc
 import ru.misterpotz.simulation.api.interactors.RepeatabilityInteractor
 import ru.misterpotz.simulation.api.interactors.TokenSelectionInteractor
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate

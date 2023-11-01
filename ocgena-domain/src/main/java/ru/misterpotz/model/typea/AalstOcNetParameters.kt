@@ -1,9 +1,10 @@
 package model.typea
 
-import model.Arc
+import ru.misterpotz.model.atoms.Arc
 import model.ArcMultiplicity
 import model.Arcs
-import model.NormalArc
+import ru.misterpotz.model.arcs.NormalArc
+import ru.misterpotz.model.arcs.VariableArcTypeA
 
 class ArcMultiplicityTypeA(val arcs: Arcs) : ArcMultiplicity {
     fun getMultiplicity(arc: Arc) : Int {

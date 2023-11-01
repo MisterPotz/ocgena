@@ -1,9 +1,7 @@
 package ru.misterpotz.simulation.api.interactors
 
-import model.Place
-import model.Places
+import ru.misterpotz.model.atoms.Place
 import model.sortById
-import ru.misterpotz.marking.objects.ObjectToken
 import ru.misterpotz.marking.objects.ObjectTokenId
 import javax.inject.Inject
 

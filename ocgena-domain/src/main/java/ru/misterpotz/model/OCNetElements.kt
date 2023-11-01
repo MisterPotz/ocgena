@@ -1,5 +1,7 @@
 package model
 
+import ru.misterpotz.model.atoms.Arc
+
 interface OCNetElements {
     val places: Places
 

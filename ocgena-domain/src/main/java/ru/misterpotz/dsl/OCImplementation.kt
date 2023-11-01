@@ -1,7 +1,5 @@
 package dsl
 
-import model.PlaceType
-
 class LinkChainDSLImpl(
     override val firstElement: NodeDSL,
     override val lastElement: NodeDSL) : LinkChainDSL {

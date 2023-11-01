@@ -1,13 +1,21 @@
 package model
 
-class Transitions(val transitions: List<Transition>) : List<Transition> by transitions {
-    operator fun get(transitionId : String): Transition {
-        return transitions.find { it.id == transitionId }!!
-    }
+import ru.misterpotz.model.atoms.Transition
+import ru.misterpotz.model.atoms.TransitionId
 
-    fun reindexArcs() {
-        for (transition in transitions) {
-            transition.reindexArcs()
-        }
+
+interface Transitions {
+    operator fun get(transition: PetriAtomId) : Transition
+}
+
+fun Transitions(transitions: Map<TransitionId, Transition>) : Transitions {
+    return TransitionsMap(transitions)
+}
+
+internal class TransitionsMap(
+    val transitions: Map<PetriAtomId, Transition>
+) : Transitions {
+    override operator fun get(transition: PetriAtomId): Transition {
+        return transitions[transition]!!
     }
 }

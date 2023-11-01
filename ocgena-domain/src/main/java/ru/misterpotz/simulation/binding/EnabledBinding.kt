@@ -1,5 +1,5 @@
 package simulation.binding
 
-import model.Transition
+import ru.misterpotz.model.atoms.Transition
 
 class EnabledBinding(val transition: Transition)

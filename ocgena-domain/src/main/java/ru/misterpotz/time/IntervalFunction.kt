@@ -1,8 +1,7 @@
 package model.time
 
 import kotlinx.serialization.Serializable
-import model.Transition
-import model.TransitionId
+import ru.misterpotz.model.atoms.TransitionId
 
 @Serializable
 data class SerializableIntervalFunction(

@@ -2,7 +2,7 @@ package simulation.binding
 
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.Time
-import model.TransitionId
+import ru.misterpotz.model.atoms.TransitionId
 import kotlin.math.abs
 
 class EnabledBindingWithTokens(

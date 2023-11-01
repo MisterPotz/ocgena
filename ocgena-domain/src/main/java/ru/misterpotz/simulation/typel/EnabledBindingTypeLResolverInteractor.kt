@@ -7,6 +7,8 @@ import ru.misterpotz.marking.objects.ObjectMarking
 import ru.misterpotz.marking.objects.ObjectTokenId
 import ru.misterpotz.marking.plain.PMarkingProvider
 import ru.misterpotz.marking.transitions.TransitionTimesMarking
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.atoms.Transition
 import simulation.binding.EnabledBinding
 import ru.misterpotz.simulation.api.interactors.EnabledBindingResolverInteractor
 import simulation.binding.EnabledBindingWithTokens

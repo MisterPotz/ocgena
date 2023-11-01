@@ -1,6 +1,8 @@
 package model
 
 import kotlinx.serialization.Serializable
+import ru.misterpotz.model.atoms.Place
+import ru.misterpotz.model.PlaceType
 import utils.toIds
 
 class InputOutputPlaces(private val entries: Map<PlaceId, PlaceType>) {
@@ -81,7 +83,8 @@ data class SerializablePlaceTyping(
     val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
 )
 
-class PlaceTyping(
+
+data class PlaceTyping(
     private val defaultObjectType: ObjectType,
     private val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
 ) {

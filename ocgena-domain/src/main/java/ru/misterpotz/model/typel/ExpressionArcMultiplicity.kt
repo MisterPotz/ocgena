@@ -1,10 +1,11 @@
 package model.typel
 
-import model.Arc
+import ru.misterpotz.model.atoms.Arc
 import model.ArcMultiplicity
 import model.Arcs
-import model.NormalArc
-import model.typea.VariableArcTypeA
+import ru.misterpotz.model.arcs.NormalArc
+import ru.misterpotz.model.arcs.VariableArcTypeA
+import ru.misterpotz.model.arcs.VariableArcTypeL
 
 interface ExpressionArcMultiplicity : ArcMultiplicity {
     fun expressionFor(arc: Arc) : ArcExpression

@@ -1,6 +1,6 @@
 package ru.misterpotz.simulation.transition
 
-import model.TransitionId
+import ru.misterpotz.model.atoms.TransitionId
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.marking.transitions.TransitionInstance
