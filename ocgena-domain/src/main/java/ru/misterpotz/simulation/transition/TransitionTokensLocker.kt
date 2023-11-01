@@ -1,52 +1,45 @@
 package ru.misterpotz.simulation.transition
 
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.marking.transitions.TransitionInstancesMarking
-import ru.misterpotz.marking.transitions.TransitionTimesMarking
+import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.Logger
-import ru.misterpotz.simulation.marking.PMarkingProvider
-import ru.misterpotz.simulation.state.SimulationTime
 import simulation.binding.EnabledBindingWithTokens
+import javax.inject.Inject
 
-class TransitionTokensLocker(
-    private val pMarkingProvider: PMarkingProvider,
-    private val tMarking: TransitionInstancesMarking,
+class TransitionTokensLocker @Inject constructor(
     private val activityAllowedTimeSelector: TransitionInstanceNextCreationTimeGenerator,
     private val transitionInstanceDurationGenerator: TransitionInstanceDurationGenerator,
-    private val tTimes: TransitionTimesMarking,
     private val logger: Logger,
-    private val simulationTime: SimulationTime,
-) {
+    private val transitionInstanceCreationFactory: TransitionInstanceCreationFactory,
+    private val currentSimulationDelegate: CurrentSimulationDelegate,
+) : CurrentSimulationDelegate by currentSimulationDelegate {
     private fun recordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
         val transition = enabledBindingWithTokens.transition
 
-        val randomSelectedDuration = transitionInstanceDurationGenerator.newDuration(
-            transition.id
-        )
+        val randomSelectedDuration = transitionInstanceDurationGenerator.newDuration(transition)
 
-        val tMarkingValue = TransitionInstance.create(
+        val tMarkingValue = transitionInstanceCreationFactory.create(
             transition = transition,
             lockedObjectTokens = enabledBindingWithTokens.involvedObjectTokens,
             duration = randomSelectedDuration,
-            startedAt = simulationTime.globalTime,
+            startedAt = simGlobalTime,
             tokenSynchronizationTime = enabledBindingWithTokens.synchronizationTime
         )
 
         tMarking.pushTMarking(tMarkingValue)
-        val newNextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
+        val newNextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition)
 
-        tTimes.setNextAllowedTime(
-            transition = transition.id,
+        tTimesMarking.setNextAllowedTime(
+            transition = transition,
             time = newNextAllowedTime
         )
         logger.onStartTransition(transition = tMarkingValue)
     }
 
     private fun lockTokensInPMarking(enabledBindingWithTokens: EnabledBindingWithTokens) {
-        pMarkingProvider.pMarking.minus(enabledBindingWithTokens.involvedObjectTokens)
+        pMarking.minus(enabledBindingWithTokens.involvedObjectTokens)
     }
 
-    fun lockTokensAndRecordActiveTransition(enabledBindingWithTokens: EnabledBindingWithTokens) {
+    fun lockTokensAndRecordNewTransitionInstance(enabledBindingWithTokens: EnabledBindingWithTokens) {
         lockTokensInPMarking(enabledBindingWithTokens)
         recordActiveTransition(enabledBindingWithTokens)
     }

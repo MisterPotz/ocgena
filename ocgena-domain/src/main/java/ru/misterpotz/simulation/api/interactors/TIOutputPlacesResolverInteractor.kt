@@ -1,8 +1,8 @@
-package simulation.binding
+package ru.misterpotz.simulation.api.interactors
 
 import ru.misterpotz.marking.transitions.TransitionInstance
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 
-interface InputToOutputPlaceResolver {
+interface TIOutputPlacesResolverInteractor {
     fun createOutputMarking(activeFiringTransition : TransitionInstance) : ImmutableObjectMarking
 }

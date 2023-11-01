@@ -2,6 +2,7 @@ package ru.misterpotz.utils
 
 import ru.misterpotz.marking.transitions.TransitionInstance
 import ru.misterpotz.marking.transitions.TransitionInstancesList
+import ru.misterpotz.marking.transitions.TransitionTimesMarking
 import utils.*
 import javax.inject.Inject
 
@@ -24,6 +25,14 @@ class TransitionInstanceDebugPrinter @Inject constructor(
             |   ${font(ANSI_YELLOW)}[locked]:$ANSI_RESET
             |${lockedObjectTokens.toString().prependIndent("\t${font(ANSI_YELLOW)}")}
         """.trimMargin()
+        }
+    }
+
+    fun prettyPrintState(transitionTimesMarking: TransitionTimesMarking): String {
+        return with(transitionTimesMarking) {
+            keys.joinToString(separator = "\n") {
+                """${it} permitted in ${getNextAllowedTime(it)?.print()}"""
+            }
         }
     }
 

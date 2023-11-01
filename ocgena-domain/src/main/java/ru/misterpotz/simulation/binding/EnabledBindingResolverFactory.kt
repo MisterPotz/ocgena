@@ -2,16 +2,17 @@ package simulation.binding
 
 import model.typea.ArcMultiplicityTypeA
 import model.typel.ExpressionArcMultiplicity
+import ru.misterpotz.simulation.api.interactors.EnabledBindingResolverInteractor
 import simulation.SimulationStateProvider
-import simulation.typea.EnabledBindingTypeAResolver
+import simulation.typea.EnabledBindingTypeAResolverInteractor
 import javax.inject.Inject
 import javax.inject.Provider
 
 class EnabledBindingResolverFactory @Inject constructor(
-    private val enabledBindingTypeAResolver: Provider<EnabledBindingTypeAResolver>,
+    private val enabledBindingTypeAResolver: Provider<EnabledBindingTypeAResolverInteractor>,
     private val stateProvider: SimulationStateProvider,
 ) {
-    fun create(): EnabledBindingResolver {
+    fun create(): EnabledBindingResolverInteractor {
         val arcMultiplicity = stateProvider.runningSimulatableOcNet().composedOcNet.arcMultiplicity
 
         return when (arcMultiplicity) {

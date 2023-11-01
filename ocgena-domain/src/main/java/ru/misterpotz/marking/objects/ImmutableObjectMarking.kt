@@ -3,22 +3,23 @@ package ru.misterpotz.marking.objects
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ext.copyWithValueTransformMutable
 import model.PlaceId
+import java.util.SortedSet
 
 interface ImmutableObjectMarking : ObjectMarkingDelta, java.io.Serializable {
     val tokensIterator: Iterator<ObjectTokenId>
-    override operator fun get(placeId: PlaceId): Set<ObjectTokenId>?
+    override operator fun get(placeId: PlaceId): SortedSet<ObjectTokenId>?
     override val keys: Set<PlaceId>
     fun isEmpty() : Boolean
 
     fun toMutable(): ObjectMarking
 }
 
-fun <S : Set<ObjectTokenId>> ImmutableObjectMarking(placesToObjectTokens: Map<PlaceId, S>): ImmutableObjectMarking {
+fun <S : SortedSet<ObjectTokenId>> ImmutableObjectMarking(placesToObjectTokens: Map<PlaceId, S>): ImmutableObjectMarking {
     return ImmutableObjectMarkingMap(placesToObjectTokens)
 }
 
 @Serializable
-internal data class ImmutableObjectMarkingMap(val placesToObjectTokens: Map<PlaceId, Set<ObjectTokenId>>) :
+internal data class ImmutableObjectMarkingMap(val placesToObjectTokens: Map<PlaceId, SortedSet<ObjectTokenId>>) :
     ImmutableObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {
@@ -29,7 +30,7 @@ internal data class ImmutableObjectMarkingMap(val placesToObjectTokens: Map<Plac
             }
         }
 
-    override fun get(placeId: PlaceId): Set<ObjectTokenId>? {
+    override fun get(placeId: PlaceId): SortedSet<ObjectTokenId>? {
         return placesToObjectTokens[placeId]
     }
 

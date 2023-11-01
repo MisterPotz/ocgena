@@ -3,19 +3,20 @@ package simulation.binding
 import ru.misterpotz.simulation.binding.ExecutedBinding
 import ru.misterpotz.marking.transitions.TransitionInstance
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.simulation.api.interactors.TIOutputPlacesResolverInteractor
 import simulation.Logger
 import simulation.SimulationStateProvider
 import javax.inject.Inject
 
-interface TransitionInstanceFinisher {
+interface TIFinisher {
     fun finishActiveTransition(activeFiringTransition: TransitionInstance)
 }
 
-class TransitionInstanceFinisherImpl @Inject constructor(
-    private val inputToOutputPlaceResolver: InputToOutputPlaceResolver,
+class TIFinisherImpl @Inject constructor(
+    private val outputPlacesResolver: TIOutputPlacesResolverInteractor,
     private val logger: Logger,
     private val simulationStateProvider: SimulationStateProvider
-) : TransitionInstanceFinisher {
+) : TIFinisher {
     private val simulationTime get() = simulationStateProvider.getSimulationTime()
     private val pMarking get() = simulationStateProvider.getOcNetState().pMarking
 
@@ -37,6 +38,6 @@ class TransitionInstanceFinisherImpl @Inject constructor(
     }
 
     private fun getMarkingForOutputPlaces(activeFiringTransition: TransitionInstance): ImmutableObjectMarking {
-        return inputToOutputPlaceResolver.createOutputMarking(activeFiringTransition)
+        return outputPlacesResolver.createOutputMarking(activeFiringTransition)
     }
 }

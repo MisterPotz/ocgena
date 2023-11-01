@@ -1,11 +1,11 @@
 package simulation.utils
 
-import ru.misterpotz.marking.objects.ObjectToken
+import ru.misterpotz.marking.objects.ObjectTokenId
 
-class ObjectTokenStack(objectTokens : List<ObjectToken> ) {
-    private val objectTokens : MutableList<ObjectToken> = objectTokens.toMutableList()
+class ObjectTokenStack(objectTokens : List<ObjectTokenId> ) {
+    private val objectTokens : MutableList<ObjectTokenId> = objectTokens.toMutableList()
 
-    fun tryConsume(amount: Int) : List<ObjectToken> {
+    fun tryConsume(amount: Int) : List<ObjectTokenId> {
         val amountToTake = amount.coerceAtMost(objectTokens.size)
         val toRet = objectTokens.takeLast(amountToTake)
         for (i in 0 until amountToTake) {
@@ -14,7 +14,7 @@ class ObjectTokenStack(objectTokens : List<ObjectToken> ) {
         return toRet
     }
 
-    fun tryConsumeAll() : List<ObjectToken> {
+    fun tryConsumeAll() : List<ObjectTokenId> {
         return tryConsume(objectTokens.size)
     }
 }

@@ -8,9 +8,8 @@ import kotlin.random.Random
 class TokenGenerationTimeSelector @Inject constructor(
     private val random: Random?,
 ) {
-    fun get(interval : TimeRange): Time {
-        return random?.let {
-            (interval.start..interval.end).random(random = it)
-        } ?: interval.start
+    fun get(interval: TimeRange): Time {
+        if (random == null) return interval.start.toLong()
+        return (interval.start..interval.end).random(random = random).toLong()
     }
 }

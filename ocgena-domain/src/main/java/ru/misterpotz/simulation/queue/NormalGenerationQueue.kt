@@ -8,7 +8,6 @@ import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.ObjectMarkingDelta
 import ru.misterpotz.marking.objects.ObjectToken
 import ru.misterpotz.marking.objects.Time
-import ru.misterpotz.model.marking.*
 import simulation.TokenGenerationTimeSelector
 
 class NormalGenerationQueue(
@@ -54,7 +53,7 @@ class NormalGenerationQueue(
             for ((id, generator) in placeGenerators) {
 
                 generateTokenIfCan(id)?.let { objectToken ->
-                    put(id, setOf(objectToken.id))
+                    put(id, sortedSetOf(objectToken.id))
                 }
 
                 if (generator.mustPlan()) {

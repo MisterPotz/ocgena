@@ -8,6 +8,11 @@ import net.mamoe.yamlkt.Yaml
 import ru.misterpotz.marking.objects.ObjectTokenSet
 import ru.misterpotz.marking.objects.ObjectTokenSetMap
 import ru.misterpotz.simulation.config.SimulationConfig
+import ru.misterpotz.simulation.api.interactors.TIOutputPlacesResolverInteractor
+import ru.misterpotz.simulation.api.interactors.BindingSelectionInteractor
+import ru.misterpotz.simulation.api.interactors.TokenSelectionInteractor
+import ru.misterpotz.simulation.impl.interactors.BindingSelectionInteractorImpl
+import ru.misterpotz.simulation.impl.interactors.TokenSelectionInteractorImpl
 import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.LogConfiguration
 import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
@@ -30,11 +35,11 @@ import kotlin.random.Random
 internal abstract class SimulationModule {
     @Binds
     @SimulationScope
-    abstract fun tokenSelector(tokenSelector: TokenSelectorImpl): TokenSelector
+    abstract fun tokenSelector(tokenSelector: TokenSelectionInteractorImpl): TokenSelectionInteractor
 
     @Binds
     @SimulationScope
-    abstract fun bindingSelector(bindingSelector: BindingSelectorImpl): BindingSelector
+    abstract fun bindingSelector(bindingSelector: BindingSelectionInteractorImpl): BindingSelectionInteractor
 
     @Provides
     @SimulationScope
@@ -50,7 +55,7 @@ internal abstract class SimulationModule {
 
     @Provides
     @SimulationScope
-    fun random(randomFactory: RandomFactory): Random {
+    fun random(randomFactory: RandomFactoryImpl): Random {
         return randomFactory.create()
     }
 
@@ -68,6 +73,12 @@ internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun currentSimulationDelegate(currentSimulationDelegate: CurrentSimulationDelegateImpl): CurrentSimulationDelegate
+
+    @Provides
+    @SimulationScope
+    fun objectTokenMover(objectTokenMoverFactory: ObjectTokenMoverFactoryImpl) : LockedTokensMover {
+        return objectTokenMoverFactory.create()
+    }
 
     @Provides
     @SimulationScope
@@ -110,7 +121,7 @@ internal abstract class SimulationModule {
 
     @Provides
     @SimulationScope
-    fun bindingOutputMarkingResolver(bindingOutputMarkingResolverFactory: BindingOutputMarkingResolverFactory): InputToOutputPlaceResolver {
+    fun bindingOutputMarkingResolver(bindingOutputMarkingResolverFactory: BindingOutputMarkingResolverFactory): TIOutputPlacesResolverInteractor {
         return bindingOutputMarkingResolverFactory.create()
     }
 
@@ -131,8 +142,8 @@ internal abstract class SimulationModule {
 
     @Binds
     @SimulationScope
-    abstract fun activeTransitionFinisher(transitionInstanceFinisherImpl: TransitionInstanceFinisherImpl):
-            TransitionInstanceFinisher
+    abstract fun activeTransitionFinisher(transitionInstanceFinisherImpl: TIFinisherImpl):
+            TIFinisher
 
     @Binds
     @SimulationScope

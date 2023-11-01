@@ -57,7 +57,7 @@ internal class ObjectMarkingMap(val placesToObjectTokens: MutableMap<PlaceId, So
 
     override fun toImmutable(): ImmutableObjectMarking {
         return ImmutableObjectMarking(
-            placesToObjectTokens.copyWithValueTransform { it.toSet() }
+            placesToObjectTokens.copyWithValueTransform { it.toSortedSet() }
         )
     }
 

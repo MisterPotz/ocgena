@@ -3,20 +3,17 @@ package simulation
 import ru.misterpotz.marking.objects.ObjectMarking
 import ru.misterpotz.marking.objects.Time
 import ru.misterpotz.simulation.config.SimulationConfig
-import ru.misterpotz.simulation.marking.PMarkingProvider
+import ru.misterpotz.marking.plain.PMarkingProvider
 import ru.misterpotz.simulation.queue.GenerationQueue
 import ru.misterpotz.simulation.state.SimulationStepState
 import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import ru.misterpotz.simulation.transition.TransitionInstanceDurationGenerator
-import ru.misterpotz.simulation.transition.TransitionInstanceNextCreationTimeGenerator
-import ru.misterpotz.simulation.transition.TransitionTokensLocker
-import simulation.binding.TransitionInstanceFinisher
+import simulation.binding.TIFinisher
 import simulation.binding.EnabledBinding
-import simulation.binding.EnabledBindingsCollector
-import simulation.random.BindingSelector
-import simulation.random.TokenSelector
+import ru.misterpotz.simulation.api.interactors.EnabledBindingsCollectorInteractor
+import ru.misterpotz.simulation.api.interactors.BindingSelectionInteractor
+import ru.misterpotz.simulation.transition.TransitionTokensLocker
 import javax.inject.Inject
 
 enum class Status {
@@ -67,15 +64,12 @@ class SimulationStateProviderImpl @Inject constructor(
 class SimulationTaskStepExecutor @Inject constructor(
     simulationConfig: SimulationConfig,
     private val simulationStateProvider: SimulationStateProvider,
-    private val bindingSelector: BindingSelector,
-    tokenSelector: TokenSelector,
-    transitionInstanceDurationGenerator: TransitionInstanceDurationGenerator,
-    nextTransitionOccurenceTimeSelector: TransitionInstanceNextCreationTimeGenerator,
-    pMarkingProvider: StatePMarkingProvider,
-    private val transitionFinisher: TransitionInstanceFinisher,
+    private val bindingSelectionInteractor: BindingSelectionInteractor,
+    private val transitionFinisher: TIFinisher,
+    private val transitionTokensLocker: TransitionTokensLocker,
     private val logger: Logger,
     private val generationQueue: GenerationQueue,
-    private val bindingsCollector: EnabledBindingsCollector,
+    private val bindingsCollector: EnabledBindingsCollectorInteractor,
 ) {
     val ocNet = simulationConfig.templateOcNet
     val state: SimulatableComposedOcNet.State
@@ -84,16 +78,6 @@ class SimulationTaskStepExecutor @Inject constructor(
     val simulationStepState get() = simulationStateProvider.getSimulationStepState()
 
     val placeTyping get() = ocNet.coreOcNet.placeTyping
-
-    private val transitionTokensLocker = TransitionTokensLocker(
-        pMarkingProvider,
-        state.tMarking,
-        logger = logger,
-        tTimes = state.tTimesMarking,
-        transitionInstanceDurationGenerator = transitionInstanceDurationGenerator,
-        simulationTime = simulationTime,
-        activityAllowedTimeSelector = nextTransitionOccurenceTimeSelector,
-    )
 
     fun executeStep() {
         findAndFinishEndedTransitions()
@@ -124,11 +108,11 @@ class SimulationTaskStepExecutor @Inject constructor(
         simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
 
         while (enabledBindings.isNotEmpty()) {
-            val selectedBinding = bindingSelector.selectBinding(enabledBindings)
+            val selectedBinding = bindingSelectionInteractor.selectBinding(enabledBindings)
 
             val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
 
-            transitionTokensLocker.lockTokensAndRecordActiveTransition(bindingWithTokens)
+            transitionTokensLocker.lockTokensAndRecordNewTransitionInstance(bindingWithTokens)
 
             enabledBindings = bindingsCollector.findEnabledBindings()
         }
@@ -170,7 +154,6 @@ class SimulationTaskStepExecutor @Inject constructor(
     }
 
     private fun resolveTimeUntilNextTokenGeneration(): Time? {
-
         val time = generationQueue.getTimeUntilNextPlanned()
         return time
     }

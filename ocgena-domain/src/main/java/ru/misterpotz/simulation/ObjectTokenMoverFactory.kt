@@ -1,19 +1,21 @@
 package simulation
 
 import model.OcNetType
-import simulation.random.TokenSelector
-import simulation.typea.ObjectTokenMoverTypeA
+import simulation.typea.LockedTokensMoverTypeA
 import javax.inject.Inject
+import javax.inject.Provider
 
-interface ObjectTokenMoverFactory
+interface ObjectTokenMoverFactory {
+    fun create() : LockedTokensMover
+}
 
 class ObjectTokenMoverFactoryImpl @Inject constructor(
-    private val tokenSelector: TokenSelector,
-    private val ocNetType: OcNetType
-) {
-    fun create(): ObjectTokenMover {
+    private val ocNetType: OcNetType,
+    private val tokenMoverTypeAProvider : Provider<LockedTokensMoverTypeA>,
+) : ObjectTokenMoverFactory {
+    override fun create(): LockedTokensMover {
         return when (ocNetType) {
-            OcNetType.AALST -> ObjectTokenMoverTypeA(tokenSelector)
+            OcNetType.AALST -> tokenMoverTypeAProvider.get()
             OcNetType.LOMAZOVA -> TODO()
         }
     }

@@ -1,4 +1,4 @@
-package ru.misterpotz.simulation.marking
+package ru.misterpotz.marking.plain
 
 import model.PlaceId
 

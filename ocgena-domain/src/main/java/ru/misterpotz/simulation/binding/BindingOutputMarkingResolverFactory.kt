@@ -2,33 +2,26 @@ package simulation.binding
 
 import model.OcNetType
 import ru.misterpotz.simulation.config.SimulationConfig
-import simulation.ObjectTokenMoverFactory
-import simulation.typea.BindingOutputMarkingTypeAResolver
+import ru.misterpotz.simulation.api.interactors.TIOutputPlacesResolverInteractor
+import simulation.typea.TIOutputMarkingTypeAResolver
 import javax.inject.Inject
+import javax.inject.Provider
 
 interface BindingOutputMarkingResolverFactory {
-    fun create(): InputToOutputPlaceResolver
+    fun create(): TIOutputPlacesResolverInteractor
 }
 
 class BindingOutputMarkingResolverFactoryImpl @Inject constructor(
     private val simulationConfig: SimulationConfig,
-    private val objectTokenMoverFactory: ObjectTokenMoverFactory
+    private val bindingOutputMarkingTypeAResolverProvider: Provider<TIOutputMarkingTypeAResolver>,
 ) : BindingOutputMarkingResolverFactory {
-    private val ocNet = simulationConfig.templateOcNet
     private val ocNetType get() = simulationConfig.ocNetType
-    private val arcs get() = ocNet.coreOcNet.arcs
-    private val placeTyping get() = ocNet.coreOcNet.placeTyping
-    private val objectTokenGenerator get() = simulationConfig.objectTokenGenerator
 
-    override fun create(): InputToOutputPlaceResolver {
+    override fun create(): TIOutputPlacesResolverInteractor {
         return when (ocNetType) {
-            OcNetType.AALST -> BindingOutputMarkingTypeAResolver(
-                arcs = arcs,
-                placeTyping = placeTyping,
-                objectTokenGenerator = objectTokenGenerator,
-                objectTokenMoverFactory = objectTokenMoverFactory
-            )
-
+            OcNetType.AALST -> {
+                bindingOutputMarkingTypeAResolverProvider.get()
+            }
             OcNetType.LOMAZOVA -> TODO("I.A.Lomazova specification is yet to be done")
         }
     }

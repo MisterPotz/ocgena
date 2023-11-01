@@ -4,12 +4,13 @@ import config.GenerationConfig
 import model.LabelMapping
 import model.OcNetType
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
+import ru.misterpotz.marking.plain.PlainMarking
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
-import simulation.ObjectTokenGenerator
+import ru.misterpotz.simulation.token_generation.ObjectTokenGenerator
 
 data class SimulationConfig(
     val templateOcNet: SimulatableComposedOcNet<*>,
-    val initialMarking: ImmutableObjectMarking,
+    val initialMarking: PlainMarking,
     val timeoutSec: Long?,
     val randomSeed: Int?,
     val useRandom: Boolean = true,

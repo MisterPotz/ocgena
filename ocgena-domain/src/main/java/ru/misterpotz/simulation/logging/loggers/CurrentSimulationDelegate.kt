@@ -1,5 +1,8 @@
 package ru.misterpotz.simulation.logging.loggers
 
+import model.Arcs
+import model.PlaceTyping
+import model.Transitions
 import ru.misterpotz.marking.transitions.TransitionInstancesMarking
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
 import ru.misterpotz.marking.objects.ObjectMarking
@@ -10,6 +13,7 @@ import ru.misterpotz.simulation.state.SimulationTime
 import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.marking.transitions.TransitionTimesMarking
+import ru.misterpotz.simulation.queue.TokenGenerationFacade
 import simulation.SimulationStateProvider
 import javax.inject.Inject
 
@@ -25,11 +29,16 @@ interface CurrentSimulationDelegate {
     val tTimesMarking: TransitionTimesMarking
     val runningSimulatableOcNet: RunningSimulatableOcNet
     val tMarking: TransitionInstancesMarking
+    val transitions: Transitions
+    val placeTyping: PlaceTyping
+    val tokenGenerationFacade: TokenGenerationFacade
+    val arcs : Arcs
 }
 
 class CurrentSimulationDelegateImpl @Inject constructor(
     private val simulationConfig: SimulationConfig,
-    private val simulationStateProvider: SimulationStateProvider
+    private val simulationStateProvider: SimulationStateProvider,
+    private val _tokenGenerationFacade: TokenGenerationFacade
 ) :
     CurrentSimulationDelegate {
     override val currentStep get() = simulationStateProvider.getSimulationStepState().currentStep
@@ -43,4 +52,8 @@ class CurrentSimulationDelegateImpl @Inject constructor(
     override val state get() = simulationStateProvider.getOcNetState()
     override val simulationStepState get() = simulationStateProvider.getSimulationStepState()
     override val runningSimulatableOcNet get() = simulationStateProvider.runningSimulatableOcNet()
+    override val transitions get() = ocNet.coreOcNet.transitions
+    override val placeTyping: PlaceTyping get() = ocNet.coreOcNet.placeTyping
+    override val tokenGenerationFacade: TokenGenerationFacade get() = _tokenGenerationFacade
+    override val arcs: Arcs get() = ocNet.coreOcNet.arcs
 }

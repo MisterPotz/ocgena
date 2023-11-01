@@ -5,8 +5,9 @@ import model.*
 import model.time.IntervalFunction
 import model.utils.OcNetCreator
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
-import ru.misterpotz.simulation.marking.PlainMarking
+import ru.misterpotz.marking.plain.PlainMarking
 import ru.misterpotz.simulation.config.SimulationConfig
+import ru.misterpotz.simulation.token_generation.ObjectMarkingFromPlainCreator
 import simulation.*
 
 open class SimulationParamsBuilder(
@@ -19,7 +20,6 @@ open class SimulationParamsBuilder(
     private var randomSeed : Int? = null
     private var useRandom : Boolean = true
     private var placeTyping : PlaceTyping? = null
-    private var objectTokenGenerator = ObjectTokenGenerator()
     private var ocNetType : OcNetType? = null
     private var labelMapping : LabelMapping? = null
 
@@ -81,15 +81,5 @@ open class SimulationParamsBuilder(
             labelMapping = labelMapping ?: LabelMapping(),
             generationConfig = generationConfig
         )
-    }
-
-    fun withInputOutput(build: InputOutputPlaces): SimulationParamsBuilder {
-        this.inputOutputPlaces = build
-        return this
-    }
-
-    fun withGenerationConfig(generationConfig: GenerationConfig): SimulationParamsBuilder {
-        this.generationConfig = generationConfig
-        return this
     }
 }

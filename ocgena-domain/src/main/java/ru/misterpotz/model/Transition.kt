@@ -5,13 +5,17 @@ import kotlinx.serialization.Serializable
 typealias TransitionId = String
 
 @Serializable
-data class SerializableTransition(val id : TransitionId) : SerializableAtom
+data class SerializableTransition(val id: TransitionId) : SerializableAtom
+
+fun <T : PetriNode> List<T>.sortById() : List<T> {
+    return sortedBy { it.id }
+}
 
 data class Transition(
     override val id: TransitionId,
-    override val label : String,
-    override val inputArcs: MutableList<Arc> = mutableListOf<Arc>(),
-    override val outputArcs: MutableList<Arc> = mutableListOf<Arc>(),
+    override val label: String,
+    override val inputArcs: MutableList<Arc> = mutableListOf(),
+    override val outputArcs: MutableList<Arc> = mutableListOf(),
     override var subgraphIndex: Int = PetriAtom.UNASSIGNED_SUBGRAPH_INDEX
 ) : PetriNode, LabelHolder {
     val placesToArcs = mutableMapOf<Place, Arc>()
@@ -20,9 +24,9 @@ data class Transition(
         SerializableTransition(id)
     }
 
-    val inputPlaces : List<Place>
+    val inputPlaces: List<Place>
         get() = inputArcs.mapNotNull { it.tailNode }.filterIsInstance<Place>()
-    val outputPlaces : List<Place>
+    val outputPlaces: List<Place>
         get() = outputArcs.mapNotNull { it.arrowNode }.filterIsInstance<Place>()
 
     override fun addInputArc(arc: Arc) {
@@ -33,7 +37,7 @@ data class Transition(
         outputArcs.add(arc)
     }
 
-    fun getArcForPlace(place: Place) : Arc? {
+    fun getArcForPlace(place: Place): Arc? {
         return placesToArcs[place]
     }
 

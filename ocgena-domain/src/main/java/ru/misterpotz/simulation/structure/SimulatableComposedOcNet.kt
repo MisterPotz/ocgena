@@ -20,9 +20,7 @@ interface SimulatableComposedOcNet<T : SimulatableComposedOcNet<T>> {
     }
 
     fun fullCopy() : T
-
-    interface SerializableState
-
+    
     interface State {
         val tMarking: TransitionInstancesMarking
         val pMarking: ObjectMarking

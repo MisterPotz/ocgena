@@ -1,10 +1,6 @@
 package model
 
 import kotlinx.serialization.Serializable
-import model.utils.NodesCacherVisitorDFS
-import model.utils.PetriNodesCopyTask
-import kotlin.js.ExperimentalJsExport
-import kotlin.js.JsExport
 
 @Serializable
 data class SerializableCoreOcNet(
@@ -28,7 +24,6 @@ class StaticCoreOcNet(
     override val transitions: Transitions,
     override val objectTypes: ObjectTypes,
     override val arcs: Arcs,
-
     override val allPetriNodes: List<PetriNode>,
     override val placeTyping: PlaceTyping,
 ) : OCNetElements {

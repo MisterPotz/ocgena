@@ -1,4 +1,4 @@
-package ru.misterpotz.simulation.marking
+package ru.misterpotz.marking.plain
 
 import ru.misterpotz.marking.objects.ObjectMarking
 

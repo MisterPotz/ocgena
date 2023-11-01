@@ -1,26 +1,24 @@
-package simulation.typel
+package simulation.typea
 
 import model.*
 import model.typea.ArcMultiplicityTypeA
 import ru.misterpotz.marking.objects.ImmutableObjectMarking
-import ru.misterpotz.marking.objects.ObjectMarking
 import ru.misterpotz.marking.objects.ObjectTokenId
-import ru.misterpotz.simulation.marking.PMarkingProvider
-import ru.misterpotz.marking.transitions.TransitionTimesMarking
+import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.binding.EnabledBinding
-import simulation.binding.EnabledBindingResolver
+import ru.misterpotz.simulation.api.interactors.EnabledBindingResolverInteractor
 import simulation.binding.EnabledBindingWithTokens
-import simulation.random.TokenSelector
+import ru.misterpotz.simulation.api.interactors.TokenSelectionInteractor
+import java.util.*
+import javax.inject.Inject
 
-class EnabledBindingTypeLResolver(
-    private val pMarkingProvider: PMarkingProvider,
-    private val arcMultiplicity: ArcMultiplicityTypeA,
-    val arcs: Arcs,
-    private val tokenSelector: TokenSelector,
-    private val tTimes: TransitionTimesMarking
-) : EnabledBindingResolver {
-    private val pMarking: ObjectMarking
-        get() = pMarkingProvider.pMarking
+
+class EnabledBindingTypeAResolverInteractor @Inject constructor(
+    private val tokenSelectionInteractor: TokenSelectionInteractor,
+    private val currentSimulationDelegate: CurrentSimulationDelegate
+) : EnabledBindingResolverInteractor, CurrentSimulationDelegate by currentSimulationDelegate {
+
+    private val arcMultiplicity get() = ocNet.arcMultiplicity as ArcMultiplicityTypeA
 
     private fun isNormalArcAndEnoughTokens(place: Place, transition: Transition): Boolean {
         val marking = pMarking[place.id]
@@ -39,28 +37,28 @@ class EnabledBindingTypeLResolver(
     private fun getObjectTokens(
         transition: Transition,
         place: Place,
-    ): Set<ObjectTokenId> {
+    ): SortedSet<ObjectTokenId> {
         // different objects policy can be setup here
         // e.g., randomized or sorted by object token time
         val arc = arcs[transition][place]!!
         val marking = pMarking[place.id]!!
         val requiredNormal = arcMultiplicity.getMultiplicity(arc)
+
         return if (arcMultiplicity.isVariable(arc).not()) {
-            tokenSelector.getTokensFromSet(marking, requiredNormal)
+            tokenSelectionInteractor.getTokensFromSet(marking, requiredNormal)
         } else {
             marking
         }
     }
 
     override fun tryGetEnabledBinding(transition: Transition): EnabledBinding? {
-        val canBeEnabled = tTimes.isAllowedToBeEnabled(transition.id)
+        val canBeEnabled = tTimesMarking.isAllowedToBeEnabled(transition.id)
         if (!canBeEnabled)
             return null
 
         val inputPlaces = transition.inputPlaces
 
         val placesWithEnoughTokens = inputPlaces.filter { place ->
-
             isNormalArcAndEnoughTokens(place, transition)
                     || isVariableArcAndEnoughTokens(place, transition)
         }
@@ -77,18 +75,18 @@ class EnabledBindingTypeLResolver(
         val transition = objectBinding.transition
         val inputPlaces = transition.inputPlaces
 
-        val placesWithEnoughTokens = inputPlaces.filter { place ->
+        val inputPlacesWithEnoughTokens = inputPlaces.filter { place ->
             isNormalArcAndEnoughTokens(place, transition)
                     || isVariableArcAndEnoughTokens(place, transition)
         }
 
-        if (placesWithEnoughTokens.size != inputPlaces.size) {
+        if (inputPlacesWithEnoughTokens.size != inputPlaces.size) {
             throw IllegalStateException("transition couldn't be created as not enough tokens are in the marking")
         }
 
         val placeToObjectTokenMap = buildMap {
-            placesWithEnoughTokens.forEach { place ->
-                put(place.id, getObjectTokens(transition, place).toSortedSet())
+            inputPlacesWithEnoughTokens.forEach { place ->
+                put(place.id, getObjectTokens(transition, place))
             }
         }
         return EnabledBindingWithTokens(
