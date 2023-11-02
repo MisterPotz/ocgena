@@ -4,7 +4,7 @@ import error.ConsistencyCheckError
 import error.ErrorLevel
 import ru.misterpotz.model.collections.ObjectTypes
 import ru.misterpotz.model.collections.PetriAtomRegistry
-import ru.misterpotz.model.validators.ConsistencyCheckPetriAtomVisitorDFS
+import ru.misterpotz.model.validation.ConsistencyCheckPetriAtomVisitorDFS
 
 class OCNetChecker(
     /**
@@ -55,8 +55,9 @@ class OCNetChecker(
             } else {
                 val visitor = ConsistencyCheckPetriAtomVisitorDFS(
                     assignedSubgraphIndex = currentSubgraphIndex,
-                    placeTyping,
-                    inputOutputPlaces
+                    placeTyping = placeTyping,
+                    inputOutputPlaces = inputOutputPlaces,
+                    petriAtomRegistry = petriAtomRegistry
                 )
                 createdCheckVisitors.add(visitor)
                 petriNode.acceptVisitor(visitor)

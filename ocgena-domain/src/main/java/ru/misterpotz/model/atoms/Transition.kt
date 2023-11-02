@@ -3,6 +3,7 @@ package ru.misterpotz.model.atoms
 import kotlinx.serialization.Serializable
 import model.*
 import ru.misterpotz.model.ext.arcIdTo
+import ru.misterpotz.model.validation.PetriAtomVisitorDFS
 import java.lang.IllegalArgumentException
 
 typealias TransitionId = String

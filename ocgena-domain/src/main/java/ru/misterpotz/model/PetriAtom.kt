@@ -1,5 +1,6 @@
 package model
 
+import ru.misterpotz.model.validation.PetriAtomVisitorDFS
 import java.io.Serializable
 
 typealias PetriAtomId = String

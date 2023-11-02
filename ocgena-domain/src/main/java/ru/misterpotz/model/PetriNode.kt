@@ -1,6 +1,7 @@
 package model
 
 import ru.misterpotz.model.atoms.Arc
+import ru.misterpotz.model.validation.PetriAtomVisitorDFS
 
 interface SerializableAtom
 

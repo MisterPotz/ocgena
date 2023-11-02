@@ -97,11 +97,11 @@ sealed class ConsistencyCheckError(
     }
 
     // PetriAtomId ---
-    class MultipleArcsFromSinglePlaceToSinglePetriAtomId(
-        PetriAtomId: PetriAtomId,
+    class MultipleArcsFromSinglePlaceToSingleTransition(
+        place: PetriAtomId,
         transition: PetriAtomId,
         debugPath: List<PetriAtomId>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = PetriAtomId, transition = transition) {
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place, transition = transition) {
         override fun label(): String {
             return this::class.simpleName!!
         }
@@ -112,9 +112,9 @@ sealed class ConsistencyCheckError(
 
     // TODO: can actually be checked when have set of all atoms
     class IsolatedPlace(
-        PetriAtomId: PetriAtomId,
+        place: PetriAtomId,
         debugPath: List<PetriAtomId>,
-    ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, place = PetriAtomId) {
+    ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, place = place) {
         override fun label(): String {
             return this::class.simpleName!!
         }

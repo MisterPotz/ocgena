@@ -2,6 +2,7 @@ package ru.misterpotz.model.atoms
 
 import model.*
 import ru.misterpotz.model.ext.arcIdTo
+import ru.misterpotz.model.validation.PetriAtomVisitorDFS
 
 data class Place(
     override val id: PlaceId,

@@ -1,6 +1,6 @@
 package model.utils
 
-import model.AbsPetriAtomVisitorDFS
+import ru.misterpotz.model.validation.AbsPetriAtomVisitorDFS
 import ru.misterpotz.model.atoms.Place
 import ru.misterpotz.model.atoms.Transition
 import model.StaticCoreOcNet

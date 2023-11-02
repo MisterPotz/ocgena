@@ -1,12 +1,13 @@
 package model.utils
 
 import model.PetriAtom
+import model.PetriAtomId
 
 class RecursionProtector() {
-    val visitedSet: MutableSet<PetriAtom> = mutableSetOf()
-    val recursiveStack: MutableList<PetriAtom> = mutableListOf()
+    val visitedSet: MutableSet<PetriAtomId> = mutableSetOf()
+    val recursiveStack: MutableList<PetriAtomId> = mutableListOf()
 
-    fun protectWithRecursionStack(petriAtom: PetriAtom, block: () -> Unit) {
+    fun protectWithRecursionStack(petriAtom: PetriAtomId, block: () -> Unit) {
         val recursiveStack = recursiveStack
         val visitedSet = visitedSet
 

@@ -3,7 +3,7 @@ package ru.misterpotz.model.atoms
 import model.ConsistencyCheckable
 import model.PetriAtom
 import model.PetriAtomId
-import model.PetriAtomVisitorDFS
+import ru.misterpotz.model.validation.PetriAtomVisitorDFS
 import ru.misterpotz.model.ext.arcArrowId
 import ru.misterpotz.model.ext.arcTailId
 
