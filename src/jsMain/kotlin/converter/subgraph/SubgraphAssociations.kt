@@ -2,7 +2,7 @@ package converter.subgraph
 
 import ast.Subgraph
 
-class SubgraphAssociations() {
+class SubgraphAssociations {
     val namedSubgraphs: MutableMap<String, Subgraph> = mutableMapOf()
 
     fun rememberSubgraph(subgraph: Subgraph) {

@@ -103,6 +103,7 @@ class TokenParseBuilder(tokens: List<String>) {
         return noBrackExprParser.fullTransformAndGetNodeId()
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private fun findNextBrackRange(): IntRange? {
         val closestOpenBrack = tokens.indexOf(openBrack)
         val closesCloseBrack = tokens.indexOf(closeBrack)

@@ -2,7 +2,7 @@ package converter
 
 import dsl.OCNetFacadeBuilder
 
-expect class OCDotToDomainConverter(
+class OCDotToDomainConverter(
     conversionParams: ConversionParams,
 ) {
     fun convert() : OCNetFacadeBuilder.BuiltOCNet
