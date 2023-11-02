@@ -1,7 +1,7 @@
 package ru.misterpotz.marking.objects
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.ext.copyWithValueTransformMutable
+import ru.misterpotz.model.ext.copyWithValueTransformMutable
 import model.PlaceId
 import java.util.SortedSet
 

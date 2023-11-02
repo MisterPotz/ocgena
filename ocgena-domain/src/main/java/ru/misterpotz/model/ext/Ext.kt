@@ -1,4 +1,4 @@
-package ru.misterpotz.ext
+package ru.misterpotz.model.ext
 
 import model.PetriNode
 

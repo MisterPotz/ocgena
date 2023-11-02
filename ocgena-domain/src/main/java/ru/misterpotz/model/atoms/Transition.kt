@@ -1,11 +1,8 @@
 package ru.misterpotz.model.atoms
 
 import kotlinx.serialization.Serializable
-import model.LabelHolder
-import model.PetriAtomId
-import model.PetriAtomVisitorDFS
-import model.PetriNode
-import ru.misterpotz.input.converter.ext.arcIdConnectedTo
+import model.*
+import ru.misterpotz.model.ext.arcIdTo
 import java.lang.IllegalArgumentException
 
 typealias TransitionId = String
@@ -29,16 +26,20 @@ data class Transition(
         toPlaces.add(place)
     }
 
+    override fun isSameType(other: PetriAtom): Boolean {
+        return other is Transition
+    }
+
     override fun getArcTo(node: PetriAtomId) : PetriAtomId {
         if (node in toPlaces) {
-            return id.arcIdConnectedTo(node)
+            return id.arcIdTo(node)
         }
         throw IllegalArgumentException("$node is not in destinations of ${this.id}")
     }
 
     override fun getArcFrom(node: PetriAtomId) : PetriAtomId {
         if (node in fromPlaces) {
-            return node.arcIdConnectedTo(id)
+            return node.arcIdTo(id)
         }
         throw IllegalArgumentException("$node is not in destinations of ${this.id}")
     }
@@ -52,10 +53,6 @@ data class Transition(
             fromPlaces = mutableListOf(),
             toPlaces = mutableListOf()
         )
-    }
-
-    override fun isSameType(other: PetriNode): Boolean {
-        return other is Transition
     }
 
     override fun toString(): String {

@@ -4,13 +4,16 @@ import model.ConsistencyCheckable
 import model.PetriAtom
 import model.PetriAtomId
 import model.PetriAtomVisitorDFS
-import ru.misterpotz.input.converter.ext.arcArrowId
-import ru.misterpotz.input.converter.ext.arcTailId
-
+import ru.misterpotz.model.ext.arcArrowId
+import ru.misterpotz.model.ext.arcTailId
 
 abstract class Arc : ConsistencyCheckable, PetriAtom {
-    var arrowNodeId: PetriAtomId = id.arcArrowId()
-    var tailNodeId: PetriAtomId = id.arcTailId()
+    val arrowNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {
+        id.arcArrowId()
+    }
+    val tailNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {
+        id.arcTailId()
+    }
 
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitArc(this)

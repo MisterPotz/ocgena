@@ -1,20 +1,18 @@
 package error
 
 import ru.misterpotz.model.atoms.Arc
-import model.PetriAtom
-import ru.misterpotz.model.atoms.Place
-import ru.misterpotz.model.atoms.Transition
+import model.PetriAtomId
 
-fun <T : Any> List<T>.prettyPrint() : String {
+fun <T : Any> List<T>.prettyPrint(): String {
     return joinToString("\n").prependIndent()
 }
 
 sealed class ConsistencyCheckError(
     override val errorLevel: ErrorLevel,
-    val debugPath: List<PetriAtom>?,
+    val debugPath: List<PetriAtomId>?,
     val arcs: List<Arc>? = null,
-    val transition: Transition? = null,
-    val place: Place? = null,
+    val transition: PetriAtomId? = null,
+    val place: PetriAtomId? = null,
 ) : Error {
 
     // STRUCTURE ---
@@ -48,23 +46,26 @@ sealed class ConsistencyCheckError(
 
     // TRANSITION ---
     class MissingArc(
-        transition: Transition,
-        debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, transition = transition) {
+        transition: PetriAtomId,
+        debugPath: List<PetriAtomId>,
+    ) : ConsistencyCheckError(
+        ErrorLevel.CRITICAL,
+        debugPath, transition = transition
+    ) {
         override fun label(): String {
             return this::class.simpleName!!
         }
 
         override val message: String
-            get() = "Transition misses one of the arcs"
+            get() = "PetriAtomId misses one of the arcs"
 
 
     }
 
     // TODO: what about case, when there is only \mu arc connected to transition?
     class VariableArcIsTheOnlyConnected(
-        transition: Transition,
-        debugPath: List<PetriAtom>,
+        transition: PetriAtomId,
+        debugPath: List<PetriAtomId>,
     ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, transition = transition) {
         override fun label(): String {
             return this::class.simpleName!!
@@ -78,7 +79,7 @@ sealed class ConsistencyCheckError(
      * well-formed condition (by Aalst) is not held
      */
     class InconsistentVariabilityArcs(
-        transition: Transition,
+        transition: PetriAtomId,
         inputArc: Arc,
         outputArc: Arc,
     ) : ConsistencyCheckError(
@@ -95,25 +96,25 @@ sealed class ConsistencyCheckError(
             get() = "Variable arcs inconsistenct: among arcs to the node are both variable and normal for one type"
     }
 
-    // PLACE ---
-    class MultipleArcsFromSinglePlaceToSingleTransition(
-        place: Place,
-        transition: Transition,
-        debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place, transition = transition) {
+    // PetriAtomId ---
+    class MultipleArcsFromSinglePlaceToSinglePetriAtomId(
+        PetriAtomId: PetriAtomId,
+        transition: PetriAtomId,
+        debugPath: List<PetriAtomId>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = PetriAtomId, transition = transition) {
         override fun label(): String {
             return this::class.simpleName!!
         }
 
         override val message: String
-            get() = "Multiple arcs from a place to the same transition"
+            get() = "Multiple arcs from a PetriAtomId to the same transition"
     }
 
     // TODO: can actually be checked when have set of all atoms
     class IsolatedPlace(
-        place: Place,
-        debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, place = place) {
+        PetriAtomId: PetriAtomId,
+        debugPath: List<PetriAtomId>,
+    ) : ConsistencyCheckError(ErrorLevel.WARNING, debugPath, place = PetriAtomId) {
         override fun label(): String {
             return this::class.simpleName!!
         }
@@ -123,33 +124,33 @@ sealed class ConsistencyCheckError(
     }
 
     class InputPlaceHasInputArcs(
-        place: Place,
-        debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place) {
+        PetriAtomId: PetriAtomId,
+        debugPath: List<PetriAtomId>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = PetriAtomId) {
         override fun label(): String {
             return this::class.simpleName!!
         }
 
         override val message: String
-            get() = "input place contains prohibited input arcs"
+            get() = "input PetriAtomId contains prohibited input arcs"
     }
 
     class OutputPlaceHasOutputArcs(
-        place: Place,
-        debugPath: List<PetriAtom>,
-    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = place) {
+        PetriAtomId: PetriAtomId,
+        debugPath: List<PetriAtomId>,
+    ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath, place = PetriAtomId) {
         override fun label(): String {
             return this::class.simpleName!!
         }
 
         override val message: String
-            get() = "output place contains prohibited output arcs"
+            get() = "output PetriAtomId contains prohibited output arcs"
     }
 
     // ARC ---
     class MissingNode(
         val arc: Arc,
-        debugPath: List<PetriAtom>,
+        debugPath: List<PetriAtomId>,
     ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath) {
         override fun label(): String {
             return this::class.simpleName!!
@@ -161,7 +162,7 @@ sealed class ConsistencyCheckError(
 
     class IsNotBipartite(
         val arc: Arc,
-        debugPath: List<PetriAtom>,
+        debugPath: List<PetriAtomId>,
     ) : ConsistencyCheckError(ErrorLevel.CRITICAL, debugPath) {
         override fun label(): String {
             return this::class.simpleName!!
@@ -175,7 +176,7 @@ sealed class ConsistencyCheckError(
 
     class ArcInputEqualsOutput(
         val arc: Arc,
-        debugPath: List<PetriAtom>,
+        debugPath: List<PetriAtomId>,
     ) : ConsistencyCheckError(
         ErrorLevel.CRITICAL,
         debugPath
@@ -208,7 +209,7 @@ sealed class ConsistencyCheckError(
     }
 
     companion object {
-        fun toStringDebugPath(debugPath: List<PetriAtom>): String {
+        fun toStringDebugPath(debugPath: List<PetriAtomId>): String {
             return debugPath.joinToString(separator = "\t")
         }
     }

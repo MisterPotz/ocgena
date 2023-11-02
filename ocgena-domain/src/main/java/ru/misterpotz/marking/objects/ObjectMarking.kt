@@ -1,6 +1,6 @@
 package ru.misterpotz.marking.objects
 
-import ru.misterpotz.ext.copyWithValueTransform
+import ru.misterpotz.model.ext.copyWithValueTransform
 import model.PlaceId
 import java.util.SortedSet
 

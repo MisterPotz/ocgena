@@ -1,6 +1,7 @@
 package model
 
 import ru.misterpotz.model.atoms.Arc
+import ru.misterpotz.model.collections.ObjectTypes
 
 
 class OCNetElementsImpl(
@@ -9,12 +10,8 @@ class OCNetElementsImpl(
     override val arcs : Arcs,
     override val objectTypes: ObjectTypes,
     override val placeTyping: PlaceTyping,
-    override val allArcs: List<Arc>,
+    val allArcs: List<Arc>,
 ): OCNetElements {
-    override val allPetriNodes : List<PetriNode> = buildList {
-        addAll(places)
-        addAll(transitions)
-    }
 
     override fun toString(): String {
         return """

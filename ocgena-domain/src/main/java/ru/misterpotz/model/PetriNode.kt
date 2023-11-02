@@ -6,7 +6,6 @@ interface SerializableAtom
 
 interface PetriNode : ConsistencyCheckable, PetriAtom {
     val label: String
-    fun isSameType(other: PetriNode): Boolean
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS)
 
     fun getArcTo(node: PetriAtomId) : PetriAtomId

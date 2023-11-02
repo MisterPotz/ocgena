@@ -2,20 +2,21 @@ package model
 
 import ru.misterpotz.model.atoms.Transition
 import ru.misterpotz.model.atoms.TransitionId
+import ru.misterpotz.model.collections.PetriAtomRegistry
 
 
 interface Transitions {
     operator fun get(transition: PetriAtomId) : Transition
 }
 
-fun Transitions(transitions: Map<TransitionId, Transition>) : Transitions {
-    return TransitionsMap(transitions)
+fun Transitions(petriAtomRegistry: PetriAtomRegistry) : Transitions {
+    return TransitionsMap(petriAtomRegistry)
 }
 
 internal class TransitionsMap(
-    val transitions: Map<PetriAtomId, Transition>
+    private val petriAtomRegistry: PetriAtomRegistry,
 ) : Transitions {
     override operator fun get(transition: PetriAtomId): Transition {
-        return transitions[transition]!!
+        return petriAtomRegistry[transition] as Transition
     }
 }

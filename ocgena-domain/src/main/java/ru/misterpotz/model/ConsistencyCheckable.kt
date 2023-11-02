@@ -4,6 +4,7 @@ import model.utils.RecursionProtector
 import ru.misterpotz.model.atoms.Arc
 import ru.misterpotz.model.atoms.Place
 import ru.misterpotz.model.atoms.Transition
+import ru.misterpotz.model.collections.PetriAtomRegistry
 
 interface PetriAtomVisitorDFS {
 
@@ -17,7 +18,7 @@ interface PetriAtomVisitorDFS {
 }
 
 abstract class AbsPetriAtomVisitorDFS constructor(
-
+    private val petriAtomRegistry: PetriAtomRegistry
 ) : PetriAtomVisitorDFS {
     protected val recursionProtector = RecursionProtector()
 
@@ -25,7 +26,7 @@ abstract class AbsPetriAtomVisitorDFS constructor(
         recursionProtector.protectWithRecursionStack(arc) {
             val canStopParsing = doForArcBeforeDFS(arc)
             if (!canStopParsing) {
-                arc.arrowNode!!.acceptVisitor(this)
+                petriAtomRegistry[arc.arrowNodeId!!].acceptVisitor(this)
             }
             doForAtomAfterDFS(arc)
         }
@@ -35,8 +36,11 @@ abstract class AbsPetriAtomVisitorDFS constructor(
         recursionProtector.protectWithRecursionStack(transition) {
             val canStopParsing = doForTransitionBeforeDFS(transition)
             if (!canStopParsing) {
-                for (outputArc in transition.outputArcIds) {
-                    visitArc(outputArc)
+                for (outputPlace in transition.outputPlaces) {
+                    val arc = with(petriAtomRegistry) {
+                        transition.id.arcTo(outputPlace)
+                    }
+                    visitArc(arc)
                 }
             }
             doForAtomAfterDFS(transition)
@@ -47,8 +51,11 @@ abstract class AbsPetriAtomVisitorDFS constructor(
         recursionProtector.protectWithRecursionStack(place) {
             val canStopParsing = doForPlaceBeforeDFS(place)
             if (!canStopParsing) {
-                for (outputArc in place.outputArcIds) {
-                    visitArc(outputArc)
+                for (toTransition in place.toTransitions) {
+                    val arc = with(petriAtomRegistry) {
+                        place.id.arcTo(toTransition)
+                    }
+                    visitArc(arc)
                 }
             }
             doForAtomAfterDFS(place)

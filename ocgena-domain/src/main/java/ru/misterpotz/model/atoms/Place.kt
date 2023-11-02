@@ -1,7 +1,7 @@
 package ru.misterpotz.model.atoms
 
 import model.*
-import ru.misterpotz.input.converter.ext.arcIdConnectedTo
+import ru.misterpotz.model.ext.arcIdTo
 
 data class Place(
     override val id: PlaceId,
@@ -21,16 +21,20 @@ data class Place(
         visitor.visitPlace(this)
     }
 
+    override fun isSameType(other: PetriAtom): Boolean {
+        return other is Place
+    }
+
     override fun getArcTo(node: PetriAtomId) : PetriAtomId {
         if (node in toTransitions) {
-            return id.arcIdConnectedTo(node)
+            return id.arcIdTo(node)
         }
         throw IllegalArgumentException("$node is not in destinations of ${this.id}")
     }
 
     override fun getArcFrom(node: PetriAtomId) : PetriAtomId {
         if (node in fromTransitions) {
-            return node.arcIdConnectedTo(id)
+            return node.arcIdTo(id)
         }
         throw IllegalArgumentException("$node is not in destinations of ${this.id}")
     }
@@ -40,9 +44,5 @@ data class Place(
             fromTransitions = mutableListOf(),
             toTransitions = mutableListOf(),
         )
-    }
-
-    override fun isSameType(other: PetriNode): Boolean {
-        return other is Place
     }
 }

@@ -1,6 +1,7 @@
 package model
 
 import ru.misterpotz.model.atoms.Arc
+import ru.misterpotz.model.collections.ObjectTypes
 
 interface OCNetElements {
     val places: Places
@@ -8,10 +9,6 @@ interface OCNetElements {
     val transitions: Transitions
 
     val arcs: Arcs
-
-    val allArcs : List<Arc>
-
-    val allPetriNodes: List<PetriNode>
 
     val objectTypes : ObjectTypes
 

@@ -1,6 +1,7 @@
 package model
 
-import ru.misterpotz.input.converter.ext.arcIdConnectedTo
+import ru.misterpotz.model.collections.PetriAtomRegistry
+import ru.misterpotz.model.ext.arcIdTo
 import ru.misterpotz.model.atoms.Arc
 
 
@@ -15,17 +16,18 @@ interface WithArrow {
 interface Arcs {
     fun withTail(placeId: PetriAtomId): WithTail
     fun withArrow(placeId: PetriAtomId): WithArrow
+    operator fun get(arcId : PetriAtomId) : Arc
 }
 
-fun Arcs(arcs: MutableMap<PetriAtomId, Arc> = mutableMapOf()) : Arcs {
-    return ArcsMap(arcs)
+fun Arcs(petriAtomRegistry: PetriAtomRegistry) : Arcs {
+    return ArcsMap(petriAtomRegistry)
 }
 
 internal class ArcsMap(
-    private val arcs: MutableMap<PetriAtomId, Arc> = mutableMapOf()
+    private val petriAtomRegistry: PetriAtomRegistry
 ) : Arcs {
     private fun tailToArrow(tail: PetriAtomId, arrow: PetriAtomId): Arc {
-        return arcs[tail.arcIdConnectedTo(arrow)]!!
+        return petriAtomRegistry[tail.arcIdTo(arrow)] as Arc
     }
 
     override fun withTail(placeId: PetriAtomId): WithTail {
@@ -34,6 +36,10 @@ internal class ArcsMap(
 
     override fun withArrow(placeId: PetriAtomId): WithArrow {
         return WithArrowImpl(placeId)
+    }
+
+    override fun get(arcId: PetriAtomId): Arc {
+        return petriAtomRegistry[arcId] as Arc
     }
 
     private inner class WithTailImpl(private val tail: PetriAtomId) : WithTail {

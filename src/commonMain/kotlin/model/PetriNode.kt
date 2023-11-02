@@ -1,7 +1,5 @@
 package model
 
-import kotlinx.serialization.Serializable
-
 interface SerializableAtom
 
 interface PetriNode: ConsistencyCheckable, PetriAtom {

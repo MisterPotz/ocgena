@@ -2,6 +2,8 @@ package model
 
 import error.ConsistencyCheckError
 import error.ErrorLevel
+import ru.misterpotz.model.collections.ObjectTypes
+import ru.misterpotz.model.collections.PetriAtomRegistry
 import ru.misterpotz.model.validators.ConsistencyCheckPetriAtomVisitorDFS
 
 class OCNetChecker(
@@ -11,10 +13,9 @@ class OCNetChecker(
     private val ocNetElements: OCNetElements,
     private val placeTyping: PlaceTyping,
     private val inputOutputPlaces: InputOutputPlaces,
+    private val petriAtomRegistry: PetriAtomRegistry
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
-//    private var inputPlaces: List<Place>? = null
-//    private var outputPlaces: List<Place>? = null
     val inputPlaces = inputOutputPlaces.getInputPlaces(ocNetElements.places)
     val outputPlaces = inputOutputPlaces.getOutputPlaces(ocNetElements.places)
 
@@ -27,15 +28,13 @@ class OCNetChecker(
         require(isConsistent)
 
         return StaticCoreOcNet(
-            inputPlaces = Places(checkNotNull(inputPlaces)),
-            outputPlaces = Places(checkNotNull(outputPlaces)),
+            inputPlaces = require(inputPlaces.isEmpty().not()).let { inputPlaces },
+            outputPlaces = require(outputPlaces.isEmpty().not()).let { outputPlaces },
             objectTypes = ObjectTypes(checkNotNull(placeTyping.allObjectTypes().toList())),
             places = ocNetElements.places,
             transitions = ocNetElements.transitions,
             arcs = ocNetElements.arcs,
-            allPetriNodes = ocNetElements.allPetriNodes,
             placeTyping = placeTyping,
-            allArcs = ocNetElements.allArcs
         )
     }
 
@@ -47,8 +46,11 @@ class OCNetChecker(
 
         var maxSubgraphIndex = -1
         // case 1 - parse and check for isolated subgraphs
-        for (petriNode in ocNetElements.allPetriNodes) {
-            if (petriNode.subgraphIndex in 0..maxSubgraphIndex) {
+        for (petriNodeId in petriAtomRegistry.iterator) {
+            val petriNode = petriAtomRegistry[petriNodeId]
+            val subgraphIndex = petriAtomRegistry.getSubgraphIndex(petriNodeId)
+
+            if (subgraphIndex in 0..maxSubgraphIndex) {
                 // the subgraph of this place was already visited
             } else {
                 val visitor = ConsistencyCheckPetriAtomVisitorDFS(

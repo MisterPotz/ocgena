@@ -1,4 +1,4 @@
-package ru.misterpotz.input.converter.ext
+package ru.misterpotz.model.ext
 
 import model.PetriAtomId
 
@@ -18,6 +18,6 @@ fun PetriAtomId.arcArrowId(): PetriAtomId {
     return substring(delimiterIndex + 1, length)
 }
 
-fun PetriAtomId.arcIdConnectedTo(petriAtomId: PetriAtomId): PetriAtomId {
+fun PetriAtomId.arcIdTo(petriAtomId: PetriAtomId): PetriAtomId {
     return "${this}_$petriAtomId"
 }
