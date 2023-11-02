@@ -2,13 +2,15 @@ package model
 
 import dsl.OCNetFacadeBuilder
 import model.utils.NodesCacherVisitorDFS
+import ru.misterpotz.ocgena.registries.PlaceObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class NodeCacherVisitorDFSTest {
-    private val defaultPlaceTyping = PlaceTyping.build()
-    private val defaultInputOutputPlaces = InputOutputPlaces.build {
+    private val defaultPlaceObjectTypeRegistry = PlaceObjectTypeRegistry.build()
+    private val defaultPlaceTypeRegistry = PlaceTypeRegistry.build {
         inputPlaces("p1")
         outputPlaces("p2")
     }
@@ -16,10 +18,10 @@ class NodeCacherVisitorDFSTest {
     @Test
     fun checkSimpleNetIsCached() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
-        val placeTyping = PlaceTyping.build()
+        val placeObjectTypeRegistry = PlaceObjectTypeRegistry.build()
         val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
-            placeTyping,
-            inputOutputPlaces = defaultInputOutputPlaces
+            placeObjectTypeRegistry,
+            placeTypeRegistry = defaultPlaceTypeRegistry
         ) {
             place { }
                 .arcTo(transition { })
@@ -41,8 +43,8 @@ class NodeCacherVisitorDFSTest {
     fun checkComplexOcNetCacher() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
-            defaultPlaceTyping,
-            InputOutputPlaces.build {
+            defaultPlaceObjectTypeRegistry,
+            PlaceTypeRegistry.build {
                 outputPlaces("p3")
                 inputPlaces("p1")
             }) {
@@ -74,11 +76,11 @@ class NodeCacherVisitorDFSTest {
     fun checkComplexOcNetCacherObjectTypes() {
         val ocNetFacadeBuilder = OCNetFacadeBuilder()
         val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
-            placeTyping = PlaceTyping.build {
+            placeObjectTypeRegistry = PlaceObjectTypeRegistry.build {
                 objectType("ob1", "ob11")
                 objectType("ob2", "ob21 ob22")
             },
-            inputOutputPlaces = InputOutputPlaces.build {
+            placeTypeRegistry = PlaceTypeRegistry.build {
                 inputPlaces("ob11")
                 outputPlaces("ob22")
             }

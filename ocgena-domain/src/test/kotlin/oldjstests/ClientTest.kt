@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import model.OcDotParseResult
-import model.OcNetType
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import simulation.client.*
 import simulation.config.SimulationConfig
 import utils.mprintln
