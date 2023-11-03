@@ -1,7 +1,5 @@
 package ru.misterpotz.ocgena.dsl
 
-import dsl.*
-
 
 class NormalArcScopeImp : NormalArcScope {
     override var multiplicity: Int = 1

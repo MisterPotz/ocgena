@@ -1,14 +1,14 @@
 package simulation.typea
 
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import model.time.IntervalFunction
-import model.StaticCoreOcNet
+import ru.misterpotz.ocgena.simulation.config.IntervalFunction
+import ru.misterpotz.ocgena.ocnet.StaticCoreOcNetScheme
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityTypeARegistry
 import ru.misterpotz.simulation.structure.SimulatableComposedOcNet
 import ru.misterpotz.simulation.state.State
 
 class SimulatableOcNetTypeA(
-    override val coreOcNet: StaticCoreOcNet,
+    override val ocNetScheme: StaticCoreOcNetScheme,
     override val arcMultiplicity: ArcToMultiplicityTypeARegistry,
     override val intervalFunction: IntervalFunction,
 ) : SimulatableComposedOcNet<SimulatableOcNetTypeA> {
@@ -20,7 +20,7 @@ class SimulatableOcNetTypeA(
 
     override fun fullCopy(): SimulatableOcNetTypeA {
         return SimulatableOcNetTypeA(
-            coreOcNet = coreOcNet,
+            ocNetScheme = ocNetScheme,
             arcMultiplicity = arcMultiplicity,
             intervalFunction = intervalFunction,
         )

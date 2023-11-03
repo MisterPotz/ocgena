@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.validation
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import model.utils.RecursionProtector
+import ru.misterpotz.ocgena.ocnet.primitives.utils.RecursionProtector
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition

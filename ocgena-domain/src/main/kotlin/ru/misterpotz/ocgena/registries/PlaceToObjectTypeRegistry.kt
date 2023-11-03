@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.registries
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import model.PlaceId
+import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import utils.toIds
 

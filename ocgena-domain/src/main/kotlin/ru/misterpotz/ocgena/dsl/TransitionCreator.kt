@@ -1,5 +1,10 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.OCTransitionScope
+import ru.misterpotz.ocgena.dsl.TransitionContainer
+import ru.misterpotz.ocgena.dsl.TransitionDSL
+import ru.misterpotz.ocgena.dsl.TransitionDSLImpl
+
 class TransitionCreator(
     private val transitionContainer: TransitionContainer,
 ) {

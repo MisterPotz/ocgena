@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.ocnet.primitives.arcs
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import model.typel.ArcExpression
+import ru.misterpotz.ocgena.ocnet.primitives.typel.ArcExpression
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
 data class VariableArcTypeL(

@@ -5,7 +5,7 @@ import ru.misterpotz.ocgena.simulation.Time
 
 interface NewTokenTimeBasedGenerator {
     fun increaseTime(time: Time)
-    fun generateTokensAsMarkingAndReplan(): ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta?
+    fun generateTokensAsMarkingAndReplan(): PlaceToObjectMarkingDelta?
     fun getTimeUntilNextPlanned(): Time?
     fun planTokenGenerationForEveryone()
 }

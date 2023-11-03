@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.primitives.atoms
 
-import model.*
+import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.primitives.LabelHolder
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom

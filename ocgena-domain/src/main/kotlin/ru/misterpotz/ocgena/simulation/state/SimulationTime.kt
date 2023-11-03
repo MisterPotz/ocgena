@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.state
 
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.simulation.Time
 import utils.print
 
 class SimulationTime(globalTime : Time = 0L) {

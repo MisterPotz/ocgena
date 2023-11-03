@@ -20,7 +20,7 @@ class NewTokenTimeBasedGeneratorFactoryImpl @Inject constructor(
             NormalNewTokenTimeBasedGenerator(
                 generationConfig = it,
                 nextTimeSelector = newTokensGenerationTimeGenerator,
-                placeToObjectTypeRegistry = ocNet.coreOcNet.placeToObjectTypeRegistry,
+                placeToObjectTypeRegistry = ocNet.ocNetScheme.placeToObjectTypeRegistry,
                 newTokenTimeBasedGenerationFacade = newTokenTimeBasedGenerationFacade
             )
         } ?: NoOpNewTokenTimeBasedGenerator()

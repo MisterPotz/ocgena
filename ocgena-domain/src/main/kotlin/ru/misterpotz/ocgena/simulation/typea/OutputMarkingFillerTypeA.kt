@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.simulation.typea
 
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
@@ -8,7 +7,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeL
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
-import simulation.LockedTokensMover
+import ru.misterpotz.ocgena.simulation.LockedTokensMover
 import javax.inject.Inject
 
 class OutputMarkingFillerTypeAFactory @Inject constructor(

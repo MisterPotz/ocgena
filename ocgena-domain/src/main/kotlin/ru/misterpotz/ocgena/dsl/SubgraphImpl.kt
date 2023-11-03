@@ -1,6 +1,6 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
-import ru.misterpotz.ocgena.dsl.ArcDelegate
+import dsl.PlaceDelegate
 
 class SubgraphImpl(
     override val label: String,

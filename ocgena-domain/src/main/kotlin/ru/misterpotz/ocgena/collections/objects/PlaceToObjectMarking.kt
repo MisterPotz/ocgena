@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.collections.objects
 
-import model.PlaceId
+import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransform
 import java.util.*

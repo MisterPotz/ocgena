@@ -1,7 +1,5 @@
 package ru.misterpotz.ocgena.dsl
 
-import dsl.*
-
 sealed class TypedArcCreator {
     data class NormalArc(val multiplicity: Int) : TypedArcCreator() {
         fun create(tailAtom: NodeDSL, arrowAtom: NodeDSL): ArcDSL {

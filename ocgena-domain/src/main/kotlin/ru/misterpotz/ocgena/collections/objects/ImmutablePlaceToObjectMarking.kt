@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.collections.objects
 
 import kotlinx.serialization.Serializable
-import model.PlaceId
+import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransformMutable

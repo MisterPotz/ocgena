@@ -9,7 +9,7 @@ class NoOpNewTokenTimeBasedGenerator() : NewTokenTimeBasedGenerator {
 
     }
 
-    override fun generateTokensAsMarkingAndReplan(): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking? {
+    override fun generateTokensAsMarkingAndReplan(): ImmutablePlaceToObjectMarking? {
         return null
     }
 

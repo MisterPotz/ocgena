@@ -1,4 +1,4 @@
-package simulation
+package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import simulation.typea.LockedTokensMoverTypeA

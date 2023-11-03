@@ -1,10 +1,8 @@
-package config;
+package ru.misterpotz.ocgena.simulation.config;
 
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import simulation.config.Config
-import simulation.config.ConfigEnum
 
 fun parseStringToMap(input: String): Map<String, String> {
     val map = mutableMapOf<String, String>()

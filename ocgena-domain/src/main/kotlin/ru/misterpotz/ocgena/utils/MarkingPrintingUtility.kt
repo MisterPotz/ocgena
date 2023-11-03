@@ -1,8 +1,7 @@
 package ru.misterpotz.ocgena.utils
 
-import model.*
 import ru.misterpotz.ocgena.collections.objects.*
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import utils.print
 import javax.inject.Inject

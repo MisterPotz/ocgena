@@ -1,8 +1,7 @@
-package model
+package ru.misterpotz.ocgena.registries
 
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 
 interface TransitionsRegistry {
     operator fun get(transition: PetriAtomId) : Transition

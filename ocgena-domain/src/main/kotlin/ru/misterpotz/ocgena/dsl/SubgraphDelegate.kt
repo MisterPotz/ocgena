@@ -1,18 +1,16 @@
-package dsl
+@file:Suppress("UNREACHABLE_CODE")
 
-import ru.misterpotz.ocgena.dsl.EntitiesCreatedInSubgraph
+package ru.misterpotz.ocgena.dsl
+
+import dsl.SubgraphPlaceDelegate
+import dsl.SubgraphTransitionDelegate
+import dsl.TransitionCreator
 
 class SubgraphDelegate(
-    private val scopeAccessibleEntities: ScopeAccessibleEntities,
     private val placeCreator: PlaceCreator,
     private val transitionCreator: TransitionCreator,
 ) : SubgraphConnector {
     val subgraphStruct: EntitiesCreatedInSubgraph = EntitiesCreatedInSubgraph()
-    private fun createLabelForSubgraph(label: String?): String {
-        val subgraphIdIssuer = scopeAccessibleEntities.subgraphIdIssuer
-        subgraphIdIssuer.newIntId()
-        return label ?: subgraphIdIssuer.lastLabelId
-    }
 
     private fun recordSubgraphToThisScope(newSubgraphDSL: SubgraphDSL) {
         subgraphStruct.subgraphs[newSubgraphDSL.label] = newSubgraphDSL
@@ -23,7 +21,7 @@ class SubgraphDelegate(
         val subgraphConnectionResolver = SubgraphConnectionResolver()
 
         val newSubgraph = SubgraphImpl(
-            label = createLabelForSubgraph(label),
+            label = throw NotImplementedError(),
             placeDelegate = SubgraphPlaceDelegate(
                 entitiesCreatedInSubgraph = entitiesCreatedInSubgraph,
                 placeCreator = placeCreator
@@ -33,11 +31,10 @@ class SubgraphDelegate(
                 transitionCreator = transitionCreator,
             ),
             arcDelegate = SubgraphArcDelegate(
-                arcContainer = scopeAccessibleEntities,
+                arcContainer = throw IllegalStateException(),
                 subgraphConnectionResolver = subgraphConnectionResolver,
             ),
             subgraphDelegate = SubgraphDelegate(
-                scopeAccessibleEntities = scopeAccessibleEntities,
                 placeCreator = placeCreator,
                 transitionCreator = transitionCreator
             ),

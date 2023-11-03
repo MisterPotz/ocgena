@@ -1,4 +1,4 @@
-package simulation.binding
+package ru.misterpotz.ocgena.simulation.binding
 
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 

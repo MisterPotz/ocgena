@@ -1,20 +1,16 @@
-package model.utils
+package ru.misterpotz.ocgena.ocnet.primitives.utils
 
-import dsl.*
+import ru.misterpotz.ocgena.dsl.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectType
 
 @Deprecated("Broken after refactoring of how petri atoms")
-class OCNetDSLConverter(
-    private val ocNetDSLElements: OCNetDSLElements,
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
-) {
+class OCNetDSLConverter {
     private val foundObjectTypes: MutableMap<ObjectTypeId, ObjectType> = mutableMapOf()
     private val elementsIdCreator = ElementsIdCreator()
     private val createdPlaces: MutableList<Place> = mutableListOf()

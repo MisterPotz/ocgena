@@ -1,4 +1,4 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 class OCNetDSLElementsImpl(
     override val places : MutableMap<String, PlaceDSL>,

@@ -1,15 +1,16 @@
 package ru.misterpotz.ocgena.simulation.config
 
+import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
-class MarkingScheme {
-    private val placesToTokens: MutableMap<PetriAtomId, Int> = mutableMapOf()
+@Serializable
+data class MarkingScheme(private val placesToTokens: MutableMap<PetriAtomId, Int> = mutableMapOf()) {
 
-    fun allPlaces() : Collection<PetriAtomId> {
+    fun allPlaces(): Collection<PetriAtomId> {
         return placesToTokens.keys
     }
 
-    operator fun get(place : PetriAtomId) : Int {
+    operator fun get(place: PetriAtomId): Int {
         return placesToTokens[place] ?: 0
     }
 

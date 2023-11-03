@@ -1,4 +1,4 @@
-package error
+package ru.misterpotz.ocgena.error
 
 interface Error {
     val message: String

@@ -1,6 +1,8 @@
 package dsl
 
 import model.PlaceType
+import ru.misterpotz.ocgena.dsl.NormalArcDSL
+import ru.misterpotz.ocgena.dsl.VariableArcDSL
 import utils.mprintln
 import kotlin.test.Test
 import kotlin.test.assertEquals

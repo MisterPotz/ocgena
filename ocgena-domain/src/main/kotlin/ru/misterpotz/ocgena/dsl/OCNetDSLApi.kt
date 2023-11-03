@@ -1,4 +1,4 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 interface OCScope :
     ArcsAcceptor,

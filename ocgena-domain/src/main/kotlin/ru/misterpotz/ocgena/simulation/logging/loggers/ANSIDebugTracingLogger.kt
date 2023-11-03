@@ -1,14 +1,16 @@
-package simulation.client.loggers
+package ru.misterpotz.ocgena.simulation.logging.loggers
 
 import net.mamoe.yamlkt.Yaml
+import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
+import simulation.client.loggers.NoOpLogger
 import utils.*
 import java.io.Writer
 import javax.inject.Inject
 
 class ANSIDebugTracingLogger @Inject constructor(
     private val currentSimulationDelegate: CurrentSimulationDelegate,
+    private val simulationConfig: SimulationConfig,
     val yaml: Yaml,
     val developmentDebugConfig: DevelopmentDebugConfig,
     val writer: Writer,
@@ -26,7 +28,7 @@ class ANSIDebugTracingLogger @Inject constructor(
     }
 
     private fun dumpInput(): String {
-        return yaml.encodeToString(simulationParams.toSerializable()).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+        return yaml.encodeToString(simulationConfig).replace(Regex("\\n[\\s\\r]*\\n"), "\n")
     }
 
     override fun onStart() {

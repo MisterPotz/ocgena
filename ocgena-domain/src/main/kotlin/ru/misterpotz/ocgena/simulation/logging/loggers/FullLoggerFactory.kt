@@ -5,7 +5,6 @@ import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.simulation.logging.LogConfiguration
 import simulation.Logger
 import simulation.client.Writer
-import simulation.client.loggers.ANSIDebugTracingLogger
 import simulation.client.loggers.CompoundLogger
 import javax.inject.Inject
 import javax.inject.Provider

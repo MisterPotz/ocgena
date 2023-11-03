@@ -1,20 +1,19 @@
-package model
+package ru.misterpotz.ocgena.registries
 
-import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
-interface Places {
+interface PlaceRegistry {
     operator fun get(place: PetriAtomId): Place
     val iterable: Iterable<Place>
     fun isEmpty(): Boolean
 }
 
-fun Places(petriAtomRegistry: PetriAtomRegistry): Places {
-    return PlacesMap(petriAtomRegistry)
+fun PlaceRegistry(petriAtomRegistry: PetriAtomRegistry): PlaceRegistry {
+    return PlaceRegistryMap(petriAtomRegistry)
 }
 
-internal class PlacesMap(private val petriAtomRegistry: PetriAtomRegistry) : Places {
+internal class PlaceRegistryMap(private val petriAtomRegistry: PetriAtomRegistry) : PlaceRegistry {
 
     override operator fun get(place: PetriAtomId): Place {
         return petriAtomRegistry[place] as Place

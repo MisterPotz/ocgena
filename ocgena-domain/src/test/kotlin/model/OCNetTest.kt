@@ -1,15 +1,16 @@
 package model
 
 import dsl.OCNetFacadeBuilder
-import error.prettyPrint
+import ru.misterpotz.ocgena.error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import simulation.utils.SimulationParamsBuilder
-import model.time.IntervalFunction
-import model.time.TransitionTimes
+import ru.misterpotz.ocgena.simulation.config.IntervalFunction
+import ru.misterpotz.ocgena.simulation.config.TransitionTimes
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
+import ru.misterpotz.ocgena.simulation.SimpleExecutionConditions
 import simulation.*
 import kotlin.test.Test
 import kotlin.test.assertNotNull

@@ -1,7 +1,5 @@
 package ru.misterpotz.ocgena.dsl
 
-import dsl.PatternIdCreator
-
 class GroupsIdCreator {
     private val idCreators = mutableMapOf<String, PatternIdCreator>()
 

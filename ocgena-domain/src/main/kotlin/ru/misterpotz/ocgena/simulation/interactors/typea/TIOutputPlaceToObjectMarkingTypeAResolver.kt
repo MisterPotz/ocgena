@@ -10,7 +10,7 @@ class TIOutputPlaceToObjectMarkingTypeAResolver @Inject constructor(
     private val outputMarkingFillerTypeAFactory: OutputMarkingFillerTypeAFactory
 ) : TIOutputPlacesResolverInteractor {
 
-    override fun createOutputMarking(activeFiringTransition: TransitionInstance): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
+    override fun createOutputMarking(activeFiringTransition: TransitionInstance): ImmutablePlaceToObjectMarking {
         val markingFillahr = outputMarkingFillerTypeAFactory.create(activeFiringTransition)
 
         return markingFillahr.fill()

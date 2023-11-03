@@ -1,12 +1,11 @@
 package ru.misterpotz.ocgena.registries.typea
 
 import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
-import model.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
-class ArcToMultiplicityTypeARegistry(val arcsRegistry: ArcsRegistry) : ArcMultiplicity {
+class ArcToMultiplicityTypeARegistry : ArcMultiplicity {
     fun getMultiplicity(arc: Arc) : Int {
         return when (arc) {
             is NormalArc -> arc.multiplicity

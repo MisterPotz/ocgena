@@ -1,4 +1,4 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 object Utils {
     fun selectPlace(orderedAtomsList: List<AtomDSL>, block: PlaceDSL.(atomIndex: Int) -> Boolean): PlaceDSL {

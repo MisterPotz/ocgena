@@ -1,4 +1,4 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 class PatternIdCreator(
     private val startIndex : Long,

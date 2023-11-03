@@ -1,10 +1,8 @@
 package ru.misterpotz.ocgena.simulation.generator.impl
 
-import config.GenerationConfig
-import config.TimeRange
-import model.PlaceId
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta
+import ru.misterpotz.ocgena.simulation.config.GenerationConfig
+import ru.misterpotz.ocgena.simulation.config.TimeRange
+import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.Time

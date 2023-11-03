@@ -1,9 +1,7 @@
-package simulation.binding
+package ru.misterpotz.ocgena.simulation.binding
 
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
 import ru.misterpotz.ocgena.simulation.interactors.TIOutputPlacesResolverInteractor
-import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import simulation.Logger
 import simulation.SimulationStateProvider
 import javax.inject.Inject

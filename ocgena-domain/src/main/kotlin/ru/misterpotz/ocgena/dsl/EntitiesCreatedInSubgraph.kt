@@ -1,10 +1,5 @@
 package ru.misterpotz.ocgena.dsl
 
-import dsl.NodeDSL
-import dsl.PlaceDSL
-import dsl.SubgraphDSL
-import dsl.TransitionDSL
-
 class EntitiesCreatedInSubgraph(
     val places: MutableMap<String, PlaceDSL> = mutableMapOf(),
     val transitions: MutableMap<String, TransitionDSL> = mutableMapOf(),

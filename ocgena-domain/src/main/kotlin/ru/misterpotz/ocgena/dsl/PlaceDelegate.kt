@@ -1,6 +1,6 @@
 package dsl
 
-import ru.misterpotz.ocgena.dsl.EntitiesCreatedInSubgraph
+import ru.misterpotz.ocgena.dsl.*
 
 open class PlaceDelegate(
     val placeCreator: PlaceCreator,

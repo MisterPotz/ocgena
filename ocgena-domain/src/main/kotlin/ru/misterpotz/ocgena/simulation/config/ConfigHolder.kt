@@ -1,4 +1,4 @@
-package simulation.config
+package ru.misterpotz.ocgena.simulation.config
 
 interface Config {
     val type : ConfigEnum

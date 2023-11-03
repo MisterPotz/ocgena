@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.generator
 
-import config.TimeRange
+import ru.misterpotz.ocgena.simulation.config.TimeRange
 import ru.misterpotz.ocgena.simulation.Time
 import javax.inject.Inject
 import kotlin.random.Random

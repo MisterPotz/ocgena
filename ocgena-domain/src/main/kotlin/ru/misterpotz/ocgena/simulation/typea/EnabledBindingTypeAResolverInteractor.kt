@@ -9,8 +9,8 @@ import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
-import simulation.binding.EnabledBinding
-import simulation.binding.EnabledBindingWithTokens
+import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
+import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
 import java.util.*
 import javax.inject.Inject
 

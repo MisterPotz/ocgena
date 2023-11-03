@@ -24,7 +24,7 @@ class SimulationTask @Inject constructor(
         val initialMarking = placeToObjectMarkingBySchemeCreatorFactory.create(initialMarkingScheme).create()
         pMarking.plus(initialMarking)
 
-        for (transition in ocNet.coreOcNet.transitionsRegistry.iterable) {
+        for (transition in ocNet.ocNetScheme.transitionsRegistry.iterable) {
             val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
             state.tTimesMarking.setNextAllowedTime(transition.id, nextAllowedTime)
         }

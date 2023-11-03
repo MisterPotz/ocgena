@@ -1,8 +1,9 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 class LinkChainDSLImpl(
     override val firstElement: NodeDSL,
-    override val lastElement: NodeDSL) : LinkChainDSL {
+    override val lastElement: NodeDSL
+) : LinkChainDSL {
 }
 
 class VariableArcDSLImpl(

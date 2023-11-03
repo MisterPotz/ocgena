@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.generator
 
-import model.time.IntervalFunction
+import ru.misterpotz.ocgena.simulation.config.IntervalFunction
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.Time
 import javax.inject.Inject

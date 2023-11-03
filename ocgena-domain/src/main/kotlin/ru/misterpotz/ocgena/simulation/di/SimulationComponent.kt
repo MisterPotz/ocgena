@@ -7,6 +7,10 @@ import ru.misterpotz.ocgena.collections.objects.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.objects.ObjectTokenSetMap
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
+import ru.misterpotz.ocgena.simulation.LockedTokensMover
+import ru.misterpotz.ocgena.simulation.ObjectTokenMoverFactory
+import ru.misterpotz.ocgena.simulation.ObjectTokenMoverFactoryImpl
+import ru.misterpotz.ocgena.simulation.SimpleExecutionConditions
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.generator.*
 import ru.misterpotz.ocgena.simulation.interactors.*
@@ -19,8 +23,8 @@ import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceive
 import simulation.*
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
-import simulation.binding.TIFinisher
-import simulation.binding.TIFinisherImpl
+import ru.misterpotz.ocgena.simulation.binding.TIFinisher
+import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
 import simulation.random.RandomFactory
 import simulation.random.RandomFactoryImpl
 import javax.inject.Scope

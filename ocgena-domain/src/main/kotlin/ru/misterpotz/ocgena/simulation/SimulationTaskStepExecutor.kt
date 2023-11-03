@@ -8,10 +8,10 @@ import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.state.SimulationStepState
 import ru.misterpotz.ocgena.simulation.state.SimulationTime
 import ru.misterpotz.ocgena.simulation.structure.RunningSimulatableOcNet
-import ru.misterpotz.ocgena.simulation.structure.SimulatableComposedOcNet
+import ru.misterpotz.ocgena.simulation.structure.OcNetInstance
 import ru.misterpotz.ocgena.simulation.transition.TransitionTokensLocker
-import simulation.binding.EnabledBinding
-import simulation.binding.TIFinisher
+import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
+import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import javax.inject.Inject
 
 enum class Status {
@@ -21,7 +21,7 @@ enum class Status {
 
 interface SimulationStateProvider {
     val status: Status
-    fun getOcNetState(): SimulatableComposedOcNet.State
+    fun getOcNetState(): OcNetInstance.State
     fun getSimulationTime(): SimulationTime
     fun getSimulationStepState(): SimulationStepState
     fun runningSimulatableOcNet(): RunningSimulatableOcNet
@@ -37,7 +37,7 @@ class SimulationStateProviderImpl @Inject constructor(
     private val runningSimulatableOcNet = RunningSimulatableOcNet(simulationConfig.templateOcNet, state)
     override var status: Status = Status.EXECUTING
 
-    override fun getOcNetState(): SimulatableComposedOcNet.State {
+    override fun getOcNetState(): OcNetInstance.State {
         return state
     }
 
@@ -70,12 +70,12 @@ class SimulationTaskStepExecutor @Inject constructor(
     private val bindingsCollector: EnabledBindingsCollectorInteractor,
 ) {
     val ocNet = simulationConfig.templateOcNet
-    val state: SimulatableComposedOcNet.State
+    val state: OcNetInstance.State
         get() = simulationStateProvider.getOcNetState()
     val simulationTime get() = simulationStateProvider.getSimulationTime()
     val simulationStepState get() = simulationStateProvider.getSimulationStepState()
 
-    val placeTyping get() = ocNet.coreOcNet.placeToObjectTypeRegistry
+    val placeTyping get() = ocNet.ocNetScheme.placeToObjectTypeRegistry
 
     fun executeStep() {
         findAndFinishEndedTransitions()

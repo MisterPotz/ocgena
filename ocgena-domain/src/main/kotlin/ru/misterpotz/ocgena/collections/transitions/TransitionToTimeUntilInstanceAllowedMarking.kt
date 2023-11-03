@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.collections.transitions
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 import ru.misterpotz.ocgena.simulation.Time
 
-interface TransitionTimesMarking {
+interface TransitionToTimeUntilInstanceAllowedMarking {
     val keys : Iterable<TransitionId>
     fun increaseSimTime(time: Time)
     fun earliestNonZeroTime(): Time?
@@ -12,15 +12,15 @@ interface TransitionTimesMarking {
     fun setNextAllowedTime(transition: TransitionId, time: Time)
 }
 
-fun TransitionOccurrenceAllowedTimes(transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf())
-        : TransitionTimesMarking {
-    return TransitionTimesMarkingMap(transitionsToNextTimes)
+fun TransitionToTimeUntilInstanceAllowedMarking(transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf())
+        : TransitionToTimeUntilInstanceAllowedMarking {
+    return TransitionToTimeUntilInstanceAllowedMarkingMap(transitionsToNextTimes)
 }
 
-internal class TransitionTimesMarkingMap(
+internal class TransitionToTimeUntilInstanceAllowedMarkingMap(
     private val transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf()
 ) :
-    TransitionTimesMarking {
+    TransitionToTimeUntilInstanceAllowedMarking {
     override val keys: Iterable<TransitionId>
         get() = transitionsToNextTimes.keys
 

@@ -4,7 +4,7 @@ import ru.misterpotz.ocgena.simulation.generator.TransitionInstanceDurationGener
 import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.Logger
-import simulation.binding.EnabledBindingWithTokens
+import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
 import javax.inject.Inject
 
 class TransitionTokensLocker @Inject constructor(

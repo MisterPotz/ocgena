@@ -1,9 +1,9 @@
-package model.utils
+package ru.misterpotz.ocgena.ocnet.primitives.utils
 
-import dsl.ArcDSL
-import dsl.NodeDSL
-import dsl.PlaceDSL
-import dsl.TransitionDSL
+import ru.misterpotz.ocgena.dsl.ArcDSL
+import ru.misterpotz.ocgena.dsl.NodeDSL
+import ru.misterpotz.ocgena.dsl.PlaceDSL
+import ru.misterpotz.ocgena.dsl.TransitionDSL
 
 class ElementsIdCreator() {
     fun createPlaceId(placeDSL: PlaceDSL) : String {

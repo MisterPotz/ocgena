@@ -1,8 +1,5 @@
 package ru.misterpotz.ocgena.dsl
 
-import dsl.ObjectTypeAcceptor
-import dsl.ObjectTypeDSL
-
 class ObjectTypeDelegate(
     var objectTypeCreator : ObjectTypeCreator
 ) : ObjectTypeAcceptor {

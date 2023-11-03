@@ -1,4 +1,4 @@
-package model.time
+package ru.misterpotz.ocgena.simulation.config
 
 import kotlinx.serialization.Serializable
 

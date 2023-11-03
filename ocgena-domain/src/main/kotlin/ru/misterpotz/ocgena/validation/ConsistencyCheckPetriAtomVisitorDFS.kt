@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.validation
 
-import error.ConsistencyCheckError
+import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc

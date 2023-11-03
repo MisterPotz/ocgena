@@ -2,6 +2,9 @@ package eventlog
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import ru.misterpotz.ocgena.eventlog.ObjectsLists
+import ru.misterpotz.ocgena.eventlog.Timestamp
+import ru.misterpotz.ocgena.eventlog.ValuesMap
 
 @Serializable
 data class Event(

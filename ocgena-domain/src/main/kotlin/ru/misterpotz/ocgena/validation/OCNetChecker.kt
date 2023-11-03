@@ -1,9 +1,9 @@
 package ru.misterpotz.ocgena.validation
 
-import error.ConsistencyCheckError
-import error.ErrorLevel
-import model.OCNetElements
-import model.StaticCoreOcNet
+import ru.misterpotz.ocgena.error.ConsistencyCheckError
+import ru.misterpotz.ocgena.error.ErrorLevel
+import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.ocnet.StaticCoreOcNetScheme
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
@@ -12,30 +12,30 @@ class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
-    private val ocNetElements: OCNetElements,
+    private val ocNet: OCNet,
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val placeTypeRegistry: PlaceTypeRegistry,
     private val petriAtomRegistry: PetriAtomRegistry
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
-    val inputPlaces = placeTypeRegistry.getInputPlaces(ocNetElements.places)
-    val outputPlaces = placeTypeRegistry.getOutputPlaces(ocNetElements.places)
+    val inputPlaces = placeTypeRegistry.getInputPlaces(ocNet.placeRegistry)
+    val outputPlaces = placeTypeRegistry.getOutputPlaces(ocNet.placeRegistry)
 
     val isConsistent: Boolean
         get() {
             return checkConsistency(lastConsistencyResults)
         }
 
-    fun createWellFormedOCNet(): StaticCoreOcNet {
+    fun createWellFormedOCNet(): StaticCoreOcNetScheme {
         require(isConsistent)
 
-        return StaticCoreOcNet(
-            inputPlaces = require(inputPlaces.isEmpty().not()).let { inputPlaces },
-            outputPlaces = require(outputPlaces.isEmpty().not()).let { outputPlaces },
+        return StaticCoreOcNetScheme(
+            inputPlaceRegistry = require(inputPlaces.isEmpty().not()).let { inputPlaces },
+            outputPlaceRegistry = require(outputPlaces.isEmpty().not()).let { outputPlaces },
             objectTypes = placeToObjectTypeRegistry.allObjectTypes().toMutableList(),
-            places = ocNetElements.places,
-            transitionsRegistry = ocNetElements.transitionsRegistry,
-            arcsRegistry = ocNetElements.arcsRegistry,
+            placeRegistry = ocNet.placeRegistry,
+            transitionsRegistry = ocNet.transitionsRegistry,
+            arcsRegistry = ocNet.arcsRegistry,
             placeToObjectTypeRegistry = placeToObjectTypeRegistry,
         )
     }

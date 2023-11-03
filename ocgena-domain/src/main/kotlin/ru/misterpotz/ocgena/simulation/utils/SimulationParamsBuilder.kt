@@ -1,11 +1,11 @@
 package simulation.utils
 
-import config.GenerationConfig
+import ru.misterpotz.ocgena.simulation.config.GenerationConfig
 import model.*
-import model.time.IntervalFunction
+import ru.misterpotz.ocgena.simulation.config.IntervalFunction
 import model.utils.OcNetCreator
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
 import ru.misterpotz.marking.plain.PlainMarking
+import ru.misterpotz.ocgena.ocnet.StaticCoreOcNetScheme
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
@@ -15,7 +15,7 @@ import ru.misterpotz.simulation.token_generation.ObjectMarkingFromPlainCreator
 import simulation.*
 
 open class SimulationParamsBuilder(
-    private val ocNet: StaticCoreOcNet
+    private val ocNet: StaticCoreOcNetScheme
 ) {
     private var generationConfig: GenerationConfig? = null
     private var placeTypeRegistry: PlaceTypeRegistry? = null
@@ -70,7 +70,7 @@ open class SimulationParamsBuilder(
 
     fun build() : SimulationConfig {
         val creator = OcNetCreator(
-            coreOcNet = ocNet,
+            ocNetScheme = ocNet,
             timeIntervalFunction = timeIntervalFunction!!
         )
         val ocNet = creator.create(ocNetType!!)

@@ -1,4 +1,6 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
+
+import dsl.TransitionCreator
 
 open class TransitionDelegate(
     private val transitionCreator: TransitionCreator,

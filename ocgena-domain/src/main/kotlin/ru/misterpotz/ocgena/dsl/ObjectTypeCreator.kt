@@ -1,9 +1,5 @@
 package ru.misterpotz.ocgena.dsl
 
-import dsl.ObjectTypeDSL
-import dsl.ObjectTypeImpl
-import dsl.PatternIdCreator
-
 class ObjectTypeCreator(
     private val objectTypesContainer: ObjectTypesContainer,
     private val objectTypeIdCreator: PatternIdCreator,

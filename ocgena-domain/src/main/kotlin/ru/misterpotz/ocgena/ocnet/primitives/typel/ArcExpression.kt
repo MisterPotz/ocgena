@@ -1,3 +1,3 @@
-package model.typel
+package ru.misterpotz.ocgena.ocnet.primitives.typel
 
 typealias ArcExpression = String

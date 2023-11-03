@@ -1,10 +1,13 @@
 package model
 
 import dsl.*
-import error.ConsistencyCheckError
-import model.utils.OCNetDSLConverter
+import ru.misterpotz.ocgena.error.ConsistencyCheckError
+import ru.misterpotz.ocgena.ocnet.primitives.utils.OCNetDSLConverter
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.dsl.OCNetBuilder
+import ru.misterpotz.ocgena.dsl.OCScope
+import ru.misterpotz.ocgena.dsl.ObjectsSearcher
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import ru.misterpotz.ocgena.validation.OCNetChecker
@@ -14,16 +17,9 @@ class OCNetCheckerTest {
     private val placeTyping = createExamplePlaceTyping()
     private val inputOutputPlaces = createExampleInputOutputPlaces()
 
-    @Test
-    fun checkConvertionHappensAtAll() {
-        val converter = OCNetDSLConverter(ocScopeImpl, placeTyping)
-        val result = converter.convert()
-    }
 
     @Test
     fun checkConvertionResults() {
-        val converter = OCNetDSLConverter(ocScopeImpl, placeTyping)
-        val result = converter.convert()
 
         assertTrue(result.places.isNotEmpty(), "converted places were empty ")
 
@@ -34,7 +30,7 @@ class OCNetCheckerTest {
 
     @Test
     fun checkCorrectModelIsConsistent() {
-        val converter = OCNetDSLConverter(ocScopeImpl, placeTyping)
+        val converter = OCNetDSLConverter()
         val result = converter.convert()
         val places = result.places
         val consistencyChecker = OCNetChecker(
@@ -48,8 +44,8 @@ class OCNetCheckerTest {
             "inconsistencies detected:\n" + consistencyResults.joinToString(separator = "\n").prependIndent()
         )
         val consistentNet = consistencyChecker.createWellFormedOCNet()
-        assertEquals(3, consistentNet.inputPlaces.size)
-        assertEquals(3, consistentNet.outputPlaces.size)
+        assertEquals(3, consistentNet.inputPlaceRegistry.size)
+        assertEquals(3, consistentNet.outputPlaceRegistry.size)
         assertEquals(3, consistentNet.objectTypes.size)
     }
 
@@ -59,7 +55,7 @@ class OCNetCheckerTest {
         block: OCScope.() -> Unit
     ): List<ConsistencyCheckError> {
         val ocScope = OCNetBuilder.define(block)
-        val converter = OCNetDSLConverter(ocScope, placeToObjectTypeRegistry)
+        val converter = OCNetDSLConverter()
         val convertionResult = converter.convert()
         val ocnetChecker = OCNetChecker(
             convertionResult,
@@ -132,7 +128,7 @@ class OCNetCheckerTest {
                 .variableArcTo(transition { })
                 .arcTo(place { })
         }
-        val converter = OCNetDSLConverter(ocScope, placeToObjectTypeRegistry)
+        val converter = OCNetDSLConverter()
         val convertionResult = converter.convert()
         val ocnetChecker = OCNetChecker(convertionResult, placeToObjectTypeRegistry, placeTypeRegistry)
         val errors = ocnetChecker.checkConsistency()

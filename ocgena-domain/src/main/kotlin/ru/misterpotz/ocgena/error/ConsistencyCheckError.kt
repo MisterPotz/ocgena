@@ -1,4 +1,4 @@
-package error
+package ru.misterpotz.ocgena.error
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc

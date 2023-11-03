@@ -1,7 +1,8 @@
 package dsl
 
-import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
+import ru.misterpotz.ocgena.dsl.OCNetBuilder
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import utils.toIds
 
 fun createExamplePlaceTyping() : PlaceToObjectTypeRegistry {
@@ -22,7 +23,7 @@ fun createExampleInputOutputPlaces() : PlaceTypeRegistry {
 /**
  * @see <img src="src/jvmTest/resources/img.png" >
  */
-fun createExampleModel(): OCNetDSLElements {
+fun createExampleModel() {
     val ocNet = OCNetBuilder.define {
         val order = objectType("order") {
             "o$it"

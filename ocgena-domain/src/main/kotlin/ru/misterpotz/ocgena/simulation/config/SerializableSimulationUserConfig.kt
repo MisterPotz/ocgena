@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.simulation.config
 
-import config.*
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 

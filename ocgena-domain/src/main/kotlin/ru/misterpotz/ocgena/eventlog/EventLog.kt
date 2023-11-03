@@ -1,10 +1,9 @@
-package eventlog
+package ru.misterpotz.ocgena.eventlog
 
-import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import ru.misterpotz.ocgena.simulation.ObjectType
+import eventlog.Event
 import ru.misterpotz.ocgena.simulation.ObjectToken
+import ru.misterpotz.ocgena.simulation.ObjectType
 
-typealias AttributeNames = List<String>
 typealias ObjectTypes = MutableList<ObjectType>
 
 

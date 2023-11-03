@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
-import simulation.binding.EnabledBinding
+import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import kotlin.random.Random
 
 interface BindingSelectionInteractor {

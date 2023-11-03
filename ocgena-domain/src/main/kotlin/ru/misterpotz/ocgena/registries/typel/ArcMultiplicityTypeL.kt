@@ -7,6 +7,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeL
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
+@Suppress("UNUSED")
 class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
 
     fun getVariableDependency(arc: Arc) : String? {

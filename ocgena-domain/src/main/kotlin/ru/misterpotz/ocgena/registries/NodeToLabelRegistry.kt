@@ -1,10 +1,12 @@
 package ru.misterpotz.ocgena.registries
 
+import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.Label
 import ru.misterpotz.ocgena.ocnet.primitives.NodeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 
-class NodeToLabelRegistry(private val transitionsToActivity: MutableMap<NodeId, Label> = mutableMapOf()) {
+@Serializable
+data class NodeToLabelRegistry(private val transitionsToActivity: MutableMap<NodeId, Label> = mutableMapOf()) {
     operator fun get(node: NodeId): Label {
         return transitionsToActivity[node] ?: node
     }

@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.token_generation
 
-import dsl.PatternIdCreator
+import ru.misterpotz.ocgena.dsl.PatternIdCreator
 import ru.misterpotz.ocgena.simulation.EmptyObjectValuesMap
 import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.ObjectType

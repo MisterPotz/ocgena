@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.collections.transitions
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 
-class TransitionInstancesMarking() {
+class TransitionToInstancesMarking() {
     private val transitionsToTMarkingValue = mutableMapOf<TransitionId, TransitionInstancesList>()
 
     operator fun get(transitionId: TransitionId): TransitionInstancesList? {

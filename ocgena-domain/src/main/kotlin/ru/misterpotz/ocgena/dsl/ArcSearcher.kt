@@ -1,6 +1,8 @@
 package dsl
 
 import ru.misterpotz.ocgena.dsl.ArcContainer
+import ru.misterpotz.ocgena.dsl.ArcDSL
+import ru.misterpotz.ocgena.dsl.NodeDSL
 
 class ArcSearcher(private val arcContainer: ArcContainer) {
     private val arcs : List<ArcDSL>
