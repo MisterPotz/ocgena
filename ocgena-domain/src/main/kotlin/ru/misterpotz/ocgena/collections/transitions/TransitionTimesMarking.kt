@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.collections.transitions
 
-import ru.misterpotz.model.atoms.TransitionId
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
+import ru.misterpotz.ocgena.simulation.Time
 
 interface TransitionTimesMarking {
     val keys : Iterable<TransitionId>

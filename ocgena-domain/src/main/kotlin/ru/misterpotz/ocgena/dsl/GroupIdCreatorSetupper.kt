@@ -1,4 +1,6 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
+
+import ru.misterpotz.ocgena.dsl.GroupsIdCreator
 
 class GroupIdCreatorSetupper() {
     fun setupGroupIdCreator(groupsIdCreator: GroupsIdCreator) {

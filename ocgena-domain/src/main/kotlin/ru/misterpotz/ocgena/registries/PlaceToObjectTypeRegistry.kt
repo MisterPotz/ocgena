@@ -13,7 +13,7 @@ data class PlaceToObjectTypeRegistry(
     private val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
 ) {
     fun toObjectTypes() : ObjectTypeRegistry {
-        return ObjectTypeRegistry(allObjectTypes().toList())
+        return ObjectTypeRegistry(allObjectTypes().associateBy { it.id }.toMutableMap())
     }
     fun allObjectTypes(): Set<ObjectType> {
         return placeIdToObjectType.values.toMutableSet().apply {

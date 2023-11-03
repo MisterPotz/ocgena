@@ -1,8 +1,7 @@
-package simulation.binding
+package ru.misterpotz.ocgena.simulation.interactors.factories
 
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityTypeARegistry
-import model.typel.ExpressionArcMultiplicity
-import ru.misterpotz.simulation.api.interactors.EnabledBindingResolverInteractor
+import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import simulation.SimulationStateProvider
 import simulation.typea.EnabledBindingTypeAResolverInteractor
 import javax.inject.Inject
@@ -17,7 +16,6 @@ class EnabledBindingResolverFactory @Inject constructor(
 
         return when (arcMultiplicity) {
             is ArcToMultiplicityTypeARegistry -> enabledBindingTypeAResolver.get()
-            is ExpressionArcMultiplicity -> TODO("I.A.Lomazova specification is yet to be done")
             else -> throw IllegalArgumentException("type ${arcMultiplicity::class.simpleName} is not supported")
         }
     }

@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.ArcContainer
+
 class ArcSearcher(private val arcContainer: ArcContainer) {
     private val arcs : List<ArcDSL>
         get() = arcContainer.arcs

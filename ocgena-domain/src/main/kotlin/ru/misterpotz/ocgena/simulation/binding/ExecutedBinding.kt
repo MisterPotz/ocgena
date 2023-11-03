@@ -1,8 +1,7 @@
 package ru.misterpotz.ocgena.simulation.binding
 
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.simulation.Time
 import utils.*
 
 data class ExecutedBinding(

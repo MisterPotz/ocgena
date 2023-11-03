@@ -1,16 +1,16 @@
 package simulation.typea
 
 import model.*
+import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityTypeARegistry
-import ru.misterpotz.marking.objects.ObjectTokenId
-import ru.misterpotz.model.atoms.Place
-import ru.misterpotz.model.atoms.Transition
-import ru.misterpotz.ocgena.collections.objects.ImmutableObjectMarking
-import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
+import ru.misterpotz.ocgena.simulation.ObjectTokenId
+import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
+import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
+import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.binding.EnabledBinding
-import ru.misterpotz.simulation.api.interactors.EnabledBindingResolverInteractor
 import simulation.binding.EnabledBindingWithTokens
-import ru.misterpotz.simulation.api.interactors.TokenSelectionInteractor
 import java.util.*
 import javax.inject.Inject
 
@@ -93,7 +93,7 @@ class EnabledBindingTypeAResolverInteractor @Inject constructor(
         }
         return EnabledBindingWithTokens(
             transition = transition.id,
-            involvedObjectTokens = ImmutableObjectMarking(placeToObjectTokenMap)
+            involvedObjectTokens = ImmutablePlaceToObjectMarking(placeToObjectTokenMap)
         )
     }
 }

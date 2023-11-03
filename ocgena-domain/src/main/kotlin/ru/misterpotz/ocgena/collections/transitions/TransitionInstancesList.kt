@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.collections.transitions
 
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.simulation.Time
 
 interface TransitionInstancesList {
     fun add(tMarkingValue: TransitionInstance)

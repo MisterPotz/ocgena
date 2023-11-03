@@ -1,4 +1,4 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 class IdIssuer(private val startIndex : Long = 0) {
     private var uniqueIdCounter: Long = startIndex

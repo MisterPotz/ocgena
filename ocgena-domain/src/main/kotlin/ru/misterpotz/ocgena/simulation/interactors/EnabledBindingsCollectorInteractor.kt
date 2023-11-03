@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.simulation.interactors
 
 import simulation.SimulationStateProvider
 import simulation.binding.EnabledBinding
-import simulation.binding.EnabledBindingResolverFactory
+import ru.misterpotz.ocgena.simulation.interactors.factories.EnabledBindingResolverFactory
 import simulation.binding.EnabledBindingWithTokens
 import javax.inject.Inject
 

@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.GroupsIdCreator
+
 class PlaceCreator(
     private val scopeType: ObjectTypeDSL,
     private val placesContainer: PlacesContainer,

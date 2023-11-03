@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.EntitiesCreatedInSubgraph
+
 open class PlaceDelegate(
     val placeCreator: PlaceCreator,
 ) : PlaceAcceptor {

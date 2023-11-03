@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.ArcContainer
+
 interface OCNetDSLElements : ArcContainer, PlacesContainer {
     abstract fun objectType(s: String): ObjectTypeDSL
     fun place(s: String): NodeDSL

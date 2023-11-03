@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.EntitiesCreatedInSubgraph
+
 class SubgraphDelegate(
     private val scopeAccessibleEntities: ScopeAccessibleEntities,
     private val placeCreator: PlaceCreator,

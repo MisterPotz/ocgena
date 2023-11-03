@@ -1,5 +1,9 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.ArcDelegate
+import ru.misterpotz.ocgena.dsl.GroupsIdCreator
+import ru.misterpotz.ocgena.dsl.ObjectTypeDelegate
+
 
 class OCScopeImpl(
     private val defaultObjectType : ObjectTypeDSL,

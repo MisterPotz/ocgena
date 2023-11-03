@@ -1,7 +1,7 @@
 package error
 
-import ru.misterpotz.model.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
 fun <T : Any> List<T>.prettyPrint(): String {
     return joinToString("\n").prependIndent()

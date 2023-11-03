@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.GroupsIdCreator
+
 class PlaceDSLCreation(
     val userPlaceLabel : String?,
     val groupIdIssuer: GroupsIdCreator,

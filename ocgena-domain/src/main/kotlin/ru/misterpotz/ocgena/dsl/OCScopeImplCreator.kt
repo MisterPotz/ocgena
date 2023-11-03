@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.*
+
 class OCScopeImplCreator() {
     private val groupIdCreator: GroupsIdCreator = GroupsIdCreator().also {
         GroupIdCreatorSetupper().setupGroupIdCreator(it)

@@ -1,5 +1,7 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.ArcDelegate
+
 class SubgraphImpl(
     override val label: String,
     private val placeDelegate: PlaceDelegate,

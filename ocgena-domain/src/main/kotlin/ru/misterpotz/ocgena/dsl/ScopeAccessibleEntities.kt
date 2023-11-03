@@ -1,5 +1,8 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.ArcContainer
+import ru.misterpotz.ocgena.dsl.GroupsIdCreator
+
 class ScopeAccessibleEntities(
     private val groupsIdCreator: GroupsIdCreator,
     private val parentScopeEntities: ScopeAccessibleEntities? = null,

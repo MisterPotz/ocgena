@@ -1,14 +1,10 @@
 package simulation.client.loggers
 
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.simulation.binding.ExecutedBinding
 import net.mamoe.yamlkt.Yaml
-import ru.misterpotz.marking.objects.Time
-import ru.misterpotz.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
-import simulation.SerializableSimulationState
-import simulation.client.Writer
+import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import utils.*
+import java.io.Writer
 import javax.inject.Inject
 
 class ANSIDebugTracingLogger @Inject constructor(
@@ -18,13 +14,15 @@ class ANSIDebugTracingLogger @Inject constructor(
     val writer: Writer,
 ) : NoOpLogger(), CurrentSimulationDelegate by currentSimulationDelegate {
     private fun dumpState(): String {
-        return yaml.encodeToString(
-            SerializableSimulationState(
-                simGlobalTime,
-                state.toSerializable()
-            )
-        )
-            .replace(Regex("\\n[\\s\\r]*\\n"), "\n")
+        // TODO: provide real state
+        return ""
+//        return yaml.encodeToString(
+//            SerializableSimulationState(
+//                simGlobalTime,
+//                state.toSerializable()
+//            )
+//        )
+//            .replace(Regex("\\n[\\s\\r]*\\n"), "\n")
     }
 
     private fun dumpInput(): String {

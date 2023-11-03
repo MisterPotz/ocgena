@@ -1,13 +1,10 @@
-@file:OptIn(ExperimentalJsExport::class)
-
 package config;
 
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import ru.misterpotz.model.atoms.TransitionId
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import simulation.config.Config
 import simulation.config.ConfigEnum
-import kotlin.js.ExperimentalJsExport
 
 fun parseStringToMap(input: String): Map<String, String> {
     val map = mutableMapOf<String, String>()
@@ -173,7 +170,7 @@ data class TransitionTimesConfig(
     val defaultTransitionInterval: TransitionIntervals?,
     val transitionsToIntervals: Map<String, TransitionIntervals>,
 ) : Config {
-    fun getTransitionConfig(transitionId: TransitionId): TransitionIntervals {
+    fun getTransitionConfig(transitionId: PetriAtomId): TransitionIntervals {
         return transitionsToIntervals[transitionId] as TransitionIntervals
     }
 

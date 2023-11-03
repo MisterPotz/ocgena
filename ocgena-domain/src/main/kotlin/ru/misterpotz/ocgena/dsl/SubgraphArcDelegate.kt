@@ -1,5 +1,10 @@
 package dsl
 
+import ru.misterpotz.ocgena.dsl.ArcContainer
+import ru.misterpotz.ocgena.dsl.ArcCreator
+import ru.misterpotz.ocgena.dsl.ArcDelegate
+import ru.misterpotz.ocgena.dsl.TypedArcCreator
+
 class SubgraphConnectionResolver(
     val inNode: UnresolvedHasLast = UnresolvedHasLast(),
     val outNode: UnresolvedHasFirst = UnresolvedHasFirst(),

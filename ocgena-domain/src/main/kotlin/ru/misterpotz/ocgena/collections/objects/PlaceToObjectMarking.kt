@@ -10,10 +10,10 @@ interface PlaceToObjectMarking {
     operator fun get(place: PlaceId): SortedSet<ObjectTokenId>?
     operator fun set(place: PlaceId, tokens: SortedSet<ObjectTokenId>?)
     fun removePlace(placeId: PlaceId)
-    fun plus(delta: ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta)
-    fun minus(delta: ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta)
-    fun toImmutable(): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
-    fun modify(modifier : ru.misterpotz.ocgena.collections.objects.ObjectMarkingModifier)
+    fun plus(delta: PlaceToObjectMarkingDelta)
+    fun minus(delta: PlaceToObjectMarkingDelta)
+    fun toImmutable(): ImmutablePlaceToObjectMarking
+    fun modify(modifier : ObjectMarkingModifier)
     fun clear()
 }
 
@@ -46,27 +46,27 @@ internal class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<Plac
         placesToObjectTokens.remove(placeId)
     }
 
-    override fun plus(delta: ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta) {
+    override fun plus(delta: PlaceToObjectMarkingDelta) {
         val commonKeys = placesToObjectTokens.keys.intersect(delta.keys)
         for (key in commonKeys) {
             get(key)!!.addAll(delta[key]!!)
         }
     }
 
-    override fun minus(delta: ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta) {
+    override fun minus(delta: PlaceToObjectMarkingDelta) {
         val commonKeys = placesToObjectTokens.keys.intersect(delta.keys)
         for (key in commonKeys) {
             get(key)!!.removeAll(delta[key]!!)
         }
     }
 
-    override fun toImmutable(): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
-        return ImmutableObjectMarking(
+    override fun toImmutable(): ImmutablePlaceToObjectMarking {
+        return ImmutablePlaceToObjectMarking(
             placesToObjectTokens.copyWithValueTransform { it.toSortedSet() }
         )
     }
 
-    override fun modify(modifier: ru.misterpotz.ocgena.collections.objects.ObjectMarkingModifier) {
+    override fun modify(modifier: ObjectMarkingModifier) {
         modifier.applyTo(placesToObjectTokens)
     }
 

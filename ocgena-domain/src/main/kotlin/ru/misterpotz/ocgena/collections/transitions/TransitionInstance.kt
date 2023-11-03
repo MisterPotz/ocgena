@@ -16,7 +16,7 @@ data class TransitionInstance(
     val duration: Time,
     val startedAt: Time,
     val tokenSynchronizationTime: Time,
-    val lockedObjectTokens: ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking,
+    val lockedObjectTokens: ImmutablePlaceToObjectMarking,
 ) {
 
     fun timeLeftUntilFinish(): Time {
