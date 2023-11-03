@@ -5,7 +5,7 @@ import error.ConsistencyCheckError
 import model.utils.OCNetDSLConverter
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.registries.PlaceObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import ru.misterpotz.ocgena.validation.OCNetChecker
 
@@ -55,15 +55,15 @@ class OCNetCheckerTest {
 
     private fun createAndCheckForConsistency(
         placeTypeRegistry: PlaceTypeRegistry,
-        placeObjectTypeRegistry: PlaceObjectTypeRegistry = PlaceObjectTypeRegistry.build(),
+        placeToObjectTypeRegistry: PlaceToObjectTypeRegistry = PlaceToObjectTypeRegistry.build(),
         block: OCScope.() -> Unit
     ): List<ConsistencyCheckError> {
         val ocScope = OCNetBuilder.define(block)
-        val converter = OCNetDSLConverter(ocScope, placeObjectTypeRegistry)
+        val converter = OCNetDSLConverter(ocScope, placeToObjectTypeRegistry)
         val convertionResult = converter.convert()
         val ocnetChecker = OCNetChecker(
             convertionResult,
-            placeObjectTypeRegistry,
+            placeToObjectTypeRegistry,
             placeTypeRegistry
         )
         return ocnetChecker.checkConsistency()
@@ -74,7 +74,7 @@ class OCNetCheckerTest {
         val errors = createAndCheckForConsistency(
             placeTypeRegistry = PlaceTypeRegistry.build {
             },
-            placeObjectTypeRegistry = PlaceObjectTypeRegistry.build()
+            placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build()
         ) {
             place { }
             // place types not specified
@@ -118,7 +118,7 @@ class OCNetCheckerTest {
     fun checkIsConsistentWhenWarningsAndOnlyVariableArcs() {
         // TODO: check that input and output are presented for a subgraph
 
-        val placeObjectTypeRegistry = PlaceObjectTypeRegistry.build {
+        val placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build {
             objectType("custom", "p4")
         }
         val placeTypeRegistry = PlaceTypeRegistry.build {
@@ -132,9 +132,9 @@ class OCNetCheckerTest {
                 .variableArcTo(transition { })
                 .arcTo(place { })
         }
-        val converter = OCNetDSLConverter(ocScope, placeObjectTypeRegistry)
+        val converter = OCNetDSLConverter(ocScope, placeToObjectTypeRegistry)
         val convertionResult = converter.convert()
-        val ocnetChecker = OCNetChecker(convertionResult, placeObjectTypeRegistry, placeTypeRegistry)
+        val ocnetChecker = OCNetChecker(convertionResult, placeToObjectTypeRegistry, placeTypeRegistry)
         val errors = ocnetChecker.checkConsistency()
         val objectSearcher = ObjectsSearcher(ocScope)
 

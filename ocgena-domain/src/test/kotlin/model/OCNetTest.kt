@@ -8,7 +8,7 @@ import simulation.utils.SimulationParamsBuilder
 import model.time.IntervalFunction
 import model.time.TransitionTimes
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.registries.PlaceObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import simulation.*
 import kotlin.test.Test
@@ -23,10 +23,10 @@ class OCNetTest {
             inputPlaces("p1")
             outputPlaces("p2")
         }
-        val placeObjectTypeRegistry = PlaceObjectTypeRegistry.build()
+        val placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build()
 
         val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
-            placeObjectTypeRegistry = placeObjectTypeRegistry,
+            placeToObjectTypeRegistry = placeToObjectTypeRegistry,
             placeTypeRegistry = placeTypeRegistry
         ) {
             place { }
@@ -41,7 +41,7 @@ class OCNetTest {
 
         val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
             .withPlaceTypingAndInitialMarking(
-                placeObjectTypeRegistry = PlaceObjectTypeRegistry.build(),
+                placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build(),
                 PlainMarking.of {
                     put("p1", 10)
                 }
@@ -85,10 +85,10 @@ class OCNetTest {
             inputPlaces("p1 p2")
             outputPlaces("p4")
         }
-        val placeObjectTypeRegistry = PlaceObjectTypeRegistry.build()
+        val placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build()
 
         val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
-            placeObjectTypeRegistry = placeObjectTypeRegistry,
+            placeToObjectTypeRegistry = placeToObjectTypeRegistry,
             placeTypeRegistry = placeTypeRegistry
         ) {
 
@@ -114,7 +114,7 @@ class OCNetTest {
         val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
             .withInputOutput(placeTypeRegistry)
             .withPlaceTypingAndInitialMarking(
-                placeTyping = placeObjectTypeRegistry,
+                placeTyping = placeToObjectTypeRegistry,
                 PlainMarking.of {
                     put("p1", 10)
                     put("p2", 4)
@@ -159,10 +159,10 @@ class OCNetTest {
             inputPlaces("p1 p2")
             outputPlaces("p4")
         }
-        val placeObjectTypeRegistry = PlaceObjectTypeRegistry.build()
+        val placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build()
 
         val ocNet = ocNetFacadeBuilder.tryBuildModelFromDSl(
-            placeObjectTypeRegistry = placeObjectTypeRegistry,
+            placeToObjectTypeRegistry = placeToObjectTypeRegistry,
             placeTypeRegistry = placeTypeRegistry
         ) {
             place("p1") { }.arcTo(transition("t1"))
@@ -181,7 +181,7 @@ class OCNetTest {
 
         val simulationParamsBuilder = SimulationParamsBuilder(ocNet)
             .withPlaceTypingAndInitialMarking(
-                placeObjectTypeRegistry = placeObjectTypeRegistry,
+                placeToObjectTypeRegistry = placeToObjectTypeRegistry,
                 PlainMarking.of {
                     put("p1", 10)
                     put("p2", 4)

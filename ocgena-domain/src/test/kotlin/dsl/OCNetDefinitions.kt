@@ -1,11 +1,11 @@
 package dsl
 
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
-import ru.misterpotz.ocgena.registries.PlaceObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import utils.toIds
 
-fun createExamplePlaceTyping() : PlaceObjectTypeRegistry {
-    return PlaceObjectTypeRegistry.build {
+fun createExamplePlaceTyping() : PlaceToObjectTypeRegistry {
+    return PlaceToObjectTypeRegistry.build {
         objectType("order", "o1 o2 o3 o4 o5")
         objectType("item", "i1 i2 i3 i4 i5 i6")
         objectType("route", "r1 r2 r3")

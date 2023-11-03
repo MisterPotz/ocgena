@@ -1,0 +1,10 @@
+package ru.misterpotz.ocgena.simulation.interactors
+
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
+import simulation.binding.EnabledBinding
+import simulation.binding.EnabledBindingWithTokens
+
+interface EnabledBindingResolverInteractor {
+    fun tryGetEnabledBinding(transition: Transition): EnabledBinding?
+    fun requireEnabledBindingWithTokens(objectBinding: EnabledBinding) : EnabledBindingWithTokens
+}
