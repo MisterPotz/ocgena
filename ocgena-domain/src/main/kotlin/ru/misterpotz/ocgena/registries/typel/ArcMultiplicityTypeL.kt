@@ -4,7 +4,6 @@ import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
 import model.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeL
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
 @Suppress("UNUSED")
@@ -14,7 +13,6 @@ class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
         return when (arc) {
             is NormalArc -> null
             is VariableArc -> null
-            is VariableArcTypeL -> null
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
     }
@@ -23,7 +21,6 @@ class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
         return when (arc) {
             is NormalArc -> arc.multiplicity
             is VariableArc -> 1
-            is VariableArcTypeL -> TODO()
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
     }
@@ -32,7 +29,6 @@ class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
         return when(arc) {
             is NormalArc -> TransferAmount.Normal(arc.multiplicity)
             is VariableArc -> TransferAmount.SimpleVariable
-            is VariableArcTypeL -> TransferAmount.VariableExpression(arc.expression.toString())
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
     }

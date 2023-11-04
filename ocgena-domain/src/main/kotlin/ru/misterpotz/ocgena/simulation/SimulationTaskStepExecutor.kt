@@ -1,6 +1,5 @@
-package simulation
+package ru.misterpotz.ocgena.simulation
 
-import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.interactors.BindingSelectionInteractor
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingsCollectorInteractor
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
@@ -12,6 +11,7 @@ import ru.misterpotz.ocgena.simulation.structure.OcNetInstance
 import ru.misterpotz.ocgena.simulation.transition.TransitionTokensLocker
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
+import simulation.Logger
 import javax.inject.Inject
 
 enum class Status {
@@ -29,18 +29,17 @@ interface SimulationStateProvider {
 }
 
 class SimulationStateProviderImpl @Inject constructor(
-    private val simulationConfig: SimulationConfig
+    simulationConfig: SimulationConfig
 ) : SimulationStateProvider {
-    val state = simulationConfig.templateOcNet.createInitialState()
-    val simulationTime = SimulationTime()
+    val state = simulationConfig.ocNetInstance.createInitialState()
+    private val simulationTime = SimulationTime()
     private val simulationStepState = SimulationStepState()
-    private val runningSimulatableOcNet = RunningSimulatableOcNet(simulationConfig.templateOcNet, state)
+    private val runningSimulatableOcNet = RunningSimulatableOcNet(simulationConfig.ocNetInstance, state)
     override var status: Status = Status.EXECUTING
 
     override fun getOcNetState(): OcNetInstance.State {
         return state
     }
-
 
     override fun getSimulationTime(): SimulationTime {
         return simulationTime
@@ -60,7 +59,6 @@ class SimulationStateProviderImpl @Inject constructor(
 }
 
 class SimulationTaskStepExecutor @Inject constructor(
-    simulationConfig: SimulationConfig,
     private val simulationStateProvider: SimulationStateProvider,
     private val bindingSelectionInteractor: BindingSelectionInteractor,
     private val transitionFinisher: TIFinisher,
@@ -69,13 +67,10 @@ class SimulationTaskStepExecutor @Inject constructor(
     private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
     private val bindingsCollector: EnabledBindingsCollectorInteractor,
 ) {
-    val ocNet = simulationConfig.templateOcNet
     val state: OcNetInstance.State
         get() = simulationStateProvider.getOcNetState()
-    val simulationTime get() = simulationStateProvider.getSimulationTime()
-    val simulationStepState get() = simulationStateProvider.getSimulationStepState()
-
-    val placeTyping get() = ocNet.ocNetScheme.placeToObjectTypeRegistry
+    private val simulationTime get() = simulationStateProvider.getSimulationTime()
+    private val simulationStepState get() = simulationStateProvider.getSimulationStepState()
 
     fun executeStep() {
         findAndFinishEndedTransitions()

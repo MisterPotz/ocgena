@@ -1,5 +1,6 @@
 package model
 
+import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -20,6 +21,8 @@ interface ArcsRegistry {
     fun withArrow(placeId: PetriAtomId): WithArrow
 
     operator fun get(arcId: PetriAtomId) : Arc
+    fun multiplicity(arcId: PetriAtomId) : ArcMultiplicity
+
     val iterable: Iterable<Arc>
     val size : Int
 
@@ -46,6 +49,10 @@ internal class ArcsRegistryMap(
 
     override fun get(arcId: PetriAtomId): Arc {
         return petriAtomRegistry[arcId] as Arc
+    }
+
+    override fun multiplicity(arcId: PetriAtomId): ArcMultiplicity {
+        return
     }
 
     override val iterable: Iterable<Arc> = petriAtomRegistry

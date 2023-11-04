@@ -29,7 +29,7 @@ class OCNetCheckerTest {
         )
         assertEquals(3, ocNet.inputPlaces.size)
         assertEquals(3, ocNet.outputPlaces.size)
-        assertEquals(3, ocNet.objectTypes.size)
+        assertEquals(3, ocNet.objectTypeRegistry.size)
     }
 
     private fun createAndCheckForConsistency(

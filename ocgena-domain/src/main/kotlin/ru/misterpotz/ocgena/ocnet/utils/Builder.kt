@@ -3,7 +3,6 @@ package ru.misterpotz.ocgena.ocnet.utils
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetImpl
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
@@ -20,7 +19,7 @@ class OCNetBuilder() {
         val builderRegistry = atomBlock.builderRegistry
 
         return OCNetImpl(
-            objectTypes = builderRegistry.objectTypes,
+            objectTypeRegistry = builderRegistry.objectTypeRegistry,
             placeTypeRegistry = builderRegistry.placeTypeRegistry,
             placeToObjectTypeRegistry = builderRegistry.placeObjectTypeRegistry,
             petriAtomRegistry = builderRegistry.petriAtomRegistry

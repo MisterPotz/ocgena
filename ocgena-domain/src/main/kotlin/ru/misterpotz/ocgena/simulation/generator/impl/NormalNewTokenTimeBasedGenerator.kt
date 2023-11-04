@@ -42,9 +42,9 @@ class NormalNewTokenTimeBasedGenerator(
         val generator = placeGenerators[placeId]!!
 
         return if (generator.mustGenerateNow()) {
-            val placeType = placeToObjectTypeRegistry[placeId]
+            val objectTypeId = placeToObjectTypeRegistry[placeId]
             generator.markAsNewGenerated()
-            newTokenTimeBasedGenerationFacade.generate(placeType)
+            newTokenTimeBasedGenerationFacade.generate(objectTypeId)
         } else null
     }
 

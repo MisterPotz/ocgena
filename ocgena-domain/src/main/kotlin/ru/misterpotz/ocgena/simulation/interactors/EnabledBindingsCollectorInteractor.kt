@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
-import simulation.SimulationStateProvider
+import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.interactors.factories.EnabledBindingResolverFactory
 import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
@@ -10,7 +10,7 @@ class EnabledBindingsCollectorInteractor @Inject constructor(
     simulationStateProvider: SimulationStateProvider,
     enabledBindingResolverFactory: EnabledBindingResolverFactory
 ) {
-    private val transitions = simulationStateProvider.runningSimulatableOcNet().composedOcNet.ocNetScheme.transitionsRegistry
+    private val transitions = simulationStateProvider.runningSimulatableOcNet().composedOcNet.ocNet.transitionsRegistry
 
     private val enabledBindingResolver = enabledBindingResolverFactory.create()
 

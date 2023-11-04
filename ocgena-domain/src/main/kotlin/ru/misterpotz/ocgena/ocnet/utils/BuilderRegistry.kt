@@ -32,7 +32,7 @@ internal class BuilderRegistry() {
         } as OCNetBuilder.ArcBlock
     }
 
-    val objectTypes by lazy(LazyThreadSafetyMode.NONE) {
+    val objectTypeRegistry by lazy(LazyThreadSafetyMode.NONE) {
         atomBuilders.values
             .asSequence()
             .filterIsInstance<OCNetBuilder.PlaceBlock>()
@@ -41,7 +41,11 @@ internal class BuilderRegistry() {
             .map {
                 ObjectType(it, id = it)
             }
-            .toMutableList()
+            .associateBy {
+                it.id
+            }.let {
+                ObjectTypeRegistry(it.toMutableMap())
+            }
     }
 
     val placeTypeRegistry by lazy(LazyThreadSafetyMode.NONE) {

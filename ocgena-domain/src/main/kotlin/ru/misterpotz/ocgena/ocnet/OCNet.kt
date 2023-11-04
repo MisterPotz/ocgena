@@ -2,11 +2,10 @@ package ru.misterpotz.ocgena.ocnet
 
 import kotlinx.serialization.Serializable
 import model.ArcsRegistry
-import ru.misterpotz.ocgena.eventlog.ObjectTypes
 import ru.misterpotz.ocgena.registries.*
 
 interface OCNet {
-    val objectTypes: ObjectTypes
+    val objectTypeRegistry: ObjectTypeRegistry
     val placeTypeRegistry: PlaceTypeRegistry
     val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry
     val placeRegistry: PlaceRegistry
@@ -22,7 +21,7 @@ typealias PlaceId = String
 
 @Serializable
 data class OCNetImpl(
-    override val objectTypes: ObjectTypes,
+    override val objectTypeRegistry: ObjectTypeRegistry,
     override val placeTypeRegistry: PlaceTypeRegistry,
     override val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     override val petriAtomRegistry: PetriAtomRegistry

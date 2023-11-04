@@ -1,6 +1,6 @@
-package simulation
+package ru.misterpotz.ocgena.simulation
 
-import ru.misterpotz.simulation.structure.RunningSimulatableOcNet
+import ru.misterpotz.ocgena.simulation.structure.RunningSimulatableOcNet
 
 
 interface ExecutionConditions {

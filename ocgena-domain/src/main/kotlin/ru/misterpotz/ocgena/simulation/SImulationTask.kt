@@ -1,9 +1,10 @@
-package simulation
+package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.token_generation.PlaceToObjectMarkingBySchemeCreatorFactory
+import simulation.Logger
 import javax.inject.Inject
 
 class SimulationTask @Inject constructor(
@@ -24,7 +25,7 @@ class SimulationTask @Inject constructor(
         val initialMarking = placeToObjectMarkingBySchemeCreatorFactory.create(initialMarkingScheme).create()
         pMarking.plus(initialMarking)
 
-        for (transition in ocNet.ocNetScheme.transitionsRegistry.iterable) {
+        for (transition in ocNet.ocNet.transitionsRegistry.iterable) {
             val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
             state.tTimesMarking.setNextAllowedTime(transition.id, nextAllowedTime)
         }

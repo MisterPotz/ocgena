@@ -14,13 +14,13 @@ class NewTokenTimeBasedGeneratorFactoryImpl @Inject constructor(
     private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
 ) : NewTokenTimeBasedGeneratorFactory {
     override fun createGenerationQueue(simulationConfig: SimulationConfig): NewTokenTimeBasedGenerator {
-        val ocNet = simulationConfig.templateOcNet
+        val ocNet = simulationConfig.ocNetInstance
 
         return simulationConfig.generationConfig?.let {
             NormalNewTokenTimeBasedGenerator(
                 generationConfig = it,
                 nextTimeSelector = newTokensGenerationTimeGenerator,
-                placeToObjectTypeRegistry = ocNet.ocNetScheme.placeToObjectTypeRegistry,
+                placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry,
                 newTokenTimeBasedGenerationFacade = newTokenTimeBasedGenerationFacade
             )
         } ?: NoOpNewTokenTimeBasedGenerator()

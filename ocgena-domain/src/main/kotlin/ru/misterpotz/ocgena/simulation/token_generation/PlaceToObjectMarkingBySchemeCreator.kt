@@ -1,21 +1,21 @@
 package ru.misterpotz.ocgena.simulation.token_generation
 
-import ru.misterpotz.ocgena.registries.ObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerationFacade
+import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import javax.inject.Inject
 
 class PlaceToObjectMarkingBySchemeCreatorFactory @Inject constructor(
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
+    currentSimulationDelegate: CurrentSimulationDelegate,
     private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade,
-    private val objectTypeRegistry: ObjectTypeRegistry,
 ) {
+    private val placeToObjectTypeRegistry = currentSimulationDelegate.placeToObjectTypeRegistry
+
     fun create(markingScheme: MarkingScheme): PlaceToObjectMarkingBySchemeCreator {
         return PlaceToObjectMarkingBySchemeCreator(
             markingScheme,
             placeToObjectTypeRegistry,
-            objectTypeRegistry,
             newTokenTimeBasedGenerationFacade
         )
     }
@@ -24,7 +24,6 @@ class PlaceToObjectMarkingBySchemeCreatorFactory @Inject constructor(
 class PlaceToObjectMarkingBySchemeCreator @Inject constructor(
     private val plainMarking: MarkingScheme,
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
-    private val objectTypeRegistry: ObjectTypeRegistry,
     private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
 ) {
     fun create(): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
@@ -35,8 +34,7 @@ class PlaceToObjectMarkingBySchemeCreator @Inject constructor(
                         val tokens = plainMarking[place]
                         repeat(tokens) {
                             val objectTypeID = placeToObjectTypeRegistry[place]
-                            val objectType = objectTypeRegistry[objectTypeID]
-                            add(newTokenTimeBasedGenerationFacade.generate(objectType).id)
+                            add(newTokenTimeBasedGenerationFacade.generate(objectTypeID).id)
                         }
                     }.toSortedSet())
                 }

@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.simulation.binding
 import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
 import ru.misterpotz.ocgena.simulation.interactors.TIOutputPlacesResolverInteractor
 import simulation.Logger
-import simulation.SimulationStateProvider
+import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import javax.inject.Inject
 
 interface TIFinisher {
