@@ -1,10 +1,19 @@
 package ru.misterpotz.ocgena.simulation.utils
 
 import model.*
+import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.PlaceId
+import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
+import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.TransitionsRegistry
+import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
+import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
+import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import simulation.utils.ObjectTokenStack
 import javax.inject.Inject
 
@@ -18,7 +27,7 @@ class TokenCollectorByTypeAndArcFactory @Inject constructor(
             transitionInstance = transitionInstance,
             repeatabilityInteractor = repeatabilityInteractor,
             tokenSelectionInteractor = tokenSelectionInteractor,
-            currentSimulationDelegate = currentSimulationDelegate
+            currentSimulationDelegate = currentSimulationDelegate,
         )
     }
 }
@@ -29,26 +38,23 @@ class TokenInputCollectorByTypeAndArc(
     private val tokenSelectionInteractor: TokenSelectionInteractor,
     currentSimulationDelegate: CurrentSimulationDelegate,
 ) {
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry = currentSimulationDelegate.placeTyping
-    private val arcsRegistry: ArcsRegistry = currentSimulationDelegate.arcs
-    private val transitionsRegistry: TransitionsRegistry = currentSimulationDelegate.transitions
+    val ocNet = currentSimulationDelegate.ocNet.ocNet
     private val transitionInputMarking = transitionInstance.lockedObjectTokens
-    private val transition = transitionsRegistry[transitionInstance.transition]
+    private val transition = ocNet.transitionsRegistry[transitionInstance.transition]
     private val transitionInputPlaces = transition.inputPlaces
-    private val transitionArcs = arcsRegistry[transition]
-
-
-    private val collectedThroughNormalArcsAcc = mutableMapOf<ObjectType, MutableList<ObjectTokenId>>()
-    private val collectedThroughOtherArcsAcc = mutableMapOf<ObjectType, MutableList<ObjectTokenId>>()
-
-    private fun addToNormalForPlaceAndType(placeId: PlaceId, type: ObjectType) {
+    private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
+    private val collectedThroughNormalArcsAcc = mutableMapOf<ObjectTypeId, MutableList<ObjectTokenId>>()
+    private val collectedThroughOtherArcsAcc = mutableMapOf<ObjectTypeId, MutableList<ObjectTokenId>>()
+    private val arcsRegistry = ocNet.arcsRegistry
+    private fun addToNormalForPlaceAndType(placeId: PlaceId, type: ObjectTypeId) {
         val placeObjectTokens = transitionInputMarking[placeId]!!
         val acc = collectedThroughNormalArcsAcc.getOrPut(type) { mutableListOf() }
         acc.addAll(placeObjectTokens)
     }
 
-    private fun addToOtherForPlaceAndType(placeId: PlaceId, type: ObjectType) {
+    private fun addToOtherForPlaceAndType(placeId: PlaceId, type: ObjectTypeId) {
         val placeObjectTokens = transitionInputMarking[placeId]!!
+
         val acc = collectedThroughOtherArcsAcc.getOrPut(type) { mutableListOf() }
         acc.addAll(placeObjectTokens)
     }
@@ -58,19 +64,20 @@ class TokenInputCollectorByTypeAndArc(
             repeatabilityInteractor
                 .sortPlaces(places = transitionInputPlaces)
                 .groupBy {
-                    placeToObjectTypeRegistry[it.id]
+                    placeToObjectTypeRegistry[it]
                 }
         inputPlaceObjects.forEach { (type, places) ->
             places.forEach { place ->
-                val arcWhichReachesPlace = transitionArcs[place]
-                when (arcWhichReachesPlace) {
-                    is NormalArc -> addToNormalForPlaceAndType(place.id, type)
-                    else -> addToOtherForPlaceAndType(place.id, type)
+                val arcId = place.arcIdTo(transition.id)
+                val arc = arcsRegistry[arcId]
+                when (arc) {
+                    is NormalArc -> addToNormalForPlaceAndType(place, type)
+                    else -> addToOtherForPlaceAndType(place, type)
                 }
             }
         }
 
-        fun shuffleCollectionsAndConvertToStacks(map: Map<ObjectType, MutableList<ObjectTokenId>>): Map<ObjectType, ObjectTokenStack> {
+        fun shuffleCollectionsAndConvertToStacks(map: Map<ObjectTypeId, MutableList<ObjectTokenId>>): Map<ObjectTypeId, ObjectTokenStack> {
             return map.mapValues { (_, tokens) ->
                 ObjectTokenStack(tokenSelectionInteractor.shuffleTokens(tokens))
             }
@@ -83,7 +90,7 @@ class TokenInputCollectorByTypeAndArc(
     }
 
     class ObjectTokenStacks(
-        val collectedThroughNormalArcs: Map<ObjectType, ObjectTokenStack>,
-        val collectedThroughOtherArcs: Map<ObjectType, ObjectTokenStack>
+        val collectedThroughNormalArcs: Map<ObjectTypeId, ObjectTokenStack>,
+        val collectedThroughOtherArcs: Map<ObjectTypeId, ObjectTokenStack>
     )
 }

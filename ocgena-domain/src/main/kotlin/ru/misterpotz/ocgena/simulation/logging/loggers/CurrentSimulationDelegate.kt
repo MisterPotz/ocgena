@@ -23,7 +23,7 @@ interface CurrentSimulationDelegate {
     val simGlobalTime: Time
     val simTime: SimulationTime
     val pMarking: PlaceToObjectMarking
-    val ocNet: OcNetInstance<*>
+    val ocNet: OcNetInstance
     val initialMarkingScheme: MarkingScheme
     val state: OcNetInstance.State
     val simulationStepState: SimulationStepState

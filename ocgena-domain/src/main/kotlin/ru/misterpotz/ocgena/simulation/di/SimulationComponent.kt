@@ -25,6 +25,7 @@ import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
+import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
 import simulation.random.RandomFactory
 import simulation.random.RandomFactoryImpl
 import javax.inject.Scope
@@ -67,10 +68,6 @@ internal abstract class SimulationModule {
 
     @Binds
     @SimulationScope
-    abstract fun objectTokenSet(objectTokenSet: ObjectTokenSetMap): ObjectTokenSet
-
-    @Binds
-    @SimulationScope
     abstract fun bindingOutputMarkingResolverFactory(factory: BindingOutputMarkingResolverFactoryImpl):
             BindingOutputMarkingResolverFactory
 
@@ -109,6 +106,17 @@ internal abstract class SimulationModule {
                 random,
                 intervalFunction = simulationConfig.templateOcNet.intervalFunction
             )
+        }
+        @Provides
+        @SimulationScope
+        fun objectTokenSet(): ObjectTokenSet {
+            return ObjectTokenSetMap(mutableMapOf())
+        }
+
+        @Provides
+        @SimulationScope
+        fun objectTokenGenerator() : ObjectTokenGenerator {
+            return ObjectTokenGenerator()
         }
 
         @Provides
