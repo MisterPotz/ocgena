@@ -1,11 +1,15 @@
 package ru.misterpotz.ocgena.simulation.logging.loggers
 
 import net.mamoe.yamlkt.Yaml
+import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.simulation.Time
+import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.utils.ExecutedBindingDebugPrinter
+import ru.misterpotz.ocgena.utils.TransitionInstanceDebugPrinter
 import simulation.client.loggers.NoOpLogger
 import utils.*
-import java.io.Writer
 import javax.inject.Inject
 
 class ANSIDebugTracingLogger @Inject constructor(
@@ -13,6 +17,8 @@ class ANSIDebugTracingLogger @Inject constructor(
     private val simulationConfig: SimulationConfig,
     val yaml: Yaml,
     val developmentDebugConfig: DevelopmentDebugConfig,
+    val transitionInstanceDebugPrinter: TransitionInstanceDebugPrinter,
+    val executedBindingDebugPrinter: ExecutedBindingDebugPrinter,
     val writer: Writer,
 ) : NoOpLogger(), CurrentSimulationDelegate by currentSimulationDelegate {
     private fun dumpState(): String {
@@ -77,15 +83,19 @@ class ANSIDebugTracingLogger @Inject constructor(
     }
 
     override fun onStartTransition(transition: TransitionInstance) {
-        writer.writeLine(transition.prettyPrintStarted().trimMargin().indentMargin(3))
+        with(transitionInstanceDebugPrinter) {
+            writer.writeLine(prettyPrintStarted(transition).trimMargin().indentMargin(3))
+        }
     }
 
     override fun beforeEndingTransitions() {
-        writer.writeLine("""ending transitions:""".indent(2))
+        writer.writeLine("""ending transitions:""".indent(2, "\t"))
     }
 
     override fun onEndTransition(executedBinding: ExecutedBinding) {
-        writer.writeLine(executedBinding.prettyPrintExecuted().indentMargin(3, margin = "x"))
+        with(executedBindingDebugPrinter) {
+            writer.writeLine(prettyPrintExecuted(executedBinding).indentMargin(3, margin = "x"))
+        }
     }
 
     override fun onExecutionStepFinish(newTimeDelta: Time) {

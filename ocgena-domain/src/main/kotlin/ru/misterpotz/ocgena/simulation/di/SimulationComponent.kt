@@ -18,7 +18,7 @@ import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegateImpl
-import ru.misterpotz.ocgena.simulation.logging.loggers.FullLoggerFactory
+import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
 import simulation.*
 import simulation.binding.BindingOutputMarkingResolverFactory
@@ -40,30 +40,6 @@ internal abstract class SimulationModule {
     @SimulationScope
     abstract fun bindingSelector(bindingSelector: BindingSelectionInteractorImpl): BindingSelectionInteractor
 
-    @Provides
-    @SimulationScope
-    fun executionConditions(): ExecutionConditions {
-        return SimpleExecutionConditions()
-    }
-
-    @Provides
-    @SimulationScope
-    fun logger(fullLoggerFactory: FullLoggerFactory) : Logger {
-        return fullLoggerFactory.createLogger()
-    }
-
-    @Provides
-    @SimulationScope
-    fun random(randomFactory: RandomFactoryImpl): Random {
-        return randomFactory.create()
-    }
-
-    @Provides
-    @SimulationScope
-    fun labelMapping(simulationConfig: SimulationConfig): NodeToLabelRegistry {
-        return simulationConfig.nodeToLabelRegistry
-    }
-
     @Binds
     @SimulationScope
     abstract fun simulationStateProvider(simulationStateProviderImpl: SimulationStateProviderImpl):
@@ -73,71 +49,16 @@ internal abstract class SimulationModule {
     @SimulationScope
     abstract fun currentSimulationDelegate(currentSimulationDelegate: CurrentSimulationDelegateImpl): CurrentSimulationDelegate
 
-    @Provides
-    @SimulationScope
-    fun objectTokenMover(objectTokenMoverFactory: ObjectTokenMoverFactoryImpl) : LockedTokensMover {
-        return objectTokenMoverFactory.create()
-    }
-
-    @Provides
-    @SimulationScope
-    fun provideTransitionDurationSelector(
-        random: Random,
-        simulationConfig: SimulationConfig
-    ): TransitionInstanceDurationGenerator {
-        return TransitionInstanceDurationGenerator(
-            random,
-            intervalFunction = simulationConfig.templateOcNet.intervalFunction
-        )
-    }
-
-    @Provides
-    @SimulationScope
-    fun transitionInstanceOccurrenceDeltaSelector(
-        random: Random,
-        simulationConfig: SimulationConfig
-    ): TransitionNextInstanceAllowedTimeGenerator {
-        return TransitionNextInstanceAllowedTimeGenerator(
-            random,
-            intervalFunction = simulationConfig.templateOcNet.intervalFunction
-        )
-    }
-
-    @Provides
-    @SimulationScope
-    fun ocNetType(simulationConfig: SimulationConfig): OcNetType {
-        return simulationConfig.ocNetType
-    }
 
     @Binds
     @SimulationScope
     abstract fun objectTokenMoverFactory(objectTokenMoverFactory: ObjectTokenMoverFactoryImpl): ObjectTokenMoverFactory
-
-    @Provides
-    @SimulationScope
-    abstract fun bindingOutputMarkingResolverFactory(factory: BindingOutputMarkingResolverFactoryImpl):
-            BindingOutputMarkingResolverFactory
-
-    @Provides
-    @SimulationScope
-    fun bindingOutputMarkingResolver(bindingOutputMarkingResolverFactory: BindingOutputMarkingResolverFactory): TIOutputPlacesResolverInteractor {
-        return bindingOutputMarkingResolverFactory.create()
-    }
 
     @Binds
     @SimulationScope
     abstract fun generationQueueFactory(
         simulationConfig: NewTokenTimeBasedGeneratorFactoryImpl
     ): NewTokenTimeBasedGeneratorFactory
-
-    @Provides
-    @SimulationScope
-    fun generationQueue(
-        simulationConfig: SimulationConfig,
-        newTokenTimeBasedGeneratorFactory: NewTokenTimeBasedGeneratorFactory
-    ): NewTokenTimeBasedGenerator {
-        return newTokenTimeBasedGeneratorFactory.createGenerationQueue(simulationConfig)
-    }
 
     @Binds
     @SimulationScope
@@ -147,11 +68,93 @@ internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun objectTokenSet(objectTokenSet: ObjectTokenSetMap): ObjectTokenSet
+
+    @Binds
+    @SimulationScope
+    abstract fun bindingOutputMarkingResolverFactory(factory: BindingOutputMarkingResolverFactoryImpl):
+            BindingOutputMarkingResolverFactory
+
+    companion object {
+        @Provides
+        @SimulationScope
+        fun logger(fullLoggerFactory: FullLoggerFactory): Logger {
+            return fullLoggerFactory.createLogger()
+        }
+
+        @Provides
+        @SimulationScope
+        fun random(randomFactory: RandomFactoryImpl): Random {
+            return randomFactory.create()
+        }
+
+        @Provides
+        @SimulationScope
+        fun labelMapping(simulationConfig: SimulationConfig): NodeToLabelRegistry {
+            return simulationConfig.nodeToLabelRegistry
+        }
+
+        @Provides
+        @SimulationScope
+        fun objectTokenMover(objectTokenMoverFactory: ObjectTokenMoverFactoryImpl): LockedTokensMover {
+            return objectTokenMoverFactory.create()
+        }
+
+        @Provides
+        @SimulationScope
+        fun provideTransitionDurationSelector(
+            random: Random,
+            simulationConfig: SimulationConfig
+        ): TransitionInstanceDurationGenerator {
+            return TransitionInstanceDurationGenerator(
+                random,
+                intervalFunction = simulationConfig.templateOcNet.intervalFunction
+            )
+        }
+
+        @Provides
+        @SimulationScope
+        fun transitionInstanceOccurrenceDeltaSelector(
+            random: Random,
+            simulationConfig: SimulationConfig
+        ): TransitionNextInstanceAllowedTimeGenerator {
+            return TransitionNextInstanceAllowedTimeGenerator(
+                random,
+                intervalFunction = simulationConfig.templateOcNet.intervalFunction
+            )
+        }
+
+        @Provides
+        @SimulationScope
+        fun ocNetType(simulationConfig: SimulationConfig): OcNetType {
+            return simulationConfig.ocNetType
+        }
+
+        @Provides
+        @SimulationScope
+        fun bindingOutputMarkingResolver(bindingOutputMarkingResolverFactory: BindingOutputMarkingResolverFactory): TIOutputPlacesResolverInteractor {
+            return bindingOutputMarkingResolverFactory.create()
+        }
+
+        @Provides
+        @SimulationScope
+        fun generationQueue(
+            simulationConfig: SimulationConfig,
+            newTokenTimeBasedGeneratorFactory: NewTokenTimeBasedGeneratorFactory
+        ): NewTokenTimeBasedGenerator {
+            return newTokenTimeBasedGeneratorFactory.createGenerationQueue(simulationConfig)
+        }
+
+        @Provides
+        @SimulationScope
+        fun executionConditions(): ExecutionConditions {
+            return SimpleExecutionConditions()
+        }
+    }
 }
 
 interface SimulationComponentDependencies {
     val json: Json
-    val yaml : Yaml
+    val yaml: Yaml
 }
 
 @SimulationScope
@@ -169,7 +172,8 @@ interface SimulationComponent {
             @BindsInstance loggingConfiguration: LogConfiguration,
             @BindsInstance randomFactory: RandomFactory,
             @BindsInstance developmentDebugConfig: DevelopmentDebugConfig,
-            @BindsInstance stepAggregatingLogReceiver: StepAggregatingLogReceiver
+            @BindsInstance stepAggregatingLogReceiver: StepAggregatingLogReceiver,
+            componentDependencies: SimulationComponentDependencies,
         ): SimulationComponent
     }
 }

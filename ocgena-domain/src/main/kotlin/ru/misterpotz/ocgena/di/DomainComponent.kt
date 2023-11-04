@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.di
 
 import dagger.Component
+import dagger.Module
 import dagger.Provides
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -10,13 +11,15 @@ import net.mamoe.yamlkt.YamlBuilder
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import javax.inject.Scope
 
+@Module
 class DomainModule {
-    @Provides
-    @ru.misterpotz.ocgena.di.DomainScope
-    fun json(): Json {
-        return Json {
-            prettyPrint = true
-            serializersModule = SerializersModule {
+    companion object {
+        @Provides
+        @DomainScope
+        fun json(): Json {
+            return Json {
+                prettyPrint = true
+                serializersModule = SerializersModule {
 //                polymorphic(baseClass = SerializableAtom::class) {
 //                    subclass(SerializablePlace::class, SerializablePlace.serializer())
 //                    subclass(SerializableTransition::class, SerializableTransition.serializer())
@@ -30,18 +33,18 @@ class DomainModule {
 //                polymorphic(ObjectValuesMap::class) {
 //                    subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
 //                }
+                }
             }
         }
-    }
 
-    @Provides
-    @ru.misterpotz.ocgena.di.DomainScope
-    fun yaml(): Yaml {
-        return Yaml {
-            this.listSerialization = YamlBuilder.ListSerialization.AUTO
-            this.mapSerialization = YamlBuilder.MapSerialization.BLOCK_MAP
+        @Provides
+        @DomainScope
+        fun yaml(): Yaml {
+            return Yaml {
+                this.listSerialization = YamlBuilder.ListSerialization.AUTO
+                this.mapSerialization = YamlBuilder.MapSerialization.BLOCK_MAP
 
-            serializersModule = SerializersModule {
+                serializersModule = SerializersModule {
 //                polymorphic(baseClass = SerializableAtom::class) {
 //                    subclass(SerializablePlace::class, SerializablePlace.serializer())
 //                    subclass(SerializableTransition::class, SerializableTransition.serializer())
@@ -56,13 +59,14 @@ class DomainModule {
 //                polymorphic(ObjectValuesMap::class) {
 //                    subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
 //                }
+                }
             }
         }
     }
 }
 
-@ru.misterpotz.ocgena.di.DomainScope
-@Component(modules = [ru.misterpotz.ocgena.di.DomainModule::class])
+@DomainScope
+@Component(modules = [DomainModule::class])
 interface DomainComponent : SimulationComponentDependencies {
 
 }

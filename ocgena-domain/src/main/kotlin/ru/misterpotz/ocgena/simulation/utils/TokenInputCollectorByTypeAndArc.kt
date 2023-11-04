@@ -1,16 +1,11 @@
-package simulation.utils
+package ru.misterpotz.ocgena.simulation.utils
 
 import model.*
-import ru.misterpotz.marking.objects.ObjectTokenId
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.model.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.TransitionsRegistry
 import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.simulation.api.interactors.RepeatabilityInteractor
-import ru.misterpotz.simulation.api.interactors.TokenSelectionInteractor
-import ru.misterpotz.simulation.logging.loggers.CurrentSimulationDelegate
+import simulation.utils.ObjectTokenStack
 import javax.inject.Inject
 
 class TokenCollectorByTypeAndArcFactory @Inject constructor(

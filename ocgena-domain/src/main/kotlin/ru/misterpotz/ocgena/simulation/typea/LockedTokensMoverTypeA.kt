@@ -7,7 +7,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.LockedTokensMover
-import simulation.utils.TokenCollectorByTypeAndArcFactory
+import ru.misterpotz.ocgena.simulation.utils.TokenCollectorByTypeAndArcFactory
 import javax.inject.Inject
 
 class LockedTokensMoverTypeA @Inject constructor(

@@ -1,7 +1,8 @@
 plugins {
-    kotlin("jvm")
-    kotlin("kapt")
-    kotlin("plugin.serialization") version "1.8.21"
+    id("kotlin")
+//    kotlin("kapt")
+    id("com.google.devtools.ksp") version "1.9.0-1.0.12"
+    kotlin("plugin.serialization") version "1.9.20"
 }
 
 group = "ru.misterpotz"
@@ -18,11 +19,16 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation(project(":ocgena-math-parexper"))
 
-    implementation("com.google.dagger:dagger:2.48.1")
-    kapt("com.google.dagger:dagger-compiler:2.48.1")
+    implementation("com.google.dagger:dagger:2.48")
+//    kapt("com.google.dagger:dagger-compiler:2.48.1")
+    ksp("com.google.dagger:dagger-compiler:2.48")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+}
+
+kotlin {
+    jvmToolchain(8)
 }
 
 tasks.test {
