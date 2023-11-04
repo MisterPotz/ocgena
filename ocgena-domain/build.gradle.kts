@@ -1,5 +1,5 @@
 plugins {
-    id("kotlin")
+    kotlin("jvm")
     kotlin("kapt")
     kotlin("plugin.serialization") version "1.8.21"
 }

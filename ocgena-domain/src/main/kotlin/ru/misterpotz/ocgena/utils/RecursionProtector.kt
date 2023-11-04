@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.ocnet.primitives.utils
+package ru.misterpotz.ocgena.utils
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
