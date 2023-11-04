@@ -2,14 +2,14 @@ package ru.misterpotz.ocgena.registries.typea
 
 import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
 class ArcToMultiplicityTypeARegistry : ArcMultiplicity {
     fun getMultiplicity(arc: Arc) : Int {
         return when (arc) {
             is NormalArc -> arc.multiplicity
-            is VariableArcTypeA -> 1
+            is VariableArc -> 1
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
     }
@@ -17,7 +17,7 @@ class ArcToMultiplicityTypeARegistry : ArcMultiplicity {
     fun getAbstractTransferAmount(arc: Arc) : TransferAmount {
         return when(arc) {
             is NormalArc -> TransferAmount.Normal(arc.multiplicity)
-            is VariableArcTypeA -> TransferAmount.Variable
+            is VariableArc -> TransferAmount.Variable
             else -> TransferAmount.Wrong(trace = "[unknown arc ${arc::class.simpleName}]")
         }
     }

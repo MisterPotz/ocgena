@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.ocnet.primitives.utils
 
 import ru.misterpotz.ocgena.dsl.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
@@ -74,7 +74,7 @@ class OCNetDSLConverter {
         val arcId = elementsIdCreator.createArcId(arcDSL)
         val arc = when (arcDSL) {
             is VariableArcDSL -> {
-                VariableArcTypeA(
+                VariableArc(
                     id = arcId
                 )
             }

@@ -1,19 +1,11 @@
 package dsl
 
-import ru.misterpotz.ocgena.dsl.OCNetBuilder
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
+import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import utils.toIds
 
-fun createExamplePlaceTyping() : PlaceToObjectTypeRegistry {
-    return PlaceToObjectTypeRegistry.build {
-        objectType("order", "o1 o2 o3 o4 o5")
-        objectType("item", "i1 i2 i3 i4 i5 i6")
-        objectType("route", "r1 r2 r3")
-    }
-}
-
-fun createExampleInputOutputPlaces() : PlaceTypeRegistry {
+fun createExampleInputOutputPlaces(): PlaceTypeRegistry {
     return PlaceTypeRegistry.build {
         inputPlaces("o1 i1 r1".toIds())
         outputPlaces("o5 i6 r3".toIds())
@@ -23,54 +15,71 @@ fun createExampleInputOutputPlaces() : PlaceTypeRegistry {
 /**
  * @see <img src="src/jvmTest/resources/img.png" >
  */
-fun createExampleModel() {
-    val ocNet = OCNetBuilder.define {
-        val order = objectType("order") {
-            "o$it"
+fun createExampleModel(): OCNet {
+    return OCNetBuilder().defineAtoms {
+        // places and objects
+        for (i in 1..5) {
+            "o$i".p {
+                objectTypeId = "order"
+            }
         }
-        val item = objectType("item")
-        val route = objectType("route") {
-            "r$it"
+        for (i in 1..6) {
+            "i$i".p {
+                objectTypeId = "item"
+            }
         }
+        for (i in 1..3) {
+            "r$i".p {
+                objectTypeId = "route"
+            }
+        }
+        // inputs and outputs
+        "o1".p { input }
+        "i1".p { input }
+        "r1".p { input }
 
-        forType(order) {
-            place("o1").arcTo(transition("place order"))
-                .arcTo(place("o2"))
-                .arcTo(transition("send invoice"))
-                .connectTo(subgraph {
-                    val place = place("o3")
-                    inNode
-                        .arcTo(place)
-                        .arcTo(transition("send reminder"))
-                        .arcTo(place)
-                        .arcTo(outNode)
-                })
-                .connectTo(transition("pay order"))
-                .arcTo(place("o4"))
-                .arcTo(transition("mark as completed"))
-                .arcTo(place("o5"))
-        }
+        "o5".p { output }
+        "i6".p { output }
+        "r3".p { output }
 
-        forType(item) {
-            place("i1")
-                .variableArcTo(transition("place order"))
-                .variableArcTo(place("i2"))
-                .arcTo(transition("pick item"))
-                .arcTo(place("i3"))
-                .variableArcTo(transition("start route"))
-                .variableArcTo(place("i4"))
-                .variableArcTo(transition("end route"))
-                .variableArcTo(place("i5"))
-                .variableArcTo(transition("mark as completed"))
-                .variableArcTo(place("i6"))
-        }
+        // transitions
+        val placeOrder = "place order".t
+        val sendInvoice = "send invoice".t
+        val pickItem = "pick item".t
+        val startRoute = "start route".t
+        val endRoute = "end route".t
+        val markCompl = "mark as completed".t
+        val payOrder = "pay order".t
+        val sendReminder = "send reminder".t
 
-        forType(route) {
-            place("r1").arcTo(transition("start route"))
-                .arcTo(place("r2"))
-                .arcTo(transition("end route"))
-                .arcTo(place("r3"))
-        }
+        // arcs
+        "o1".arc(placeOrder)
+            .arc("o2")
+            .arc(sendInvoice)
+            .arc("o3")
+            .also { o3 ->
+                o3.arc(sendReminder)
+                    .arc(o3)
+            }
+            .arc(payOrder)
+            .arc("o4")
+            .arc(markCompl)
+            .arc("o5")
+
+        "i1".arc(placeOrder) { vari }
+            .arc("i2") { vari }
+            .arc(pickItem)
+            .arc("i3")
+            .arc(startRoute) { vari }
+            .arc("i4") { vari }
+            .arc(endRoute) { vari }
+            .arc("i5") { vari }
+            .arc(markCompl) { vari }
+            .arc("i6") { vari }
+
+        "r1".arc(startRoute)
+            .arc("r2")
+            .arc(endRoute)
+            .arc("r3")
     }
-    return ocNet
 }

@@ -3,9 +3,7 @@ package ru.misterpotz.ocgena.validation
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import ru.misterpotz.ocgena.error.ErrorLevel
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.StaticCoreOcNetScheme
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 
 class OCNetChecker(
@@ -13,32 +11,18 @@ class OCNetChecker(
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
     private val ocNet: OCNet,
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
-    private val placeTypeRegistry: PlaceTypeRegistry,
-    private val petriAtomRegistry: PetriAtomRegistry
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
+    private val placeTypeRegistry: PlaceTypeRegistry = ocNet.placeTypeRegistry
     val inputPlaces = placeTypeRegistry.getInputPlaces(ocNet.placeRegistry)
     val outputPlaces = placeTypeRegistry.getOutputPlaces(ocNet.placeRegistry)
+    private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
+    private val petriAtomRegistry: PetriAtomRegistry = ocNet.petriAtomRegistry
 
     val isConsistent: Boolean
         get() {
             return checkConsistency(lastConsistencyResults)
         }
-
-    fun createWellFormedOCNet(): StaticCoreOcNetScheme {
-        require(isConsistent)
-
-        return StaticCoreOcNetScheme(
-            inputPlaceRegistry = require(inputPlaces.isEmpty().not()).let { inputPlaces },
-            outputPlaceRegistry = require(outputPlaces.isEmpty().not()).let { outputPlaces },
-            objectTypes = placeToObjectTypeRegistry.allObjectTypes().toMutableList(),
-            placeRegistry = ocNet.placeRegistry,
-            transitionsRegistry = ocNet.transitionsRegistry,
-            arcsRegistry = ocNet.arcsRegistry,
-            placeToObjectTypeRegistry = placeToObjectTypeRegistry,
-        )
-    }
 
     fun checkConsistency(): List<ConsistencyCheckError> {
         val inconsistencies = mutableListOf<ConsistencyCheckError>()

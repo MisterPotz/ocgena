@@ -6,6 +6,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 interface TransitionsRegistry {
     operator fun get(transition: PetriAtomId) : Transition
     val iterable : Iterable<Transition>
+    val size : Int
 }
 
 fun TransitionsRegistry(petriAtomRegistry: PetriAtomRegistry) : TransitionsRegistry {
@@ -21,4 +22,6 @@ internal class TransitionsRegistryMap(
 
     override val iterable: Iterable<Transition>
         get() = petriAtomRegistry.getTransitions().map { petriAtomRegistry.getTransition(it) }
+    override val size: Int
+        get() = iterable.count()
 }

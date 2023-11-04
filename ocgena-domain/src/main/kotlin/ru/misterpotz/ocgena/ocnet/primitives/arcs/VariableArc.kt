@@ -1,23 +1,20 @@
 package ru.misterpotz.ocgena.ocnet.primitives.arcs
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import ru.misterpotz.ocgena.ocnet.primitives.typel.ArcExpression
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
-data class VariableArcTypeL(
+data class VariableArc(
     override val id: String,
-    val expression: ArcExpression,
 ) : Arc() {
-
     override fun isSameArcType(other: Arc): Boolean {
-        return other is VariableArcTypeL
+        return other is VariableArc
     }
 
     override fun isSameType(other: PetriAtom): Boolean {
-        return other is VariableArcTypeL
+        return other is VariableArc
     }
 
     override fun toString(): String {
-        return "$expression=>"
+        return "[ $id ]"
     }
 }

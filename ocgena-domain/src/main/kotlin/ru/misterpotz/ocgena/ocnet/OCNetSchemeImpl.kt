@@ -1,12 +1,5 @@
 package ru.misterpotz.ocgena.ocnet
 
-import model.ArcsRegistry
-import ru.misterpotz.ocgena.registries.PlaceRegistry
-import ru.misterpotz.ocgena.registries.TransitionsRegistry
-import ru.misterpotz.ocgena.eventlog.ObjectTypes
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
-
 
 //class OCNetSchemeImpl(
 //    override val placeRegistry : PlaceRegistry,

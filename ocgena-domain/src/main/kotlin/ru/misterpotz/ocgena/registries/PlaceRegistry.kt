@@ -7,6 +7,7 @@ interface PlaceRegistry {
     operator fun get(place: PetriAtomId): Place
     val iterable: Iterable<Place>
     fun isEmpty(): Boolean
+    val size : Int
 }
 
 fun PlaceRegistry(petriAtomRegistry: PetriAtomRegistry): PlaceRegistry {
@@ -22,6 +23,9 @@ internal class PlaceRegistryMap(private val petriAtomRegistry: PetriAtomRegistry
     override fun isEmpty(): Boolean {
         return petriAtomRegistry.getPlaces().toList().isEmpty()
     }
+
+    override val size: Int
+        get() = iterable.count()
 
     override val iterable: Iterable<Place> = petriAtomRegistry
         .getPlaces()

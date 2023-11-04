@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.validation
 
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
@@ -172,7 +172,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             // case 4 - only variability arc serves as input or output arc
             if (transition.inputPlaces.size == 1) {
                 val firstInputPlace = transition.inputPlaces.first()
-                if (firstInputPlace.arcTo(transition.id) is VariableArcTypeA) {
+                if (firstInputPlace.arcTo(transition.id) is VariableArc) {
                     inconsistenciesSet.add(
                         ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                             transition = transition.id,
@@ -184,7 +184,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             if (transition.outputPlaces.size == 1) {
                 val firstOutputPlace = transition.outputPlaces.first()
 
-                if (transition.id.arcTo(firstOutputPlace) is VariableArcTypeA) {
+                if (transition.id.arcTo(firstOutputPlace) is VariableArc) {
                     inconsistenciesSet.add(
                         ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                             transition = transition.id,

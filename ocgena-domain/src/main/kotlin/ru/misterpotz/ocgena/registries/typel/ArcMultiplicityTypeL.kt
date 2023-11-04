@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.registries.typel
 import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
 import model.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeL
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 
@@ -13,7 +13,7 @@ class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
     fun getVariableDependency(arc: Arc) : String? {
         return when (arc) {
             is NormalArc -> null
-            is VariableArcTypeA -> null
+            is VariableArc -> null
             is VariableArcTypeL -> null
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
@@ -22,7 +22,7 @@ class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
     fun getMultiplicity(arc: Arc, ) : Int {
         return when (arc) {
             is NormalArc -> arc.multiplicity
-            is VariableArcTypeA -> 1
+            is VariableArc -> 1
             is VariableArcTypeL -> TODO()
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }
@@ -31,7 +31,7 @@ class ArcMultiplicityTypeL(val arcsRegistry : ArcsRegistry) : ArcMultiplicity {
     fun getAbstractTransferAmount(arc: Arc) : TransferAmount {
         return when(arc) {
             is NormalArc -> TransferAmount.Normal(arc.multiplicity)
-            is VariableArcTypeA -> TransferAmount.SimpleVariable
+            is VariableArc -> TransferAmount.SimpleVariable
             is VariableArcTypeL -> TransferAmount.VariableExpression(arc.expression.toString())
             else -> throw IllegalStateException("can't calculate arc multiplicity for unsupported type")
         }

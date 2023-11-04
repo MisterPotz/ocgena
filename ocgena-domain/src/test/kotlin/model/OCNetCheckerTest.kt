@@ -2,79 +2,53 @@ package model
 
 import dsl.*
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
-import ru.misterpotz.ocgena.ocnet.primitives.utils.OCNetDSLConverter
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.dsl.OCNetBuilder
-import ru.misterpotz.ocgena.dsl.OCScope
-import ru.misterpotz.ocgena.dsl.ObjectsSearcher
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
+import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.validation.OCNetChecker
 
 class OCNetCheckerTest {
-    val ocScopeImpl = createExampleModel()
-    private val placeTyping = createExamplePlaceTyping()
-    private val inputOutputPlaces = createExampleInputOutputPlaces()
-
+    val ocNet = createExampleModel()
 
     @Test
     fun checkConvertionResults() {
+        assertTrue(ocNet.placeRegistry.isEmpty().not(), "converted places were empty ")
 
-        assertTrue(result.places.isNotEmpty(), "converted places were empty ")
-
-        assertTrue(result.places.size == 14, "incorrect amount of places")
-//        assertEquals(24, result.arcs.size, "incorrect amount of arcs")
-        assertEquals(8, result.transitions.size, "incorrect amount of transitions")
+        assertEquals(14, ocNet.placeRegistry.iterable.toList().size, "incorrect amount of places")
+        assertEquals(24, ocNet.arcsRegistry.iterable.toList().size, "incorrect amount of arcs")
+        assertEquals(8, ocNet.transitionsRegistry.iterable.toList().size, "incorrect amount of transitions")
     }
 
     @Test
     fun checkCorrectModelIsConsistent() {
-        val converter = OCNetDSLConverter()
-        val result = converter.convert()
-        val places = result.places
-        val consistencyChecker = OCNetChecker(
-            result,
-            placeTyping,
-            inputOutputPlaces
-        )
+        val consistencyChecker = OCNetChecker(ocNet)
         val consistencyResults = consistencyChecker.checkConsistency()
         assertTrue(
             consistencyResults.isEmpty(),
             "inconsistencies detected:\n" + consistencyResults.joinToString(separator = "\n").prependIndent()
         )
-        val consistentNet = consistencyChecker.createWellFormedOCNet()
-        assertEquals(3, consistentNet.inputPlaceRegistry.size)
-        assertEquals(3, consistentNet.outputPlaceRegistry.size)
-        assertEquals(3, consistentNet.objectTypes.size)
+        assertEquals(3, ocNet.inputPlaces.size)
+        assertEquals(3, ocNet.outputPlaces.size)
+        assertEquals(3, ocNet.objectTypes.size)
     }
 
     private fun createAndCheckForConsistency(
-        placeTypeRegistry: PlaceTypeRegistry,
-        placeToObjectTypeRegistry: PlaceToObjectTypeRegistry = PlaceToObjectTypeRegistry.build(),
-        block: OCScope.() -> Unit
+        block: OCNetBuilder.AtomDefinitionBlock.() -> Unit
     ): List<ConsistencyCheckError> {
-        val ocScope = OCNetBuilder.define(block)
-        val converter = OCNetDSLConverter()
-        val convertionResult = converter.convert()
+        val ocNet = OCNetBuilder().defineAtoms(block)
         val ocnetChecker = OCNetChecker(
-            convertionResult,
-            placeToObjectTypeRegistry,
-            placeTypeRegistry
+            ocNet,
         )
         return ocnetChecker.checkConsistency()
     }
 
     @Test
-    fun checkInputOutputAbsence() {
-        val errors = createAndCheckForConsistency(
-            placeTypeRegistry = PlaceTypeRegistry.build {
-            },
-            placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build()
-        ) {
-            place { }
-            // place types not specified
-            place { }.arcTo(transition { }).arcTo(place { })
+    fun `place types not specified`() {
+        val errors = createAndCheckForConsistency {
+            "p1".p
+            "p2".p
+                .arc("t1".t)
+                .arc("p2".p)
         }
         assertTrue(errors.isNotEmpty(), "errors were expected ")
         assertNotNull(errors.find { it is ConsistencyCheckError.NoInputPlacesDetected }) { "isolated error expected" }
@@ -82,13 +56,11 @@ class OCNetCheckerTest {
     }
 
     @Test
-    fun checkIsolatedSubgraphPresent() {
-        val errors = createAndCheckForConsistency(
-            placeTypeRegistry = PlaceTypeRegistry.build { }
-        ) {
-            // isolated place
-            place { }
-            place { }.arcTo(transition { })
+    fun `isolated place`() {
+        val errors = createAndCheckForConsistency {
+            "p1".p
+            "p2".p
+                .arc("t1".t)
         }
         assertTrue(errors.isNotEmpty(), "errors were expected ")
         assertNotNull(errors.find { it is ConsistencyCheckError.IsolatedSubgraphsDetected }) { "isolated error expected" }
@@ -96,13 +68,14 @@ class OCNetCheckerTest {
 
     @Test
     fun checkMissingArcsAndTransitions() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build { }
-        ) {
-            place { }
-            transition { }
-            place { }
-            place { }.arcTo(transition { }).arcTo(place { })
+        val errors = createAndCheckForConsistency {
+            "p1".p
+            "t1".t
+            "p2".p
+
+            "p3".p()
+                .arc("t2".t)
+                .arc("p4".p)
         }
 
         assertNotNull(errors.find { it is ConsistencyCheckError.MissingArc })
@@ -113,26 +86,14 @@ class OCNetCheckerTest {
     @Test
     fun checkIsConsistentWhenWarningsAndOnlyVariableArcs() {
         // TODO: check that input and output are presented for a subgraph
-
-        val placeToObjectTypeRegistry = PlaceToObjectTypeRegistry.build {
-            objectType("custom", "p4")
+        val ocNet = OCNetBuilder().defineAtoms {
+            "p1".p
+            "p2".p
+                .arc("t1".t) { vari }
+                .arc("p3")
         }
-        val placeTypeRegistry = PlaceTypeRegistry.build {
-            inputPlaces("p3")
-            outputPlaces("p4")
-        }
-        val ocScope = OCNetBuilder.define {
-            place { }
-            place { }
-            place { }
-                .variableArcTo(transition { })
-                .arcTo(place { })
-        }
-        val converter = OCNetDSLConverter()
-        val convertionResult = converter.convert()
-        val ocnetChecker = OCNetChecker(convertionResult, placeToObjectTypeRegistry, placeTypeRegistry)
+        val ocnetChecker = OCNetChecker(ocNet)
         val errors = ocnetChecker.checkConsistency()
-        val objectSearcher = ObjectsSearcher(ocScope)
 
         assertTrue(
             ocnetChecker.isConsistent,
@@ -144,10 +105,9 @@ class OCNetCheckerTest {
 
     @Test
     fun testIsNotBipartiteError() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build { }
-        ) {
-            place { }.arcTo(place { })
+        val errors = createAndCheckForConsistency {
+            "p1".p
+                .arc("p2".p)
         }
 
         assertNotNull(errors.find { it is ConsistencyCheckError.IsNotBipartite })
@@ -155,17 +115,12 @@ class OCNetCheckerTest {
 
     @Test
     fun testOutputPlaceWithOutputArcsError() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build {
-                inputPlaces("p1")
-                outputPlaces("p2 p3")
-            }
-        ) {
-            place { }
-                .arcTo(transition { })
-                .arcTo(place { })
-                .arcTo(transition { })
-                .arcTo(place { })
+        val errors = createAndCheckForConsistency {
+            "p1".p { output }
+                .arc("t1".t)
+                .arc("p2".p)
+                .arc("t2".t)
+                .arc("p3".p)
         }
 
         assertNotNull(errors.find { it is ConsistencyCheckError.OutputPlaceHasOutputArcs })
@@ -173,13 +128,9 @@ class OCNetCheckerTest {
 
     @Test
     fun testInputPlaceWithInputArcsError() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build {
-                inputPlaces("p2")
-            }
-        ) {
-            place { }
-                .arcTo(place { })
+        val errors = createAndCheckForConsistency {
+            "p1".p
+                .arc("p2".p { input })
         }
 
         assertNotNull(errors.find { it is ConsistencyCheckError.InputPlaceHasInputArcs })
@@ -187,42 +138,34 @@ class OCNetCheckerTest {
 
     @Test
     fun testMultipleArcsFromSinglePlaceError() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build {
+        val errors = createAndCheckForConsistency {
+            val place = "p1".p
+            "p2".p
+                .arc("t1".t)
+                .arc(place)
 
-            }
-        ) {
-            val place = place { }
-            place { }
-                .arcTo(transition("t"))
-                .arcTo(place)
-
-            transition("t")
-                .arcTo(place)
+            "t1".t
+                .arc(place)
         }
         assertNotNull(errors.find { it is ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition })
     }
 
     @Test
     fun testArcInputAsArcOutputError() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build { }
-        ) {
-            val place = place { }
+        val errors = createAndCheckForConsistency {
+            val place = "p1".p
             place
-                .arcTo(place)
+                .arc(place)
         }
         assertNotNull(errors.find { it is ConsistencyCheckError.ArcInputEqualsOutput })
     }
 
     @Test
     fun testInconsistentVariabilityArcs() {
-        val errors = createAndCheckForConsistency(
-            PlaceTypeRegistry.build { }
-        ) {
-            place { }
-                .arcTo(transition { })
-                .variableArcTo(place { })
+        val errors = createAndCheckForConsistency {
+            "p1".p
+                .arc("t1".t)
+                .arc("p2".p)
         }
         assertNotNull(errors.find { it is ConsistencyCheckError.InconsistentVariabilityArcs })
     }

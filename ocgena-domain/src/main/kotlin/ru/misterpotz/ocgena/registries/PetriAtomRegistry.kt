@@ -26,7 +26,7 @@ interface PetriAtomRegistry {
     val iterator: MutableIterator<PetriAtomId>
 }
 
-fun createPetriAtomRegistry(elements: Map<PetriAtomId, PetriAtom>): PetriAtomRegistry {
+fun PetriAtomRegistry(elements: Map<PetriAtomId, PetriAtom>): PetriAtomRegistry {
     return PetriAtomRegistryImpl(elements.toMutableMap())
 }
 

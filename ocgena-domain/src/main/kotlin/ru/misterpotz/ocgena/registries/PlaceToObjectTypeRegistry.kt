@@ -9,59 +9,51 @@ import utils.toIds
 
 @Serializable
 data class PlaceToObjectTypeRegistry(
-    private val defaultObjectType: ObjectType,
-    private val placeIdToObjectType: MutableMap<PlaceId, ObjectType>
+    private val defaultObjectTypeId: ObjectTypeId,
+    private val placeIdToObjectType: MutableMap<PlaceId, ObjectTypeId>
 ) {
-    fun toObjectTypes() : ObjectTypeRegistry {
-        return ObjectTypeRegistry(allObjectTypes().associateBy { it.id }.toMutableMap())
-    }
-    fun allObjectTypes(): Set<ObjectType> {
-        return placeIdToObjectType.values.toMutableSet().apply {
-            if (isEmpty()) add(defaultObjectType)
-        }
-    }
 
-    operator fun get(place: PlaceId): ObjectType {
-        return placeIdToObjectType[place] ?: defaultObjectType
+    operator fun get(place: PlaceId): ObjectTypeId {
+        return placeIdToObjectType[place] ?: defaultObjectTypeId
     }
 
 
-    operator fun get(place: Place): ObjectType {
-        return placeIdToObjectType[place.id] ?: defaultObjectType
+    operator fun get(place: Place): ObjectTypeId {
+        return placeIdToObjectType[place.id] ?: defaultObjectTypeId
     }
 
     class PlaceTypingBlock {
-        val mutableMap : MutableMap<ObjectTypeId, Collection<PlaceId>> = mutableMapOf()
+        val mutableMap: MutableMap<ObjectTypeId, Collection<PlaceId>> = mutableMapOf()
 
-        fun objectType(objectType: ObjectTypeId, placesIds:String) {
+        fun objectType(objectType: ObjectTypeId, placesIds: String) {
             mutableMap[objectType] = placesIds.toIds()
         }
     }
 
-    companion object {
-        fun build(
-            defaultObjectType: ObjectTypeId = "ot",
-            block: (PlaceTypingBlock.() -> Unit)? = null
-        ): PlaceToObjectTypeRegistry {
-            val placeTypingBlock = PlaceTypingBlock().apply {
-                block?.invoke(this)
-            }
-
-            val mutableMap = if (block != null) {
-                placeTypingBlock.mutableMap
-                    .toList()
-                    .fold(mutableMapOf<PlaceId, ObjectType>()) { accum, entry ->
-                        for (placeId in entry.second) {
-                            accum[placeId] = ObjectType(entry.first)
-                        }
-                        accum
-                    }
-            } else mutableMapOf()
-
-            return PlaceToObjectTypeRegistry(
-                defaultObjectType = ObjectType(defaultObjectType),
-                placeIdToObjectType = mutableMap
-            )
-        }
-    }
+//    companion object {
+//        fun build(
+//            defaultObjectType: ObjectTypeId = "ot",
+//            block: (PlaceTypingBlock.() -> Unit)? = null
+//        ): PlaceToObjectTypeRegistry {
+//            val placeTypingBlock = PlaceTypingBlock().apply {
+//                block?.invoke(this)
+//            }
+//
+//            val mutableMap = if (block != null) {
+//                placeTypingBlock.mutableMap
+//                    .toList()
+//                    .fold(mutableMapOf<PlaceId, ObjectType>()) { accum, entry ->
+//                        for (placeId in entry.second) {
+//                            accum[placeId] = ObjectType(entry.first)
+//                        }
+//                        accum
+//                    }
+//            } else mutableMapOf()
+//
+//            return PlaceToObjectTypeRegistry(
+//                defaultObjectTypeId = defaultObjectType,
+//                placeIdToObjectType = mutableMap
+//            )
+//        }
+//    }
 }

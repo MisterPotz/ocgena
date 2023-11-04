@@ -13,6 +13,9 @@ interface OCNet {
     val transitionsRegistry: TransitionsRegistry
     val arcsRegistry: ArcsRegistry
     val petriAtomRegistry: PetriAtomRegistry
+
+    val inputPlaces : PlaceRegistry
+    val outputPlaces : PlaceRegistry
 }
 
 typealias PlaceId = String
@@ -32,5 +35,11 @@ data class OCNetImpl(
     }
     override val arcsRegistry: ArcsRegistry by lazy {
         ArcsRegistry(petriAtomRegistry)
+    }
+    override val inputPlaces: PlaceRegistry by lazy {
+        placeTypeRegistry.getInputPlaces(placeRegistry)
+    }
+    override val outputPlaces: PlaceRegistry by lazy {
+        placeTypeRegistry.getOutputPlaces(placeRegistry)
     }
 }

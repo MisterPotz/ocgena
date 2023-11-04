@@ -3,7 +3,7 @@ package simulation.typea
 import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeA
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.LockedTokensMover
@@ -37,7 +37,7 @@ class LockedTokensMoverTypeA @Inject constructor(
                         tokenStack?.tryConsume(arc.multiplicity)
                     }
 
-                    is VariableArcTypeA -> {
+                    is VariableArc -> {
                         val tokenStack = variableTokens[type]
                         tokenStack?.tryConsumeAll()
                     }

@@ -3,6 +3,7 @@ package model
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 
@@ -19,6 +20,9 @@ interface ArcsRegistry {
     fun withArrow(placeId: PetriAtomId): WithArrow
 
     operator fun get(arcId: PetriAtomId) : Arc
+    val iterable: Iterable<Arc>
+    val size : Int
+
 }
 
 fun ArcsRegistry(petriAtomRegistry: PetriAtomRegistry) : ArcsRegistry {
@@ -43,6 +47,13 @@ internal class ArcsRegistryMap(
     override fun get(arcId: PetriAtomId): Arc {
         return petriAtomRegistry[arcId] as Arc
     }
+
+    override val iterable: Iterable<Arc> = petriAtomRegistry
+        .getArcs()
+        .map { petriAtomRegistry.getArc(it) }
+
+    override val size: Int
+        get() = iterable.count()
 
     private inner class WithTailImpl(private val tail: PetriAtomId) : WithTail {
         override fun to(node: PetriAtomId): Arc {

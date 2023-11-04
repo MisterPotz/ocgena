@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import utils.toIds
-import java.io.Serial
 
 @Serializable
 data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
@@ -15,7 +14,7 @@ data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
 
     fun getInputPlaces(placeRegistry: PlaceRegistry): PlaceRegistry {
         return PlaceRegistry(
-            createPetriAtomRegistry(
+            PetriAtomRegistry(
                 placeRegistry.iterable
                     .filter { get(it.id) == PlaceType.INPUT }
                     .associateBy {
@@ -28,7 +27,7 @@ data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
 
     fun getOutputPlaces(placeRegistry: PlaceRegistry): PlaceRegistry {
         return PlaceRegistry(
-            createPetriAtomRegistry(
+            PetriAtomRegistry(
                 placeRegistry.iterable
                     .filter { get(it.id) == PlaceType.OUTPUT }
                     .associateBy {
