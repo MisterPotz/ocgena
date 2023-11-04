@@ -1,4 +1,4 @@
-package simulation.typea
+package ru.misterpotz.ocgena.simulation.typea
 
 import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.transitions.TransitionInstance

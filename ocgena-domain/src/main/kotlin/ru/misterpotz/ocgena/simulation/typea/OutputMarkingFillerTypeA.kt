@@ -4,8 +4,9 @@ import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcTypeL
-import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
+import ru.misterpotz.ocgena.registries.TransitionsRegistry
+
+\import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.LockedTokensMover
 import javax.inject.Inject
@@ -29,18 +30,16 @@ class OutputMarkingFillerTypeA(
     private val transitionInstance: TransitionInstance,
     private val lockedTokensMover: LockedTokensMover,
     private val currentSimulationDelegate: CurrentSimulationDelegate,
-    private val repeatabilityInteractor: RepeatabilityInteractor
+    private val repeatabilityInteractor: RepeatabilityInteractor,
 ) : CurrentSimulationDelegate by currentSimulationDelegate {
     val transition = petriAtomRegistry.getTransition(transitionInstance.transition)
-
-    private val outputPlaces = transition.outputPlaces
 
     fun fill(): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
         return fillOutputMarking()
     }
 
     private fun complementUnfilledPlaces(outputMarking: PlaceToObjectMarking): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
-        for (outputPlace in repeatabilityInteractor.sortPlaces(outputPlaces)) {
+        for (outputPlace in repeatabilityInteractor.sortPlaces(outputPlaces.iterable.toList())) {
             val tokens = outputMarking[outputPlace]!!
             with(petriAtomRegistry) {
                 val arc = transition.id.arcTo(outputPlace)
@@ -58,10 +57,6 @@ class OutputMarkingFillerTypeA(
 
                     is VariableArc -> {
                         // good as it is
-                    }
-
-                    is VariableArcTypeL -> {
-                        // good oas it is
                     }
                 }
             }

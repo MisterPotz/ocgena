@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import simulation.typea.LockedTokensMoverTypeA
+import ru.misterpotz.ocgena.simulation.typea.LockedTokensMoverTypeA
 import javax.inject.Inject
 import javax.inject.Provider
 

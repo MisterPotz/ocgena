@@ -1,4 +1,4 @@
-package simulation.typea
+package ru.misterpotz.ocgena.simulation.typea
 
 import model.*
 import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking

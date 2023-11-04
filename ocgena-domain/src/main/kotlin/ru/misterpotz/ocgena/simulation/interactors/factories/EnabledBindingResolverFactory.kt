@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.simulation.interactors.factories
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityTypeARegistry
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
-import simulation.typea.EnabledBindingTypeAResolverInteractor
+import ru.misterpotz.ocgena.simulation.typea.EnabledBindingTypeAResolverInteractor
 import javax.inject.Inject
 import javax.inject.Provider
 
