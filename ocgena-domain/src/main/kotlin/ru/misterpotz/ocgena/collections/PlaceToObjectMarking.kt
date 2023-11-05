@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.collections
 
+import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransform
@@ -21,7 +22,8 @@ fun PlaceToObjectMarking(placesToObjectTokens: MutableMap<PetriAtomId, SortedSet
     return PlaceToObjectMarkingMap(placesToObjectTokens)
 }
 
-internal class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>> = mutableMapOf()) :
+@Serializable
+data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>> = mutableMapOf()) :
     PlaceToObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {

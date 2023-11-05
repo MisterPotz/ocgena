@@ -8,6 +8,10 @@ import dagger.Module
 import dagger.Provides
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.*
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetImpl
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
@@ -58,6 +62,12 @@ class DomainModule {
                     subclass(NormalArc.serializer())
                     subclass(VariableArc.serializer())
                     subclass(Transition.serializer())
+                }
+                polymorphic(ImmutablePlaceToObjectMarking::class) {
+                    subclass(ImmutablePlaceToObjectMarkingMap.serializer())
+                }
+                polymorphic(PlaceToObjectMarking::class) {
+                    subclass(PlaceToObjectMarkingMap.serializer())
                 }
             }
         }
