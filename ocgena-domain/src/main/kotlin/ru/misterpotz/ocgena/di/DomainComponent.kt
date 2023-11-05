@@ -12,6 +12,7 @@ import kotlinx.serialization.modules.SerializersModuleBuilder
 import kotlinx.serialization.modules.contextual
 import ru.misterpotz.ocgena.serialization.DurationSerializer
 import ru.misterpotz.ocgena.serialization.IntRangeSerializer
+import ru.misterpotz.ocgena.serialization.PeriodSerializer
 import ru.misterpotz.ocgena.serialization.TimeUntilNextInstanceIsAllowedSerializer
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import javax.inject.Scope
@@ -22,16 +23,18 @@ class DomainModule {
 
         @Provides
         @DomainScope
+        @JvmSuppressWildcards
         fun serializersModuleBlock() : SerializersModuleBuilder.() -> Unit {
             return {
                 contextual(IntRangeSerializer("interval"))
                 contextual(DurationSerializer("duration"))
                 contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
+                contextual(PeriodSerializer("period"))
             }
         }
         @Provides
         @DomainScope
-        fun json(serializersModuleBlock : SerializersModuleBuilder.() -> Unit): Json {
+        fun json(serializersModuleBlock : @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Json {
             return Json {
                 prettyPrint = true
                 serializersModule = SerializersModule {

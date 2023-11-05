@@ -9,6 +9,7 @@ import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import ru.misterpotz.ocgena.simulation.config.Duration
+import ru.misterpotz.ocgena.simulation.config.Period
 import ru.misterpotz.ocgena.simulation.config.TimeUntilNextInstanceIsAllowed
 
 class IntRangeSerializer(private val name : String) : KSerializer<IntRange> {
@@ -59,5 +60,23 @@ class TimeUntilNextInstanceIsAllowedSerializer(private val name : String) : KSer
     override fun deserialize(decoder: Decoder): TimeUntilNextInstanceIsAllowed {
         val array = decoder.decodeSerializableValue(ListSerializer(Int.serializer()))
         return TimeUntilNextInstanceIsAllowed(IntRange(array[0], array[1]))
+    }
+}
+
+
+class PeriodSerializer(private val name : String) : KSerializer<Period> {
+
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Period") {
+        element<List<Int>>(name)
+    }
+
+    override fun serialize(encoder: Encoder, value: Period) {
+        val array = listOf(value.intRange.first, value.intRange.last)
+        encoder.encodeSerializableValue(ListSerializer(Int.serializer()), array)
+    }
+
+    override fun deserialize(decoder: Decoder): Period {
+        val array = decoder.decodeSerializableValue(ListSerializer(Int.serializer()))
+        return Period(IntRange(array[0], array[1]))
     }
 }

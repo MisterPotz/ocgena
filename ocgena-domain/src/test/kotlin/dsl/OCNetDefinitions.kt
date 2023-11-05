@@ -3,7 +3,7 @@ package dsl
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
-import utils.toIds
+import ru.misterpotz.ocgena.utils.toIds
 
 fun createExampleInputOutputPlaces(): PlaceTypeRegistry {
     return PlaceTypeRegistry.build {

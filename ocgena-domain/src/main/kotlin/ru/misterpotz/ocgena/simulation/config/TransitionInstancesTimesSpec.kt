@@ -4,9 +4,9 @@ import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
 @Serializable
-class TransitionInstancesTimesSpec(
-    private val defaultTransitionTimeSpec: TransitionInstanceTimes?,
-    private val transitionToTimeSpec: MutableMap<PetriAtomId, TransitionInstanceTimes> = mutableMapOf(),
+data class TransitionInstancesTimesSpec(
+    val defaultTransitionTimeSpec: TransitionInstanceTimes?,
+    val transitionToTimeSpec: MutableMap<PetriAtomId, TransitionInstanceTimes> = mutableMapOf(),
 ) {
     operator fun get(transition: PetriAtomId): TransitionInstanceTimes {
         return transitionToTimeSpec[transition] ?: defaultTransitionTimeSpec!!
@@ -15,7 +15,8 @@ class TransitionInstancesTimesSpec(
     companion object {
         fun create(
             defaultTransitionInstanceTimes: TransitionInstanceTimes? = null,
-            block: MutableMap<PetriAtomId, TransitionInstanceTimes>.() -> Unit): TransitionInstancesTimesSpec {
+            block: MutableMap<PetriAtomId, TransitionInstanceTimes>.() -> Unit
+        ): TransitionInstancesTimesSpec {
             return TransitionInstancesTimesSpec(
                 defaultTransitionTimeSpec = defaultTransitionInstanceTimes,
                 buildMap {

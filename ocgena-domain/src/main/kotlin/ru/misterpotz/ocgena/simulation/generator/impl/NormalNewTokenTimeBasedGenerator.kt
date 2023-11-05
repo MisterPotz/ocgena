@@ -2,8 +2,8 @@ package ru.misterpotz.ocgena.simulation.generator.impl
 
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingDelta
-import ru.misterpotz.ocgena.simulation.config.GenerationConfig
-import ru.misterpotz.ocgena.simulation.config.TimeRange
+import ru.misterpotz.ocgena.simulation.config.TokenGenerationConfig
+import ru.misterpotz.ocgena.simulation.config.Period
 import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectToken
@@ -13,19 +13,19 @@ import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.generator.NewTokensGenerationTimeGenerator
 
 class NormalNewTokenTimeBasedGenerator(
-    private val generationConfig: GenerationConfig,
+    private val tokenGenerationConfig: TokenGenerationConfig,
     private val nextTimeSelector: NewTokensGenerationTimeGenerator,
     val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade,
-    private val defaultGenerationInterval: TimeRange? = null
+    private val defaultGenerationInterval: Period? = null
 ) : NewTokenTimeBasedGenerator {
 
     private val placeGenerators: Map<PlaceId, PlaceGenerator> = buildMap {
-        for ((i, value) in generationConfig.placeIdToGenerationTarget) {
+        for ((i, value) in tokenGenerationConfig.placeIdToGenerationTarget) {
             put(
                 i, PlaceGenerator(
                     mustTotallyGenerate = value,
-                    timeRange = generationConfig.defaultGeneration
+                    timeRange = tokenGenerationConfig.defaultPeriod
                         ?: defaultGenerationInterval
                         ?: continue,
                     nextGenerationHappensIn = null
@@ -92,7 +92,7 @@ class NormalNewTokenTimeBasedGenerator(
 
     private class PlaceGenerator(
         val mustTotallyGenerate: Int,
-        val timeRange: TimeRange,
+        val timeRange: Period,
         var nextGenerationHappensIn: Time?,
     ) {
         var generated: Int = 0

@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation.state
 
 import ru.misterpotz.ocgena.simulation.Time
-import utils.print
+import ru.misterpotz.ocgena.utils.print
 
 class SimulationTime(globalTime : Time = 0L) {
     var globalTime = globalTime

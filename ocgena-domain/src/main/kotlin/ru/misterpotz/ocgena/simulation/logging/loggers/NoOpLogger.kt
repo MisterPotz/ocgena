@@ -1,8 +1,8 @@
-package simulation.client.loggers
+package ru.misterpotz.ocgena.simulation.logging.loggers
 
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.simulation.binding.ExecutedBinding
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.collections.TransitionInstance
+import ru.misterpotz.ocgena.simulation.Time
+import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import simulation.Logger
 
 open class NoOpLogger : Logger {

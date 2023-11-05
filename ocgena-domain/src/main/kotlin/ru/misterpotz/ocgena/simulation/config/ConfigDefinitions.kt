@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation.config;
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -108,54 +109,7 @@ data class InitialMarkingConfig(
 }
 
 
-fun parseTimeConfigExpression(expression: String): Map<String, Map<String, List<String>>> {
-    val result = mutableMapOf<String, Map<String, List<String>>>()
-    val pattern = Regex("""(\w+):\s+d\[(\d+),\s*(\d+)]\s+min\[(\d+),\s*(\d+)]""")
-    val matches = pattern.findAll(expression)
-    for (match in matches) {
-        val key = match.groupValues[1]
-        val values = mapOf(
-            "d" to listOf(match.groupValues[2], match.groupValues[3]),
-            "min" to listOf(match.groupValues[4], match.groupValues[5])
-        )
-        result[key] = values
-    }
-    return result
-}
-
-fun parseIntervalsExpression(expression: String): Map<String, Map<String, List<String>>> {
-    val result = mutableMapOf<String, Map<String, List<String>>>()
-//    val pattern = Regex("""(\w+):\s+(?:d\\[(\d+),\s*(\d+)\\]\s+min\\[(\d+),\s*(\d+)]|min\[(\d+),\s*(\d+)]\s+d\[(\d+),\s*(\d+)])""")
-    val pattern =
-        Regex("""(\w+):\s+(?:d\[(\d+),\s*(\d+)\]\s+min\[(\d+),\s*(\d+)\]|min\[(\d+),\s*(\d+)\]\s+d\[(\d+),\s*(\d+)\])""")
-
-    val matches = pattern.findAll(expression)
-    for (match in matches) {
-        val key = match.groupValues[1]
-        val values = if (match.groupValues[2].isNotEmpty()) {
-            mapOf(
-                "d" to listOf(match.groupValues[2], match.groupValues[3]),
-                "min" to listOf(match.groupValues[4], match.groupValues[5])
-            )
-        } else {
-            mapOf(
-                "d" to listOf(match.groupValues[7], match.groupValues[8]),
-                "min" to listOf(match.groupValues[6], match.groupValues[9])
-            )
-        }
-        result[key] = values
-    }
-    return result
-}
-
-fun mapToTransitionsIntervals(map: Map<String, List<String>>): TransitionIntervals {
-    return TransitionIntervals(
-        duration = TimeRange(map["d"]!!.map { it.toInt() }),
-        minOccurrenceInterval = TimeRange(map["min"]!!.map { it.toInt() })
-    )
-}
-
-fun TimeRange.customString(): String {
+fun Period.customString(): String {
     return "[$start, $end]"
 }
 
@@ -183,61 +137,37 @@ data class TransitionTimesConfig(
     }
 
     override val type = ConfigEnum.TRANSITIONS
-
-    companion object {
-        fun fastCreate(defaultExpression: String?, mapIntervals: String?): TransitionTimesConfig {
-            val defaultExpression = if (defaultExpression != null) {
-                val parsed = parseIntervalsExpression(defaultExpression)
-                mapToTransitionsIntervals(parsed["default"]!!)
-            } else null
-            val mapExpression = if (mapIntervals != null) {
-                val parsed = parseIntervalsExpression(mapIntervals)
-                parsed.keys.associate {
-                    it to mapToTransitionsIntervals(parsed[it]!!)
-                }
-            } else null
-            return TransitionTimesConfig(defaultExpression, mapExpression ?: emptyMap())
-        }
-    }
 }
 
 @Serializable
-data class TimeRange(val timeRange: List<Int>) {
+data class Period(@Contextual val intRange: IntRange) {
     val start: Int
-        get() = timeRange.first()
+        get() = intRange.first()
     val end: Int
-        get() = timeRange[1]
+        get() = intRange.last
 }
 
 @Serializable
 data class TransitionIntervals(
-    val duration: TimeRange?,
-    val minOccurrenceInterval: TimeRange?
+    val duration: Period?,
+    val minOccurrenceInterval: Period?
 )
 
 @Serializable
-data class GenerationConfig(
-    val defaultGeneration: TimeRange?,
-    val placeIdToGenerationTarget: Map<String, Int> /* map place id to initial marking (int) */
+data class TokenGenerationConfig(
+    @Contextual
+    val defaultPeriod: Period?,
+    val placeIdToGenerationTarget: Map<String, Int>
 ) : Config {
     override val type: ConfigEnum = ConfigEnum.GENERATION
 
     override fun toDebugString(): String {
-        return "[default generation: ${defaultGeneration?.customString()} ] " + placeIdToGenerationTarget.entries.joinToString(
+        return "[default generation: ${defaultPeriod?.customString()} ] " + placeIdToGenerationTarget.entries.joinToString(
             separator = "; ",
             prefix = "[transitions intervals: ",
             postfix = "]"
         ) {
             "${it.key}: ${it.value};"
-        }
-    }
-
-    companion object {
-        fun fastCreate(defaultGeneration: String?, placeIdToGenerationTarget: String?): GenerationConfig {
-            return GenerationConfig(
-                defaultGeneration = defaultGeneration?.let { parseInterval(it) },
-                placeIdToGenerationTarget = placeIdToGenerationTarget?.let { parseStringToMapInt(it) } ?: mapOf()
-            )
         }
     }
 }
@@ -261,13 +191,4 @@ data class RandomizationConfig(
             )
         }
     }
-}
-
-fun parseInterval(string: String): TimeRange {
-    val values = string
-        .removePrefix("[")
-        .removeSuffix("]")
-        .split(",")
-        .map { it.trim().toInt() }
-    return TimeRange(values)
 }

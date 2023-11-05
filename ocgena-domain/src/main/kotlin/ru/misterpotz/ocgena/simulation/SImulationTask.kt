@@ -34,7 +34,7 @@ class SimulationTask @Inject constructor(
 
 
     private fun isFinished(): Boolean {
-        return executionConditions.checkTerminateConditionSatisfied(simulationableOcNetInstance)
+        return executionConditions.checkTerminateConditionSatisfied(ocNet)
                 || simulationStepState.isFinished()
                 || finishRequested
     }

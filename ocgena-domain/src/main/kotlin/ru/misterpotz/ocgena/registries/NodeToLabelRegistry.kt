@@ -6,7 +6,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.NodeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 
 @Serializable
-data class NodeToLabelRegistry(private val transitionsToActivity: MutableMap<NodeId, Label> = mutableMapOf()) {
+data class NodeToLabelRegistry(val transitionsToActivity: MutableMap<NodeId, Label> = mutableMapOf()) {
     operator fun get(node: NodeId): Label {
         return transitionsToActivity[node] ?: node
     }

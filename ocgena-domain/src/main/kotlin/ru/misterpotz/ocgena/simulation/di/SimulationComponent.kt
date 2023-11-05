@@ -14,6 +14,7 @@ import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistryDelegating
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.registries.delegates.CompoundArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
+import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityVariableDelegateTypeA
 import ru.misterpotz.ocgena.simulation.*
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
@@ -26,8 +27,10 @@ import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegateImpl
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
+import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
+import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
 import ru.misterpotz.ocgena.simulation.structure.State
 import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
 import simulation.Logger
@@ -78,6 +81,12 @@ internal abstract class SimulationModule {
     abstract fun bindingOutputMarkingResolverFactory(factory: BindingOutputMarkingResolverFactoryImpl):
             BindingOutputMarkingResolverFactory
 
+    @Binds
+    @SimulationScope
+    abstract fun enabledBindingResolverInteractor(
+        enabledBindingResolverInteractorImpl: EnabledBindingResolverInteractorImpl
+    ): EnabledBindingResolverInteractor
+
     companion object {
         @Provides
         @SimulationScope
@@ -123,8 +132,12 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun ocNetInstance(simulationConfig: SimulationConfig): SimulatableOcNetInstance {
-            return simulationConfig.ocNet
+        fun ocNetInstance(ocNet: OCNet, state: State, ocNetType: OcNetType): SimulatableOcNetInstance {
+            return SimulatableOcNetInstanceImpl(
+                ocNet = ocNet,
+                state = state,
+                ocNetType = ocNetType
+            )
         }
 
         @Provides
@@ -193,11 +206,16 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun arcMultiplicityDelegate(currentSimulationDelegate: CurrentSimulationDelegate): ArcsMultiplicityDelegate {
+        fun arcMultiplicityDelegate(pMarkingProvider: PMarkingProvider): ArcsMultiplicityDelegate {
             return CompoundArcsMultiplicityDelegate(
                 arcMultiplicityDelegates = buildMap {
                     put(
-                        ArcType.NORMAL, ArcToMultiplicityNormalDelegateTypeA(currentSimulationDelegate)
+                        ArcType.NORMAL,
+                        ArcToMultiplicityNormalDelegateTypeA(pMarkingProvider)
+                    )
+                    put(
+                        ArcType.VARIABLE,
+                        ArcToMultiplicityVariableDelegateTypeA(pMarkingProvider)
                     )
                 }
             )
@@ -206,12 +224,14 @@ internal abstract class SimulationModule {
         @Provides
         @SimulationScope
         fun state(
-            simulationConfig: SimulationConfig,
-            arcsMultiplicityRegistry: ArcsMultiplicityRegistry
+            ocNet: OCNet,
+            arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
+            pMarkingProvider: PMarkingProvider,
         ): State {
             return StateImpl(
-                ocNet = simulationConfig.ocNet,
-                arcsMultiplicityRegistry = arcsMultiplicityRegistry
+                ocNet = ocNet,
+                arcsMultiplicityRegistry = arcsMultiplicityRegistry,
+                pMarkingProvider = pMarkingProvider
             )
         }
     }

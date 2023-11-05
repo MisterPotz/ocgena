@@ -1,12 +1,12 @@
 package ru.misterpotz.ocgena.simulation
 
-import ru.misterpotz.ocgena.simulation.structure.SimulationableOcNetInstance
+import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 
 
 interface ExecutionConditions {
 
     // for terminate
-    fun checkTerminateConditionSatisfied(ocNet: SimulationableOcNetInstance): Boolean
+    fun checkTerminateConditionSatisfied(ocNet: SimulatableOcNetInstance): Boolean
 
     // TODO: for debug ability
 //    fun checkIfSuspend(ocNet: RunningSimulatableOcNet)

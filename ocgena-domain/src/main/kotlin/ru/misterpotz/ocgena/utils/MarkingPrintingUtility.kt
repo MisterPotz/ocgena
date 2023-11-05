@@ -5,7 +5,6 @@ import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import utils.print
 import javax.inject.Inject
 
 class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: ObjectTokenSet) {

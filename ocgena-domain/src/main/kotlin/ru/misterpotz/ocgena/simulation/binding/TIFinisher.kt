@@ -17,7 +17,7 @@ class TIFinisherImpl @Inject constructor(
     private val simulationStateProvider: SimulationStateProvider
 ) : TIFinisher {
     private val simulationTime get() = simulationStateProvider.getSimulationTime()
-    private val pMarking get() = simulationStateProvider.getOcNetState().pMarking
+    private val pMarking get() = simulationStateProvider.simulatableOcNetInstance().state.pMarking
 
     override fun finishActiveTransition(activeFiringTransition: TransitionInstance) {
         val markingForOutputPlaces = getMarkingForOutputPlaces(activeFiringTransition)

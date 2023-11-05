@@ -1,11 +1,8 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
-import sun.tools.jstat.Token
 import javax.inject.Inject
 
 class RepeatabilityInteractor @Inject constructor() {

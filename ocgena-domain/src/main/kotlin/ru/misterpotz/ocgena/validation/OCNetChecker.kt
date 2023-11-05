@@ -10,13 +10,12 @@ class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
-    private val ocNet: OCNet,
+    ocNet: OCNet,
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
     private val placeTypeRegistry: PlaceTypeRegistry = ocNet.placeTypeRegistry
     val inputPlaces = placeTypeRegistry.getInputPlaces(ocNet.placeRegistry)
     val outputPlaces = placeTypeRegistry.getOutputPlaces(ocNet.placeRegistry)
-    private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
     private val petriAtomRegistry: PetriAtomRegistry = ocNet.petriAtomRegistry
 
     val isConsistent: Boolean
@@ -34,7 +33,9 @@ class OCNetChecker(
         // case 1 - parse and check for isolated subgraphs
         for (petriNodeId in petriAtomRegistry.iterator) {
             val petriNode = petriAtomRegistry[petriNodeId]
-            val subgraphIndex = petriAtomRegistry.getSubgraphIndex(petriNodeId)
+            val subgraphIndex = with(petriAtomRegistry) {
+                petriNodeId.subgraphIndex
+            }
 
             if (subgraphIndex in 0..maxSubgraphIndex) {
                 // the subgraph of this place was already visited

@@ -9,7 +9,7 @@ data class SerializableSimulationUserConfig(
     val outputPlaces: PlacesConfig?, /*p1 p2 p3 */
     val ocNetType: OcNetType?,
     val randomization: RandomizationConfig?,
-    val generation: GenerationConfig?,
+    val generation: TokenGenerationConfig?,
     val placeTyping: PlaceTypingConfig?,
     val initialMarking: InitialMarkingConfig?,
     val transitionTimes: TransitionTimesConfig?,

@@ -1,14 +1,14 @@
 package ru.misterpotz.ocgena.registries
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.ocgena.ocnet.PlaceId
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
-import utils.toIds
+import ru.misterpotz.ocgena.utils.toIds
 
 @Serializable
-data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
+data class PlaceTypeRegistry(private val entries: Map<PetriAtomId, PlaceType>) {
 
-    operator fun get(placeId: PlaceId): PlaceType {
+    operator fun get(placeId: PetriAtomId): PlaceType {
         return entries[placeId] ?: PlaceType.NORMAL
     }
 
@@ -16,7 +16,10 @@ data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
         return PlaceRegistry(
             PetriAtomRegistry(
                 placeRegistry.iterable
-                    .filter { get(it.id) == PlaceType.INPUT }
+                    .filter { get(it) == PlaceType.INPUT }
+                    .map {
+                        placeRegistry[it]
+                    }
                     .associateBy {
                         it.id
                     }
@@ -29,7 +32,8 @@ data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
         return PlaceRegistry(
             PetriAtomRegistry(
                 placeRegistry.iterable
-                    .filter { get(it.id) == PlaceType.OUTPUT }
+                    .filter { get(it) == PlaceType.OUTPUT }
+                    .map { placeRegistry[it] }
                     .associateBy {
                         it.id
                     }
@@ -39,14 +43,14 @@ data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
     }
 
     class InputOutputPlacesBlock {
-        val mutableMap: MutableMap<PlaceType, Collection<PlaceId>> = mutableMapOf()
+        val mutableMap: MutableMap<PlaceType, Collection<PetriAtomId>> = mutableMapOf()
 
-        fun inputPlaces(placesIds: Collection<PlaceId>) {
+        fun inputPlaces(placesIds: Collection<PetriAtomId>) {
             mutableMap[PlaceType.INPUT] = placesIds
         }
 
 
-        fun outputPlaces(placesIds: Collection<PlaceId>) {
+        fun outputPlaces(placesIds: Collection<PetriAtomId>) {
             mutableMap[PlaceType.OUTPUT] = placesIds
         }
 
@@ -66,10 +70,10 @@ data class PlaceTypeRegistry(private val entries: Map<PlaceId, PlaceType>) {
             val inputOutputPlacesBlock = InputOutputPlacesBlock()
             inputOutputPlacesBlock.block()
 
-            val mutableMap: MutableMap<PlaceType, Collection<PlaceId>> = inputOutputPlacesBlock.mutableMap
+            val mutableMap: MutableMap<PlaceType, Collection<PetriAtomId>> = inputOutputPlacesBlock.mutableMap
 
             val kek = mutableMap.toList()
-                .fold<Pair<PlaceType, Collection<PlaceId>>, MutableMap<PlaceId, PlaceType>>(mutableMapOf()) { accum, entry ->
+                .fold<Pair<PlaceType, Collection<PetriAtomId>>, MutableMap<PetriAtomId, PlaceType>>(mutableMapOf()) { accum, entry ->
                     for (placeId in entry.second) {
                         accum[placeId] = entry.first
                     }

@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.logging
 
-import net.mamoe.yamlkt.Yaml
+import com.charleskorn.kaml.Yaml
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.loggers.*
 import ru.misterpotz.ocgena.utils.ExecutedBindingDebugPrinter

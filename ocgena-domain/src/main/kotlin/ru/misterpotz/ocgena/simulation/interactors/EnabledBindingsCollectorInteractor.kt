@@ -12,7 +12,7 @@ class EnabledBindingsCollectorInteractor @Inject constructor(
     enabledBindingResolverFactory: EnabledBindingResolverFactory,
     private val repeatabilityInteractor: RepeatabilityInteractor,
 ) {
-    private val transitions = simulationStateProvider.runningSimulatableOcNet().simulatableOcNetInstance.ocNet.transitionsRegistry
+    private val transitions = simulationStateProvider.simulatableOcNetInstance().transitionsRegistry
 
     private val enabledBindingResolver = enabledBindingResolverFactory.create()
 

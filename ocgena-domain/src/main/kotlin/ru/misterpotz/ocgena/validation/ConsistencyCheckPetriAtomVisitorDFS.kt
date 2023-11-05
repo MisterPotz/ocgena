@@ -29,7 +29,9 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         get() = recursionProtector.visitedSet
 
     private fun checkIfExistsSubgraphIndex(petriAtom: PetriAtom): Boolean {
-        val subgraphIndex = petriAtomRegistry.getSubgraphIndex(petriAtom.id)
+        val subgraphIndex = with(petriAtomRegistry) {
+            petriAtom.id.subgraphIndex
+        }
         if (subgraphIndex != assignedSubgraphIndex && subgraphIndex != null) {
             discoveredSubgraphIndex = subgraphIndex
             return true

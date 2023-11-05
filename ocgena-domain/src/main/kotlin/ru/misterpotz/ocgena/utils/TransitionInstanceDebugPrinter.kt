@@ -1,9 +1,8 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.marking.transitions.TransitionInstancesList
-import ru.misterpotz.marking.transitions.TransitionTimesMarking
-import utils.*
+import ru.misterpotz.ocgena.collections.TransitionInstance
+import ru.misterpotz.ocgena.collections.TransitionInstancesList
+import ru.misterpotz.ocgena.registries.TransitionToTimeUntilInstanceAllowedRegistry
 import javax.inject.Inject
 
 class TransitionInstanceDebugPrinter @Inject constructor(
@@ -28,7 +27,7 @@ class TransitionInstanceDebugPrinter @Inject constructor(
         }
     }
 
-    fun prettyPrintState(transitionTimesMarking: TransitionTimesMarking): String {
+    fun prettyPrintState(transitionTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry): String {
         return with(transitionTimesMarking) {
             keys.joinToString(separator = "\n") {
                 """${it} permitted in ${getNextAllowedTime(it)?.print()}"""

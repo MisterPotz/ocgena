@@ -1,15 +1,13 @@
 package ru.misterpotz.ocgena.simulation.logging.loggers
 
-import net.mamoe.yamlkt.Yaml
+import com.charleskorn.kaml.Yaml
+import kotlinx.serialization.encodeToString
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.utils.ExecutedBindingDebugPrinter
-import ru.misterpotz.ocgena.utils.TransitionInstanceDebugPrinter
-import simulation.client.loggers.NoOpLogger
-import utils.*
+import ru.misterpotz.ocgena.utils.*
 import javax.inject.Inject
 
 class ANSIDebugTracingLogger @Inject constructor(

@@ -1,10 +1,10 @@
 package ru.misterpotz.ocgena.simulation.logging.loggers
 
-import ru.misterpotz.marking.transitions.TransitionInstance
-import ru.misterpotz.simulation.binding.ExecutedBinding
-import ru.misterpotz.marking.objects.Time
-import ru.misterpotz.simulation.logging.LogEvent
-import ru.misterpotz.simulation.logging.LoggingEvent
+import ru.misterpotz.ocgena.collections.TransitionInstance
+import ru.misterpotz.ocgena.simulation.Time
+import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
+import ru.misterpotz.ocgena.simulation.logging.LogEvent
+import ru.misterpotz.ocgena.simulation.logging.LoggingEvent
 import javax.inject.Inject
 
 class StepAggregatingLogCreator @Inject constructor(

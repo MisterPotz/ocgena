@@ -10,13 +10,18 @@ class TransitionNextInstanceAllowedTimeGenerator @Inject constructor(
     private val random: Random?,
     private val transitionInstancesTimesSpec: TransitionInstancesTimesSpec,
 ) {
-    fun get(interval: IntRange): Time {
+    private fun randomValue(interval: IntRange): Long {
         return (random?.let {
             interval.random(random = it)
         } ?: interval.first).toLong()
+
+    }
+
+    fun get(interval: IntRange): Time {
+        return randomValue(interval)
     }
 
     fun getNewActivityNextAllowedTime(transition: PetriAtomId): Time {
-        return get(transitionInstancesTimesSpec[transition].timeUntilNextInstanceIsAllowed)
+        return get(transitionInstancesTimesSpec[transition].timeUntilNextInstanceIsAllowed.intRange)
     }
 }

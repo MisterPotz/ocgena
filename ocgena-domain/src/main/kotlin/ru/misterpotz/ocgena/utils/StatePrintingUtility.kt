@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.simulation.state.State
+import ru.misterpotz.ocgena.simulation.structure.State
 import javax.inject.Inject
 
 class StatePrintingUtility @Inject constructor(

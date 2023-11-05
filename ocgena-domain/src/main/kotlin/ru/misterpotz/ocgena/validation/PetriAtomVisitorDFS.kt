@@ -1,8 +1,8 @@
 package ru.misterpotz.ocgena.validation
 
-import ru.misterpotz.model.atoms.Arc
-import ru.misterpotz.model.atoms.Place
-import ru.misterpotz.model.atoms.Transition
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 
 interface PetriAtomVisitorDFS {
 

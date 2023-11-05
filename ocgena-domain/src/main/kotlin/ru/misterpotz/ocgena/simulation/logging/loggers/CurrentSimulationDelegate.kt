@@ -12,7 +12,6 @@ import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerationFacade
 import ru.misterpotz.ocgena.simulation.state.SimulationStepState
 import ru.misterpotz.ocgena.simulation.state.SimulationTime
-import ru.misterpotz.ocgena.simulation.structure.SimulationableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.structure.State
@@ -26,7 +25,6 @@ interface CurrentSimulationDelegate : OCNet {
     val simGlobalTime: Time
     val simTime: SimulationTime
     val initialMarkingScheme: MarkingScheme
-    val simulationableOcNetInstance: SimulationableOcNetInstance
     val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
     val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry
         get() = state.tTimesMarking
@@ -53,7 +51,6 @@ interface CurrentSimulationDelegate : OCNet {
         get() = ocNet.inputPlaces
     override val outputPlaces: PlaceRegistry
         get() = ocNet.outputPlaces
-
 }
 
 class CurrentSimulationDelegateImpl @Inject constructor(
@@ -65,9 +62,8 @@ class CurrentSimulationDelegateImpl @Inject constructor(
     override val currentStep get() = simulationStateProvider.getSimulationStepState().currentStep
     override val simGlobalTime get() = simulationStateProvider.getSimulationTime().globalTime
     override val simTime get() = simulationStateProvider.getSimulationTime()
-    override val ocNet get() = simulationConfig.ocNet
+    override val ocNet get() = simulationStateProvider.simulatableOcNetInstance()
     override val initialMarkingScheme get() = simulationConfig.initialMarking
-    override val state get() = simulationStateProvider.getOcNetState()
+    override val state get() = simulationStateProvider.simulatableOcNetInstance().state
     override val simulationStepState get() = simulationStateProvider.getSimulationStepState()
-    override val simulationableOcNetInstance get() = simulationStateProvider.runningSimulatableOcNet()
 }

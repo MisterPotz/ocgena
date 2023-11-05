@@ -1,6 +1,6 @@
-package utils
+package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.simulation.Time
 
 fun String.toIds() : Collection<String> {
     return split(" ")

@@ -12,6 +12,7 @@ const val defaultObjTypeId = "obj"
 
 val defaultObjType = ObjectType(defaultObjTypeId, defaultObjTypeId)
 typealias ArrowAtomId = PetriAtomId
+
 class OCNetBuilder() {
     fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNet {
         val atomBlock = AtomDefinitionBlockImpl()
@@ -27,8 +28,8 @@ class OCNetBuilder() {
     }
 
     interface AtomDefinitionBlock {
-        val String.t : String
-        val String.p : String
+        val String.t: String
+        val String.p: String
 
         fun String.t(block: (TransitionBlock.() -> Unit)? = null): String
         fun String.arc(block: (ArcBlock.() -> Unit)? = null): String
@@ -66,10 +67,10 @@ class OCNetBuilder() {
             return this
         }
 
-        override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)?): String {
-            return this.arcIdTo(petriAtomId).also {
-                builderRegistry.getArc(petriAtomId)
-            }
+        override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)? ): String {
+            val arcId = arcIdTo(petriAtomId)
+            builderRegistry.getArc(arcId)
+            return petriAtomId
         }
 
         override fun String.p(block: (PlaceBlock.() -> Unit)?): String {

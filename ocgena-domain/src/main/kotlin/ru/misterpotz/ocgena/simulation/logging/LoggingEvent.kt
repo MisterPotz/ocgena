@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.simulation.logging
 
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
-import ru.misterpotz.marking.objects.Time
+import ru.misterpotz.ocgena.simulation.Time
 
 @Serializable
 data class LoggingEvent(

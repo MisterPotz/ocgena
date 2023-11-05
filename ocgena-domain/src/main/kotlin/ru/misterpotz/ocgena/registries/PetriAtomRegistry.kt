@@ -20,9 +20,6 @@ interface PetriAtomRegistry {
 
     fun PetriAtomId.arcTo(petriAtom: PetriAtomId): Arc
     operator fun set(petriAtomId: PetriAtomId, petriAtom: PetriAtom)
-
-    fun getSubgraphIndex(petriAtomId: PetriAtomId): Int?
-    fun setSubgraphIndex(petriAtomId: PetriAtomId, subgraphIndex: Int?)
     val iterator: MutableIterator<PetriAtomId>
 }
 
@@ -45,8 +42,10 @@ internal class PetriAtomRegistryImpl(
     }
 
     override var PetriAtomId.subgraphIndex: Int?
-        get() = getSubgraphIndex(this)
-        set(value) = setSubgraphIndex(this, value)
+        get() = subgraphIndexData[this]
+        set(value) {
+            subgraphIndexData[this] = subgraphIndex
+        }
 
     override fun getPlace(petriAtomId: PetriAtomId): Place {
         return get(petriAtomId) as Place
@@ -78,14 +77,6 @@ internal class PetriAtomRegistryImpl(
 
     override fun PetriAtomId.arcTo(petriAtom: PetriAtomId): Arc {
         return getArc(arcIdTo(petriAtom))
-    }
-
-    override fun getSubgraphIndex(petriAtomId: PetriAtomId): Int? {
-        return subgraphIndexData[petriAtomId]
-    }
-
-    override fun setSubgraphIndex(petriAtomId: PetriAtomId, subgraphIndex: Int?) {
-        subgraphIndexData[petriAtomId] = subgraphIndex
     }
 
     override val iterator: MutableIterator<PetriAtomId>
