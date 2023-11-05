@@ -3,10 +3,12 @@ package ru.misterpotz.ocgena.simulation.interactors
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
+import ru.misterpotz.ocgena.simulation.di.SimulationScope
 import ru.misterpotz.ocgena.simulation.interactors.factories.EnabledBindingResolverFactory
 import ru.misterpotz.ocgena.utils.buildSortedList
 import javax.inject.Inject
 
+@SimulationScope
 class EnabledBindingsCollectorInteractor @Inject constructor(
     simulationStateProvider: SimulationStateProvider,
     enabledBindingResolverFactory: EnabledBindingResolverFactory,

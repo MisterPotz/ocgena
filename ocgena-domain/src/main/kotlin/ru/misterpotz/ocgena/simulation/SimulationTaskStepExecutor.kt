@@ -8,6 +8,7 @@ import ru.misterpotz.ocgena.simulation.state.SimulationTime
 import ru.misterpotz.ocgena.simulation.transition.TransitionInstanceCreatorFacade
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
+import ru.misterpotz.ocgena.simulation.di.SimulationScope
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.State
 import simulation.Logger
@@ -26,6 +27,7 @@ interface SimulationStateProvider {
     fun markFinished()
 }
 
+@SimulationScope
 class SimulationStateProviderImpl @Inject constructor(
     private val simulatableOcNetInstance: SimulatableOcNetInstance,
 ) : SimulationStateProvider {

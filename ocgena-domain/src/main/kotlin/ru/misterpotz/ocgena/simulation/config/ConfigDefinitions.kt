@@ -156,7 +156,7 @@ data class TransitionIntervals(
 @Serializable
 data class TokenGenerationConfig(
     @Contextual
-    val defaultPeriod: Period?,
+    val defaultPeriod: Period = Period(10..10),
     val placeIdToGenerationTarget: MarkingScheme
 ) : Config {
     override val type: ConfigEnum = ConfigEnum.GENERATION

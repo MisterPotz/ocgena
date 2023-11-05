@@ -247,6 +247,9 @@ interface SimulationComponentDependencies {
 )
 interface SimulationComponent {
     fun simulationTask(): SimulationTask
+    fun state() : State
+    fun ocNet() : OCNet
+    fun enabledBindingsResolver() : EnabledBindingResolverInteractor
 
     @Component.Factory
     interface Factory {

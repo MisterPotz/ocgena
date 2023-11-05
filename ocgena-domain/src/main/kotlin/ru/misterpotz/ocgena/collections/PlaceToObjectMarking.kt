@@ -39,8 +39,8 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
     }
 
     override fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?) {
-        placesToObjectTokens.getOrElse(place) {
-            mutableSetOf()
+        placesToObjectTokens.getOrPut(place) {
+            sortedSetOf()
         }.addAll(tokens ?: return)
     }
 
@@ -49,9 +49,10 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
     }
 
     override fun plus(delta: PlaceToObjectMarkingDelta) {
-        val commonKeys = placesToObjectTokens.keys.intersect(delta.keys)
-        for (key in commonKeys) {
-            get(key)!!.addAll(delta[key]!!)
+        for (key in delta.keys) {
+            placesToObjectTokens.getOrPut(key) {
+                sortedSetOf()
+            }.addAll(delta[key]!!)
         }
     }
 
@@ -59,6 +60,9 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
         val commonKeys = placesToObjectTokens.keys.intersect(delta.keys)
         for (key in commonKeys) {
             get(key)!!.removeAll(delta[key]!!)
+            if (get(key)!!.isEmpty()) {
+                removePlace(key)
+            }
         }
     }
 

@@ -1,61 +1,63 @@
 package ru.misterpotz.ocgena.dsl.model
 
-import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
-import ru.misterpotz.ocgena.validation.OCNetChecker
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.di.DomainComponent
-import ru.misterpotz.ocgena.error.prettyPrint
-import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
+import ru.misterpotz.ocgena.dsl.tool.buildSimplestOCNetNoVar
+import ru.misterpotz.ocgena.dsl.tool.component
+import ru.misterpotz.ocgena.dsl.tool.defaultSimConfig
+import ru.misterpotz.ocgena.dsl.tool.simTask
 import ru.misterpotz.ocgena.simulation.config.*
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 
 class OCNetTest {
     @Test()
-    fun testRunSimpleModel() {
-        val ocNet = OCNetBuilder().defineAtoms {
-            "p1".p { input }
-                .arc("t1".t)
-                .arc("p2".p { output })
-        }
-        val errors = OCNetChecker(ocNet).checkConsistency()
+    fun checkInitialMarkingIsApplied() {
+        val ocNet = buildSimplestOCNetNoVar()
 
-
-        assertTrue(
-            errors.isEmpty(),
-            "ocNet is null, detected errors: ${errors.prettyPrint()}"
-        )
-
-        val simulationConfig = SimulationConfig(
-            ocNet,
+        val config = defaultSimConfig(ocNet).copy(
             initialMarking = MarkingScheme.of {
                 put("p1", 10)
+            }
+        )
+
+        val component = component(config)
+        val simTask = simTask(component)
+        simTask.prepareRun()
+
+        assertTrue(
+            component.state().pMarking["p1"]!!.size == 10,
+            "seems initial marking scheme doesn't work"
+        )
+    }
+
+    @Test
+    fun simpleRunPerforms() {
+        val ocNet = buildSimplestOCNetNoVar()
+
+        val config = defaultSimConfig(ocNet)
+        val component = component(config)
+        val simTask = simTask(component)
+
+        simTask.prepareAndRunAll()
+    }
+
+    @Test
+    fun simpleRunPerformHugeTokenAmount() {
+        val ocNet = buildSimplestOCNetNoVar()
+
+        val config = defaultSimConfig(ocNet).copy(
+            initialMarking = MarkingScheme.of {
+                put("p1", 100000)
             },
-            transitionInstancesTimesSpec = TransitionInstancesTimesSpec(
-                defaultTransitionTimeSpec = TransitionInstanceTimes(
-                    duration = Duration(2..10),
-                    timeUntilNextInstanceIsAllowed = TimeUntilNextInstanceIsAllowed(10..100)
-                )
-            ),
-            randomSeed = 45,
-            nodeToLabelRegistry = NodeToLabelRegistry(),
             tokenGeneration = TokenGenerationConfig(
-                defaultPeriod = Period(100..120),
                 placeIdToGenerationTarget = MarkingScheme.of {
-                    put("p1", 15)
-                }
+                    put("p1", 100000)
+                },
             ),
-            ocNetType = OcNetType.AALST
         )
+        val component = component(config)
+        val simTask = simTask(component)
 
-        val simulationComponent = SimulationComponent.defaultCreate(
-            simulationConfig = simulationConfig,
-            componentDependencies = DomainComponent.create()
-        )
-        val task = simulationComponent.simulationTask()
-
-        task.prepareAndRunAll()
+        simTask.prepareAndRunAll()
     }
 
 //    @OptIn(ExperimentalCoroutinesApi::class)
