@@ -9,6 +9,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 import java.lang.IllegalArgumentException
 
+@Deprecated("use PetriAtomID")
 typealias TransitionId = String
 
 @Serializable

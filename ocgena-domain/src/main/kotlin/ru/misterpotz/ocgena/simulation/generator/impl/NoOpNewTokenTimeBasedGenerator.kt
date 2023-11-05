@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.generator.impl
 
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 

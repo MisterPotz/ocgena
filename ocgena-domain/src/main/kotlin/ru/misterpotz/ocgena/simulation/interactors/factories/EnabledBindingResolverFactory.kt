@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.interactors.factories
 
-import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityTypeARegistry
+import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.typea.EnabledBindingTypeAResolverInteractor
@@ -12,10 +12,10 @@ class EnabledBindingResolverFactory @Inject constructor(
     private val stateProvider: SimulationStateProvider,
 ) {
     fun create(): EnabledBindingResolverInteractor {
-        val arcMultiplicity = stateProvider.runningSimulatableOcNet().composedOcNet
+        val arcMultiplicity = stateProvider.runningSimulatableOcNet().simulatableOcNetInstance
 
         return when (arcMultiplicity) {
-            is ArcToMultiplicityTypeARegistry -> enabledBindingTypeAResolver.get()
+            is ArcToMultiplicityNormalDelegateTypeA -> enabledBindingTypeAResolver.get()
             else -> throw IllegalArgumentException("type ${arcMultiplicity::class.simpleName} is not supported")
         }
     }

@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation.typea
 
-import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor

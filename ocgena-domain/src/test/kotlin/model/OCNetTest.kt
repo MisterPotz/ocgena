@@ -3,8 +3,8 @@ package model
 import ru.misterpotz.ocgena.error.prettyPrint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import simulation.utils.SimulationParamsBuilder
-import ru.misterpotz.ocgena.simulation.config.IntervalFunction
-import ru.misterpotz.ocgena.simulation.config.TransitionTimes
+import ru.misterpotz.ocgena.simulation.config.TransitionInstancesTimesSpec
+import ru.misterpotz.ocgena.simulation.config.TransitionInstanceTimes
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
@@ -51,11 +51,11 @@ class OCNetTest {
                 }
             )
             .withTimeIntervals(
-                IntervalFunction.create {
+                TransitionInstancesTimesSpec.create {
                     put(
-                        "t1", TransitionTimes(
+                        "t1", TransitionInstanceTimes(
                             duration = 10..15,
-                            pauseBeforeNextOccurence = 0..0
+                            timeUntilNextInstanceIsAllowed = 0..0
                         )
                     )
                 }
@@ -119,17 +119,17 @@ class OCNetTest {
             )
             .withOcNetType(OcNetType.AALST)
             .withTimeIntervals(
-                IntervalFunction.create {
+                TransitionInstancesTimesSpec.create {
                     put(
-                        "t1", TransitionTimes(
+                        "t1", TransitionInstanceTimes(
                             duration = 10..15,
-                            pauseBeforeNextOccurence = 10..10
+                            timeUntilNextInstanceIsAllowed = 10..10
                         )
                     )
                     put(
-                        "t2", TransitionTimes(
+                        "t2", TransitionInstanceTimes(
                             duration = 0..5,
-                            pauseBeforeNextOccurence = 0..0
+                            timeUntilNextInstanceIsAllowed = 0..0
                         )
                     )
                 }
@@ -187,17 +187,17 @@ class OCNetTest {
             .withOcNetType(OcNetType.AALST)
             .withInputOutput(placeTypeRegistry)
             .withTimeIntervals(
-                IntervalFunction.create {
+                TransitionInstancesTimesSpec.create {
                     put(
-                        "t1", TransitionTimes(
+                        "t1", TransitionInstanceTimes(
                             duration = 10..15,
-                            pauseBeforeNextOccurence = 10..10
+                            timeUntilNextInstanceIsAllowed = 10..10
                         )
                     )
                     put(
-                        "t2", TransitionTimes(
+                        "t2", TransitionInstanceTimes(
                             duration = 0..5,
-                            pauseBeforeNextOccurence = 0..0
+                            timeUntilNextInstanceIsAllowed = 0..0
                         )
                     )
                 }

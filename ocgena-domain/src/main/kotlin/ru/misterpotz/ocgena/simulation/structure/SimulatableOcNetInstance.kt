@@ -1,18 +1,18 @@
 package ru.misterpotz.ocgena.simulation.structure
 
-import model.ArcsRegistry
-import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.transitions.TransitionToInstancesMarking
-import ru.misterpotz.ocgena.collections.transitions.TransitionToTimeUntilInstanceAllowedMarking
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.registries.TransitionToInstancesRegistry
+import ru.misterpotz.ocgena.registries.TransitionToTimeUntilInstanceAllowedRegistry
+import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.*
-import ru.misterpotz.ocgena.simulation.config.IntervalFunction
+import ru.misterpotz.ocgena.simulation.config.TransitionInstancesTimesSpec
 
-interface OcNetInstance : OCNet {
+interface SimulatableOcNetInstance : OCNet {
     val ocNet: OCNet
-    val intervalFunction: IntervalFunction
     val ocNetType: OcNetType
+    val state : State
 
     override val objectTypeRegistry: ObjectTypeRegistry
         get() = ocNet.objectTypeRegistry
@@ -33,11 +33,12 @@ interface OcNetInstance : OCNet {
     override val outputPlaces: PlaceRegistry
         get() = ocNet.outputPlaces
 
-    fun createInitialState(): State
-    
-    interface State {
-        val tMarking: TransitionToInstancesMarking
-        val pMarking: PlaceToObjectMarking
-        val tTimesMarking: TransitionToTimeUntilInstanceAllowedMarking
-    }
+}
+
+interface State {
+    val tMarking: TransitionToInstancesRegistry
+    val pMarking: PlaceToObjectMarking
+    val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry
+    val arcsMultiplicityRegistry : ArcsMultiplicityRegistry
+    val transitionToPlacesByObjectTypeIndexRegistry : TransitionToPlacesByObjectTypeIndexRegistry
 }

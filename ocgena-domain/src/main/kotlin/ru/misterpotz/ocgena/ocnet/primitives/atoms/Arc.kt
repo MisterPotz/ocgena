@@ -6,6 +6,11 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcArrowId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcTailId
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 
+enum class ArcType {
+    NORMAL,
+    VARIABLE
+}
+
 abstract class Arc : PetriAtom {
     val arrowNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {
         id.arcArrowId()
@@ -13,6 +18,7 @@ abstract class Arc : PetriAtom {
     val tailNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {
         id.arcTailId()
     }
+    abstract val arcType : ArcType
 
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitArc(this)

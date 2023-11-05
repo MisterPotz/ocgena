@@ -1,7 +1,6 @@
-package ru.misterpotz.ocgena.collections.transitions
+package ru.misterpotz.ocgena.collections
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 import utils.ANSI_CYAN

@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.generator
 
-import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingDelta
 import ru.misterpotz.ocgena.simulation.Time
 
 interface NewTokenTimeBasedGenerator {

@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.collections.transitions
+package ru.misterpotz.ocgena.collections
 
 import ru.misterpotz.ocgena.simulation.Time
 

@@ -14,7 +14,7 @@ class NewTokenTimeBasedGeneratorFactoryImpl @Inject constructor(
     private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
 ) : NewTokenTimeBasedGeneratorFactory {
     override fun createGenerationQueue(simulationConfig: SimulationConfig): NewTokenTimeBasedGenerator {
-        val ocNet = simulationConfig.ocNetInstance
+        val ocNet = simulationConfig.ocNet
 
         return simulationConfig.generationConfig?.let {
             NormalNewTokenTimeBasedGenerator(

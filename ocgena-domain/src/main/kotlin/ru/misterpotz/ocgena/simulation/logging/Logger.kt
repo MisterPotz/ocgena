@@ -1,6 +1,6 @@
 package simulation
 
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 

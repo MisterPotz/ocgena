@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.collections.objects
+package ru.misterpotz.ocgena.collections
 
 import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.ObjectTokenId

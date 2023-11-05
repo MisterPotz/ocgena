@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation.transition
 
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 import ru.misterpotz.ocgena.simulation.Time
 import javax.inject.Inject
@@ -9,7 +9,7 @@ import javax.inject.Inject
 class TransitionInstanceCreationFactory @Inject constructor() {
     fun create(
         transition: TransitionId,
-        lockedObjectTokens: ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking,
+        lockedObjectTokens: ImmutablePlaceToObjectMarking,
         duration: Time,
         startedAt: Time,
         tokenSynchronizationTime: Time,

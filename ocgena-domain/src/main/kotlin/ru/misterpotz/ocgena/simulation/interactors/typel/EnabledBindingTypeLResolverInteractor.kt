@@ -1,14 +1,15 @@
 package simulation.typel
 
 import model.*
-import ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.transitions.TransitionToTimeUntilInstanceAllowedMarking
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.registries.TransitionToTimeUntilInstanceAllowedRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
+import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
-import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityTypeARegistry
+import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
@@ -18,10 +19,10 @@ import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
 
 @Suppress("UNUSED")
 class EnabledBindingTypeLResolverInteractor(
-    private val arcMultiplicity: ArcToMultiplicityTypeARegistry,
+    private val arcMultiplicity: ArcToMultiplicityNormalDelegateTypeA,
     val arcsRegistry: ArcsRegistry,
     private val tokenSelectionInteractor: TokenSelectionInteractor,
-    private val tTimes: TransitionToTimeUntilInstanceAllowedMarking,
+    private val tTimes: TransitionToTimeUntilInstanceAllowedRegistry,
     private val currentSimulationDelegate: CurrentSimulationDelegate
 ) : EnabledBindingResolverInteractor {
     private val pMarking: PlaceToObjectMarking get() = currentSimulationDelegate.pMarking

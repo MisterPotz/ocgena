@@ -1,29 +1,38 @@
 package ru.misterpotz.ocgena.simulation.di
 
+import com.charleskorn.kaml.Yaml
 import dagger.*
 import kotlinx.serialization.json.Json
-import net.mamoe.yamlkt.Yaml
-import ru.misterpotz.ocgena.collections.objects.ObjectTokenSet
-import ru.misterpotz.ocgena.collections.objects.ObjectTokenSetMap
+import ru.misterpotz.ocgena.collections.ObjectTokenSet
+import ru.misterpotz.ocgena.collections.ObjectTokenSetMap
+import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
+import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
+import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
+import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistryDelegating
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
+import ru.misterpotz.ocgena.registries.delegates.CompoundArcsMultiplicityDelegate
+import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.simulation.*
+import ru.misterpotz.ocgena.simulation.binding.TIFinisher
+import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.generator.*
 import ru.misterpotz.ocgena.simulation.interactors.*
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
 import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegateImpl
-import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
-import simulation.*
+import ru.misterpotz.ocgena.simulation.state.StateImpl
+import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
+import ru.misterpotz.ocgena.simulation.structure.State
+import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
+import simulation.Logger
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
-import ru.misterpotz.ocgena.simulation.binding.TIFinisher
-import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
-import ru.misterpotz.ocgena.simulation.structure.OcNetInstance
-import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
 import simulation.random.RandomFactory
 import simulation.random.RandomFactoryImpl
 import javax.inject.Scope
@@ -102,9 +111,10 @@ internal abstract class SimulationModule {
         ): TransitionInstanceDurationGenerator {
             return TransitionInstanceDurationGenerator(
                 random,
-                intervalFunction = simulationConfig.ocNetInstance.intervalFunction
+                transitionInstancesTimesSpec = simulationConfig.transitionInstancesTimesSpec
             )
         }
+
         @Provides
         @SimulationScope
         fun objectTokenSet(): ObjectTokenSet {
@@ -113,13 +123,13 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun ocNetInstance(simulationConfig: SimulationConfig) : OcNetInstance {
-            return simulationConfig.ocNetInstance
+        fun ocNetInstance(simulationConfig: SimulationConfig): SimulatableOcNetInstance {
+            return simulationConfig.ocNet
         }
 
         @Provides
         @SimulationScope
-        fun objectTokenGenerator() : ObjectTokenGenerator {
+        fun objectTokenGenerator(): ObjectTokenGenerator {
             return ObjectTokenGenerator()
         }
 
@@ -131,7 +141,7 @@ internal abstract class SimulationModule {
         ): TransitionNextInstanceAllowedTimeGenerator {
             return TransitionNextInstanceAllowedTimeGenerator(
                 random,
-                intervalFunction = simulationConfig.ocNetInstance.intervalFunction
+                transitionInstancesTimesSpec = simulationConfig.transitionInstancesTimesSpec
             )
         }
 
@@ -160,6 +170,49 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun executionConditions(): ExecutionConditions {
             return SimpleExecutionConditions()
+        }
+
+        @Provides
+        @SimulationScope
+        fun ocNet(simulationConfig: SimulationConfig): OCNet {
+            return simulationConfig.ocNet
+        }
+
+        @Provides
+        @SimulationScope
+        fun arcMultiplicityRegistry(
+            ocNet: OCNet,
+            arcsMultiplicityDelegate: ArcsMultiplicityDelegate
+        ): ArcsMultiplicityRegistry {
+            return ArcsMultiplicityRegistryDelegating(
+                petriAtomRegistry = ocNet.petriAtomRegistry,
+                arcsRegistry = ocNet.arcsRegistry,
+                arcsMultiplicityDelegate = arcsMultiplicityDelegate
+            )
+        }
+
+        @Provides
+        @SimulationScope
+        fun arcMultiplicityDelegate(currentSimulationDelegate: CurrentSimulationDelegate): ArcsMultiplicityDelegate {
+            return CompoundArcsMultiplicityDelegate(
+                arcMultiplicityDelegates = buildMap {
+                    put(
+                        ArcType.NORMAL, ArcToMultiplicityNormalDelegateTypeA(currentSimulationDelegate)
+                    )
+                }
+            )
+        }
+
+        @Provides
+        @SimulationScope
+        fun state(
+            simulationConfig: SimulationConfig,
+            arcsMultiplicityRegistry: ArcsMultiplicityRegistry
+        ): State {
+            return StateImpl(
+                ocNet = simulationConfig.ocNet,
+                arcsMultiplicityRegistry = arcsMultiplicityRegistry
+            )
         }
     }
 }

@@ -1,14 +1,15 @@
 package ru.misterpotz.ocgena.simulation.binding
 
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import utils.*
 
 data class ExecutedBinding(
     val finishedTransitionInstance: TransitionInstance,
     val finishedTime: Time,
-    val consumedMap: ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking,
-    val producedMap: ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking,
+    val consumedMap: ImmutablePlaceToObjectMarking,
+    val producedMap: ImmutablePlaceToObjectMarking,
 ) {
 
     override fun toString(): String {

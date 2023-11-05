@@ -1,5 +1,7 @@
 package ru.misterpotz.ocgena.simulation.generator.impl
 
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingDelta
 import ru.misterpotz.ocgena.simulation.config.GenerationConfig
 import ru.misterpotz.ocgena.simulation.config.TimeRange
 import ru.misterpotz.ocgena.ocnet.PlaceId
@@ -48,7 +50,7 @@ class NormalNewTokenTimeBasedGenerator(
         } else null
     }
 
-    override fun generateTokensAsMarkingAndReplan(): ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta? {
+    override fun generateTokensAsMarkingAndReplan(): PlaceToObjectMarkingDelta? {
         val map = buildMap {
             for ((id, generator) in placeGenerators) {
 
@@ -62,7 +64,7 @@ class NormalNewTokenTimeBasedGenerator(
             }
         }
         if (map.isNotEmpty()) {
-            return ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking(map)
+            return ImmutablePlaceToObjectMarking(map)
         }
         return null
     }

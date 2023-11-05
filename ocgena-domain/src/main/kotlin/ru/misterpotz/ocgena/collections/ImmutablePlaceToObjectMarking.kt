@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.collections.objects
+package ru.misterpotz.ocgena.collections
 
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.PlaceId
@@ -12,22 +12,22 @@ interface PlaceToObjectMarkingDelta {
     operator fun get(placeId: PetriAtomId): Set<ObjectTokenId>?
 }
 
-interface ImmutablePlaceToObjectMarking : ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarkingDelta, java.io.Serializable {
+interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta, java.io.Serializable {
     val tokensIterator: Iterator<ObjectTokenId>
     override operator fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>?
     override val keys: Set<PlaceId>
     fun isEmpty(): Boolean
 
-    fun toMutable(): ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
+    fun toMutable(): PlaceToObjectMarking
 }
 
-fun <S : SortedSet<ObjectTokenId>> ImmutablePlaceToObjectMarking(placesToObjectTokens: Map<PetriAtomId, S>): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
-    return ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarkingMap(placesToObjectTokens)
+fun <S : SortedSet<ObjectTokenId>> ImmutablePlaceToObjectMarking(placesToObjectTokens: Map<PetriAtomId, S>): ImmutablePlaceToObjectMarking {
+    return ImmutablePlaceToObjectMarkingMap(placesToObjectTokens)
 }
 
 @Serializable
 internal data class ImmutablePlaceToObjectMarkingMap(val placesToObjectTokens: Map<PetriAtomId, SortedSet<ObjectTokenId>>) :
-    ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
+    ImmutablePlaceToObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {
             return iterator {
@@ -51,8 +51,8 @@ internal data class ImmutablePlaceToObjectMarkingMap(val placesToObjectTokens: M
         }
     }
 
-    override fun toMutable(): ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking {
-        return ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking(
+    override fun toMutable(): PlaceToObjectMarking {
+        return PlaceToObjectMarking(
             placesToObjectTokens.copyWithValueTransformMutable {
                 it.toSortedSet()
             }
@@ -66,8 +66,8 @@ interface ObjectMarkingModifier {
 
 fun buildObjectMarkingModifier(
     block: (modificationTarget: MutableMap<PlaceId, SortedSet<ObjectTokenId>>) -> Unit
-): ru.misterpotz.ocgena.collections.objects.ObjectMarkingModifier {
-    return object : ru.misterpotz.ocgena.collections.objects.ObjectMarkingModifier {
+): ObjectMarkingModifier {
+    return object : ObjectMarkingModifier {
         override fun applyTo(map: MutableMap<PlaceId, SortedSet<ObjectTokenId>>) {
             block(map)
         }

@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation
 
-import ru.misterpotz.ocgena.simulation.structure.RunningSimulatableOcNet
+import ru.misterpotz.ocgena.simulation.structure.SimulationableOcNetInstance
 
 class SimpleExecutionConditions() : ExecutionConditions {
     //    override fun checkTerminateConditionSatisfied(ocNet: StaticCoreOcNet): Boolean {
@@ -17,7 +17,7 @@ class SimpleExecutionConditions() : ExecutionConditions {
 //        // by default, select the first one
 //        return enabledBindings.first()
 //    }
-    override fun checkTerminateConditionSatisfied(ocNet: RunningSimulatableOcNet): Boolean {
+    override fun checkTerminateConditionSatisfied(ocNet: SimulationableOcNetInstance): Boolean {
 //        TODO("Not yet implemented")
         return false
     }

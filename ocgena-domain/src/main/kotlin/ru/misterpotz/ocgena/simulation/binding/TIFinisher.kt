@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.simulation.binding
 
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.interactors.TIOutputPlacesResolverInteractor
 import simulation.Logger
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
@@ -35,7 +36,7 @@ class TIFinisherImpl @Inject constructor(
         logger.onEndTransition(executedBinding)
     }
 
-    private fun getMarkingForOutputPlaces(activeFiringTransition: TransitionInstance): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
+    private fun getMarkingForOutputPlaces(activeFiringTransition: TransitionInstance): ImmutablePlaceToObjectMarking {
         return outputPlacesResolver.createOutputMarking(activeFiringTransition)
     }
 }

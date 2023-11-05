@@ -1,7 +1,6 @@
 package ru.misterpotz.ocgena.ocnet
 
 import kotlinx.serialization.Serializable
-import model.ArcsRegistry
 import ru.misterpotz.ocgena.registries.*
 
 interface OCNet {
@@ -13,10 +12,11 @@ interface OCNet {
     val arcsRegistry: ArcsRegistry
     val petriAtomRegistry: PetriAtomRegistry
 
-    val inputPlaces : PlaceRegistry
-    val outputPlaces : PlaceRegistry
+    val inputPlaces: PlaceRegistry
+    val outputPlaces: PlaceRegistry
 }
 
+@Deprecated("use petriatomid")
 typealias PlaceId = String
 
 @Serializable
@@ -26,19 +26,19 @@ data class OCNetImpl(
     override val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     override val petriAtomRegistry: PetriAtomRegistry
 ) : OCNet {
-    override val placeRegistry: PlaceRegistry by lazy {
+    override val placeRegistry: PlaceRegistry by lazy(LazyThreadSafetyMode.NONE) {
         PlaceRegistry(petriAtomRegistry)
     }
-    override val transitionsRegistry: TransitionsRegistry by lazy {
+    override val transitionsRegistry: TransitionsRegistry by lazy(LazyThreadSafetyMode.NONE) {
         TransitionsRegistry(petriAtomRegistry)
     }
-    override val arcsRegistry: ArcsRegistry by lazy {
+    override val arcsRegistry: ArcsRegistry by lazy(LazyThreadSafetyMode.NONE) {
         ArcsRegistry(petriAtomRegistry)
     }
-    override val inputPlaces: PlaceRegistry by lazy {
+    override val inputPlaces: PlaceRegistry by lazy(LazyThreadSafetyMode.NONE) {
         placeTypeRegistry.getInputPlaces(placeRegistry)
     }
-    override val outputPlaces: PlaceRegistry by lazy {
+    override val outputPlaces: PlaceRegistry by lazy(LazyThreadSafetyMode.NONE) {
         placeTypeRegistry.getOutputPlaces(placeRegistry)
     }
 }

@@ -1,9 +1,11 @@
-package ru.misterpotz.ocgena.collections.transitions
+package ru.misterpotz.ocgena.registries
 
+import ru.misterpotz.ocgena.collections.TransitionInstance
+import ru.misterpotz.ocgena.collections.TransitionInstancesList
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 
-class TransitionToInstancesMarking() {
+class TransitionToInstancesRegistry {
     private val transitionsToTMarkingValue = mutableMapOf<TransitionId, TransitionInstancesList>()
 
     operator fun get(transitionId: TransitionId): TransitionInstancesList? {

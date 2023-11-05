@@ -1,15 +1,15 @@
-package ru.misterpotz.ocgena.collections.objects
+package ru.misterpotz.ocgena.collections
 
-import ru.misterpotz.ocgena.ocnet.PlaceId
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransform
 import java.util.*
 
 interface PlaceToObjectMarking {
     val tokensIterator: Iterator<ObjectTokenId>
-    operator fun get(place: PlaceId): SortedSet<ObjectTokenId>?
-    operator fun set(place: PlaceId, tokens: SortedSet<ObjectTokenId>?)
-    fun removePlace(placeId: PlaceId)
+    operator fun get(place: PetriAtomId): SortedSet<ObjectTokenId>?
+    operator fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?)
+    fun removePlace(placeId: PetriAtomId)
     fun plus(delta: PlaceToObjectMarkingDelta)
     fun minus(delta: PlaceToObjectMarkingDelta)
     fun toImmutable(): ImmutablePlaceToObjectMarking
@@ -17,11 +17,11 @@ interface PlaceToObjectMarking {
     fun clear()
 }
 
-fun PlaceToObjectMarking(placesToObjectTokens: MutableMap<PlaceId, SortedSet<ObjectTokenId>> = mutableMapOf()): PlaceToObjectMarking {
+fun PlaceToObjectMarking(placesToObjectTokens: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>> = mutableMapOf()): PlaceToObjectMarking {
     return PlaceToObjectMarkingMap(placesToObjectTokens)
 }
 
-internal class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PlaceId, SortedSet<ObjectTokenId>> = mutableMapOf()) :
+internal class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>> = mutableMapOf()) :
     PlaceToObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {
@@ -32,17 +32,17 @@ internal class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<Plac
             }
         }
 
-    override fun get(place: PlaceId): SortedSet<ObjectTokenId>? {
+    override fun get(place: PetriAtomId): SortedSet<ObjectTokenId>? {
         return placesToObjectTokens[place]
     }
 
-    override fun set(place: PlaceId, tokens: SortedSet<ObjectTokenId>?) {
+    override fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?) {
         placesToObjectTokens.getOrElse(place) {
             mutableSetOf()
         }.addAll(tokens ?: return)
     }
 
-    override fun removePlace(placeId: PlaceId) {
+    override fun removePlace(placeId: PetriAtomId) {
         placesToObjectTokens.remove(placeId)
     }
 

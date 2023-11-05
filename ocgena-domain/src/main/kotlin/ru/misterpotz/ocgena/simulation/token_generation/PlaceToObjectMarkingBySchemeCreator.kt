@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation.token_generation
 
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerationFacade
@@ -26,8 +27,8 @@ class PlaceToObjectMarkingBySchemeCreator @Inject constructor(
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
 ) {
-    fun create(): ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking {
-        return ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking(
+    fun create(): ImmutablePlaceToObjectMarking {
+        return ImmutablePlaceToObjectMarking(
             buildMap {
                 for (place in plainMarking.allPlaces()) {
                     put(place, buildSet {

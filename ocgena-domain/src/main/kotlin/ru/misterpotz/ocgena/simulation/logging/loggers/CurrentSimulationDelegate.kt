@@ -1,8 +1,9 @@
 package ru.misterpotz.ocgena.simulation.logging.loggers
 
-import model.ArcsRegistry
-import ru.misterpotz.ocgena.collections.objects.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.transitions.TransitionToTimeUntilInstanceAllowedMarking
+import ru.misterpotz.ocgena.registries.ArcsRegistry
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.registries.TransitionToInstancesRegistry
+import ru.misterpotz.ocgena.registries.TransitionToTimeUntilInstanceAllowedRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.simulation.Time
@@ -11,25 +12,28 @@ import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerationFacade
 import ru.misterpotz.ocgena.simulation.state.SimulationStepState
 import ru.misterpotz.ocgena.simulation.state.SimulationTime
-import ru.misterpotz.ocgena.simulation.structure.RunningSimulatableOcNet
-import ru.misterpotz.ocgena.simulation.structure.OcNetInstance
+import ru.misterpotz.ocgena.simulation.structure.SimulationableOcNetInstance
+import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
+import ru.misterpotz.ocgena.simulation.structure.State
 import javax.inject.Inject
 
 interface CurrentSimulationDelegate : OCNet {
-    val ocNet: OcNetInstance
-    val state: OcNetInstance.State
+    val ocNet: SimulatableOcNetInstance
+    val state: State
     val currentStep: Long
     val simulationStepState: SimulationStepState
     val simGlobalTime: Time
     val simTime: SimulationTime
     val initialMarkingScheme: MarkingScheme
-    val runningSimulatableOcNet: RunningSimulatableOcNet
+    val simulationableOcNetInstance: SimulationableOcNetInstance
     val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
-    val tTimesMarking: TransitionToTimeUntilInstanceAllowedMarking
+    val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry
         get() = state.tTimesMarking
     val pMarking: PlaceToObjectMarking
         get() = state.pMarking
+    val tMarking : TransitionToInstancesRegistry
+        get() = state.tMarking
 
     override val transitionsRegistry: TransitionsRegistry
         get() = ocNet.transitionsRegistry
@@ -49,6 +53,7 @@ interface CurrentSimulationDelegate : OCNet {
         get() = ocNet.inputPlaces
     override val outputPlaces: PlaceRegistry
         get() = ocNet.outputPlaces
+
 }
 
 class CurrentSimulationDelegateImpl @Inject constructor(
@@ -60,9 +65,9 @@ class CurrentSimulationDelegateImpl @Inject constructor(
     override val currentStep get() = simulationStateProvider.getSimulationStepState().currentStep
     override val simGlobalTime get() = simulationStateProvider.getSimulationTime().globalTime
     override val simTime get() = simulationStateProvider.getSimulationTime()
-    override val ocNet get() = simulationConfig.ocNetInstance
+    override val ocNet get() = simulationConfig.ocNet
     override val initialMarkingScheme get() = simulationConfig.initialMarking
     override val state get() = simulationStateProvider.getOcNetState()
     override val simulationStepState get() = simulationStateProvider.getSimulationStepState()
-    override val runningSimulatableOcNet get() = simulationStateProvider.runningSimulatableOcNet()
+    override val simulationableOcNetInstance get() = simulationStateProvider.runningSimulatableOcNet()
 }

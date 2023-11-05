@@ -1,4 +1,4 @@
-package simulation.utils
+package ru.misterpotz.ocgena.simulation.utils
 
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 

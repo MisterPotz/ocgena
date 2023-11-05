@@ -1,6 +1,8 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.ocgena.collections.objects.*
+import ru.misterpotz.ocgena.collections.*
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import utils.print
@@ -23,8 +25,8 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
         return prettyPrint((objectMarking as PlaceToObjectMarkingMap).placesToObjectTokens)
     }
 
-    fun prettyPrint(objectMarking: ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking): String {
-        return prettyPrint((objectMarking as ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarkingMap).placesToObjectTokens)
+    fun prettyPrint(objectMarking: ImmutablePlaceToObjectMarking): String {
+        return prettyPrint((objectMarking as ImmutablePlaceToObjectMarkingMap).placesToObjectTokens)
     }
 
     fun <S : Set<ObjectTokenId>> toString(placesToObjectTokens: Map<PlaceId, S>): String {
@@ -44,7 +46,7 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
         return toString((objectMarking as PlaceToObjectMarkingMap).placesToObjectTokens)
     }
 
-    fun toString(objectMarking: ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarking): String {
-        return toString((objectMarking as ru.misterpotz.ocgena.collections.objects.ImmutablePlaceToObjectMarkingMap).placesToObjectTokens)
+    fun toString(objectMarking: ImmutablePlaceToObjectMarking): String {
+        return toString((objectMarking as ImmutablePlaceToObjectMarkingMap).placesToObjectTokens)
     }
 }

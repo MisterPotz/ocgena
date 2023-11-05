@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation.logging.loggers
 
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import ru.misterpotz.ocgena.simulation.logging.LoggingEvent

@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
-import model.ArcsRegistry
+import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc

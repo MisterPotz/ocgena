@@ -7,7 +7,7 @@ import simulation.Logger
 import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
 import javax.inject.Inject
 
-class TransitionTokensLocker @Inject constructor(
+class TransitionInstanceCreatorFacade @Inject constructor(
     private val activityAllowedTimeSelector: TransitionNextInstanceAllowedTimeGenerator,
     private val transitionInstanceDurationGenerator: TransitionInstanceDurationGenerator,
     private val logger: Logger,

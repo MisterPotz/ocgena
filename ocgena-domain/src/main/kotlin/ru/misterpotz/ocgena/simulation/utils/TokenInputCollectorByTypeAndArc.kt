@@ -1,20 +1,14 @@
 package ru.misterpotz.ocgena.simulation.utils
 
-import model.*
-import ru.misterpotz.ocgena.collections.transitions.TransitionInstance
-import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.registries.TransitionsRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
-import simulation.utils.ObjectTokenStack
 import javax.inject.Inject
 
 class TokenCollectorByTypeAndArcFactory @Inject constructor(

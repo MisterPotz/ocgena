@@ -1,25 +1,41 @@
 package ru.misterpotz.ocgena.di
 
+import com.charleskorn.kaml.SequenceStyle
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
 import dagger.Component
 import dagger.Module
 import dagger.Provides
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import model.*
-import net.mamoe.yamlkt.Yaml
-import net.mamoe.yamlkt.YamlBuilder
+import kotlinx.serialization.modules.SerializersModuleBuilder
+import kotlinx.serialization.modules.contextual
+import ru.misterpotz.ocgena.serialization.DurationSerializer
+import ru.misterpotz.ocgena.serialization.IntRangeSerializer
+import ru.misterpotz.ocgena.serialization.TimeUntilNextInstanceIsAllowedSerializer
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import javax.inject.Scope
 
 @Module
 class DomainModule {
     companion object {
+
         @Provides
         @DomainScope
-        fun json(): Json {
+        fun serializersModuleBlock() : SerializersModuleBuilder.() -> Unit {
+            return {
+                contextual(IntRangeSerializer("interval"))
+                contextual(DurationSerializer("duration"))
+                contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
+            }
+        }
+        @Provides
+        @DomainScope
+        fun json(serializersModuleBlock : SerializersModuleBuilder.() -> Unit): Json {
             return Json {
                 prettyPrint = true
                 serializersModule = SerializersModule {
+                    serializersModuleBlock()
 //                polymorphic(baseClass = SerializableAtom::class) {
 //                    subclass(SerializablePlace::class, SerializablePlace.serializer())
 //                    subclass(SerializableTransition::class, SerializableTransition.serializer())
@@ -40,27 +56,14 @@ class DomainModule {
         @Provides
         @DomainScope
         fun yaml(): Yaml {
-            return Yaml {
-                this.listSerialization = YamlBuilder.ListSerialization.AUTO
-                this.mapSerialization = YamlBuilder.MapSerialization.BLOCK_MAP
-
+            return Yaml(
                 serializersModule = SerializersModule {
-//                polymorphic(baseClass = SerializableAtom::class) {
-//                    subclass(SerializablePlace::class, SerializablePlace.serializer())
-//                    subclass(SerializableTransition::class, SerializableTransition.serializer())
-//                    subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
-//                    subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
-//                    subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
-//                }
-//
-//                polymorphic(SimulatableComposedOcNet.SerializableState::class) {
-//                    subclass(SerializableState::class, SerializableState.serializer())
-//                }
-//                polymorphic(ObjectValuesMap::class) {
-//                    subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
-//                }
-                }
-            }
+                    serializersModuleBlock()
+                },
+                configuration = YamlConfiguration(
+                    sequenceStyle = SequenceStyle.Flow
+                )
+            )
         }
     }
 }

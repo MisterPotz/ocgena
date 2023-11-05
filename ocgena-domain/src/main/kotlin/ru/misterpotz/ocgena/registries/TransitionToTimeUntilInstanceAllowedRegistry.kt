@@ -1,9 +1,9 @@
-package ru.misterpotz.ocgena.collections.transitions
+package ru.misterpotz.ocgena.registries
 
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 import ru.misterpotz.ocgena.simulation.Time
 
-interface TransitionToTimeUntilInstanceAllowedMarking {
+interface TransitionToTimeUntilInstanceAllowedRegistry {
     val keys : Iterable<TransitionId>
     fun increaseSimTime(time: Time)
     fun earliestNonZeroTime(): Time?
@@ -13,14 +13,14 @@ interface TransitionToTimeUntilInstanceAllowedMarking {
 }
 
 fun TransitionToTimeUntilInstanceAllowedMarking(transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf())
-        : TransitionToTimeUntilInstanceAllowedMarking {
-    return TransitionToTimeUntilInstanceAllowedMarkingMap(transitionsToNextTimes)
+        : TransitionToTimeUntilInstanceAllowedRegistry {
+    return TransitionToTimeUntilInstanceAllowedRegistryMap(transitionsToNextTimes)
 }
 
-internal class TransitionToTimeUntilInstanceAllowedMarkingMap(
+internal class TransitionToTimeUntilInstanceAllowedRegistryMap(
     private val transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf()
 ) :
-    TransitionToTimeUntilInstanceAllowedMarking {
+    TransitionToTimeUntilInstanceAllowedRegistry {
     override val keys: Iterable<TransitionId>
         get() = transitionsToNextTimes.keys
 
