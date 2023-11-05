@@ -14,14 +14,11 @@ typealias TransitionId = String
 
 @Serializable
 data class Transition(
-    override val id: TransitionId,
+    override val id: PetriAtomId,
     override val label: String,
     val fromPlaces: MutableList<PetriAtomId> = mutableListOf(),
     val toPlaces: MutableList<PetriAtomId> = mutableListOf(),
 ) : PetriNode, LabelHolder {
-    val inputPlaces: List<PetriAtomId> get() = fromPlaces
-    val outputPlaces: List<PetriAtomId> get() = toPlaces
-
     fun addFromPlace(place: PetriAtomId) {
         fromPlaces.add(place)
     }
@@ -57,9 +54,5 @@ data class Transition(
             fromPlaces = mutableListOf(),
             toPlaces = mutableListOf()
         )
-    }
-
-    override fun toString(): String {
-        return "transition [ $label ]"
     }
 }

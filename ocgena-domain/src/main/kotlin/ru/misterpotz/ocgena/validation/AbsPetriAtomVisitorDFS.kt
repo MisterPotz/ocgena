@@ -26,7 +26,7 @@ abstract class AbsPetriAtomVisitorDFS(
         recursionProtector.protectWithRecursionStack(transition.id) {
             val canStopParsing = doForTransitionBeforeDFS(transition)
             if (!canStopParsing) {
-                for (outputPlace in transition.outputPlaces) {
+                for (outputPlace in transition.toPlaces) {
                     val arc = with(petriAtomRegistry) {
                         transition.id.arcTo(outputPlace)
                     }

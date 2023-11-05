@@ -5,6 +5,7 @@ import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
+import ru.misterpotz.ocgena.utils.findInstance
 import ru.misterpotz.ocgena.validation.OCNetChecker
 
 class OCNetCheckerTest {
@@ -88,9 +89,9 @@ class OCNetCheckerTest {
         // TODO: check that input and output are presented for a subgraph
         val ocNet = OCNetBuilder().defineAtoms {
             "p1".p
-            "p2".p
+            "p2".p { input }
                 .arc("t1".t) { vari }
-                .arc("p3")
+                .arc("p3".p { output }) { vari }
         }
         val ocnetChecker = OCNetChecker(ocNet)
         val errors = ocnetChecker.checkConsistency()
@@ -137,6 +138,8 @@ class OCNetCheckerTest {
     }
 
     @Test
+    // due to map-like storage and how arc ids are constructed,
+    // that's uncheckable - to check there are no arc duplicates - the arc between same nodes is always one
     fun testMultipleArcsFromSinglePlaceError() {
         val errors = createAndCheckForConsistency {
             val place = "p1".p
@@ -147,7 +150,8 @@ class OCNetCheckerTest {
             "t1".t
                 .arc(place)
         }
-        assertNotNull(errors.find { it is ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition })
+        assertNotNull(errors.findInstance<ConsistencyCheckError.NoInputPlacesDetected>())
+        assertNotNull(errors.findInstance<ConsistencyCheckError.NoOutputPlacesDetected>())
     }
 
     @Test
@@ -164,7 +168,7 @@ class OCNetCheckerTest {
     fun testInconsistentVariabilityArcs() {
         val errors = createAndCheckForConsistency {
             "p1".p
-                .arc("t1".t)
+                .arc("t1".t) { vari }
                 .arc("p2".p)
         }
         assertNotNull(errors.find { it is ConsistencyCheckError.InconsistentVariabilityArcs })

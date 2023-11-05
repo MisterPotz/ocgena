@@ -9,12 +9,15 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 
 class ConsistencyCheckPetriAtomVisitorDFS(
     val assignedSubgraphIndex: Int,
     private val placeTypeRegistry: PlaceTypeRegistry,
+    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val petriAtomRegistry: PetriAtomRegistry,
+    private val loggingEnabled : Boolean
 ) : AbsPetriAtomVisitorDFS(
     petriAtomRegistry
 ) {
@@ -43,17 +46,35 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         setSubgraphIndexTo(atom)
     }
 
+
+
     override fun doForArcBeforeDFS(arc: Arc): Boolean {
+        logItem(arc)
         recordIfArcConsistencyErrors(arc)
         return checkIfExistsSubgraphIndex(arc)
     }
 
     override fun doForTransitionBeforeDFS(transition: Transition): Boolean {
+        logItem(transition)
         recordIfTransitionConsistencyErrors(transition)
         return checkIfExistsSubgraphIndex(transition)
     }
 
+    private fun logItem(petriAtom: PetriAtom) {
+        if (loggingEnabled) {
+            println("hit $petriAtom")
+        }
+    }
+
+    private fun recInconsistency(consistencyCheckError: ConsistencyCheckError) {
+        if (loggingEnabled){
+            println("found error: $consistencyCheckError")
+        }
+        inconsistenciesSet.add(consistencyCheckError)
+    }
+
     override fun doForPlaceBeforeDFS(place: Place): Boolean {
+        logItem(place)
         recordIfPlaceConsistencyErrors(place)
         return checkIfExistsSubgraphIndex(place)
     }
@@ -63,7 +84,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         val arrowNodeId = arc.arrowNodeId
 
         if (tailNodeId == null || arrowNodeId == null) {
-            inconsistenciesSet.add(
+            recInconsistency(
                 ConsistencyCheckError.MissingNode(
                     arc = arc,
                     debugPath = copyAndAppendTraversalPath()
@@ -71,7 +92,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             )
         }
         if (tailNodeId == arrowNodeId) {
-            inconsistenciesSet.add(
+            recInconsistency(
                 ConsistencyCheckError.ArcInputEqualsOutput(
                     arc = arc,
                     debugPath = copyAndAppendTraversalPath()
@@ -84,7 +105,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
                 (arrowNodeId.asNode())
                     .isSameType(tailNodeId.asNode())
             ) {
-                inconsistenciesSet.add(
+                recInconsistency(
                     ConsistencyCheckError.IsNotBipartite(
                         arc = arc,
                         debugPath = copyAndAppendTraversalPath()
@@ -105,10 +126,10 @@ class ConsistencyCheckPetriAtomVisitorDFS(
     private fun recordIfTransitionConsistencyErrors(transition: Transition) {
         with(petriAtomRegistry) {
             // case 1
-            if (transition.inputPlaces.isEmpty() ||
-                transition.outputPlaces.isEmpty()
+            if (transition.fromPlaces.isEmpty() ||
+                transition.toPlaces.isEmpty()
             ) {
-                inconsistenciesSet.add(
+                recInconsistency(
                     ConsistencyCheckError.MissingArc(
                         transition = transition.id,
                         debugPath = copyAndAppendTraversalPath()
@@ -117,10 +138,10 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             }
             // case 2 - only one arc goes from a place to transition
             val visitedPlaces = mutableSetOf<PetriAtomId>()
-            for (inputPlaceId in transition.inputPlaces) {
+            for (inputPlaceId in transition.fromPlaces) {
                 if (inputPlaceId in visitedPlaces) {
                     // one place has 2 or more arcs to transition
-                    inconsistenciesSet.add(
+                    recInconsistency(
                         ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition(
                             place = inputPlaceId,
                             transition = transition.id,
@@ -132,9 +153,9 @@ class ConsistencyCheckPetriAtomVisitorDFS(
                 }
             }
             visitedPlaces.clear()
-            for (outputPlaceId in transition.outputPlaces) {
+            for (outputPlaceId in transition.toPlaces) {
                 if (outputPlaceId in visitedPlaces) {
-                    inconsistenciesSet.add(
+                    recInconsistency(
                         ConsistencyCheckError.MultipleArcsFromSinglePlaceToSingleTransition(
                             place = outputPlaceId,
                             transition = transition.id,
@@ -147,10 +168,10 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             }
 
             // case 3 - variability arcs inconsistency
-            for (inputPlaceId in transition.inputPlaces) {
-                for (outputPlaceId in transition.outputPlaces) {
-                    val inputPlaceType = placeTypeRegistry[inputPlaceId]
-                    val outputPlaceType = placeTypeRegistry[outputPlaceId]
+            for (inputPlaceId in transition.fromPlaces) {
+                for (outputPlaceId in transition.toPlaces) {
+                    val inputPlaceType = placeToObjectTypeRegistry[inputPlaceId]
+                    val outputPlaceType = placeToObjectTypeRegistry[outputPlaceId]
 
                     if (inputPlaceType == outputPlaceType) {
                         // arcs must be of same type
@@ -159,7 +180,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
                         val arcsOfSameType = inputArc.isSameArcType(outputArc)
 
                         if (!arcsOfSameType) {
-                            inconsistenciesSet.add(
+                            recInconsistency(
                                 ConsistencyCheckError.InconsistentVariabilityArcs(
                                     transition = transition.id,
                                     inputArc = inputArc,
@@ -172,10 +193,10 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             }
 
             // case 4 - only variability arc serves as input or output arc
-            if (transition.inputPlaces.size == 1) {
-                val firstInputPlace = transition.inputPlaces.first()
+            if (transition.fromPlaces.size == 1) {
+                val firstInputPlace = transition.fromPlaces.first()
                 if (firstInputPlace.arcTo(transition.id) is VariableArc) {
-                    inconsistenciesSet.add(
+                    recInconsistency(
                         ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                             transition = transition.id,
                             debugPath = copyAndAppendTraversalPath()
@@ -183,11 +204,11 @@ class ConsistencyCheckPetriAtomVisitorDFS(
                     )
                 }
             }
-            if (transition.outputPlaces.size == 1) {
-                val firstOutputPlace = transition.outputPlaces.first()
+            if (transition.toPlaces.size == 1) {
+                val firstOutputPlace = transition.toPlaces.first()
 
                 if (transition.id.arcTo(firstOutputPlace) is VariableArc) {
-                    inconsistenciesSet.add(
+                    recInconsistency(
                         ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                             transition = transition.id,
                             debugPath = copyAndAppendTraversalPath()
@@ -201,7 +222,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
     private fun recordIfPlaceConsistencyErrors(place: Place) {
         // case 1 - isolated place
         if (place.toTransitions.isEmpty() && place.fromTransitions.isEmpty()) {
-            inconsistenciesSet.add(
+            recInconsistency(
                 ConsistencyCheckError.IsolatedPlace(
                     place = place.id,
                     debugPath = copyAndAppendTraversalPath()
@@ -211,13 +232,13 @@ class ConsistencyCheckPetriAtomVisitorDFS(
 
         // case 2 - input place has input arcs
         if (placeTypeRegistry[place.id] == PlaceType.INPUT && place.fromTransitions.isNotEmpty()) {
-            inconsistenciesSet.add(
+            recInconsistency(
                 ConsistencyCheckError.InputPlaceHasInputArcs(place.id, copyAndAppendTraversalPath())
             )
         }
         // case 3 - output place has output arcs
         if (placeTypeRegistry[place.id] == PlaceType.OUTPUT && place.toTransitions.isNotEmpty()) {
-            inconsistenciesSet.add(
+            recInconsistency(
                 ConsistencyCheckError.OutputPlaceHasOutputArcs(place.id, copyAndAppendTraversalPath())
             )
         }

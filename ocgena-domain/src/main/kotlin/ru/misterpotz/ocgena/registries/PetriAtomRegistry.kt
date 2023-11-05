@@ -44,7 +44,7 @@ internal class PetriAtomRegistryImpl(
     override var PetriAtomId.subgraphIndex: Int?
         get() = subgraphIndexData[this]
         set(value) {
-            subgraphIndexData[this] = subgraphIndex
+            subgraphIndexData[this] = value
         }
 
     override fun getPlace(petriAtomId: PetriAtomId): Place {
@@ -68,7 +68,7 @@ internal class PetriAtomRegistryImpl(
     }
 
     override fun getArcs(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Transition }.asIterable()
+        return map.keys.asSequence().filter { get(it) is Arc }.asIterable()
     }
 
     override fun set(petriAtomId: PetriAtomId, petriAtom: PetriAtom) {

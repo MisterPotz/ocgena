@@ -25,7 +25,7 @@ class LockedTokensMoverTypeA @Inject constructor(
         val outputMarking = PlaceToObjectMarking()
 
         return with(petriAtomRegistry) {
-            val outputPlaces = getTransition(transitionInstance.transition).outputPlaces
+            val outputPlaces = getTransition(transitionInstance.transition).toPlaces
 
             for (outputPlace in repeatabilityInteractor.sortPlaces(outputPlaces)) {
                 val arc = transitionInstance.transition.arcTo(outputPlace)
@@ -46,8 +46,7 @@ class LockedTokensMoverTypeA @Inject constructor(
                 }
                 outputMarking[outputPlace] = consumedTokens?.toSortedSet() ?: sortedSetOf()
             }
-            return outputMarking
-
+            outputMarking
         }
     }
 }

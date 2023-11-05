@@ -5,18 +5,21 @@ import ru.misterpotz.ocgena.error.ErrorLevel
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
+import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 
 class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
     ocNet: OCNet,
+    private val developmentDebugConfig: DevelopmentDebugConfig
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
     private val placeTypeRegistry: PlaceTypeRegistry = ocNet.placeTypeRegistry
     val inputPlaces = placeTypeRegistry.getInputPlaces(ocNet.placeRegistry)
     val outputPlaces = placeTypeRegistry.getOutputPlaces(ocNet.placeRegistry)
     private val petriAtomRegistry: PetriAtomRegistry = ocNet.petriAtomRegistry
+    private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
     val isConsistent: Boolean
         get() {
@@ -43,7 +46,9 @@ class OCNetChecker(
                 val visitor = ConsistencyCheckPetriAtomVisitorDFS(
                     assignedSubgraphIndex = currentSubgraphIndex,
                     placeTypeRegistry = placeTypeRegistry,
-                    petriAtomRegistry = petriAtomRegistry
+                    petriAtomRegistry = petriAtomRegistry,
+                    placeToObjectTypeRegistry = placeToObjectTypeRegistry,
+                    loggingEnabled = true
                 )
                 createdCheckVisitors.add(visitor)
                 petriNode.acceptVisitor(visitor)

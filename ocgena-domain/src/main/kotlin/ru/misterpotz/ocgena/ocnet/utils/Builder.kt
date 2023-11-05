@@ -69,7 +69,10 @@ class OCNetBuilder() {
 
         override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)? ): String {
             val arcId = arcIdTo(petriAtomId)
-            builderRegistry.getArc(arcId)
+            val receiver = builderRegistry.getArc(arcId)
+            if (block != null) {
+                receiver.block()
+            }
             return petriAtomId
         }
 

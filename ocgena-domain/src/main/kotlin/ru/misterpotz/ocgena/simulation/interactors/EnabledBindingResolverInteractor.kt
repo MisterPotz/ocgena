@@ -50,7 +50,7 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         if (!canBeEnabled) return null
 
 
-        val hasEnoughTokensAtAllInputs = transitionsRegistry[transition.id].inputPlaces.all { placeId ->
+        val hasEnoughTokensAtAllInputs = transitionsRegistry[transition.id].fromPlaces.all { placeId ->
                 arcInputPlaceHasEnoughTokens(placeId, transition)
             }
 
@@ -65,7 +65,7 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
 
     override fun requireEnabledBindingWithTokens(objectBinding: EnabledBinding): EnabledBindingWithTokens {
         val transition = objectBinding.transition
-        val inputPlaces = transition.inputPlaces
+        val inputPlaces = transition.fromPlaces
 
         val placeToObjectTokenMap = buildMap {
             for (inputPlace in inputPlaces) {

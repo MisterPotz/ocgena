@@ -35,7 +35,7 @@ class TokenInputCollectorByTypeAndArc(
     val ocNet = currentSimulationDelegate.ocNet.ocNet
     private val transitionInputMarking = transitionInstance.lockedObjectTokens
     private val transition = ocNet.transitionsRegistry[transitionInstance.transition]
-    private val transitionInputPlaces = transition.inputPlaces
+    private val transitionInputPlaces = transition.fromPlaces
     private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
     private val collectedThroughNormalArcsAcc = mutableMapOf<ObjectTypeId, MutableList<ObjectTokenId>>()
     private val collectedThroughOtherArcsAcc = mutableMapOf<ObjectTypeId, MutableList<ObjectTokenId>>()

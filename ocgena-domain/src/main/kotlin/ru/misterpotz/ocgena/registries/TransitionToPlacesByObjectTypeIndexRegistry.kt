@@ -35,7 +35,7 @@ internal class TransitionToPlacesByObjectTypeIndexRegistryMap(
         return indexInputPlaces.getOrPut(transitionId) {
             val transition = transitionsRegistry[transitionId]
 
-            val inputPlaces = transition.inputPlaces
+            val inputPlaces = transition.fromPlaces
 
             buildMap {
                 for (inputPlace in inputPlaces) {
@@ -50,7 +50,7 @@ internal class TransitionToPlacesByObjectTypeIndexRegistryMap(
         return indexOutputPlaces.getOrPut(transitionId) {
             val transition = transitionsRegistry[transitionId]
 
-            val outputPlaces = transition.outputPlaces
+            val outputPlaces = transition.toPlaces
 
             buildMap {
                 for (outputPlace in outputPlaces) {

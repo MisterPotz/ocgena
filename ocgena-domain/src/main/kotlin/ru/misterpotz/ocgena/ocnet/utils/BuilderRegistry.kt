@@ -6,6 +6,8 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
+import ru.misterpotz.ocgena.ocnet.primitives.ext.arcArrowId
+import ru.misterpotz.ocgena.ocnet.primitives.ext.arcTailId
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder.ArcBlock.Type.*
 import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.simulation.ObjectType
@@ -78,21 +80,66 @@ internal class BuilderRegistry() {
             }
     }
 
+    private fun Collection<PetriAtomId>.filterArcsEndWith(petriAtomId: PetriAtomId): List<PetriAtomId> {
+        return filter { it.endsWith(petriAtomId) && it.length != petriAtomId.length }
+    }
+
+    private fun Collection<PetriAtomId>.filterArcsStartWith(petriAtomId: PetriAtomId): List<PetriAtomId> {
+        return filter { it.startsWith(petriAtomId) && it.length != petriAtomId.length }
+    }
+
+    private fun Collection<PetriAtomId>.mapArcsTail() : List<PetriAtomId> {
+        return map { it.arcTailId() }
+    }
+
+    private fun Collection<PetriAtomId>.mapArcsHead() : List<PetriAtomId> {
+        return map { it.arcArrowId() }
+    }
+
     val petriAtomRegistry by lazy(LazyThreadSafetyMode.NONE) {
         atomBuilders.values.map {
             val atom = when (it) {
                 is OCNetBuilder.PlaceBlock -> {
-                    Place(it.id, it.id)
+                    Place(
+                        id = it.id,
+                        label = it.id,
+                        fromTransitions = atomBuilders
+                            .keys
+                            .filterArcsEndWith(it.id)
+                            .mapArcsTail()
+                            .toMutableList(),
+                        toTransitions = atomBuilders
+                            .keys
+                            .filterArcsStartWith(it.id)
+                            .mapArcsHead()
+                            .toMutableList()
+                    )
                 }
+
                 is OCNetBuilder.TransitionBlock -> {
-                    Transition(it.id, it.id)
+                    Transition(
+                        id = it.id,
+                        label = it.id,
+                        fromPlaces = atomBuilders
+                            .keys
+                            .filterArcsEndWith(it.id)
+                            .mapArcsTail()
+                            .toMutableList(),
+                        toPlaces = atomBuilders
+                            .keys
+                            .filterArcsStartWith(it.id)
+                            .mapArcsHead()
+                            .toMutableList()
+                    )
                 }
+
                 is OCNetBuilder.ArcBlock -> {
                     when (it.type) {
-                        VAR -> VariableArc(it.id)
-                        NORMAL -> NormalArc(it.id)
+                        VAR -> VariableArc(id = it.id)
+                        NORMAL -> NormalArc(id = it.id)
                     }
                 }
+
                 else -> throw IllegalArgumentException()
             }
             atom

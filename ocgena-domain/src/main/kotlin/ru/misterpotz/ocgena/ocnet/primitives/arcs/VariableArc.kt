@@ -1,9 +1,11 @@
 package ru.misterpotz.ocgena.ocnet.primitives.arcs
 
+import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 
+@Serializable
 data class VariableArc(
     override val id: String,
 ) : Arc() {
@@ -16,9 +18,5 @@ data class VariableArc(
 
     override fun isSameType(other: PetriAtom): Boolean {
         return other is VariableArc
-    }
-
-    override fun toString(): String {
-        return "[ $id ]"
     }
 }
