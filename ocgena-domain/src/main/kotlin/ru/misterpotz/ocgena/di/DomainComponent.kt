@@ -7,9 +7,19 @@ import dagger.Component
 import dagger.Module
 import dagger.Provides
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.SerializersModuleBuilder
-import kotlinx.serialization.modules.contextual
+import kotlinx.serialization.modules.*
+import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.ocnet.OCNetImpl
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
+import ru.misterpotz.ocgena.registries.ObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
+import ru.misterpotz.ocgena.registries.PetriAtomRegistry
+import ru.misterpotz.ocgena.registries.PetriAtomRegistryImpl
 import ru.misterpotz.ocgena.serialization.DurationSerializer
 import ru.misterpotz.ocgena.serialization.IntRangeSerializer
 import ru.misterpotz.ocgena.serialization.PeriodSerializer
@@ -24,41 +34,48 @@ class DomainModule {
         @Provides
         @DomainScope
         @JvmSuppressWildcards
-        fun serializersModuleBlock() : SerializersModuleBuilder.() -> Unit {
+        fun serializersModuleBlock(): SerializersModuleBuilder.() -> Unit {
             return {
                 contextual(IntRangeSerializer("interval"))
                 contextual(DurationSerializer("duration"))
                 contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
                 contextual(PeriodSerializer("period"))
-            }
-        }
-        @Provides
-        @DomainScope
-        fun json(serializersModuleBlock : @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Json {
-            return Json {
-                prettyPrint = true
-                serializersModule = SerializersModule {
-                    serializersModuleBlock()
-//                polymorphic(baseClass = SerializableAtom::class) {
-//                    subclass(SerializablePlace::class, SerializablePlace.serializer())
-//                    subclass(SerializableTransition::class, SerializableTransition.serializer())
-//                    subclass(SerializableNormalArc::class, SerializableNormalArc.serializer())
-//                    subclass(SerializableArcTypeL::class, SerializableArcTypeL.serializer())
-//                    subclass(SerializableVariableArcTypeA::class, SerializableVariableArcTypeA.serializer())
-//                }
-//                polymorphic(SimulatableComposedOcNet.SerializableState::class) {
-//                    subclass(SerializableState::class, SerializableState.serializer())
-//                }
-//                polymorphic(ObjectValuesMap::class) {
-//                    subclass(EmptyObjectValuesMap::class, EmptyObjectValuesMap.serializer())
-//                }
+                polymorphic(OCNet::class) {
+                    subclass(OCNetImpl::class, OCNetImpl.serializer())
+                }
+                polymorphic(ObjectTypeRegistry::class) {
+                    subclass(ObjectTypeRegistryMap::class, ObjectTypeRegistryMap.serializer())
+                }
+                polymorphic(PetriAtomRegistry::class) {
+                    subclass(PetriAtomRegistryImpl.serializer())
+                }
+                polymorphic(Arc::class) {
+                    subclass(NormalArc.serializer())
+                    subclass(VariableArc.serializer())
+                }
+                polymorphic(PetriAtom::class) {
+                    subclass(Place.serializer())
+                    subclass(NormalArc.serializer())
+                    subclass(VariableArc.serializer())
+                    subclass(Transition.serializer())
                 }
             }
         }
 
         @Provides
         @DomainScope
-        fun yaml(): Yaml {
+        fun json(serializersModuleBlock: @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Json {
+            return Json {
+                prettyPrint = true
+                serializersModule = SerializersModule {
+                    serializersModuleBlock()
+                }
+            }
+        }
+
+        @Provides
+        @DomainScope
+        fun yaml(serializersModuleBlock: @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Yaml {
             return Yaml(
                 serializersModule = SerializersModule {
                     serializersModuleBlock()
@@ -75,6 +92,11 @@ class DomainModule {
 @Component(modules = [DomainModule::class])
 interface DomainComponent : SimulationComponentDependencies {
 
+    companion object {
+        fun create(): DomainComponent {
+            return DaggerDomainComponent.create()
+        }
+    }
 }
 
 @Scope

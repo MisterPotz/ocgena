@@ -1,4 +1,4 @@
-package dsl
+package ru.misterpotz.ocgena.dsl
 
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder

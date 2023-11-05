@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.primitives.atoms
 
+import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.primitives.LabelHolder
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
@@ -7,6 +8,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 
+@Serializable
 data class Place(
     override val id: PetriAtomId,
     override val label: String,

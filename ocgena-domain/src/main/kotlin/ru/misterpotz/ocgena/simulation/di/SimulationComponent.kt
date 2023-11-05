@@ -21,11 +21,10 @@ import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.generator.*
 import ru.misterpotz.ocgena.simulation.interactors.*
-import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
-import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
+import ru.misterpotz.ocgena.simulation.logging.*
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegateImpl
+import ru.misterpotz.ocgena.simulation.logging.loggers.NoOpStepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
@@ -36,7 +35,6 @@ import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
 import simulation.Logger
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
-import simulation.random.RandomFactory
 import simulation.random.RandomFactoryImpl
 import javax.inject.Scope
 import kotlin.random.Random
@@ -255,11 +253,57 @@ interface SimulationComponent {
         fun create(
             @BindsInstance simulationParams: SimulationConfig,
             @BindsInstance loggingConfiguration: LogConfiguration,
-            @BindsInstance randomFactory: RandomFactory,
             @BindsInstance developmentDebugConfig: DevelopmentDebugConfig,
             @BindsInstance stepAggregatingLogReceiver: StepAggregatingLogReceiver,
             componentDependencies: SimulationComponentDependencies,
         ): SimulationComponent
+    }
+
+    companion object {
+        fun defaultCreate(
+            simulationConfig: SimulationConfig,
+            componentDependencies: SimulationComponentDependencies
+        ): SimulationComponent {
+            return create(
+                simulationParams = simulationConfig,
+                loggingConfiguration = LogConfiguration(
+                    currentStateLog = CurrentStateLogConfiguration(
+                        includeOngoingTransitions = true,
+                        includeNextTransitionAllowedTiming = true,
+                        includePlaceMarking = true
+                    ),
+                    transitionsLog = TransitionsLogConfiguration(
+                        includeEndingTransitions = true,
+                        includeStartingTransitions = true
+                    ),
+                    loggingEnabled = true
+                ),
+                developmentDebugConfig = DevelopmentDebugConfig(
+                    developmentLoggersEnabled = true,
+                    dumpState = true,
+                    dumpConsistencyCheckLogs = true
+                ),
+                stepAggregatingLogReceiver = NoOpStepAggregatingLogReceiver,
+                componentDependencies
+            )
+        }
+
+        fun create(
+            simulationParams: SimulationConfig,
+            loggingConfiguration: LogConfiguration,
+            developmentDebugConfig: DevelopmentDebugConfig,
+            stepAggregatingLogReceiver: StepAggregatingLogReceiver,
+            componentDependencies: SimulationComponentDependencies,
+        ): SimulationComponent {
+            return DaggerSimulationComponent.factory()
+                .create(
+                    simulationParams,
+                    loggingConfiguration,
+                    developmentDebugConfig,
+                    stepAggregatingLogReceiver,
+                    componentDependencies
+                )
+        }
     }
 }
 

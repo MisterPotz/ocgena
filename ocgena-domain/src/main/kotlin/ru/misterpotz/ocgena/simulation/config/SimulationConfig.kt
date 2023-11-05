@@ -14,7 +14,7 @@ data class SimulationConfig(
     @Contextual
     val transitionInstancesTimesSpec: TransitionInstancesTimesSpec,
     val randomSeed: Int?,
-    val nodeToLabelRegistry: NodeToLabelRegistry,
+    val nodeToLabelRegistry: NodeToLabelRegistry = NodeToLabelRegistry(),
     val tokenGeneration: TokenGenerationConfig?,
     val ocNetType: OcNetType,
 )

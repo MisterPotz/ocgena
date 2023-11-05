@@ -157,18 +157,20 @@ data class TransitionIntervals(
 data class TokenGenerationConfig(
     @Contextual
     val defaultPeriod: Period?,
-    val placeIdToGenerationTarget: Map<String, Int>
+    val placeIdToGenerationTarget: MarkingScheme
 ) : Config {
     override val type: ConfigEnum = ConfigEnum.GENERATION
 
     override fun toDebugString(): String {
-        return "[default generation: ${defaultPeriod?.customString()} ] " + placeIdToGenerationTarget.entries.joinToString(
-            separator = "; ",
-            prefix = "[transitions intervals: ",
-            postfix = "]"
-        ) {
-            "${it.key}: ${it.value};"
-        }
+        return "[default generation: ${defaultPeriod?.customString()} ] " + placeIdToGenerationTarget.placesToTokens
+            .entries
+            .joinToString(
+                separator = "; ",
+                prefix = "[transitions intervals: ",
+                postfix = "]"
+            ) {
+                "${it.key}: ${it.value};"
+            }
     }
 }
 

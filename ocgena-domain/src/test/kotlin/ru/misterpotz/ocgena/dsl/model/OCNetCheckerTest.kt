@@ -1,9 +1,9 @@
-package model
+package ru.misterpotz.ocgena.dsl.model
 
-import dsl.*
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.dsl.createExampleModel
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup

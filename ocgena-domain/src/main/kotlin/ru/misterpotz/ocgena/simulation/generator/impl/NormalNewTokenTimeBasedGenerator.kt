@@ -21,7 +21,7 @@ class NormalNewTokenTimeBasedGenerator(
 ) : NewTokenTimeBasedGenerator {
 
     private val placeGenerators: Map<PetriAtomId, PlaceGenerator> = buildMap {
-        for ((i, value) in tokenGenerationConfig.placeIdToGenerationTarget) {
+        for ((i, value) in tokenGenerationConfig.placeIdToGenerationTarget.placesToTokens) {
             put(
                 i, PlaceGenerator(
                     mustTotallyGenerate = value,
