@@ -6,13 +6,14 @@ import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 
 class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
     ocNet: OCNet,
-    private val developmentDebugConfig: DevelopmentDebugConfig
+    private val developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
     private val placeTypeRegistry: PlaceTypeRegistry = ocNet.placeTypeRegistry
@@ -48,7 +49,7 @@ class OCNetChecker(
                     placeTypeRegistry = placeTypeRegistry,
                     petriAtomRegistry = petriAtomRegistry,
                     placeToObjectTypeRegistry = placeToObjectTypeRegistry,
-                    loggingEnabled = true
+                    loggingEnabled = developmentDebugConfig.dumpConsistencyCheckLogs
                 )
                 createdCheckVisitors.add(visitor)
                 petriNode.acceptVisitor(visitor)

@@ -2,9 +2,9 @@ package ru.misterpotz.ocgena.simulation.generator.impl
 
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingDelta
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.config.TokenGenerationConfig
 import ru.misterpotz.ocgena.simulation.config.Period
-import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.Time
@@ -20,7 +20,7 @@ class NormalNewTokenTimeBasedGenerator(
     private val defaultGenerationInterval: Period? = null
 ) : NewTokenTimeBasedGenerator {
 
-    private val placeGenerators: Map<PlaceId, PlaceGenerator> = buildMap {
+    private val placeGenerators: Map<PetriAtomId, PlaceGenerator> = buildMap {
         for ((i, value) in tokenGenerationConfig.placeIdToGenerationTarget) {
             put(
                 i, PlaceGenerator(
@@ -40,7 +40,7 @@ class NormalNewTokenTimeBasedGenerator(
         }
     }
 
-    private fun generateTokenIfCan(placeId: PlaceId): ObjectToken? {
+    private fun generateTokenIfCan(placeId: PetriAtomId): ObjectToken? {
         val generator = placeGenerators[placeId]!!
 
         return if (generator.mustGenerateNow()) {
@@ -72,7 +72,7 @@ class NormalNewTokenTimeBasedGenerator(
     override fun getTimeUntilNextPlanned(): Time? {
         var minTime: Time? = null
 
-        for ((id, generator) in placeGenerators) {
+        for ((_, generator) in placeGenerators) {
             if (generator.hasPlannedToken()) {
                 minTime = minTime
                     ?.coerceAtMost(generator.nextGenerationHappensIn!!)
@@ -83,7 +83,7 @@ class NormalNewTokenTimeBasedGenerator(
     }
 
     override fun planTokenGenerationForEveryone() {
-        for ((id, generator) in placeGenerators) {
+        for ((_, generator) in placeGenerators) {
             if (!generator.hasPlannedToken() && generator.mustPlan()) {
                 generator.plan(nextTimeSelector.get(generator.timeRange))
             }

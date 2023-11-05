@@ -1,7 +1,6 @@
 package ru.misterpotz.ocgena.collections
 
 import kotlinx.serialization.Serializable
-import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransformMutable
@@ -15,7 +14,7 @@ interface PlaceToObjectMarkingDelta {
 interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta, java.io.Serializable {
     val tokensIterator: Iterator<ObjectTokenId>
     override operator fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>?
-    override val keys: Set<PlaceId>
+    override val keys: Set<PetriAtomId>
     fun isEmpty(): Boolean
 
     fun toMutable(): PlaceToObjectMarking
@@ -37,11 +36,11 @@ internal data class ImmutablePlaceToObjectMarkingMap(val placesToObjectTokens: M
             }
         }
 
-    override fun get(placeId: PlaceId): SortedSet<ObjectTokenId>? {
+    override fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>? {
         return placesToObjectTokens[placeId]
     }
 
-    override val keys: Set<PlaceId> by lazy(LazyThreadSafetyMode.NONE) {
+    override val keys: Set<PetriAtomId> by lazy(LazyThreadSafetyMode.NONE) {
         placesToObjectTokens.keys
     }
 
@@ -61,14 +60,14 @@ internal data class ImmutablePlaceToObjectMarkingMap(val placesToObjectTokens: M
 }
 
 interface ObjectMarkingModifier {
-    fun applyTo(map: MutableMap<PlaceId, SortedSet<ObjectTokenId>>)
+    fun applyTo(map: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>>)
 }
 
 fun buildObjectMarkingModifier(
-    block: (modificationTarget: MutableMap<PlaceId, SortedSet<ObjectTokenId>>) -> Unit
+    block: (modificationTarget: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>>) -> Unit
 ): ObjectMarkingModifier {
     return object : ObjectMarkingModifier {
-        override fun applyTo(map: MutableMap<PlaceId, SortedSet<ObjectTokenId>>) {
+        override fun applyTo(map: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>>) {
             block(map)
         }
     }

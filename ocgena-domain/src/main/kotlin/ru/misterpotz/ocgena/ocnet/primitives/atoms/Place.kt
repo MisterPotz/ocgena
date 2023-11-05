@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.ocnet.primitives.atoms
 
-import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.primitives.LabelHolder
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
@@ -9,7 +8,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 
 data class Place(
-    override val id: PlaceId,
+    override val id: PetriAtomId,
     override val label: String,
     val fromTransitions: MutableList<PetriAtomId> = mutableListOf(),
     val toTransitions: MutableList<PetriAtomId> = mutableListOf()

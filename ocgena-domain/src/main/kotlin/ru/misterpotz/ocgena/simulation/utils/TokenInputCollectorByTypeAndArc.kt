@@ -1,8 +1,8 @@
 package ru.misterpotz.ocgena.simulation.utils
 
 import ru.misterpotz.ocgena.collections.TransitionInstance
-import ru.misterpotz.ocgena.ocnet.PlaceId
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
@@ -40,13 +40,13 @@ class TokenInputCollectorByTypeAndArc(
     private val collectedThroughNormalArcsAcc = mutableMapOf<ObjectTypeId, MutableList<ObjectTokenId>>()
     private val collectedThroughOtherArcsAcc = mutableMapOf<ObjectTypeId, MutableList<ObjectTokenId>>()
     private val arcsRegistry = ocNet.arcsRegistry
-    private fun addToNormalForPlaceAndType(placeId: PlaceId, type: ObjectTypeId) {
+    private fun addToNormalForPlaceAndType(placeId: PetriAtomId, type: ObjectTypeId) {
         val placeObjectTokens = transitionInputMarking[placeId]!!
         val acc = collectedThroughNormalArcsAcc.getOrPut(type) { mutableListOf() }
         acc.addAll(placeObjectTokens)
     }
 
-    private fun addToOtherForPlaceAndType(placeId: PlaceId, type: ObjectTypeId) {
+    private fun addToOtherForPlaceAndType(placeId: PetriAtomId, type: ObjectTypeId) {
         val placeObjectTokens = transitionInputMarking[placeId]!!
 
         val acc = collectedThroughOtherArcsAcc.getOrPut(type) { mutableListOf() }

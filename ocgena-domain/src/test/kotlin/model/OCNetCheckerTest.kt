@@ -4,12 +4,18 @@ import dsl.*
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
+import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
 import ru.misterpotz.ocgena.utils.findInstance
 import ru.misterpotz.ocgena.validation.OCNetChecker
 
 class OCNetCheckerTest {
     val ocNet = createExampleModel()
+
+    fun createChecker(ocnet: OCNet) : OCNetChecker {
+        return OCNetChecker(ocNet = ocnet, developmentDebugConfig = fastConsistencyDevSetup())
+    }
 
     @Test
     fun checkConvertionResults() {

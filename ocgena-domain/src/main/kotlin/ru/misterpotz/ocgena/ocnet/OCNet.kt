@@ -16,9 +16,6 @@ interface OCNet {
     val outputPlaces: PlaceRegistry
 }
 
-@Deprecated("use petriatomid")
-typealias PlaceId = String
-
 @Serializable
 data class OCNetImpl(
     override val objectTypeRegistry: ObjectTypeRegistry,

@@ -3,12 +3,12 @@ package ru.misterpotz.ocgena.utils
 import ru.misterpotz.ocgena.collections.*
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
-import ru.misterpotz.ocgena.ocnet.PlaceId
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import javax.inject.Inject
 
 class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: ObjectTokenSet) {
-    fun <S : Set<ObjectTokenId>> prettyPrint(placesToObjectTokens: Map<PlaceId, S>): String {
+    fun <S : Set<ObjectTokenId>> prettyPrint(placesToObjectTokens: Map<PetriAtomId, S>): String {
         return placesToObjectTokens.entries.fold(StringBuilder()) { accum, line ->
             accum.append(line.key)
             accum.append(" |\n")
@@ -28,7 +28,7 @@ class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: Obj
         return prettyPrint((objectMarking as ImmutablePlaceToObjectMarkingMap).placesToObjectTokens)
     }
 
-    fun <S : Set<ObjectTokenId>> toString(placesToObjectTokens: Map<PlaceId, S>): String {
+    fun <S : Set<ObjectTokenId>> toString(placesToObjectTokens: Map<PetriAtomId, S>): String {
         return placesToObjectTokens.keys.joinToString(separator = " ") { place ->
             val objectTokens = placesToObjectTokens[place]!!
 
