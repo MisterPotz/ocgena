@@ -4,13 +4,12 @@ import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import ru.misterpotz.ocgena.simulation.logging.LoggingEvent
-import simulation.Logger
 import javax.inject.Inject
 
 class StepAggregatingLogger @Inject constructor(
     private val logReceiver: StepAggregatingLogReceiver,
     private val stepAggregatingLogCreator: StepAggregatingLogCreator,
-) : Logger {
+) : NoOpLogger() {
 
     private fun logIfCreates(block : StepAggregatingLogCreator.() -> LoggingEvent?) {
         stepAggregatingLogCreator.block()?.let {
@@ -94,5 +93,13 @@ class StepAggregatingLogger @Inject constructor(
         logIfCreates {
             onTimeout()
         }
+    }
+
+    override fun beforeRemovingTokensAtFinishPlace() {
+
+    }
+
+    override fun afterRemovingTokensAtFinishPlace() {
+
     }
 }

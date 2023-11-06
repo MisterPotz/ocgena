@@ -1,5 +1,7 @@
 package ru.misterpotz.ocgena.simulation
 
+import ru.misterpotz.ocgena.collections.ObjectTokenSet
+import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.simulation.interactors.BindingSelectionInteractor
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingsCollectorInteractor
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
@@ -11,7 +13,7 @@ import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.di.SimulationScope
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.State
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 import javax.inject.Inject
 
 enum class Status {
@@ -60,9 +62,17 @@ class SimulationTaskStepExecutor @Inject constructor(
     private val logger: Logger,
     private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
     private val bindingsCollector: EnabledBindingsCollectorInteractor,
+    private val objectTokenSet: ObjectTokenSet,
 ) {
     val state: State
         get() = simulationStateProvider.simulatableOcNetInstance().state
+
+    val ocNet: OCNet
+        get() = simulationStateProvider.simulatableOcNetInstance().ocNet
+
+    val ocNetOutputPlaces by lazy(LazyThreadSafetyMode.NONE) {
+        ocNet.placeTypeRegistry.getOutputPlaces(ocNet.placeRegistry)
+    }
 
     private val simulationTime get() = simulationStateProvider.getSimulationTime()
     private val simulationStepState get() = simulationStateProvider.getSimulationStepState()
@@ -70,11 +80,28 @@ class SimulationTaskStepExecutor @Inject constructor(
     fun executeStep() {
         findAndFinishEndedTransitions()
 
+        removeTokensAtFinishPlace()
+
         generateNewTokensAndPlanNextGeneration()
 
         findAndStartEnabledTransitionActivities()
 
         increaseTimeByMinimalSomethingChangingDelta()
+    }
+
+    private fun removeTokensAtFinishPlace() {
+        logger.beforeRemovingTokensAtFinishPlace()
+
+        for (outputPlace in ocNetOutputPlaces.places) {
+            val tokensToRemove = state.pMarking[outputPlace.id]
+
+            if (!tokensToRemove.isNullOrEmpty()) {
+                state.pMarking.removeAllPlaceTokens(outputPlace.id)
+                objectTokenSet.removeAll(tokensToRemove)
+            }
+        }
+
+        logger.afterRemovingTokensAtFinishPlace()
     }
 
     private fun generateNewTokensAndPlanNextGeneration() {

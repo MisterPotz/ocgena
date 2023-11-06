@@ -2,9 +2,10 @@ package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
+import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.token_generation.PlaceToObjectMarkingBySchemeCreatorFactory
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 import javax.inject.Inject
 
 class SimulationTask @Inject constructor(
@@ -15,7 +16,8 @@ class SimulationTask @Inject constructor(
     private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
     private val currentStateDelegate: CurrentSimulationDelegate,
     private val stepExecutor: SimulationTaskStepExecutor,
-    private val placeToObjectMarkingBySchemeCreatorFactory: PlaceToObjectMarkingBySchemeCreatorFactory
+    private val placeToObjectMarkingBySchemeCreatorFactory: PlaceToObjectMarkingBySchemeCreatorFactory,
+    private val developmentDebugConfig: DevelopmentDebugConfig,
 ) : CurrentSimulationDelegate by currentStateDelegate {
     private var stepIndex: Long = 0
     private val oneStepGranularity = 5
@@ -48,6 +50,9 @@ class SimulationTask @Inject constructor(
         while (
             !isFinished() && (stepsCounter++ < oneStepGranularity)
         ) {
+            if (stepIndex % developmentDebugConfig.stepNMarkGranularity == 0L && developmentDebugConfig.markEachNStep) {
+                println("on step start: $stepIndex")
+            }
             simulationStepState.currentStep = stepIndex
             simulationStepState.onNewStep()
             logger.onExecutionNewStepStart()

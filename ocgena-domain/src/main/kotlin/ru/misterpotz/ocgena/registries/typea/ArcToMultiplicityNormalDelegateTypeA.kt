@@ -12,9 +12,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
     pMarkingProvider: PMarkingProvider
 ) : ArcsMultiplicityDelegate() {
     private val pMarking = pMarkingProvider.get()
-    init {
-        println("marking at multiplicity is $pMarking")
-    }
+
     override fun multiplicity(arc: Arc): ArcMultiplicity {
         require(arc is NormalArc)
 

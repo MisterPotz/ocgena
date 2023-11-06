@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.simulation.binding
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.interactors.TIOutputPlacesResolverInteractor
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import javax.inject.Inject
 

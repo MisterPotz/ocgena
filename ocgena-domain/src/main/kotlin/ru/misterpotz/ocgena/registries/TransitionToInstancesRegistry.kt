@@ -2,13 +2,13 @@ package ru.misterpotz.ocgena.registries
 
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.collections.TransitionInstancesList
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.Time
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 
 class TransitionToInstancesRegistry {
-    private val transitionsToTMarkingValue = mutableMapOf<TransitionId, TransitionInstancesList>()
+    private val transitionsToTMarkingValue = mutableMapOf<PetriAtomId, TransitionInstancesList>()
 
-    operator fun get(transitionId: TransitionId): TransitionInstancesList? {
+    operator fun get(transitionId: PetriAtomId): TransitionInstancesList? {
         return transitionsToTMarkingValue[transitionId]
     }
 

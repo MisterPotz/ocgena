@@ -1,27 +1,28 @@
 package ru.misterpotz.ocgena.registries
 
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.TransitionId
 import ru.misterpotz.ocgena.simulation.Time
 
 interface TransitionToTimeUntilInstanceAllowedRegistry {
-    val keys : Iterable<TransitionId>
+    val keys : Iterable<PetriAtomId>
     fun increaseSimTime(time: Time)
     fun earliestNonZeroTime(): Time?
-    fun isAllowedToBeEnabled(transition: TransitionId): Boolean
-    fun getNextAllowedTime(transition: TransitionId) : Time?
-    fun setNextAllowedTime(transition: TransitionId, time: Time)
+    fun isAllowedToBeEnabled(transition: PetriAtomId): Boolean
+    fun getNextAllowedTime(transition: PetriAtomId) : Time?
+    fun setNextAllowedTime(transition: PetriAtomId, time: Time)
 }
 
-fun TransitionToTimeUntilInstanceAllowedMarking(transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf())
+fun TransitionToTimeUntilInstanceAllowedMarking(transitionsToNextTimes: MutableMap<PetriAtomId, Time> = mutableMapOf())
         : TransitionToTimeUntilInstanceAllowedRegistry {
     return TransitionToTimeUntilInstanceAllowedRegistryMap(transitionsToNextTimes)
 }
 
 internal class TransitionToTimeUntilInstanceAllowedRegistryMap(
-    private val transitionsToNextTimes: MutableMap<TransitionId, Time> = mutableMapOf()
+    private val transitionsToNextTimes: MutableMap<PetriAtomId, Time> = mutableMapOf()
 ) :
     TransitionToTimeUntilInstanceAllowedRegistry {
-    override val keys: Iterable<TransitionId>
+    override val keys: Iterable<PetriAtomId>
         get() = transitionsToNextTimes.keys
 
     override fun increaseSimTime(time: Time) {
@@ -42,15 +43,15 @@ internal class TransitionToTimeUntilInstanceAllowedRegistryMap(
         }
     }
     
-    override fun isAllowedToBeEnabled(transition: TransitionId): Boolean {
+    override fun isAllowedToBeEnabled(transition: PetriAtomId): Boolean {
         return transitionsToNextTimes[transition] == 0L
     }
 
-    override fun getNextAllowedTime(transition: TransitionId): Time? {
+    override fun getNextAllowedTime(transition: PetriAtomId): Time? {
         return transitionsToNextTimes[transition]
     }
 
-    override fun setNextAllowedTime(transition: TransitionId, time: Time) {
+    override fun setNextAllowedTime(transition: PetriAtomId, time: Time) {
         transitionsToNextTimes[transition] = time
     }
 }

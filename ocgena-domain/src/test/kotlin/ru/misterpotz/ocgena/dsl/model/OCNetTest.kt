@@ -7,6 +7,9 @@ import ru.misterpotz.ocgena.dsl.tool.component
 import ru.misterpotz.ocgena.dsl.tool.defaultSimConfig
 import ru.misterpotz.ocgena.dsl.tool.simTask
 import ru.misterpotz.ocgena.simulation.config.*
+import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
+import ru.misterpotz.ocgena.simulation.logging.fastFullDev
+import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 
 class OCNetTest {
     @Test()
@@ -46,15 +49,19 @@ class OCNetTest {
 
         val config = defaultSimConfig(ocNet).copy(
             initialMarking = MarkingScheme.of {
-                put("p1", 100000)
+                put("p1", 1000)
             },
             tokenGeneration = TokenGenerationConfig(
                 placeIdToGenerationTarget = MarkingScheme.of {
-                    put("p1", 100000)
+                    put("p1", 1000)
                 },
             ),
+
+            )
+        val component = component(
+            config,
+            developmentDebugConfig = fastNoDevSetup().copy(markEachNStep = true, stepNMarkGranularity = 1000)
         )
-        val component = component(config)
         val simTask = simTask(component)
 
         simTask.prepareAndRunAll()

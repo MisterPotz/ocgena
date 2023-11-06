@@ -13,6 +13,7 @@ interface PlaceToObjectMarking {
     fun removePlace(placeId: PetriAtomId)
     fun plus(delta: PlaceToObjectMarkingDelta)
     fun minus(delta: PlaceToObjectMarkingDelta)
+    fun removeAllPlaceTokens(place: PetriAtomId)
     fun toImmutable(): ImmutablePlaceToObjectMarking
     fun modify(modifier : ObjectMarkingModifier)
     fun clear()
@@ -33,6 +34,10 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
                 }
             }
         }
+
+    override fun removeAllPlaceTokens(place: PetriAtomId) {
+        placesToObjectTokens[place]!!.clear()
+    }
 
     override fun get(place: PetriAtomId): SortedSet<ObjectTokenId>? {
         return placesToObjectTokens[place]

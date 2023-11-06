@@ -5,7 +5,6 @@ import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.loggers.*
 import ru.misterpotz.ocgena.utils.ExecutedBindingDebugPrinter
 import ru.misterpotz.ocgena.utils.TransitionInstanceDebugPrinter
-import simulation.Logger
 import simulation.client.loggers.CompoundLogger
 import javax.inject.Inject
 import javax.inject.Provider

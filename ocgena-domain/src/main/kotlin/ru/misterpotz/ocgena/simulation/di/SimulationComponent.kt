@@ -32,7 +32,7 @@ import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
 import ru.misterpotz.ocgena.simulation.structure.State
 import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import simulation.random.RandomFactoryImpl
@@ -265,27 +265,13 @@ interface SimulationComponent {
     companion object {
         fun defaultCreate(
             simulationConfig: SimulationConfig,
-            componentDependencies: SimulationComponentDependencies
+            componentDependencies: SimulationComponentDependencies,
+            developmentDebugConfig: DevelopmentDebugConfig
         ): SimulationComponent {
             return create(
                 simulationParams = simulationConfig,
-                loggingConfiguration = LogConfiguration(
-                    currentStateLog = CurrentStateLogConfiguration(
-                        includeOngoingTransitions = true,
-                        includeNextTransitionAllowedTiming = true,
-                        includePlaceMarking = true
-                    ),
-                    transitionsLog = TransitionsLogConfiguration(
-                        includeEndingTransitions = true,
-                        includeStartingTransitions = true
-                    ),
-                    loggingEnabled = true
-                ),
-                developmentDebugConfig = DevelopmentDebugConfig(
-                    developmentLoggersEnabled = true,
-                    dumpState = true,
-                    dumpConsistencyCheckLogs = true
-                ),
+                loggingConfiguration = LogConfiguration.default(),
+                developmentDebugConfig = developmentDebugConfig,
                 stepAggregatingLogReceiver = NoOpStepAggregatingLogReceiver,
                 componentDependencies
             )

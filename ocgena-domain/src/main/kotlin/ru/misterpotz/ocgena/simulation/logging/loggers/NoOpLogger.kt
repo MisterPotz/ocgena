@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.simulation.logging.loggers
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 
 open class NoOpLogger : Logger {
 
@@ -29,4 +29,10 @@ open class NoOpLogger : Logger {
     override fun onTimeout() {}
 
     override fun onEnd() {}
+
+    override fun beforeRemovingTokensAtFinishPlace() {
+    }
+
+    override fun afterRemovingTokensAtFinishPlace() {
+    }
 }

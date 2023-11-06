@@ -3,11 +3,12 @@ package simulation.client.loggers
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.loggers.NoOpLogger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 
 class CompoundLogger(
     val loggers: List<Logger>
-) : Logger {
+) : NoOpLogger() {
     private inline fun log(crossinline block: Logger.() -> Unit) {
         for (i in loggers) {
             i.block()

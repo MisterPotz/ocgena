@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.simulation.transition
 import ru.misterpotz.ocgena.simulation.generator.TransitionInstanceDurationGenerator
 import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
-import simulation.Logger
+import ru.misterpotz.ocgena.simulation.logging.Logger
 import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
 import javax.inject.Inject
 

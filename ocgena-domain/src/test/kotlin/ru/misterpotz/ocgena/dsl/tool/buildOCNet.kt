@@ -10,6 +10,9 @@ import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.simulation.SimulationTask
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
+import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 import ru.misterpotz.ocgena.validation.OCNetChecker
 
 fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNet {
@@ -59,11 +62,13 @@ fun defaultSimConfig(
 }
 
 fun component(
-    simulationConfig: SimulationConfig
+    simulationConfig: SimulationConfig,
+    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
-        componentDependencies = DomainComponent.create()
+        componentDependencies = DomainComponent.create(),
+        developmentDebugConfig = developmentDebugConfig
     )
 }
 
