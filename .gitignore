@@ -4,6 +4,8 @@
 /build/classes/kotlin/jvm/main/
 /build/js/
 /.idea/
+**/build/*
+*/build/*
 
 yarn.lock
 
