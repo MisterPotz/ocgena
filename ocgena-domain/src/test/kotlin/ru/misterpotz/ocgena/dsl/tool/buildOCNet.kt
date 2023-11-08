@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
@@ -15,7 +16,7 @@ import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 import ru.misterpotz.ocgena.validation.OCNetChecker
 
-fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNet {
+fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNetStruct {
     val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
     val errors = OCNetChecker(ocNet).checkConsistency()
 
@@ -27,7 +28,7 @@ fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit)
     return ocNet
 }
 
-fun buildSimplestOCNetNoVar(): OCNet {
+fun buildSimplestOCNetNoVar(): OCNetStruct {
     return buildOCNet {
         "p1".p { input }
             .arc("t1".t)
@@ -36,7 +37,7 @@ fun buildSimplestOCNetNoVar(): OCNet {
 }
 
 fun defaultSimConfig(
-    ocNet: OCNet,
+    ocNet: OCNetStruct,
 ): SimulationConfig {
     return SimulationConfig(
         ocNet,
@@ -59,6 +60,10 @@ fun defaultSimConfig(
         ),
         ocNetType = OcNetType.AALST
     )
+}
+
+fun domainComponent(): DomainComponent {
+    return DomainComponent.create()
 }
 
 fun component(

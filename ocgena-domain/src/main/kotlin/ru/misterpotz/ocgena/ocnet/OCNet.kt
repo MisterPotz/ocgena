@@ -17,11 +17,11 @@ interface OCNet {
 }
 
 @Serializable
-data class OCNetImpl(
-    override val objectTypeRegistry: ObjectTypeRegistry,
+data class OCNetStruct(
+    override val objectTypeRegistry: ObjectTypeRegistryMap,
     override val placeTypeRegistry: PlaceTypeRegistry,
     override val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
-    override val petriAtomRegistry: PetriAtomRegistry
+    override val petriAtomRegistry: PetriAtomRegistryStruct
 ) : OCNet {
     override val placeRegistry: PlaceRegistry by lazy(LazyThreadSafetyMode.NONE) {
         PlaceRegistry(petriAtomRegistry)

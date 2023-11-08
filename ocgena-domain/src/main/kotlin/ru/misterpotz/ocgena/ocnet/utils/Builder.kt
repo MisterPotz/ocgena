@@ -1,11 +1,13 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.OCNetImpl
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
+import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
+import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
 import ru.misterpotz.ocgena.simulation.ObjectType
 
 const val defaultObjTypeId = "obj"
@@ -14,16 +16,16 @@ val defaultObjType = ObjectType(defaultObjTypeId, defaultObjTypeId)
 typealias ArrowAtomId = PetriAtomId
 
 class OCNetBuilder() {
-    fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNet {
+    fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNetStruct {
         val atomBlock = AtomDefinitionBlockImpl()
         atomBlock.atomDefinitionBlock()
         val builderRegistry = atomBlock.builderRegistry
 
-        return OCNetImpl(
-            objectTypeRegistry = builderRegistry.objectTypeRegistry,
+        return OCNetStruct(
+            objectTypeRegistry = builderRegistry.objectTypeRegistry as ObjectTypeRegistryMap,
             placeTypeRegistry = builderRegistry.placeTypeRegistry,
             placeToObjectTypeRegistry = builderRegistry.placeObjectTypeRegistry,
-            petriAtomRegistry = builderRegistry.petriAtomRegistry
+            petriAtomRegistry = builderRegistry.petriAtomRegistry as PetriAtomRegistryStruct
         )
     }
 

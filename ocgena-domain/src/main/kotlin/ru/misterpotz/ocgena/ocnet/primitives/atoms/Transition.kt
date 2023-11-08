@@ -1,11 +1,9 @@
 package ru.misterpotz.ocgena.ocnet.primitives.atoms
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.ocnet.primitives.LabelHolder
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 import java.lang.IllegalArgumentException
 
@@ -13,6 +11,7 @@ import java.lang.IllegalArgumentException
 typealias TransitionId = String
 
 @Serializable
+@SerialName("transition")
 data class Transition(
     override val id: PetriAtomId,
     override val label: String,

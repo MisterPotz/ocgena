@@ -1,11 +1,14 @@
 package ru.misterpotz.ocgena.ocnet.primitives.arcs
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomType
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 
 @Serializable
+@SerialName("vararc")
 data class VariableArc(
     override val id: String,
 ) : Arc() {

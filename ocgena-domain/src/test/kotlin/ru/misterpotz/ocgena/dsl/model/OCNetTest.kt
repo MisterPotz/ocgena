@@ -64,6 +64,7 @@ class OCNetTest {
         )
         val simTask = simTask(component)
 
+        (0..20).shuffled()
         simTask.prepareAndRunAll()
     }
 

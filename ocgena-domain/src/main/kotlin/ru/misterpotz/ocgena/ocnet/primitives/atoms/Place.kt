@@ -1,19 +1,18 @@
 package ru.misterpotz.ocgena.ocnet.primitives.atoms
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.ocnet.primitives.LabelHolder
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.PetriNode
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 
 @Serializable
+@SerialName("place")
 data class Place(
     override val id: PetriAtomId,
     override val label: String,
     val fromTransitions: MutableList<PetriAtomId> = mutableListOf(),
-    val toTransitions: MutableList<PetriAtomId> = mutableListOf()
+    val toTransitions: MutableList<PetriAtomId> = mutableListOf(),
 ) : PetriNode, LabelHolder {
     fun addFromTransition(transition: PetriAtomId) {
         fromTransitions.add(transition)

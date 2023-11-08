@@ -1,6 +1,8 @@
 package ru.misterpotz.ocgena.registries
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
@@ -25,13 +27,15 @@ interface PetriAtomRegistry {
 }
 
 fun PetriAtomRegistry(elements: Map<PetriAtomId, PetriAtom>): PetriAtomRegistry {
-    return PetriAtomRegistryImpl(elements.toMutableMap())
+    return PetriAtomRegistryStruct(elements.toMutableMap())
 }
 
 @Serializable
-internal data class PetriAtomRegistryImpl(
-    private val map: MutableMap<PetriAtomId, PetriAtom> = mutableMapOf(),
+@SerialName("atoms")
+data class PetriAtomRegistryStruct(
+    val map: MutableMap<PetriAtomId, PetriAtom> = mutableMapOf(),
 ) : PetriAtomRegistry {
+    @Transient
     private val subgraphIndexData: MutableMap<PetriAtomId, Int?> = mutableMapOf()
     override fun get(petriAtomId: PetriAtomId): PetriAtom {
         return requireNotNull(map[petriAtomId]) {
