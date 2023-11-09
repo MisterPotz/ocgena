@@ -1,12 +1,13 @@
 package ru.misterpotz.ocgena.registries
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.utils.toIds
 
 @Serializable
-data class PlaceTypeRegistry(private val entries: Map<PetriAtomId, PlaceType>) {
+data class PlaceTypeRegistry(@SerialName("per_place") private val entries: Map<PetriAtomId, PlaceType>) {
 
     operator fun get(placeId: PetriAtomId): PlaceType {
         return entries[placeId] ?: PlaceType.NORMAL

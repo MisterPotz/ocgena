@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.registries
 
-import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
@@ -50,12 +49,14 @@ internal class ArcsRegistryMap(
         return petriAtomRegistry[arcId] as Arc
     }
 
-    override val iterable: Iterable<Arc> = petriAtomRegistry
-        .getArcs()
-        .map { petriAtomRegistry.getArc(it) }
+    override val iterable: List<Arc> by lazy(LazyThreadSafetyMode.NONE) {
+        petriAtomRegistry
+            .getArcs()
+            .map { petriAtomRegistry.getArc(it) }
+    }
 
     override val size: Int
-        get() = iterable.count()
+        get() = iterable.size
 
     private inner class WithTailImpl(private val tail: PetriAtomId) : WithTail {
         override fun to(node: PetriAtomId): Arc {

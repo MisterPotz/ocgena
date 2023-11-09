@@ -1,0 +1,259 @@
+type: "ru.misterpotz.ocgena.ocnet.OCNetStruct"
+object_types:
+  per_object_type_id:
+    "△order":
+      label: "△order"
+    "△item":
+      label: "△item"
+    "△route":
+      label: "△route"
+place_types:
+  per_place:
+    "o1": "INPUT"
+    "o2": "NORMAL"
+    "o3": "NORMAL"
+    "o4": "NORMAL"
+    "o5": "OUTPUT"
+    "i1": "INPUT"
+    "i2": "NORMAL"
+    "i3": "NORMAL"
+    "i4": "NORMAL"
+    "i5": "NORMAL"
+    "i6": "OUTPUT"
+    "r1": "INPUT"
+    "r2": "NORMAL"
+    "r3": "OUTPUT"
+place_object_types:
+  default: "△0"
+  per_place:
+    "o1": "△order"
+    "o2": "△order"
+    "o3": "△order"
+    "o4": "△order"
+    "o5": "△order"
+    "i1": "△item"
+    "i2": "△item"
+    "i3": "△item"
+    "i4": "△item"
+    "i5": "△item"
+    "i6": "△item"
+    "r1": "△route"
+    "r2": "△route"
+    "r3": "△route"
+petri_atoms:
+  per_id:
+    "o1":
+      type: "place"
+      id: "o1"
+      label: "o1"
+      to_transtns: ["place_order"]
+    "o2":
+      type: "place"
+      id: "o2"
+      label: "o2"
+      from_transtns: ["place_order"]
+      to_transtns: ["send_invoice"]
+    "o3":
+      type: "place"
+      id: "o3"
+      label: "o3"
+      from_transtns: ["send_invoice", "send_reminder"]
+      to_transtns: ["send_reminder", "pay_order"]
+    "o4":
+      type: "place"
+      id: "o4"
+      label: "o4"
+      from_transtns: ["pay_order"]
+      to_transtns: ["mark_as_completed"]
+    "o5":
+      type: "place"
+      id: "o5"
+      label: "o5"
+      from_transtns: ["mark_as_completed"]
+    "i1":
+      type: "place"
+      id: "i1"
+      label: "i1"
+      to_transtns: ["place_order"]
+    "i2":
+      type: "place"
+      id: "i2"
+      label: "i2"
+      from_transtns: ["place_order"]
+      to_transtns: ["pick_item"]
+    "i3":
+      type: "place"
+      id: "i3"
+      label: "i3"
+      from_transtns: ["pick_item"]
+      to_transtns: ["start_route"]
+    "i4":
+      type: "place"
+      id: "i4"
+      label: "i4"
+      from_transtns: ["start_route"]
+      to_transtns: ["end_route"]
+    "i5":
+      type: "place"
+      id: "i5"
+      label: "i5"
+      from_transtns: ["end_route"]
+      to_transtns: ["mark_as_completed"]
+    "i6":
+      type: "place"
+      id: "i6"
+      label: "i6"
+      from_transtns: ["mark_as_completed"]
+    "r1":
+      type: "place"
+      id: "r1"
+      label: "r1"
+      to_transtns: ["start_route"]
+    "r2":
+      type: "place"
+      id: "r2"
+      label: "r2"
+      from_transtns: ["start_route"]
+      to_transtns: ["end_route"]
+    "r3":
+      type: "place"
+      id: "r3"
+      label: "r3"
+      from_transtns: ["end_route"]
+    "place_order":
+      type: "transition"
+      id: "place_order"
+      label: "place_order"
+      from_places: ["o1", "i1"]
+      to_places: ["o2", "i2"]
+    "send_invoice":
+      type: "transition"
+      id: "send_invoice"
+      label: "send_invoice"
+      from_places: ["o2"]
+      to_places: ["o3"]
+    "pick_item":
+      type: "transition"
+      id: "pick_item"
+      label: "pick_item"
+      from_places: ["i2"]
+      to_places: ["i3"]
+    "start_route":
+      type: "transition"
+      id: "start_route"
+      label: "start_route"
+      from_places: ["i3", "r1"]
+      to_places: ["i4", "r2"]
+    "end_route":
+      type: "transition"
+      id: "end_route"
+      label: "end_route"
+      from_places: ["i4", "r2"]
+      to_places: ["i5", "r3"]
+    "mark_as_completed":
+      type: "transition"
+      id: "mark_as_completed"
+      label: "mark_as_completed"
+      from_places: ["o4", "i5"]
+      to_places: ["o5", "i6"]
+    "pay_order":
+      type: "transition"
+      id: "pay_order"
+      label: "pay_order"
+      from_places: ["o3"]
+      to_places: ["o4"]
+    "send_reminder":
+      type: "transition"
+      id: "send_reminder"
+      label: "send_reminder"
+      from_places: ["o3"]
+      to_places: ["o3"]
+    "o1.place_order":
+      type: "arc"
+      id: "o1.place_order"
+    "place_order.o2":
+      type: "arc"
+      id: "place_order.o2"
+    "o2.send_invoice":
+      type: "arc"
+      id: "o2.send_invoice"
+    "send_invoice.o3":
+      type: "arc"
+      id: "send_invoice.o3"
+    "o3.send_reminder":
+      type: "arc"
+      id: "o3.send_reminder"
+    "send_reminder.o3":
+      type: "arc"
+      id: "send_reminder.o3"
+    "o3.pay_order":
+      type: "arc"
+      id: "o3.pay_order"
+    "pay_order.o4":
+      type: "arc"
+      id: "pay_order.o4"
+    "o4.mark_as_completed":
+      type: "arc"
+      id: "o4.mark_as_completed"
+    "mark_as_completed.o5":
+      type: "arc"
+      id: "mark_as_completed.o5"
+    "i1.place_order":
+      type: "vararc"
+      id: "i1.place_order"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "place_order.i2":
+      type: "vararc"
+      id: "place_order.i2"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "i2.pick_item":
+      type: "arc"
+      id: "i2.pick_item"
+    "pick_item.i3":
+      type: "arc"
+      id: "pick_item.i3"
+    "i3.start_route":
+      type: "vararc"
+      id: "i3.start_route"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "start_route.i4":
+      type: "vararc"
+      id: "start_route.i4"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "i4.end_route":
+      type: "vararc"
+      id: "i4.end_route"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "end_route.i5":
+      type: "vararc"
+      id: "end_route.i5"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "i5.mark_as_completed":
+      type: "vararc"
+      id: "i5.mark_as_completed"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "mark_as_completed.i6":
+      type: "vararc"
+      id: "mark_as_completed.i6"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "r1.start_route":
+      type: "arc"
+      id: "r1.start_route"
+    "start_route.r2":
+      type: "arc"
+      id: "start_route.r2"
+    "r2.end_route":
+      type: "arc"
+      id: "r2.end_route"
+    "end_route.r3":
+      type: "arc"
+      id: "end_route.r3"
+oc_net_type: "aalst"

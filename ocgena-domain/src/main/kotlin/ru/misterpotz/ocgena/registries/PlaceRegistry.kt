@@ -6,9 +6,9 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 interface PlaceRegistry {
     operator fun get(place: PetriAtomId): Place
     val iterable: Iterable<PetriAtomId>
-    val places : Iterable<Place>
+    val places: Iterable<Place>
     fun isEmpty(): Boolean
-    val size : Int
+    val size: Int
 }
 
 fun PlaceRegistry(petriAtomRegistry: PetriAtomRegistry): PlaceRegistry {
@@ -22,15 +22,17 @@ internal class PlaceRegistryMap(private val petriAtomRegistry: PetriAtomRegistry
     }
 
     override fun isEmpty(): Boolean {
-        return petriAtomRegistry.getPlaces().toList().isEmpty()
+        return petriAtomRegistry.getPlaces().isEmpty()
     }
 
     override val size: Int
-        get() = iterable.count()
+        get() = iterable.size
 
-    override val iterable: Iterable<PetriAtomId> = petriAtomRegistry
-        .getPlaces()
-    override val places: Iterable<Place>
-        get() = iterable.map { petriAtomRegistry.getPlace(it) }
+    override val iterable: List<PetriAtomId> =
+        petriAtomRegistry.getPlaces()
+
+    override val places: Iterable<Place> by lazy(LazyThreadSafetyMode.NONE) {
+        iterable.map { petriAtomRegistry.getPlace(it) }
+    }
 }
 

@@ -1,7 +1,10 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
@@ -10,10 +13,10 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcArrowId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcTailId
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder.ArcBlock.Type.*
 import ru.misterpotz.ocgena.registries.*
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import java.lang.IllegalArgumentException
 
-internal class BuilderRegistry() {
+internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean, ocNetType: OcNetType) {
     private val atomBuilders: MutableMap<PetriAtomId, OCNetBuilder.AtomBlock> = mutableMapOf()
 
     fun getPlace(petriAtomId: PetriAtomId): OCNetBuilder.PlaceBlock {
@@ -38,10 +41,10 @@ internal class BuilderRegistry() {
         atomBuilders.values
             .asSequence()
             .filterIsInstance<OCNetBuilder.PlaceBlock>()
-            .map { it.objectTypeId }
+            .map { if (useSpecialSymbolsInNaming) it.objectTypeId.makeObjTypeId() else it.objectTypeId }
             .toSet()
             .map {
-                ObjectType(it, id = it)
+                ObjectType(id = it, label = it)
             }
             .associateBy {
                 it.id
@@ -73,7 +76,11 @@ internal class BuilderRegistry() {
                     it.id
                 },
                 valueTransform = {
-                    it.objectTypeId
+                    if (useSpecialSymbolsInNaming) {
+                        it.objectTypeId.makeObjTypeId()
+                    } else {
+                        it.objectTypeId
+                    }
                 }
             ).let {
                 PlaceToObjectTypeRegistry(defaultObjTypeId, it.toMutableMap())
@@ -81,18 +88,26 @@ internal class BuilderRegistry() {
     }
 
     private fun Collection<PetriAtomId>.filterArcsEndWith(petriAtomId: PetriAtomId): List<PetriAtomId> {
-        return filter { it.endsWith(petriAtomId) && it.length != petriAtomId.length }
+        return filter {
+            it.endsWith(petriAtomId) && it.length != petriAtomId.length && it.contains(".") &&
+                    it.substringAfter(".") == petriAtomId
+        }
     }
 
     private fun Collection<PetriAtomId>.filterArcsStartWith(petriAtomId: PetriAtomId): List<PetriAtomId> {
-        return filter { it.startsWith(petriAtomId) && it.length != petriAtomId.length }
+        return filter {
+            it.startsWith(petriAtomId) &&
+                    it.contains(".") &&
+                    it.length != petriAtomId.length &&
+                    it.substringBefore(".") == petriAtomId
+        }
     }
 
-    private fun Collection<PetriAtomId>.mapArcsTail() : List<PetriAtomId> {
+    private fun Collection<PetriAtomId>.mapArcsTail(): List<PetriAtomId> {
         return map { it.arcTailId() }
     }
 
-    private fun Collection<PetriAtomId>.mapArcsHead() : List<PetriAtomId> {
+    private fun Collection<PetriAtomId>.mapArcsHead(): List<PetriAtomId> {
         return map { it.arcArrowId() }
     }
 
@@ -133,10 +148,25 @@ internal class BuilderRegistry() {
                     )
                 }
 
-                is OCNetBuilder.ArcBlock -> {
+                is OCNetBuilder.ArcBlockImpl -> {
                     when (it.type) {
-                        VAR -> VariableArc(id = it.id)
-                        NORMAL -> NormalArc(id = it.id)
+                        VAR -> VariableArc(
+                            id = it.id,
+                            when (ocNetType) {
+                                OcNetType.AALST -> {
+                                    AalstVariableArcMeta
+                                }
+
+                                OcNetType.LOMAZOVA -> {
+                                    require(it.innerMathExpr != null) {
+                                        "Lomazova arcs must have a variable denoted"
+                                    }
+                                    LomazovaVariableArcMeta(it.innerMathExpr!!)
+                                }
+                            }
+                        )
+
+                        NORMAL -> NormalArc(id = it.id, multiplicity = it.multiplicity)
                     }
                 }
 

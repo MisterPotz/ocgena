@@ -15,9 +15,9 @@ interface PetriAtomRegistry {
     fun getPlace(petriAtomId: PetriAtomId): Place
     fun getTransition(petriAtomId: PetriAtomId): Transition
     fun getArc(petriAtomId: PetriAtomId): Arc
-    fun getPlaces(): Iterable<PetriAtomId>
-    fun getTransitions(): Iterable<PetriAtomId>
-    fun getArcs(): Iterable<PetriAtomId>
+    fun getPlaces(): List<PetriAtomId>
+    fun getTransitions(): List<PetriAtomId>
+    fun getArcs(): List<PetriAtomId>
     fun PetriAtomId.asNode(): PetriAtom
     var PetriAtomId.subgraphIndex: Int?
 
@@ -33,10 +33,21 @@ fun PetriAtomRegistry(elements: Map<PetriAtomId, PetriAtom>): PetriAtomRegistry 
 @Serializable
 @SerialName("atoms")
 data class PetriAtomRegistryStruct(
+    @SerialName("per_id")
     val map: MutableMap<PetriAtomId, PetriAtom> = mutableMapOf(),
 ) : PetriAtomRegistry {
     @Transient
     private val subgraphIndexData: MutableMap<PetriAtomId, Int?> = mutableMapOf()
+
+    private val _places by lazy(LazyThreadSafetyMode.NONE) {
+        map.keys.asSequence().filter { get(it) is Place }.sortedBy { it }.toList()
+    }
+    private val _transitions by lazy(LazyThreadSafetyMode.NONE) {
+        map.keys.asSequence().filter { get(it) is Transition }.sortedBy { it }.toList()
+    }
+    private val _arcs by lazy(LazyThreadSafetyMode.NONE) {
+        map.keys.asSequence().filter { get(it) is Arc }.sortedBy { it }.toList()
+    }
     override fun get(petriAtomId: PetriAtomId): PetriAtom {
         return requireNotNull(map[petriAtomId]) {
             "petri atom wasn't found for id $petriAtomId"
@@ -65,16 +76,16 @@ data class PetriAtomRegistryStruct(
         return get(petriAtomId) as Arc
     }
 
-    override fun getPlaces(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Place }.asIterable()
+    override fun getPlaces(): List<PetriAtomId> {
+        return _places
     }
 
-    override fun getTransitions(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Transition }.asIterable()
+    override fun getTransitions(): List<PetriAtomId> {
+        return _transitions
     }
 
-    override fun getArcs(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Arc }.asIterable()
+    override fun getArcs(): List<PetriAtomId> {
+        return _arcs
     }
 
     override fun set(petriAtomId: PetriAtomId, petriAtom: PetriAtom) {

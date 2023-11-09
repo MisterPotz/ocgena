@@ -39,7 +39,7 @@ internal class TransitionToPlacesByObjectTypeIndexRegistryMap(
 
             buildMap {
                 for (inputPlace in inputPlaces) {
-                    getOrPut(placeToObjectTypeRegistry[inputPlace]) { mutableListOf() }
+                    getOrPut(placeToObjectTypeRegistry[inputPlace]!!) { mutableListOf() }
                         .add(placeRegistry[inputPlace])
                 }
             }
@@ -54,7 +54,7 @@ internal class TransitionToPlacesByObjectTypeIndexRegistryMap(
 
             buildMap {
                 for (outputPlace in outputPlaces) {
-                    getOrPut(placeToObjectTypeRegistry[outputPlace]) { mutableListOf() }
+                    getOrPut(placeToObjectTypeRegistry[outputPlace]!!) { mutableListOf() }
                         .add(placeRegistry[outputPlace])
                 }
             }

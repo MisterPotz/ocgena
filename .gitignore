@@ -15,3 +15,5 @@ node_modules
 
 # the exported binaries for ocgena js source code
 ocgenajs
+
+*.DS_Store

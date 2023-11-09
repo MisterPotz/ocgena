@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.ocnet.primitives.ext
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
 fun PetriAtomId.arcTailId(): PetriAtomId {
-    val delimiterIndex = indexOf("_")
+    val delimiterIndex = indexOf(".")
     require(delimiterIndex > 0) {
         "id was not of arc $this"
     }
@@ -11,7 +11,7 @@ fun PetriAtomId.arcTailId(): PetriAtomId {
 }
 
 fun PetriAtomId.arcArrowId(): PetriAtomId {
-    val delimiterIndex = indexOf("_")
+    val delimiterIndex = indexOf(".")
     require(delimiterIndex > 0 && length > delimiterIndex + 1) {
         "id was not of arc $this"
     }
@@ -19,5 +19,5 @@ fun PetriAtomId.arcArrowId(): PetriAtomId {
 }
 
 fun PetriAtomId.arcIdTo(petriAtomId: PetriAtomId): PetriAtomId {
-    return "${this}_$petriAtomId"
+    return "${this.replaceAfter(" ", "_")}.${petriAtomId.replace(" ", "_")}"
 }

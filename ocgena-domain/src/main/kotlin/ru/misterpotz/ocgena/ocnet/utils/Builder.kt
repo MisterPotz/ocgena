@@ -1,23 +1,49 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
-import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.ObjectType
+import java.lang.IllegalStateException
 
-const val defaultObjTypeId = "obj"
+const val objTypePrefix = "△"
+const val objPrefix = "●"
+const val defaultObjTypeId = "${objTypePrefix}0"
+fun ObjectTypeId.makeObjTypeId(): ObjectTypeId {
+    return if (startsWith(objTypePrefix)) {
+        this
+    } else {
+        "$objTypePrefix$this"
+    }
+}
+
+fun ObjectTokenId.toObjTokenString(): String {
+    return "$objPrefix$this"
+}
+
+fun ObjectTypeId.firstLetter(): String {
+    return (if (!startsWith(objTypePrefix)) {
+        first()
+    } else {
+        get(1)
+    }).toString()
+}
 
 val defaultObjType = ObjectType(defaultObjTypeId, defaultObjTypeId)
 typealias ArrowAtomId = PetriAtomId
 
-class OCNetBuilder() {
+class OCNetBuilder(
+    private var useSpecialSymbolsInNaming: Boolean = true,
+    val ocNetType: OcNetType = OcNetType.AALST
+) {
     fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNetStruct {
-        val atomBlock = AtomDefinitionBlockImpl()
+        val atomBlock = AtomDefinitionBlockImpl(useSpecialSymbolsInNaming, ocNetType = ocNetType)
         atomBlock.atomDefinitionBlock()
         val builderRegistry = atomBlock.builderRegistry
 
@@ -25,7 +51,8 @@ class OCNetBuilder() {
             objectTypeRegistry = builderRegistry.objectTypeRegistry as ObjectTypeRegistryMap,
             placeTypeRegistry = builderRegistry.placeTypeRegistry,
             placeToObjectTypeRegistry = builderRegistry.placeObjectTypeRegistry,
-            petriAtomRegistry = builderRegistry.petriAtomRegistry as PetriAtomRegistryStruct
+            petriAtomRegistry = builderRegistry.petriAtomRegistry as PetriAtomRegistryStruct,
+            ocNetType = ocNetType
         )
     }
 
@@ -42,8 +69,8 @@ class OCNetBuilder() {
         ): ArrowAtomId
     }
 
-    class AtomDefinitionBlockImpl() : AtomDefinitionBlock {
-        internal val builderRegistry = BuilderRegistry()
+    class AtomDefinitionBlockImpl(useSpecialSymbolsInNaming: Boolean, ocNetType: OcNetType) : AtomDefinitionBlock {
+        internal val builderRegistry = BuilderRegistry(useSpecialSymbolsInNaming, ocNetType = ocNetType)
         override val String.t: String
             get() {
                 return this.t()
@@ -54,36 +81,45 @@ class OCNetBuilder() {
             }
 
         override fun String.t(block: (TransitionBlock.() -> Unit)?): String {
-            val receiver = builderRegistry.getTransition(this)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val receiver = builderRegistry.getTransition(this)
+                if (block != null) {
+                    receiver.block()
+                }
+                return this
             }
-            return this
+
         }
 
         override fun String.arc(block: (ArcBlock.() -> Unit)?): String {
-            val receiver = builderRegistry.getArc(this)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val receiver = builderRegistry.getArc(this)
+                if (block != null) {
+                    receiver.block()
+                }
+                return this
             }
-            return this
         }
 
-        override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)? ): String {
-            val arcId = arcIdTo(petriAtomId)
-            val receiver = builderRegistry.getArc(arcId)
-            if (block != null) {
-                receiver.block()
+        override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)?): String {
+            this.replace(" ", "_").apply {
+                val arcId = arcIdTo(petriAtomId)
+                val receiver = builderRegistry.getArc(arcId)
+                if (block != null) {
+                    receiver.block()
+                }
+                return petriAtomId.replace(" ", "_")
             }
-            return petriAtomId
         }
 
         override fun String.p(block: (PlaceBlock.() -> Unit)?): String {
-            val receiver = builderRegistry.getPlace(this)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val receiver = builderRegistry.getPlace(this)
+                if (block != null) {
+                    receiver.block()
+                }
+                return this
             }
-            return this
         }
     }
 
@@ -124,6 +160,8 @@ class OCNetBuilder() {
         var type: Type
         var multiplicity: Int
 
+        var mathExpr: String
+
         val vari: Unit
         val norm: Unit
 
@@ -152,5 +190,13 @@ class OCNetBuilder() {
         override fun m(multiplicity: Int) {
             this.multiplicity = multiplicity
         }
+
+        var innerMathExpr: String? = null
+
+        override var mathExpr: String
+            get() = throw IllegalStateException()
+            set(value) {
+                innerMathExpr = value
+            }
     }
 }

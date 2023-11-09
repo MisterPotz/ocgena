@@ -1,6 +1,8 @@
 package ru.misterpotz.ocgena.validation
 
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
+import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
@@ -17,7 +19,8 @@ class ConsistencyCheckPetriAtomVisitorDFS(
     private val placeTypeRegistry: PlaceTypeRegistry,
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val petriAtomRegistry: PetriAtomRegistry,
-    private val loggingEnabled : Boolean
+    private val loggingEnabled: Boolean,
+    private val ocNet: OcNetType
 ) : AbsPetriAtomVisitorDFS(
     petriAtomRegistry
 ) {
@@ -46,8 +49,6 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         setSubgraphIndexTo(atom)
     }
 
-
-
     override fun doForArcBeforeDFS(arc: Arc): Boolean {
         logItem(arc)
         recordIfArcConsistencyErrors(arc)
@@ -67,7 +68,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
     }
 
     private fun recInconsistency(consistencyCheckError: ConsistencyCheckError) {
-        if (loggingEnabled){
+        if (loggingEnabled) {
             println("found error: $consistencyCheckError")
         }
         inconsistenciesSet.add(consistencyCheckError)
@@ -195,7 +196,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             // case 4 - only variability arc serves as input or output arc
             if (transition.fromPlaces.size == 1) {
                 val firstInputPlace = transition.fromPlaces.first()
-                if (firstInputPlace.arcTo(transition.id) is VariableArc) {
+                if (firstInputPlace.arcTo(transition.id) is VariableArc && ocNet == OcNetType.AALST) {
                     recInconsistency(
                         ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                             transition = transition.id,
@@ -207,7 +208,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
             if (transition.toPlaces.size == 1) {
                 val firstOutputPlace = transition.toPlaces.first()
 
-                if (transition.id.arcTo(firstOutputPlace) is VariableArc) {
+                if (transition.id.arcTo(firstOutputPlace) is VariableArc && ocNet == OcNetType.AALST) {
                     recInconsistency(
                         ConsistencyCheckError.VariableArcIsTheOnlyConnected(
                             transition = transition.id,
@@ -231,11 +232,11 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         }
 
         // case 2 - input place has input arcs
-        if (placeTypeRegistry[place.id] == PlaceType.INPUT && place.fromTransitions.isNotEmpty()) {
-            recInconsistency(
-                ConsistencyCheckError.InputPlaceHasInputArcs(place.id, copyAndAppendTraversalPath())
-            )
-        }
+//        if (placeTypeRegistry[place.id] == PlaceType.INPUT && place.fromTransitions.isNotEmpty()) {
+//            recInconsistency(
+//                ConsistencyCheckError.InputPlaceHasInputArcs(place.id, copyAndAppendTraversalPath())
+//            )
+//        }
         // case 3 - output place has output arcs
         if (placeTypeRegistry[place.id] == PlaceType.OUTPUT && place.toTransitions.isNotEmpty()) {
             recInconsistency(

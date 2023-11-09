@@ -17,7 +17,7 @@
 //import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 //import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 //import ru.misterpotz.ocgena.simulation.config.TokenGenerationConfig
-//import ru.misterpotz.ocgena.simulation.config.TransitionInstancesTimesSpec
+//import ru.misterpotz.ocgena.simulation.config.original.TransitionInstancesTimesSpec
 //
 //
 //

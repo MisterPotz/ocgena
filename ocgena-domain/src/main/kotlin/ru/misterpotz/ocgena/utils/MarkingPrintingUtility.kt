@@ -1,10 +1,8 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.ocgena.collections.*
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.collections.*
 import javax.inject.Inject
 
 class MarkingPrintingUtility @Inject constructor(private val objectTokenSet: ObjectTokenSet) {

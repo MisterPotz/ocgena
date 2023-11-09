@@ -9,10 +9,10 @@ import dagger.Module
 import dagger.Provides
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.*
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.simulation_old.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.simulation_old.collections.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
@@ -25,7 +25,9 @@ import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
 import ru.misterpotz.ocgena.serialization.*
-import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
+import ru.misterpotz.ocgena.simulation_old.config.TransitionsSpec
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.timepn.TransitionsTimePNSpec
 import javax.inject.Scope
 
 
@@ -43,7 +45,7 @@ class DomainModule {
                 contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
                 contextual(PeriodSerializer("period"))
                 polymorphic(OCNet::class) {
-                    subclass(OCNetStruct::class,  OCNetStruct.serializer())
+                    subclass(OCNetStruct::class, OCNetStruct.serializer())
                     defaultDeserializer {
                         OCNetStruct.serializer()
                     }
@@ -72,6 +74,10 @@ class DomainModule {
                 polymorphic(PlaceToObjectMarking::class) {
                     subclass(PlaceToObjectMarkingMap.serializer())
                 }
+                polymorphic(TransitionsSpec::class) {
+                    subclass(TransitionsOriginalSpec.serializer())
+                    subclass(TransitionsTimePNSpec.serializer())
+                }
             }
         }
 
@@ -81,6 +87,7 @@ class DomainModule {
             return Json {
                 classDiscriminator = "type"
                 prettyPrint = true
+                encodeDefaults = false
                 isLenient = true
                 ignoreUnknownKeys = true
                 serializersModule = SerializersModule {
@@ -98,6 +105,7 @@ class DomainModule {
                     sequenceStyle = SequenceStyle.Flow,
                     polymorphismStyle = PolymorphismStyle.Property,
                     strictMode = false,
+                    encodeDefaults = false
                 ),
                 serializersModule = SerializersModule {
                     serializersModuleBlock()
@@ -109,14 +117,18 @@ class DomainModule {
 
 @DomainScope
 @Component(modules = [DomainModule::class])
-interface DomainComponent : SimulationComponentDependencies {
+interface DomainComponent {
+    fun json(): Json
+    fun yaml(): Yaml
 
-    fun json() : Json
-    fun yaml() : Yaml
+    @Component.Factory
+    interface Factory {
+        fun create(): DomainComponent
+    }
 
     companion object {
         fun create(): DomainComponent {
-            return DaggerDomainComponent.create()
+            return DaggerDomainComponent.factory().create()
         }
     }
 }
