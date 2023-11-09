@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.dsl.model
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import ru.misterpotz.ocgena.dsl.tool.buildSimplestOCNetNoVar
 import ru.misterpotz.ocgena.dsl.tool.component
 import ru.misterpotz.ocgena.dsl.tool.defaultSimConfig
@@ -25,18 +26,36 @@ class OCNetTest {
         val component = component(config)
         val simTask = simTask(component)
         simTask.prepareRun()
+        val objectTokenRealAmountRegistry = component.objectTokenRealAmountRegistry()
 
         assertTrue(
-            component.state().pMarking["p1"]!!.size == 10,
+            objectTokenRealAmountRegistry.getRealAmountAt("p1") == 10,
             "seems initial marking scheme doesn't work"
         )
     }
 
     @Test
+    @Timeout(value = 1,  threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     fun simpleRunPerforms() {
         val ocNet = buildSimplestOCNetNoVar()
 
         val config = defaultSimConfig(ocNet)
+            .copy(
+                initialMarking = MarkingScheme.of {
+                    put("p1", 1)
+                },
+                transitionInstancesTimesSpec = TransitionInstancesTimesSpec(
+                    defaultTransitionTimeSpec = TransitionInstanceTimes(
+                        duration = Duration(10..10),
+                        timeUntilNextInstanceIsAllowed = TimeUntilNextInstanceIsAllowed(10..10)
+                    )
+                ),
+                tokenGeneration = TokenGenerationConfig(
+                    placeIdToGenerationTarget = MarkingScheme.of {
+                        put("p1", 1)
+                    }
+                )
+            )
         val component = component(config)
         val simTask = simTask(component)
 
@@ -49,11 +68,11 @@ class OCNetTest {
 
         val config = defaultSimConfig(ocNet).copy(
             initialMarking = MarkingScheme.of {
-                put("p1", 1000)
+                put("p1", 100000)
             },
             tokenGeneration = TokenGenerationConfig(
                 placeIdToGenerationTarget = MarkingScheme.of {
-                    put("p1", 1000)
+                    put("p1", 100000)
                 },
             ),
 

@@ -8,39 +8,54 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransform
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import java.util.*
+import javax.inject.Inject
 
 interface ObjectTokenRealAmountRegistry {
     fun getRealAmountAt(place: PetriAtomId): Int
-    fun setRealAmountAt(place: PetriAtomId, newRealAmount: Int)
+    fun zeroAmountAt(place: PetriAtomId)
     fun incrementRealAmountAt(place: PetriAtomId, incrementValue: Int)
+    fun decreaseRealAmountAt(place: PetriAtomId, decrementValue: Int)
     fun getRealAmountOfType(objectTypeId: ObjectTypeId): Int
     fun incrementRealAmountOfType(objectTypeId: ObjectTypeId, incrementValue: Int)
+    fun decrementRealAmountOfType(objectTypeId: ObjectTypeId, decrementValue: Int)
 }
 
 fun ObjectTokenRealAmountRegistry(placeToObjectTypeRegistry: PlaceToObjectTypeRegistry): ObjectTokenRealAmountRegistry {
     return ObjectTokenRealAmountRegistryImpl(placeToObjectTypeRegistry)
 }
 
-internal class ObjectTokenRealAmountRegistryImpl(
+internal class ObjectTokenRealAmountRegistryImpl @Inject constructor(
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry
 ) : ObjectTokenRealAmountRegistry {
     private val placeToAmount = mutableMapOf<PetriAtomId, Int>()
     private val typeToAmount = mutableMapOf<ObjectTypeId, Int>()
     override fun getRealAmountAt(place: PetriAtomId): Int {
-        return placeToAmount[place]!!
+        return placeToAmount.getOrPut(place) { 0 }
     }
 
-    override fun setRealAmountAt(place: PetriAtomId, newRealAmount: Int) {
-        val placeOldTokenAmount = placeToAmount[place]
-        placeToAmount[place] = newRealAmount
-//        val objectTypeId = placeToObjectTypeRegistry[place]
-//        val newTypeAmount = typeToAmount[objectTypeId]!! - placeOldTokenAmount!! + newRealAmount
-//
-//        typeToAmount[objectTypeId] = newTypeAmount
+    override fun decreaseRealAmountAt(place: PetriAtomId, decrementValue: Int) {
+        placeToAmount[place] = (placeToAmount.getOrPut(place) { 0 } - decrementValue).coerceAtLeast(0)
+        decrementRealAmountOfType(placeToObjectTypeRegistry[place], decrementValue)
     }
+
+    override fun zeroAmountAt(place: PetriAtomId) {
+        placeToAmount[place] = 0
+    }
+
+//    override fun setRealAmountAt(place: PetriAtomId, newRealAmount: Int) {
+//        val placeOldTokenAmount = placeToAmount[place]
+//        placeToAmount[place] = newRealAmount
+//        val objectTypeId = placeToObjectTypeRegistry[place]
+//
+//        val newTypeAmount = typeToAmount[objectTypeId]!! - placeOldTokenAmount!! + newRealAmount
+////
+////        typeToAmount[objectTypeId] = newTypeAmount
+//    }
 
     override fun incrementRealAmountAt(place: PetriAtomId, incrementValue: Int) {
         placeToAmount[place] = placeToAmount.getOrPut(place) { 0 } + incrementValue
+        val objectTypeId = placeToObjectTypeRegistry[place]
+        incrementRealAmountOfType(objectTypeId, incrementValue)
     }
 
     override fun getRealAmountOfType(objectTypeId: ObjectTypeId): Int {
@@ -50,14 +65,16 @@ internal class ObjectTokenRealAmountRegistryImpl(
     override fun incrementRealAmountOfType(objectTypeId: ObjectTypeId, incrementValue: Int) {
         typeToAmount[objectTypeId] = typeToAmount.getOrPut(objectTypeId) { 0 } + incrementValue
     }
+
+    override fun decrementRealAmountOfType(objectTypeId: ObjectTypeId, decrementValue: Int) {
+        typeToAmount[objectTypeId] = (typeToAmount.getOrPut(objectTypeId) { 0 } - decrementValue).coerceAtLeast(0)
+    }
 }
 
 interface PlaceToObjectMarking {
     val tokensIterator: Iterator<ObjectTokenId>
-    operator fun get(place: PetriAtomId): SortedSet<ObjectTokenId>?
+    operator fun get(place: PetriAtomId): SortedSet<ObjectTokenId>
     operator fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?)
-    fun getRealTokenAmount(place: PetriAtomId): Int?
-    fun setRealTokenAmount(place: PetriAtomId, newRealAmount: Int?)
     fun removePlace(placeId: PetriAtomId)
     fun plus(delta: PlaceToObjectMarkingDelta)
     fun minus(delta: PlaceToObjectMarkingDelta)
@@ -90,26 +107,16 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
         placesToObjectTokens[place]!!.clear()
     }
 
-    override fun get(place: PetriAtomId): SortedSet<ObjectTokenId>? {
-        return placesToObjectTokens[place]
+    override fun get(place: PetriAtomId): SortedSet<ObjectTokenId> {
+        return placesToObjectTokens.getOrPut(place) {
+            sortedSetOf()
+        }
     }
 
     override fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?) {
         placesToObjectTokens.getOrPut(place) {
             sortedSetOf()
         }.addAll(tokens ?: return)
-    }
-
-    override fun getRealTokenAmount(place: PetriAtomId): Int? {
-        return placeToRealTokenAmount[place]
-    }
-
-    override fun setRealTokenAmount(place: PetriAtomId, newRealAmount: Int?) {
-        if (newRealAmount == null) {
-            placeToRealTokenAmount.remove(place)
-        } else {
-            placeToRealTokenAmount[place] = newRealAmount
-        }
     }
 
     override fun removePlace(placeId: PetriAtomId) {

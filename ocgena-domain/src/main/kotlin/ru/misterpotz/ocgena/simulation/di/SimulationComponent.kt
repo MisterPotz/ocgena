@@ -3,6 +3,8 @@ package ru.misterpotz.ocgena.simulation.di
 import com.charleskorn.kaml.Yaml
 import dagger.*
 import kotlinx.serialization.json.Json
+import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
 import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.ObjectTokenSetMap
 import ru.misterpotz.ocgena.ocnet.OCNet
@@ -124,6 +126,14 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
+        fun providesObjectRealTokenAmountRegistry(ocNet: OCNet) : ObjectTokenRealAmountRegistry {
+            return ObjectTokenRealAmountRegistryImpl(
+                ocNet.placeToObjectTypeRegistry
+            )
+        }
+
+        @Provides
+        @SimulationScope
         fun objectTokenSet(): ObjectTokenSet {
             return ObjectTokenSetMap(mutableMapOf())
         }
@@ -196,24 +206,27 @@ internal abstract class SimulationModule {
             arcsMultiplicityDelegate: ArcsMultiplicityDelegate
         ): ArcsMultiplicityRegistry {
             return ArcsMultiplicityRegistryDelegating(
-                petriAtomRegistry = ocNet.petriAtomRegistry,
                 arcsRegistry = ocNet.arcsRegistry,
                 arcsMultiplicityDelegate = arcsMultiplicityDelegate
             )
         }
 
+
         @Provides
         @SimulationScope
-        fun arcMultiplicityDelegate(pMarkingProvider: PMarkingProvider): ArcsMultiplicityDelegate {
+        fun arcMultiplicityDelegate(
+            arcToMultiplicityNormalDelegateTypeA: ArcToMultiplicityNormalDelegateTypeA,
+            arcToMultiplicityVariableDelegateTypeA: ArcToMultiplicityVariableDelegateTypeA
+        ): ArcsMultiplicityDelegate {
             return CompoundArcsMultiplicityDelegate(
                 arcMultiplicityDelegates = buildMap {
                     put(
                         ArcType.NORMAL,
-                        ArcToMultiplicityNormalDelegateTypeA(pMarkingProvider)
+                        arcToMultiplicityNormalDelegateTypeA
                     )
                     put(
                         ArcType.VARIABLE,
-                        ArcToMultiplicityVariableDelegateTypeA(pMarkingProvider)
+                        arcToMultiplicityVariableDelegateTypeA
                     )
                 }
             )
@@ -247,10 +260,10 @@ interface SimulationComponentDependencies {
 )
 interface SimulationComponent {
     fun simulationTask(): SimulationTask
-    fun state() : State
-    fun ocNet() : OCNet
-    fun enabledBindingsResolver() : EnabledBindingResolverInteractor
-
+    fun state(): State
+    fun ocNet(): OCNet
+    fun enabledBindingsResolver(): EnabledBindingResolverInteractor
+    fun objectTokenRealAmountRegistry() : ObjectTokenRealAmountRegistry
     @Component.Factory
     interface Factory {
         fun create(
