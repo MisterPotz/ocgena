@@ -1,10 +1,10 @@
 package ru.misterpotz.ocgena.simulation
 
+import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
-import ru.misterpotz.ocgena.simulation.token_generation.PlaceToObjectMarkingBySchemeCreatorFactory
 import ru.misterpotz.ocgena.simulation.logging.Logger
 import javax.inject.Inject
 
@@ -16,17 +16,17 @@ class SimulationTask @Inject constructor(
     private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
     private val currentStateDelegate: CurrentSimulationDelegate,
     private val stepExecutor: SimulationTaskStepExecutor,
-    private val placeToObjectMarkingBySchemeCreatorFactory: PlaceToObjectMarkingBySchemeCreatorFactory,
     private val developmentDebugConfig: DevelopmentDebugConfig,
+    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry
 ) : CurrentSimulationDelegate by currentStateDelegate {
     private var stepIndex: Long = 0
     private val oneStepGranularity = 5
     var finishRequested = false;
 
     private fun prepare() {
-        val initialMarking = placeToObjectMarkingBySchemeCreatorFactory.create(initialMarkingScheme).create()
-        pMarking.plus(initialMarking)
-
+        initialMarkingScheme.placesToTokens.forEach { (petriAtomId, amount) ->
+            objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, amount)
+        }
         for (transition in ocNet.ocNet.transitionsRegistry.iterable) {
             val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
             state.tTimesMarking.setNextAllowedTime(transition.id, nextAllowedTime)

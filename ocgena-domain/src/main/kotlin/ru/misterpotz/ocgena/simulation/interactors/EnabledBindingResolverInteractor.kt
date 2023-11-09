@@ -34,14 +34,12 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         transition: Transition,
         place: PetriAtomId,
     ): SortedSet<ObjectTokenId> {
-        // different objects policy can be setup here
-        // e.g., randomized or sorted by object token time
-        val marking = pMarking[place]!!
         val arcMultiplicity = state.arcsMultiplicityRegistry.multiplicity(place.arcIdTo(transition.id))
         val requiredTokensAmount = arcMultiplicity.requiredTokenAmount()
 
-        return tokenSelectionInteractor.getTokensFromSet(
-            marking, amount = requiredTokensAmount
+        return tokenSelectionInteractor.selectAndGenerateTokensFromPlace(
+            petriAtomId = place,
+            amount = requiredTokensAmount
         )
     }
 
@@ -49,10 +47,9 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         val canBeEnabled = tTimesMarking.isAllowedToBeEnabled(transition.id)
         if (!canBeEnabled) return null
 
-
         val hasEnoughTokensAtAllInputs = transitionsRegistry[transition.id].fromPlaces.all { placeId ->
-                arcInputPlaceHasEnoughTokens(placeId, transition)
-            }
+            arcInputPlaceHasEnoughTokens(placeId, transition)
+        }
 
         if (!hasEnoughTokensAtAllInputs) {
             return null

@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
 @Serializable
-data class MarkingScheme(val placesToTokens: MutableMap<PetriAtomId, Int> = mutableMapOf()) {
+data class MarkingScheme(val placesToTokens: Map<PetriAtomId, Int> = mutableMapOf()) {
 
     fun allPlaces(): Collection<PetriAtomId> {
         return placesToTokens.keys
@@ -17,16 +17,10 @@ data class MarkingScheme(val placesToTokens: MutableMap<PetriAtomId, Int> = muta
     companion object {
 
         fun of(map: MutableMap<PetriAtomId, Int>.() -> Unit): MarkingScheme {
-            return MarkingScheme().apply {
-                placesToTokens.putAll(
-                    buildMap {
-                        map()
-                    }.toList().fold(mutableMapOf()) { accum, entry ->
-                        accum[entry.first] = entry.second
-                        accum
-                    }
-                )
+            val map = buildMap {
+                map()
             }
+            return MarkingScheme(map)
         }
     }
 }

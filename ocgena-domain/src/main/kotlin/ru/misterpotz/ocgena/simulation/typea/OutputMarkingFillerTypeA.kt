@@ -37,7 +37,7 @@ class OutputMarkingFillerTypeA(
         return fillOutputMarking()
     }
 
-    private fun complementUnfilledPlaces(outputMarking: PlaceToObjectMarking): ImmutablePlaceToObjectMarking {
+    private fun complementUnfilledPlacesByGeneratedTokens(outputMarking: PlaceToObjectMarking): ImmutablePlaceToObjectMarking {
         for (outputPlace in repeatabilityInteractor.sortPlaces(outputPlaces.iterable.toList())) {
             val tokens = outputMarking[outputPlace]!!
             with(petriAtomRegistry) {
@@ -48,7 +48,7 @@ class OutputMarkingFillerTypeA(
                         val need = arc.multiplicity
                         if (tokens.size < need) {
                             for (i in 0 until (tokens.size - need)) {
-                                val newToken = newTokenTimeBasedGenerationFacade.generate(type)
+                                val newToken = newTokenGenerationFacade.generateRealToken(type)
                                 tokens.add(newToken.id)
                             }
                         }
@@ -64,10 +64,10 @@ class OutputMarkingFillerTypeA(
     }
 
     private fun fillOutputMarking(): ImmutablePlaceToObjectMarking {
-        val outputMarking = lockedTokensMover.tryFillOutputPlacesNormalArcs(
+        val outputMarking = lockedTokensMover.tryFillOutputPlacesFromLockedTokens(
             transitionInstance
         )
 
-        return complementUnfilledPlaces(outputMarking)
+        return complementUnfilledPlacesByGeneratedTokens(outputMarking)
     }
 }

@@ -9,7 +9,7 @@ import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerationFacade
+import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.state.SimulationStepState
 import ru.misterpotz.ocgena.simulation.state.SimulationTime
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
@@ -25,7 +25,7 @@ interface CurrentSimulationDelegate : OCNet {
     val simGlobalTime: Time
     val simTime: SimulationTime
     val initialMarkingScheme: MarkingScheme
-    val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
+    val newTokenGenerationFacade: NewTokenGenerationFacade
     val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry
         get() = state.tTimesMarking
     val pMarking: PlaceToObjectMarking
@@ -56,7 +56,7 @@ interface CurrentSimulationDelegate : OCNet {
 class CurrentSimulationDelegateImpl @Inject constructor(
     private val simulationConfig: SimulationConfig,
     private val simulationStateProvider: SimulationStateProvider,
-    override val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade
+    override val newTokenGenerationFacade: NewTokenGenerationFacade
 ) :
     CurrentSimulationDelegate {
     override val currentStep get() = simulationStateProvider.getSimulationStepState().currentStep

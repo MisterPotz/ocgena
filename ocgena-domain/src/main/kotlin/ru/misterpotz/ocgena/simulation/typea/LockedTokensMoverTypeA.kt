@@ -16,7 +16,7 @@ class LockedTokensMoverTypeA @Inject constructor(
     private val currentSimulationDelegate: CurrentSimulationDelegate,
 ) : LockedTokensMover(), CurrentSimulationDelegate by currentSimulationDelegate {
     // same type, same arc variability, arcs normal
-    override fun tryFillOutputPlacesNormalArcs(transitionInstance: TransitionInstance): PlaceToObjectMarking {
+    override fun tryFillOutputPlacesFromLockedTokens(transitionInstance: TransitionInstance): PlaceToObjectMarking {
         val tokenInputCollectorByTypeAndArc = tokenCollectorByTypeAndArcFactory.create(transitionInstance)
         val collectedTokens = tokenInputCollectorByTypeAndArc.collectTokensByInputArcAndType()
         val normalTokens = collectedTokens.collectedThroughNormalArcs
