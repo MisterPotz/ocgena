@@ -34,14 +34,11 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         transition: Transition,
         place: PetriAtomId,
     ): SortedSet<ObjectTokenId> {
-        // different objects policy can be setup here
-        // e.g., randomized or sorted by object token time
-        val marking = pMarking[place]!!
         val arcMultiplicity = state.arcsMultiplicityRegistry.multiplicity(place.arcIdTo(transition.id))
         val requiredTokensAmount = arcMultiplicity.requiredTokenAmount()
 
-        return tokenSelectionInteractor.getTokensFromPlace(
-            marking,
+        return tokenSelectionInteractor.selectAndGenerateTokensFromPlace(
+            petriAtomId = place,
             amount = requiredTokensAmount
         )
     }

@@ -28,7 +28,7 @@ class TIFinisherImpl @Inject constructor(
 //        markingForOutputPlaces.shiftTokenTime(tokenTimeDelta = activeFiringTransition.duration)
 
         markingForOutputPlaces.keys.forEach {  petriAtomId ->
-            val tokenSize = markingForOutputPlaces[petriAtomId]!!.size
+            val tokenSize = markingForOutputPlaces[petriAtomId].size
             objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, tokenSize)
         }
         pMarking.plus(markingForOutputPlaces)

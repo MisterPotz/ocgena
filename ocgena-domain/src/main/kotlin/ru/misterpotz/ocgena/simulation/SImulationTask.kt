@@ -25,7 +25,7 @@ class SimulationTask @Inject constructor(
 
     private fun prepare() {
         initialMarkingScheme.placesToTokens.forEach { (petriAtomId, amount) ->
-            objectTokenRealAmountRegistry.setRealAmountAt(petriAtomId, amount)
+            objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, amount)
         }
         for (transition in ocNet.ocNet.transitionsRegistry.iterable) {
             val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)

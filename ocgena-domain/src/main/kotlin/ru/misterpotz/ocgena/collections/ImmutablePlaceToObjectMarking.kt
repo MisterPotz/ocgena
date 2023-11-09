@@ -13,7 +13,7 @@ interface PlaceToObjectMarkingDelta {
 
 interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta, java.io.Serializable {
     val tokensIterator: Iterator<ObjectTokenId>
-    override operator fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>?
+    override operator fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>
     override val keys: Set<PetriAtomId>
     fun isEmpty(): Boolean
 
@@ -36,8 +36,8 @@ internal data class ImmutablePlaceToObjectMarkingMap(val placesToObjectTokens: M
             }
         }
 
-    override fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>? {
-        return placesToObjectTokens[placeId]
+    override fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId> {
+        return placesToObjectTokens[placeId] ?: sortedSetOf()
     }
 
     override val keys: Set<PetriAtomId> by lazy(LazyThreadSafetyMode.NONE) {

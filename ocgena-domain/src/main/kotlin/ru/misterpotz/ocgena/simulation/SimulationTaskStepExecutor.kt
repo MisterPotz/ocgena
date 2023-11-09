@@ -96,6 +96,7 @@ class SimulationTaskStepExecutor @Inject constructor(
 
         for (outputPlace in ocNetOutputPlaces.places) {
             val tokensToRemove = state.pMarking[outputPlace.id]
+            objectTokenRealAmountRegistry.zeroAmountAt(outputPlace.id)
 
             if (!tokensToRemove.isNullOrEmpty()) {
                 state.pMarking.removeAllPlaceTokens(outputPlace.id)
@@ -119,11 +120,11 @@ class SimulationTaskStepExecutor @Inject constructor(
 
         logger.beforeStartingNewTransitions()
 
+        simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
+
         if (enabledBindings.isEmpty()) {
-            simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = false)
             return
         }
-        simulationStepState.onHasEnabledTransitions(hasEnabledTransitions = enabledBindings.isNotEmpty())
 
         while (enabledBindings.isNotEmpty()) {
             val selectedBinding = bindingSelectionInteractor.selectBinding(enabledBindings)
