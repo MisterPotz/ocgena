@@ -40,8 +40,9 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         val arcMultiplicity = state.arcsMultiplicityRegistry.multiplicity(place.arcIdTo(transition.id))
         val requiredTokensAmount = arcMultiplicity.requiredTokenAmount()
 
-        return tokenSelectionInteractor.getTokensFromSet(
-            marking, amount = requiredTokensAmount
+        return tokenSelectionInteractor.getTokensFromPlace(
+            marking,
+            amount = requiredTokensAmount
         )
     }
 
@@ -49,10 +50,9 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         val canBeEnabled = tTimesMarking.isAllowedToBeEnabled(transition.id)
         if (!canBeEnabled) return null
 
-
         val hasEnoughTokensAtAllInputs = transitionsRegistry[transition.id].fromPlaces.all { placeId ->
-                arcInputPlaceHasEnoughTokens(placeId, transition)
-            }
+            arcInputPlaceHasEnoughTokens(placeId, transition)
+        }
 
         if (!hasEnoughTokensAtAllInputs) {
             return null

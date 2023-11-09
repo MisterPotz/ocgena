@@ -8,7 +8,8 @@ import ru.misterpotz.ocgena.simulation.config.Period
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.Time
-import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerationFacade
+import ru.misterpotz.ocgena.simulation.config.MarkingScheme
+import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.generator.NewTokensGenerationTimeGenerator
 
@@ -16,7 +17,7 @@ class NormalNewTokenTimeBasedGenerator(
     private val tokenGenerationConfig: TokenGenerationConfig,
     private val nextTimeSelector: NewTokensGenerationTimeGenerator,
     val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
-    private val newTokenTimeBasedGenerationFacade: NewTokenTimeBasedGenerationFacade,
+    private val newTokenGenerationFacade: NewTokenGenerationFacade,
     private val defaultGenerationInterval: Period? = null
 ) : NewTokenTimeBasedGenerator {
 
@@ -40,23 +41,26 @@ class NormalNewTokenTimeBasedGenerator(
         }
     }
 
-    private fun generateTokenIfCan(placeId: PetriAtomId): ObjectToken? {
+    private fun generateTokenIfCan(placeId: PetriAtomId): Boolean {
         val generator = placeGenerators[placeId]!!
 
         return if (generator.mustGenerateNow()) {
             val objectTypeId = placeToObjectTypeRegistry[placeId]
             generator.markAsNewGenerated()
-            newTokenTimeBasedGenerationFacade.generate(objectTypeId)
-        } else null
+            true
+        } else {
+            false
+        }
     }
 
-    override fun generateTokensAsMarkingAndReplan(): PlaceToObjectMarkingDelta? {
+    override fun generateFictiveTokensAsMarkingSchemeAndReplan(): MarkingScheme? {
         val map = buildMap {
             for ((id, generator) in placeGenerators) {
 
-                generateTokenIfCan(id)?.let { objectToken ->
-                    put(id, sortedSetOf(objectToken.id))
-                }
+                val considerTokenAsGenerated = generateTokenIfCan(id)
+                val delta = if (considerTokenAsGenerated) 1 else 0
+                val newValue = getOrPut(id) { 0 } as Int + delta
+                put(id, newValue)
 
                 if (generator.mustPlan()) {
                     generator.plan(nextTimeSelector.get(generator.timeRange))
@@ -64,7 +68,7 @@ class NormalNewTokenTimeBasedGenerator(
             }
         }
         if (map.isNotEmpty()) {
-            return ImmutablePlaceToObjectMarking(map)
+            return MarkingScheme(map)
         }
         return null
     }

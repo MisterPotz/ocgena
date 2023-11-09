@@ -5,7 +5,6 @@ import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicityValue
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
-import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 
 class ArcToMultiplicityVariableDelegateTypeA(
@@ -15,11 +14,11 @@ class ArcToMultiplicityVariableDelegateTypeA(
     override fun multiplicity(arc: Arc): ArcMultiplicity {
         require(arc is VariableArc)
 
-        val marking = pMarking[arc.tailNodeId!!]
+        val marking = pMarking.getRealTokenAmount(arc.tailNodeId!!) ?: 0
 
         return ArcMultiplicityValue(
-            inputPlaceHasEnoughTokens = (marking?.size ?: 0) > 1,
-            requiredTokenAmount = marking?.size ?: 0
+            inputPlaceHasEnoughTokens = (marking) > 1,
+            requiredTokenAmount = marking
         )
     }
 }

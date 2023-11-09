@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation
 
+import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.simulation.interactors.BindingSelectionInteractor
@@ -63,6 +64,7 @@ class SimulationTaskStepExecutor @Inject constructor(
     private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
     private val bindingsCollector: EnabledBindingsCollectorInteractor,
     private val objectTokenSet: ObjectTokenSet,
+    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry
 ) {
     val state: State
         get() = simulationStateProvider.simulatableOcNetInstance().state
@@ -105,9 +107,10 @@ class SimulationTaskStepExecutor @Inject constructor(
     }
 
     private fun generateNewTokensAndPlanNextGeneration() {
-        val markingToAdd = newTokenTimeBasedGenerator.generateTokensAsMarkingAndReplan()
-        if (markingToAdd != null) {
-            state.pMarking.plus(markingToAdd)
+        val markingToAdd = newTokenTimeBasedGenerator.generateFictiveTokensAsMarkingSchemeAndReplan()
+
+        markingToAdd?.placesToTokens?.forEach { (petriAtomId, tokenIncrement) ->
+            objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, tokenIncrement)
         }
     }
 

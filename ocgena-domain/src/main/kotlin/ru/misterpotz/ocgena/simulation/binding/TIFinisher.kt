@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.simulation.binding
 
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.interactors.TIOutputPlacesResolverInteractor
 import ru.misterpotz.ocgena.simulation.logging.Logger
@@ -14,7 +15,8 @@ interface TIFinisher {
 class TIFinisherImpl @Inject constructor(
     private val outputPlacesResolver: TIOutputPlacesResolverInteractor,
     private val logger: Logger,
-    private val simulationStateProvider: SimulationStateProvider
+    private val simulationStateProvider: SimulationStateProvider,
+    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
 ) : TIFinisher {
     private val simulationTime get() = simulationStateProvider.getSimulationTime()
     private val pMarking get() = simulationStateProvider.simulatableOcNetInstance().state.pMarking
@@ -25,6 +27,10 @@ class TIFinisherImpl @Inject constructor(
         // TODO: think what to do with the synchronization time
 //        markingForOutputPlaces.shiftTokenTime(tokenTimeDelta = activeFiringTransition.duration)
 
+        markingForOutputPlaces.keys.forEach {  petriAtomId ->
+            val tokenSize = markingForOutputPlaces[petriAtomId]!!.size
+            objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, tokenSize)
+        }
         pMarking.plus(markingForOutputPlaces)
 
         val executedBinding = ExecutedBinding(
