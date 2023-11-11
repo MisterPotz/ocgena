@@ -13,6 +13,10 @@ class TwoSideOperatorNode(
         return printExpr()
     }
 
+    override fun acceptVisitor(mathNodeVisitor: MathNodeVisitor) {
+        mathNodeVisitor.visitTwoSideOperatorNode(this)
+    }
+
     override fun evaluate(parameterSpace: ParameterSpace): Double {
         return children.subList(1, children.size).fold(children.first().evaluate(parameterSpace)) { accum, child ->
             foldingFunction(accum, child.evaluate(parameterSpace))

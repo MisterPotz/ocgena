@@ -11,6 +11,10 @@ class UniOperatorNode(private val childNode : MathNode, override val opKey: Stri
         return operation(value)
     }
 
+    override fun acceptVisitor(mathNodeVisitor: MathNodeVisitor) {
+        mathNodeVisitor.visitUniOperatorNode(this)
+    }
+
     override fun toString(): String {
         return printExpr()
     }

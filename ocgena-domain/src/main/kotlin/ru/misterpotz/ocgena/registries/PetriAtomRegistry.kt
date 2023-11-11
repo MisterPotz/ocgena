@@ -15,9 +15,9 @@ interface PetriAtomRegistry {
     fun getPlace(petriAtomId: PetriAtomId): Place
     fun getTransition(petriAtomId: PetriAtomId): Transition
     fun getArc(petriAtomId: PetriAtomId): Arc
-    fun getPlaces(): Iterable<PetriAtomId>
-    fun getTransitions(): Iterable<PetriAtomId>
-    fun getArcs(): Iterable<PetriAtomId>
+    fun getPlaces(): List<PetriAtomId>
+    fun getTransitions(): List<PetriAtomId>
+    fun getArcs(): List<PetriAtomId>
     fun PetriAtomId.asNode(): PetriAtom
     var PetriAtomId.subgraphIndex: Int?
 
@@ -37,6 +37,16 @@ data class PetriAtomRegistryStruct(
 ) : PetriAtomRegistry {
     @Transient
     private val subgraphIndexData: MutableMap<PetriAtomId, Int?> = mutableMapOf()
+
+    private val places by lazy(LazyThreadSafetyMode.NONE) {
+        map.keys.asSequence().filter { get(it) is Place }.sortedBy { it }.toList()
+    }
+    private val transitions by lazy(LazyThreadSafetyMode.NONE) {
+        map.keys.asSequence().filter { get(it) is Transition }.sortedBy { it }.toList()
+    }
+    private val arcs by lazy(LazyThreadSafetyMode.NONE) {
+        map.keys.asSequence().filter { get(it) is Arc }.sortedBy { it }.toList()
+    }
     override fun get(petriAtomId: PetriAtomId): PetriAtom {
         return requireNotNull(map[petriAtomId]) {
             "petri atom wasn't found for id $petriAtomId"
@@ -65,16 +75,16 @@ data class PetriAtomRegistryStruct(
         return get(petriAtomId) as Arc
     }
 
-    override fun getPlaces(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Place }.asIterable()
+    override fun getPlaces(): List<PetriAtomId> {
+        return places
     }
 
-    override fun getTransitions(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Transition }.asIterable()
+    override fun getTransitions(): List<PetriAtomId> {
+        return transitions
     }
 
-    override fun getArcs(): Iterable<PetriAtomId> {
-        return map.keys.asSequence().filter { get(it) is Arc }.asIterable()
+    override fun getArcs(): List<PetriAtomId> {
+        return arcs
     }
 
     override fun set(petriAtomId: PetriAtomId, petriAtom: PetriAtom) {

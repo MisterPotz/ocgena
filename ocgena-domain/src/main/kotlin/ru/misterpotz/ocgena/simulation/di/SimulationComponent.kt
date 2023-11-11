@@ -9,6 +9,7 @@ import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.ObjectTokenSetMap
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.*
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
@@ -17,6 +18,7 @@ import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.registries.delegates.CompoundArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityVariableDelegateTypeA
+import ru.misterpotz.ocgena.registries.typel.ArcToMultiplicityVariableDelegateTypeL
 import ru.misterpotz.ocgena.simulation.*
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
@@ -126,7 +128,7 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun providesObjectRealTokenAmountRegistry(ocNet: OCNet) : ObjectTokenRealAmountRegistry {
+        fun providesObjectRealTokenAmountRegistry(ocNet: OCNet): ObjectTokenRealAmountRegistry {
             return ObjectTokenRealAmountRegistryImpl(
                 ocNet.placeToObjectTypeRegistry
             )
@@ -216,7 +218,9 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun arcMultiplicityDelegate(
             arcToMultiplicityNormalDelegateTypeA: ArcToMultiplicityNormalDelegateTypeA,
-            arcToMultiplicityVariableDelegateTypeA: ArcToMultiplicityVariableDelegateTypeA
+            arcToMultiplicityVariableDelegateTypeA: ArcToMultiplicityVariableDelegateTypeA,
+            arcToMultiplicityVariableDelegateTypeL: ArcToMultiplicityVariableDelegateTypeL,
+            ocNetType: OcNetType
         ): ArcsMultiplicityDelegate {
             return CompoundArcsMultiplicityDelegate(
                 arcMultiplicityDelegates = buildMap {
@@ -224,10 +228,21 @@ internal abstract class SimulationModule {
                         ArcType.NORMAL,
                         arcToMultiplicityNormalDelegateTypeA
                     )
-                    put(
-                        ArcType.VARIABLE,
-                        arcToMultiplicityVariableDelegateTypeA
-                    )
+                    when (ocNetType) {
+                        AALST -> {
+                            put(
+                                ArcType.VARIABLE,
+                                arcToMultiplicityVariableDelegateTypeA
+                            )
+                        }
+
+                        LOMAZOVA -> {
+                            put(
+                                ArcType.VARIABLE,
+                                arcToMultiplicityVariableDelegateTypeL
+                            )
+                        }
+                    }
                 }
             )
         }
@@ -263,7 +278,8 @@ interface SimulationComponent {
     fun state(): State
     fun ocNet(): OCNet
     fun enabledBindingsResolver(): EnabledBindingResolverInteractor
-    fun objectTokenRealAmountRegistry() : ObjectTokenRealAmountRegistry
+    fun objectTokenRealAmountRegistry(): ObjectTokenRealAmountRegistry
+
     @Component.Factory
     interface Factory {
         fun create(

@@ -1,10 +1,8 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
-import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.registries.ObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
@@ -32,11 +30,9 @@ class TokenSelectionInteractorImpl @Inject constructor(
     private val repeatabilityInteractor: RepeatabilityInteractor,
     private val newTokenGenerationFacade: NewTokenGenerationFacade,
     private val pMarkingProvider: PMarkingProvider,
-    private val objectTokenSet: ObjectTokenSet,
-    private val ocNet: OCNet,
+    ocNet: OCNet,
     private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
 ) : TokenSelectionInteractor {
-    private val objectTypeRegistry: ObjectTypeRegistry = ocNet.objectTypeRegistry
     val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
     val pMarking get() = pMarkingProvider.get()
@@ -48,6 +44,9 @@ class TokenSelectionInteractorImpl @Inject constructor(
         val markingAtPlace = pMarking[petriAtomId]
         val realTokenAmountAtPlace = objectTokenRealAmountRegistry.getRealAmountAt(petriAtomId)
         val existing = markingAtPlace.size
+        fun indexBelongsToExisting(index: Int): Boolean {
+            return index < existing
+        }
         val sortedSet = sortedSetOf<ObjectTokenId>()
         val randomizer = createRandomizerOrNoOp()
         val objectTypeId = placeToObjectTypeRegistry[petriAtomId]
@@ -61,7 +60,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
         while (randomIterator.hasNext()) {
             val randomIndex = randomIterator.next()
 
-            if (randomIndex < existing) {
+            if (indexBelongsToExisting(randomIndex)) {
                 val objectTokenId = markingAtPlace.elementAt(randomIndex)
                 sortedSet.add(objectTokenId)
             } else {
@@ -93,6 +92,5 @@ class TokenSelectionInteractorImpl @Inject constructor(
 
     companion object {
         const val GUARD_MULTIPLIER = 10
-
     }
 }

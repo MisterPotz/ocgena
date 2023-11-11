@@ -8,7 +8,7 @@ import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 
 enum class ArcType {
     NORMAL,
-    VARIABLE
+    VARIABLE,
 }
 
 abstract class Arc : PetriAtom {
