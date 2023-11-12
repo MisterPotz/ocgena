@@ -1,0 +1,10 @@
+[]
+	[node_7]
+nodespace: 
+    node_1 -> 3.0
+    node_2 -> unminus(3.0)
+    node_3 -> 4.0
+    node_4 -> unminus(4.0)
+    node_5 -> 5.0
+%    node_6 -> (unminus(4.0)) * (5.0)
+8    node_7 -> (unminus(3.0)) + ((unminus(4.0)) * (5.0))

@@ -6,6 +6,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
+import ru.misterpotz.ocgena.simulation.typea.TokenBuffer
 import ru.misterpotz.ocgena.utils.ByRandomRandomizer
 import ru.misterpotz.ocgena.utils.NoOpIteratorRandomizer
 import ru.misterpotz.ocgena.utils.RandomIterator
@@ -15,15 +16,24 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 interface TokenSelectionInteractor {
-    fun selectAndGenerateTokensFromPlace(
+
+    class SelectedAndGeneratedTokens(
+        val selected : SortedSet<ObjectTokenId>,
+        val initialized : SortedSet<ObjectTokenId>
+    )
+    fun selectAndInitializeTokensFromPlace(
         petriAtomId: PetriAtomId,
         amount: Int
-    ): SortedSet<ObjectTokenId>
+    ): SelectedAndGeneratedTokens
+
+    fun selectAndGenerateTokensFromBuffer(
+        tokenBuffer: TokenBuffer,
+        requiredAmount: Int
+    ) : SortedSet<ObjectTokenId>
 
     fun shuffleTokens(tokens: List<ObjectTokenId>): List<ObjectTokenId>
     fun shuffleTokens(tokens: SortedSet<ObjectTokenId>): SortedSet<ObjectTokenId>
 }
-
 
 class TokenSelectionInteractorImpl @Inject constructor(
     private val random: Random?,
@@ -37,10 +47,10 @@ class TokenSelectionInteractorImpl @Inject constructor(
 
     val pMarking get() = pMarkingProvider.get()
 
-    override fun selectAndGenerateTokensFromPlace(
+    override fun selectAndInitializeTokensFromPlace(
         petriAtomId: PetriAtomId,
         amount: Int
-    ): SortedSet<ObjectTokenId> {
+    ): TokenSelectionInteractor.SelectedAndGeneratedTokens {
         val markingAtPlace = pMarking[petriAtomId]
         val realTokenAmountAtPlace = objectTokenRealAmountRegistry.getRealAmountAt(petriAtomId)
         val existing = markingAtPlace.size
@@ -69,8 +79,17 @@ class TokenSelectionInteractorImpl @Inject constructor(
                 sortedSet.add(newToken.id)
             }
         }
-        markingAtPlace.addAll(newlyGeneratedTokens)
-        return sortedSet
+        return TokenSelectionInteractor.SelectedAndGeneratedTokens(
+            selected = sortedSet,
+            initialized = newlyGeneratedTokens
+        )
+    }
+
+    override fun selectAndGenerateTokensFromBuffer(
+        tokenBuffer: TokenBuffer,
+        requiredAmount: Int
+    ): SortedSet<ObjectTokenId> {
+        TODO("Not yet implemented")
     }
 
     private fun createRandomizerOrNoOp(): Randomizer {

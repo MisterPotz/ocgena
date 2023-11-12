@@ -26,7 +26,7 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
 
     private fun arcInputPlaceHasEnoughTokens(place: PetriAtomId, transition: Transition): Boolean {
         val arc = place.arcIdTo(transition.id)
-        val arcMultiplicity = ocNetInstance.state.arcsMultiplicityRegistry.multiplicity(arcId = arc)
+        val arcMultiplicity = ocNetInstance.state.arcsMultiplicityRegistry.transitionInputMultiplicity(arcId = arc)
         return arcMultiplicity.inputPlaceHasEnoughTokens()
     }
 
@@ -34,13 +34,14 @@ class EnabledBindingResolverInteractorImpl @Inject constructor(
         transition: Transition,
         place: PetriAtomId,
     ): SortedSet<ObjectTokenId> {
-        val arcMultiplicity = state.arcsMultiplicityRegistry.multiplicity(place.arcIdTo(transition.id))
+        val arcMultiplicity = state.arcsMultiplicityRegistry.transitionInputMultiplicity(place.arcIdTo(transition.id))
         val requiredTokensAmount = arcMultiplicity.requiredTokenAmount()
-
-        return tokenSelectionInteractor.selectAndGenerateTokensFromPlace(
+        val selectedAndInitializedTokens = tokenSelectionInteractor.selectAndInitializeTokensFromPlace(
             petriAtomId = place,
-            amount = requiredTokensAmount
+            amount = requiredTokensAmount,
         )
+        pMarking[place].addAll(selectedAndInitializedTokens.initialized)
+        return selectedAndInitializedTokens.selected
     }
 
     override fun tryGetEnabledBinding(transition: Transition): EnabledBinding? {

@@ -6,11 +6,11 @@ interface ArcMultiplicity {
 }
 
 class ArcMultiplicityValue(
-    private val inputPlaceHasEnoughTokens : Boolean,
+    private val sourceNodeHasEnoughTokens : Boolean,
     private val requiredTokenAmount : Int,
 ) : ArcMultiplicity {
     override fun inputPlaceHasEnoughTokens(): Boolean {
-        return inputPlaceHasEnoughTokens
+        return sourceNodeHasEnoughTokens
     }
 
     override fun requiredTokenAmount(): Int {

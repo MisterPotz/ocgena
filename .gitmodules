@@ -1,3 +1,6 @@
 [submodule "ocgena-ci"]
 	path = ocgena-ci
 	url = git@github.com:MisterPotz/ocgena-ci.git
+[submodule "ocgena-math-parexper"]
+	path = ocgena-math-parexper
+	url = https://github.com/MisterPotz/ocgena-math-parexper.git
