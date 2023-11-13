@@ -3,14 +3,17 @@ package ru.misterpotz.ocgena.simulation.typea
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
+import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType.*
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
+import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
@@ -27,6 +30,7 @@ typealias TokenBuffer = SortedSet<ObjectTokenId>
 class TokenBatch(
     val sortedSet: SortedSet<ObjectTokenId>,
     val objectTypeId: ObjectTypeId,
+    val arcMeta: ArcMeta,
 )
 
 class TokenBatchListFactory @Inject constructor(
@@ -41,29 +45,54 @@ class TokenBatchListFactory @Inject constructor(
     }
 }
 
+interface BufferBatchalizationStrategy {
+    // group by arc variable name, or have different batches for different variable names?
+    fun findExistingBatch(
+        tokenBatchs: List<TokenBatch>,
+        objectTypeId: ObjectTypeId,
+        arcMeta: ArcMeta
+    ) : TokenBatch?
+
+    // when selecting tokens for place, treat tokens coming from arcs of different variable names
+    // as relative?
+    //
+    fun findSourceTokenBatchForPlace(place : PetriAtomId) : TokenBatch
+}
+
 class TokenBatchList(
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val petriAtomRegistry: PetriAtomRegistry,
     private val transition: PetriAtomId,
+    private val arcsRegistry: ArcsRegistry,
+    private val batchalizationStrategy: BufferBatchalizationStrategy
 ) {
-
     private val tokenBatches: MutableList<TokenBatch> = mutableListOf()
-    fun addTokens(place: PetriAtomId, sortedSet: SortedSet<ObjectTokenId>) {
+    fun addTokens(
+        place: PetriAtomId,
+        sortedSet: SortedSet<ObjectTokenId>
+    ) {
         val objectType = placeToObjectTypeRegistry[place]
+        val arcId = place.arcIdTo(transition)
+        val arc = arcsRegistry[arcId]
 
-        val similarTokenBatch = tokenBatches.find {
-            it.objectTypeId == objectType
-        }
+        val similarTokenBatch = batchalizationStrategy.findExistingBatch(
+            tokenBatches,
+            objectType,
+            arc.arcMeta
+        )
 
         @Suppress("IfThenToElvis")
         if (similarTokenBatch != null) {
             similarTokenBatch.sortedSet.addAll(sortedSet)
         } else {
-            tokenBatches.add(TokenBatch(sortedSet, objectType))
+            tokenBatches.add(TokenBatch(sortedSet, objectType, arc.arcMeta))
         }
     }
 
-    fun getBatchBy(objectTypeId: ObjectTypeId): SortedSet<ObjectTokenId> {
+    fun getBatchBy(
+        objectTypeId: ObjectTypeId,
+        arcMeta: ArcMeta
+    ): SortedSet<ObjectTokenId> {
         return tokenBatches.find {
             it.objectTypeId == objectTypeId
         }!!.sortedSet
@@ -84,7 +113,10 @@ class CommonBufferizerFactory @Inject constructor(
 }
 
 interface TransitionBufferInfo {
-    fun getBatchBy(objectTypeId: ObjectTypeId): TokenBuffer
+    fun getBatchBy(
+        objectTypeId: ObjectTypeId,
+        arcMeta: ArcMeta
+    ): TokenBuffer
 
     fun getInputArcs(): Collection<Arc>
 
@@ -103,7 +135,6 @@ class CommonBufferizer(
     fun bufferize(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>) {
         if (bufferizedPlaces.contains(place)) return
         bufferizedPlaces.add(place)
-
 
         val arc = petriAtomRegistry.getArc(place.arcIdTo(transition.id))
         val batchSize = tokens.size
@@ -132,6 +163,10 @@ class CommonBufferizer(
         return arcPerBatchSize[arc]!!
     }
 }
+
+class ProducedMarkingBuffer(
+    val outputMarking: PlaceToObjectMarking = PlaceToObjectMarking()
+)
 
 interface OutputTokensProducerFactory {
     fun create(commonBufferizer: CommonBufferizer): OutputTokensProducer
@@ -179,28 +214,50 @@ class LockedTokenMoveStrategyTypeA(
         }
     }
 
+    interface BufferConsumptionStrategy {
+        //
+        fun getConsumedTokensForPlace(place: PetriAtomId): TokenBuffer
+    }
+
     class OutputTokensProducerTypeA(
         private val transition: Transition,
         private val commonBufferizer: CommonBufferizer,
         private val petriAtomRegistry: PetriAtomRegistry,
         private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
         private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
-        private val tokenSelectionInteractor: TokenSelectionInteractor
+        private val tokenSelectionInteractor: TokenSelectionInteractor,
+        private val bufferConsumptionStrategy: BufferConsumptionStrategy
     ) : OutputTokensProducer {
-        override fun produceFor(place: PetriAtomId): SortedSet<ObjectTokenId> {
+
+        private val producedMarkingBuffer = ProducedMarkingBuffer()
+        private val placeToArcMultiplicity: MutableMap<PetriAtomId, OutputArcMultiplicity> = mutableMapOf()
+
+        override fun produceByConsumeTokenBuffer(place: PetriAtomId) {
             return with(petriAtomRegistry) {
                 val objectTypeId = placeToObjectTypeRegistry[place]
                 val arcType = transition.id.arcTo(place).arcType
 
-                val relevantBatch = commonBufferizer.getBatchBy(objectTypeId, arcType)
+                val arcMultiplicity = placeToArcMultiplicity.getOrPut(place) {
+                    arcsMultiplicityRegistry.transitionOutputMultiplicity(
+                        commonBufferizer,
+                        transition.id.arcIdTo(place)
+                    )
+                }
 
-                val arcMultiplicity = arcsMultiplicityRegistry.transitionOutputMultiplicity(commonBufferizer, transition.id.arcIdTo(place))
-
+                val tokenBuffer = arcMultiplicity.getTokenSourceForThisArc()
                 val requiredTokenAmount = arcMultiplicity.requiredTokenAmount()
 
-                tokenSelectionInteractor.selectAndInitializeTokensFromPlace()
 
+                tokenSelectionInteractor.selectAndGenerateTokensFromBuffer(relevantBatch)
             }
+        }
+
+        override fun produceByNewTokenGeneration(place: PetriAtomId) {
+            TODO("Not yet implemented")
+        }
+
+        override fun finalTokenBufferForPlace(place: PetriAtomId): TokenBuffer {
+            TODO("Not yet implemented")
         }
     }
 

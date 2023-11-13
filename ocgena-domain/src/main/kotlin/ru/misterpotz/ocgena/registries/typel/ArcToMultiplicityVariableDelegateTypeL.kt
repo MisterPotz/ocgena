@@ -3,8 +3,10 @@ package ru.misterpotz.ocgena.registries.typel
 import ru.misterpotz.expression.paramspace.VariableParameterSpace
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicity
-import ru.misterpotz.ocgena.ocnet.primitives.ArcMultiplicityValue
+import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
+import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityValue
+import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
+import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicityValue
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
@@ -18,7 +20,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     private val ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
     private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
-    override fun transitionInputMultiplicity(arc: Arc): ArcMultiplicity {
+    override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         require(arc is VariableArc)
 
         // use fallback
@@ -27,17 +29,21 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
         val realTokenAmount = objectTokenRealAmountRegistry.getRealAmountAt(arc.tailNodeId!!)
 
-        return ArcMultiplicityValue(
+        return InputArcMultiplicityValue(
             sourceNodeHasEnoughTokens = (realTokenAmount) > 1,
             requiredTokenAmount = realTokenAmount // require as much tokens as there are
         )
     }
 
-    override fun transitionOutputMultiplicity(transitionBufferInfo: TransitionBufferInfo, arc: Arc): ArcMultiplicity {
+    override fun transitionOutputMultiplicity(
+        transitionBufferInfo: TransitionBufferInfo,
+        arc: Arc
+    ): OutputArcMultiplicity {
         require(arc is VariableArc)
 
         val variableName = arc.variableName
-            ?: return arcToMultiplicityNormalDelegateTypeA.transitionOutputMultiplicity(transitionBufferInfo, arc)
+            ?: return arcToMultiplicityNormalDelegateTypeA
+                .transitionOutputMultiplicity(transitionBufferInfo, arc)
         val placeId = arc.arrowNodeId!!
         val objectTypeId = placeToObjectTypeRegistry[placeId]
 
@@ -53,15 +59,17 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         val thisArcExpressionEvaluation = arc.mathNode!!.evaluate(
             parameterSpace = VariableParameterSpace(variableName to variableValue.toDouble())
         )
-        val itemsPerType = transitionBufferInfo.getBatchBy(objectTypeId).size
+        val tokenBuffer = transitionBufferInfo.getBatchBy(objectTypeId)
+        val itemsPerType = tokenBuffer.size
 
         val requiredTokenAmount = roundUpIfNeeded(thisArcExpressionEvaluation)
 
         val bufferHasEnoughTokens = requiredTokenAmount <= itemsPerType
 
-        return ArcMultiplicityValue(
-            sourceNodeHasEnoughTokens = bufferHasEnoughTokens,
-            requiredTokenAmount = requiredTokenAmount
+        return OutputArcMultiplicityValue(
+            tokenBuffer = tokenBuffer,
+            requiredTokenAmount = requiredTokenAmount,
+            bufferHasEnoughTokens = bufferHasEnoughTokens
         )
     }
 

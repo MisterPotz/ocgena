@@ -2,15 +2,19 @@ package ru.misterpotz.ocgena.ocnet.primitives.arcs
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import ru.misterpotz.expression.facade.fullConvertM
 import ru.misterpotz.expression.facade.getVariablesNames
-import ru.misterpotz.expression.m
 import ru.misterpotz.expression.node.MathNode
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomType
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
+
+data class VariableArcMeta(
+    val variableName: String?
+) : ArcMeta
+
+object VariableArcMetaTypeA : ArcMeta
 
 @Serializable
 @SerialName("vararc")
@@ -31,6 +35,9 @@ data class VariableArc(
                 "variable arcs must have no mroe than one variable"
             }
         }?.first()
+    }
+    override val arcMeta: ArcMeta by lazy(LazyThreadSafetyMode.NONE) {
+        VariableArcMeta(variableName)
     }
 
     override fun isSameArcType(other: Arc): Boolean {
