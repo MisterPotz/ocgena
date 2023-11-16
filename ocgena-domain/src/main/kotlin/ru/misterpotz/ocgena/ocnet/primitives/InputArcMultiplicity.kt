@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.primitives
 
-import ru.misterpotz.ocgena.simulation.typea.TokenBuffer
+import ru.misterpotz.ocgena.simulation.binding.TokenBuffer
 
 interface InputArcMultiplicity {
     fun inputPlaceHasEnoughTokens(): Boolean
@@ -21,7 +21,7 @@ class InputArcMultiplicityValue(
 }
 
 interface OutputArcMultiplicity {
-    fun bufferHasEnoughTokens(): Boolean
+    fun sourceBufferHasEnoughTokens(): Boolean
     fun requiredTokenAmount(): Int
     fun getTokenSourceForThisArc() : TokenBuffer
 }
@@ -31,7 +31,7 @@ class OutputArcMultiplicityValue(
     private val requiredTokenAmount: Int,
     private val tokenBuffer: TokenBuffer
 ) : OutputArcMultiplicity {
-    override fun bufferHasEnoughTokens(): Boolean {
+    override fun sourceBufferHasEnoughTokens(): Boolean {
         return bufferHasEnoughTokens
     }
 

@@ -4,7 +4,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
-import ru.misterpotz.ocgena.simulation.typea.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 
 interface ArcsMultiplicityRegistry {
     fun transitionInputMultiplicity(arcId: PetriAtomId): InputArcMultiplicity
@@ -14,7 +14,7 @@ interface ArcsMultiplicityRegistry {
     ): OutputArcMultiplicity
 }
 
-abstract class ArcsMultiplicityDelegate() {
+abstract class ArcsMultiplicityDelegate {
     abstract fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity
     abstract fun transitionOutputMultiplicity(
         transitionBufferInfo: TransitionBufferInfo,

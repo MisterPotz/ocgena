@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.registries.typea
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityValue
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
@@ -9,13 +10,14 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.simulation.typea.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import javax.inject.Inject
 
 class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
     private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
+    ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
+    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         require(arc is NormalArc)
@@ -43,7 +45,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
         val place = arc.arrowNodeId!!
         val objectType = placeToObjectTypeRegistry[place]
 
-        val tokenBuffer = transitionBufferInfo.getBatchBy(objectType)
+        val tokenBuffer = transitionBufferInfo.getBatchBy(objectType, arcMeta = arc.arcMeta)!!
         val sourceNodeItemsSize = tokenBuffer.size
         val transitionBufferHasEnoughTokens = sourceNodeItemsSize >= requiredTokens
 

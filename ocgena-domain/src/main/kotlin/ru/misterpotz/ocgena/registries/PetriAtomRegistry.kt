@@ -38,13 +38,13 @@ data class PetriAtomRegistryStruct(
     @Transient
     private val subgraphIndexData: MutableMap<PetriAtomId, Int?> = mutableMapOf()
 
-    private val places by lazy(LazyThreadSafetyMode.NONE) {
+    private val _places by lazy(LazyThreadSafetyMode.NONE) {
         map.keys.asSequence().filter { get(it) is Place }.sortedBy { it }.toList()
     }
-    private val transitions by lazy(LazyThreadSafetyMode.NONE) {
+    private val _transitions by lazy(LazyThreadSafetyMode.NONE) {
         map.keys.asSequence().filter { get(it) is Transition }.sortedBy { it }.toList()
     }
-    private val arcs by lazy(LazyThreadSafetyMode.NONE) {
+    private val _arcs by lazy(LazyThreadSafetyMode.NONE) {
         map.keys.asSequence().filter { get(it) is Arc }.sortedBy { it }.toList()
     }
     override fun get(petriAtomId: PetriAtomId): PetriAtom {
@@ -76,15 +76,15 @@ data class PetriAtomRegistryStruct(
     }
 
     override fun getPlaces(): List<PetriAtomId> {
-        return places
+        return _places
     }
 
     override fun getTransitions(): List<PetriAtomId> {
-        return transitions
+        return _transitions
     }
 
     override fun getArcs(): List<PetriAtomId> {
-        return arcs
+        return _arcs
     }
 
     override fun set(petriAtomId: PetriAtomId, petriAtom: PetriAtom) {

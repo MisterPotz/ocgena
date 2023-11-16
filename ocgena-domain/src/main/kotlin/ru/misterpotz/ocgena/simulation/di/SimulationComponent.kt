@@ -9,7 +9,8 @@ import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.ObjectTokenSetMap
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.*
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.AALST
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.LOMAZOVA
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
@@ -22,10 +23,17 @@ import ru.misterpotz.ocgena.registries.typel.ArcToMultiplicityVariableDelegateTy
 import ru.misterpotz.ocgena.simulation.*
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
+import ru.misterpotz.ocgena.simulation.binding.buffer.LockedTokensBufferizerFactory
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeAndArcGroupingStrategy
+import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeGroupingStrategy
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.generator.*
 import ru.misterpotz.ocgena.simulation.interactors.*
-import ru.misterpotz.ocgena.simulation.logging.*
+import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
+import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
+import ru.misterpotz.ocgena.simulation.logging.Logger
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegateImpl
 import ru.misterpotz.ocgena.simulation.logging.loggers.NoOpStepAggregatingLogReceiver
@@ -36,7 +44,6 @@ import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
 import ru.misterpotz.ocgena.simulation.structure.State
 import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
-import ru.misterpotz.ocgena.simulation.logging.Logger
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import simulation.random.RandomFactoryImpl
@@ -61,11 +68,6 @@ internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun currentSimulationDelegate(currentSimulationDelegate: CurrentSimulationDelegateImpl): CurrentSimulationDelegate
-
-
-    @Binds
-    @SimulationScope
-    abstract fun objectTokenMoverFactory(objectTokenMoverFactory: ObjectTokenMoverFactoryImpl): ObjectTokenMoverFactory
 
     @Binds
     @SimulationScope
@@ -106,12 +108,6 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun labelMapping(simulationConfig: SimulationConfig): NodeToLabelRegistry {
             return simulationConfig.nodeToLabelRegistry
-        }
-
-        @Provides
-        @SimulationScope
-        fun objectTokenMover(objectTokenMoverFactory: ObjectTokenMoverFactoryImpl): LockedTokensMover {
-            return objectTokenMoverFactory.create()
         }
 
         @Provides
@@ -259,6 +255,15 @@ internal abstract class SimulationModule {
                 arcsMultiplicityRegistry = arcsMultiplicityRegistry,
                 pMarkingProvider = pMarkingProvider
             )
+        }
+
+        @Provides
+        @SimulationScope
+        fun tokenBatchGroupingStrategy(
+            byObjTypeGroupingStrategy: ByObjTypeGroupingStrategy,
+            byObjTypeAndArcGroupingStrategy: ByObjTypeAndArcGroupingStrategy
+        ): TransitionBufferInfo.BatchGroupingStrategy {
+            return byObjTypeGroupingStrategy
         }
     }
 }

@@ -11,13 +11,13 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
-import ru.misterpotz.ocgena.simulation.typea.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import javax.inject.Inject
 
 class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
     private val arcToMultiplicityNormalDelegateTypeA: ArcToMultiplicityNormalDelegateTypeA,
-    private val ocNet: OCNet,
+    ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
     private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
@@ -41,33 +41,33 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     ): OutputArcMultiplicity {
         require(arc is VariableArc)
 
+        val targetPlace = arc.arrowNodeId!!
+        val objectTypeId = placeToObjectTypeRegistry[targetPlace]
+
         val variableName = arc.variableName
             ?: return arcToMultiplicityNormalDelegateTypeA
                 .transitionOutputMultiplicity(transitionBufferInfo, arc)
-        val placeId = arc.arrowNodeId!!
-        val objectTypeId = placeToObjectTypeRegistry[placeId]
 
-        val inputArcForTheVariable = transitionBufferInfo.getInputArcs().find {
-            (it is VariableArc) && it.variableName == variableName
-        }
+        val sourceBatch = transitionBufferInfo.getBatchBy(
+            objectTypeId = objectTypeId,
+            arcMeta = arc.arcMeta
+        )!!
+        val totalAvailableTokensForArc = sourceBatch.size
 
-        require(inputArcForTheVariable != null) {
-            "output arc with variable $variableName has no matched input arc"
-        }
-        val variableValue = transitionBufferInfo.getItemsPerArc(inputArcForTheVariable)
-
-        val thisArcExpressionEvaluation = arc.mathNode!!.evaluate(
-            parameterSpace = VariableParameterSpace(variableName to variableValue.toDouble())
+        // calculate the amount of tokens needed for this arc
+        val requiredTokensAmount = arc.mathNode!!.evaluate(
+            parameterSpace =
+            VariableParameterSpace(
+                variableName to totalAvailableTokensForArc.toDouble()
+            )
         )
-        val tokenBuffer = transitionBufferInfo.getBatchBy(objectTypeId)
-        val itemsPerType = tokenBuffer.size
 
-        val requiredTokenAmount = roundUpIfNeeded(thisArcExpressionEvaluation)
+        val requiredTokenAmount = roundUpIfNeeded(requiredTokensAmount)
 
-        val bufferHasEnoughTokens = requiredTokenAmount <= itemsPerType
+        val bufferHasEnoughTokens = requiredTokenAmount <= totalAvailableTokensForArc
 
         return OutputArcMultiplicityValue(
-            tokenBuffer = tokenBuffer,
+            tokenBuffer = sourceBatch,
             requiredTokenAmount = requiredTokenAmount,
             bufferHasEnoughTokens = bufferHasEnoughTokens
         )
