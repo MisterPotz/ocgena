@@ -7,7 +7,7 @@ import ru.misterpotz.ocgena.simulation.config.SettingsSimulationConfig
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 
 class SerializationTest {
-    val simpleOcNet = buildOCNet {
+    private val simpleOcNet = buildOCNet {
         "p1".p { input; }
             .arc("t1".t)
             .arc("p2".p { output })
@@ -16,13 +16,13 @@ class SerializationTest {
             .arc("t1".t) { vari }
             .arc("o2".p { output; objectTypeId = "2" }) { vari }
     }
-    val simCOnfig = defaultSimConfig(
+    private val simCOnfig = defaultSimConfig(
         ocNet = simpleOcNet
     )
-    val json_path = "serialized_with_types.json"
-    val yaml_path = "serialized_with_types.yaml"
-    val json_settings_path = "serialized_settings.json"
-    val yaml_settings_path = "serialized_settings.yaml"
+    private val json_path = "serialized_with_types.json"
+    private val yaml_path = "serialized_with_types.yaml"
+    private val json_settings_path = "serialized_settings.json"
+    private val yaml_settings_path = "serialized_settings.yaml"
 
     @Test
     fun jsonSerialization() {

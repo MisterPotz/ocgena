@@ -4,6 +4,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions.assertTrue
 import ru.misterpotz.ocgena.di.DomainComponent
+import ru.misterpotz.ocgena.dsl.simulation.TestFolder
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
@@ -14,6 +15,7 @@ import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
+import ru.misterpotz.ocgena.utils.findInstance
 import ru.misterpotz.ocgena.validation.OCNetChecker
 import java.io.File
 import java.lang.IllegalStateException
@@ -111,6 +113,11 @@ fun config(path: Path): File {
     return File(path.pathString)
 }
 
+fun String.writeConfig(path: Path) {
+    val pathCorrected = appendPathWithRes(path = path)
+    pathCorrected.toFile().writeText(this)
+}
+
 val comp = domainComponent()
 inline fun <reified T> jsonConfig(name: String): T {
     val text = config(name).readText()
@@ -125,6 +132,7 @@ inline fun <reified T> yamlConfig(name: String): T {
 }
 
 inline fun <reified T> jsonConfig(path: Path): T {
+
     val text = config(path).readText()
 
     return comp.json.decodeFromString<T>(text)
@@ -144,13 +152,32 @@ inline fun <reified T> T.toJson(): String {
     return comp.json.encodeToString(this)
 }
 
-
-
 inline fun <reified T> readConfig(name: String): T {
     return if (name.endsWith(".json")) {
         jsonConfig<T>(name)
     } else if (name.endsWith(".yaml")) {
         yamlConfig<T>(name)
+    } else {
+        throw IllegalStateException()
+    }
+}
+
+fun appendPathWithRes(path: Path): Path {
+    val resPath = Path(resPath)
+    return if (path.first() == resPath) {
+        path
+    } else {
+        resPath / path
+    }
+}
+
+inline fun <reified T> readConfig(path: Path): T {
+    val path = appendPathWithRes(path = path)
+
+    return if (path.pathString.endsWith(".json")) {
+        jsonConfig<T>(path)
+    } else if (path.pathString.endsWith(".yaml")) {
+        yamlConfig<T>(path)
     } else {
         throw IllegalStateException()
     }
@@ -166,5 +193,16 @@ inline fun <reified T> readFolderConfig(folderName: String, name: String): T {
         yamlConfig<T>(withFolderPath)
     } else {
         throw IllegalStateException()
+    }
+}
+
+inline fun <reified T, R : Any> T.withFolderName(action: (String) -> R): R {
+    val folderName = this!!::class.annotations.findInstance<TestFolder>()!!.folderName
+    return action(folderName)
+}
+
+inline fun <reified T, reified R : Any> T.readFolderConfig(name: String): R {
+    return withFolderName {
+        readFolderConfig<R>(it, name)
     }
 }

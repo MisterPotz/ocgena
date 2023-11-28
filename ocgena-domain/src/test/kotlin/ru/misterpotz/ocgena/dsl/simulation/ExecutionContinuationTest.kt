@@ -22,14 +22,5 @@ class ExecutionContinuationTest {
     }
 }
 
-inline fun <reified T, R : Any> T.withFolderName(action: (String) -> R): R {
-    val folderName = this!!::class.annotations.findInstance<TestFolder>()!!.folderName
-    return action(folderName)
-}
 
-inline fun <reified T, reified R : Any> T.readFolderConfig(name: String): R {
-    return withFolderName {
-        readFolderConfig<R>(it, name)
-    }
-}
 
