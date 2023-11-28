@@ -20,6 +20,7 @@ object VariableArcMetaTypeA : ArcMeta
 @SerialName("vararc")
 data class VariableArc(
     override val id: String,
+    @SerialName("math_exp")
     val mathExpression: String? = null,
 ) : Arc() {
     override val arcType: ArcType

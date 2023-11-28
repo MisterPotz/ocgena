@@ -81,6 +81,7 @@ class DomainModule {
             return Json {
                 classDiscriminator = "type"
                 prettyPrint = true
+                encodeDefaults = false
                 isLenient = true
                 ignoreUnknownKeys = true
                 serializersModule = SerializersModule {
@@ -98,6 +99,7 @@ class DomainModule {
                     sequenceStyle = SequenceStyle.Flow,
                     polymorphismStyle = PolymorphismStyle.Property,
                     strictMode = false,
+                    encodeDefaults = false
                 ),
                 serializersModule = SerializersModule {
                     serializersModuleBlock()

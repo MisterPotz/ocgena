@@ -1,12 +1,14 @@
 package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
 import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.Logger
 import javax.inject.Inject
+
 
 class SimulationTask @Inject constructor(
     private val simulationStateProvider: SimulationStateProvider,
@@ -17,11 +19,10 @@ class SimulationTask @Inject constructor(
     private val currentStateDelegate: CurrentSimulationDelegate,
     private val stepExecutor: SimulationTaskStepExecutor,
     private val developmentDebugConfig: DevelopmentDebugConfig,
-    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry
+    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
+    private val executionContinuation: ExecutionContinuation
 ) : CurrentSimulationDelegate by currentStateDelegate {
-    private var stepIndex: Long = 0
-    private val oneStepGranularity = 5
-    var finishRequested = false;
+    private var finishRequested = false;
 
     private fun prepare() {
         initialMarkingScheme.placesToTokens.forEach { (petriAtomId, amount) ->
@@ -45,19 +46,29 @@ class SimulationTask @Inject constructor(
         finishRequested = true
     }
 
-    private fun runStep() {
-        var stepsCounter = 0
-        while (
-            !isFinished() && (stepsCounter++ < oneStepGranularity)
+    private fun debugStepGranularityLog() {
+        if (simulationStepState.stepIndex % developmentDebugConfig.stepNMarkGranularity == 0L &&
+            developmentDebugConfig.markEachNStep
         ) {
-            if (stepIndex % developmentDebugConfig.stepNMarkGranularity == 0L && developmentDebugConfig.markEachNStep) {
-                println("on step start: $stepIndex")
-            }
-            simulationStepState.currentStep = stepIndex
+            println("on step start: ${simulationStepState.stepIndex}")
+        }
+    }
+
+    private suspend fun runStep() {
+        while (
+            !isFinished() &&
+            executionContinuation.shouldDoNextStep()
+        ) {
+            debugStepGranularityLog()
+
+            simulationStepState.currentStep = simulationStepState.stepIndex
             simulationStepState.onNewStep()
+
             logger.onExecutionNewStepStart()
-            stepExecutor.executeStep()
-            stepIndex++
+
+            stepExecutor.executeStep(executionContinuation)
+
+            simulationStepState.incrementStep()
         }
     }
 
@@ -68,7 +79,7 @@ class SimulationTask @Inject constructor(
         simulationStepState.onStart()
     }
 
-    fun doRunStep(): Boolean {
+    suspend fun doRunStep(): Boolean {
         runStep()
         if (isFinished()) {
             logger.afterFinalMarking()
@@ -79,7 +90,7 @@ class SimulationTask @Inject constructor(
         return false
     }
 
-    fun prepareAndRunAll() {
+    suspend fun prepareAndRunAll() {
         prepareRun()
         while (!isFinished()) {
             doRunStep()

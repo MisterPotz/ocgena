@@ -3,18 +3,19 @@ package ru.misterpotz.ocgena.simulation
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.simulation.interactors.BindingSelectionInteractor
-import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingsCollectorInteractor
-import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
-import ru.misterpotz.ocgena.simulation.state.SimulationStepState
-import ru.misterpotz.ocgena.simulation.state.SimulationTime
-import ru.misterpotz.ocgena.simulation.transition.TransitionInstanceCreatorFacade
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
+import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.di.SimulationScope
+import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
+import ru.misterpotz.ocgena.simulation.interactors.BindingSelectionInteractor
+import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingsCollectorInteractor
+import ru.misterpotz.ocgena.simulation.logging.Logger
+import ru.misterpotz.ocgena.simulation.state.SimulationStepState
+import ru.misterpotz.ocgena.simulation.state.SimulationTime
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.State
-import ru.misterpotz.ocgena.simulation.logging.Logger
+import ru.misterpotz.ocgena.simulation.transition.TransitionInstanceCreatorFacade
 import javax.inject.Inject
 
 enum class Status {
@@ -79,14 +80,14 @@ class SimulationTaskStepExecutor @Inject constructor(
     private val simulationTime get() = simulationStateProvider.getSimulationTime()
     private val simulationStepState get() = simulationStateProvider.getSimulationStepState()
 
-    fun executeStep() {
+    suspend fun executeStep(executionContinuation: ExecutionContinuation) {
         findAndFinishEndedTransitions()
 
         removeTokensAtFinishPlace()
 
         generateNewTokensAndPlanNextGeneration()
 
-        findAndStartEnabledTransitionActivities()
+        findAndStartEnabledTransitionActivities(executionContinuation)
 
         increaseTimeByMinimalSomethingChangingDelta()
     }
@@ -98,7 +99,7 @@ class SimulationTaskStepExecutor @Inject constructor(
             val tokensToRemove = state.pMarking[outputPlace.id]
             objectTokenRealAmountRegistry.zeroAmountAt(outputPlace.id)
 
-            if (!tokensToRemove.isNullOrEmpty()) {
+            if (!tokensToRemove.isEmpty()) {
                 state.pMarking.removeAllPlaceTokens(outputPlace.id)
                 objectTokenSet.removeAll(tokensToRemove)
             }
@@ -115,8 +116,12 @@ class SimulationTaskStepExecutor @Inject constructor(
         }
     }
 
-    private fun findAndStartEnabledTransitionActivities() {
-        var enabledBindings: List<EnabledBinding> = bindingsCollector.findEnabledBindings()
+    private suspend fun findAndStartEnabledTransitionActivities(executionContinuation: ExecutionContinuation) {
+        val foundEnabledBindings = bindingsCollector.findEnabledBindings()
+
+        executionContinuation.updatedEnabledBindings(foundEnabledBindings)
+
+        var enabledBindings: List<EnabledBinding> = executionContinuation.getEnabledBindings()
 
         logger.beforeStartingNewTransitions()
 
@@ -127,13 +132,19 @@ class SimulationTaskStepExecutor @Inject constructor(
         }
 
         while (enabledBindings.isNotEmpty()) {
-            val selectedBinding = bindingSelectionInteractor.selectBinding(enabledBindings)
+
+            val selectedBinding = executionContinuation.selectBinding()
+                ?: bindingSelectionInteractor.selectBinding(enabledBindings)
 
             val bindingWithTokens = bindingsCollector.resolveEnabledObjectBinding(selectedBinding)
 
             transitionInstanceCreatorFacade.lockTokensAndRecordNewTransitionInstance(bindingWithTokens)
 
             enabledBindings = bindingsCollector.findEnabledBindings()
+
+            executionContinuation.updatedEnabledBindings(enabledBindings)
+
+            enabledBindings = executionContinuation.getEnabledBindings()
         }
 
         logger.afterStartingNewTransitions()

@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.dsl.model
 
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -36,7 +37,7 @@ class OCNetTest {
 
     @Test
     @Timeout(value = 1,  threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
-    fun simpleRunPerforms() {
+    fun simpleRunPerforms() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
 
         val config = defaultSimConfig(ocNet)
@@ -63,7 +64,7 @@ class OCNetTest {
     }
 
     @Test
-    fun simpleRunPerformHugeTokenAmount() {
+    fun simpleRunPerformHugeTokenAmount() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
 
         val config = defaultSimConfig(ocNet).copy(

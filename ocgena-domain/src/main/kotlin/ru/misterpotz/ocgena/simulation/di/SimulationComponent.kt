@@ -28,6 +28,8 @@ import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeAndArcGroupingStrategy
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeGroupingStrategy
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
+import ru.misterpotz.ocgena.simulation.continuation.NoOpExecutionContinuation
 import ru.misterpotz.ocgena.simulation.generator.*
 import ru.misterpotz.ocgena.simulation.interactors.*
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
@@ -292,6 +294,8 @@ interface SimulationComponent {
             @BindsInstance loggingConfiguration: LogConfiguration,
             @BindsInstance developmentDebugConfig: DevelopmentDebugConfig,
             @BindsInstance stepAggregatingLogReceiver: StepAggregatingLogReceiver,
+            @BindsInstance
+            executionContinuation: ExecutionContinuation,
             componentDependencies: SimulationComponentDependencies,
         ): SimulationComponent
     }
@@ -300,14 +304,16 @@ interface SimulationComponent {
         fun defaultCreate(
             simulationConfig: SimulationConfig,
             componentDependencies: SimulationComponentDependencies,
-            developmentDebugConfig: DevelopmentDebugConfig
+            developmentDebugConfig: DevelopmentDebugConfig,
+            executionContinuation: ExecutionContinuation = NoOpExecutionContinuation()
         ): SimulationComponent {
             return create(
                 simulationParams = simulationConfig,
                 loggingConfiguration = LogConfiguration.default(),
                 developmentDebugConfig = developmentDebugConfig,
                 stepAggregatingLogReceiver = NoOpStepAggregatingLogReceiver,
-                componentDependencies
+                componentDependencies = componentDependencies,
+                executionContinuation = executionContinuation
             )
         }
 
@@ -317,6 +323,7 @@ interface SimulationComponent {
             developmentDebugConfig: DevelopmentDebugConfig,
             stepAggregatingLogReceiver: StepAggregatingLogReceiver,
             componentDependencies: SimulationComponentDependencies,
+            executionContinuation: ExecutionContinuation,
         ): SimulationComponent {
             return DaggerSimulationComponent.factory()
                 .create(
@@ -324,7 +331,8 @@ interface SimulationComponent {
                     loggingConfiguration,
                     developmentDebugConfig,
                     stepAggregatingLogReceiver,
-                    componentDependencies
+                    executionContinuation,
+                    componentDependencies,
                 )
         }
     }

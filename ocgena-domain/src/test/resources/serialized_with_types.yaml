@@ -1,59 +1,52 @@
 ocNet:
-  objectTypeRegistry:
-    objectTypes:
+  object_types:
+    per_object_type_id:
       "obj":
         label: "obj"
-        id: "obj"
       "2":
         label: "2"
-        id: "2"
-  placeTypeRegistry:
-    entries:
+  place_types:
+    per_place:
       "p1": "INPUT"
       "p2": "OUTPUT"
       "o1": "INPUT"
       "o2": "OUTPUT"
-  placeToObjectTypeRegistry:
-    defaultObjectTypeId: "obj"
-    placeIdToObjectType:
+  place_object_types:
+    default: "obj"
+    per_place:
       "p1": "obj"
       "p2": "obj"
       "o1": "2"
       "o2": "2"
-  petriAtomRegistry:
-    map:
+  petri_atoms:
+    per_id:
       "p1":
         type: "place"
         id: "p1"
         label: "p1"
-        fromTransitions: []
-        toTransitions: ["t1"]
+        to_transtns: ["t1"]
       "t1":
         type: "transition"
         id: "t1"
         label: "t1"
-        fromPlaces: ["p1", "o1"]
-        toPlaces: ["p2", "o2"]
+        from_places: ["p1", "o1"]
+        to_places: ["p2", "o2"]
       "p1_t1":
         type: "arc"
         id: "p1_t1"
-        multiplicity: 1
       "p2":
         type: "place"
         id: "p2"
         label: "p2"
-        fromTransitions: ["t1"]
-        toTransitions: []
+        from_transtns: ["t1"]
       "t1_p2":
         type: "arc"
         id: "t1_p2"
-        multiplicity: 1
       "o1":
         type: "place"
         id: "o1"
         label: "o1"
-        fromTransitions: []
-        toTransitions: ["t1"]
+        to_transtns: ["t1"]
       "o1_t1":
         type: "vararc"
         id: "o1_t1"
@@ -61,26 +54,21 @@ ocNet:
         type: "place"
         id: "o2"
         label: "o2"
-        fromTransitions: ["t1"]
-        toTransitions: []
+        from_transtns: ["t1"]
       "t1_o2":
         type: "vararc"
         id: "t1_o2"
-initialMarking:
-  placesToTokens:
+init_marking:
+  per_place:
     "p1": 10
-transitionInstancesTimesSpec:
-  defaultTransitionTimeSpec:
+transition_times:
+  default:
     duration: [2, 10]
-    timeUntilNextInstanceIsAllowed: [10, 100]
-  transitionToTimeSpec: {}
-randomSeed: 42
-nodeToLabelRegistry:
-  transitionsToActivity: {}
-tokenGeneration:
-  defaultPeriod: [100, 120]
-  placeIdToGenerationTarget:
-    placesToTokens:
+    until_next_permit: [10, 100]
+seed: 42
+token_gen:
+  default: [100, 120]
+  places_targets:
+    per_place:
       "p1": 15
-  type: "GENERATION"
-ocNetType: "aalst"
+oc_net_type: "aalst"

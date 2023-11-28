@@ -1,8 +1,12 @@
 package ru.misterpotz.ocgena.simulation.state
 
-class SimulationStepState() {
+class SimulationStepState {
     private var current: BySteps? = null
     var currentStep: Long = -1
+    var stepIndex: Long = 0
+    val oneStepGranularity = 5
+    var stepInGranularityIterationsCounter: Long = 0
+
 
     fun onStart() {
         current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false, noPlannedTokenGenerations = false)
@@ -10,6 +14,19 @@ class SimulationStepState() {
 
     fun onNewStep() {
         current = BySteps()
+    }
+
+    fun checkStepGranularityNotSatisfied(): Boolean {
+        return stepInGranularityIterationsCounter < oneStepGranularity
+    }
+
+    fun resetStepGranularity() {
+        stepInGranularityIterationsCounter = 0
+    }
+
+    fun incrementStep() {
+        stepIndex++
+        stepInGranularityIterationsCounter++
     }
 
     fun onHasEnabledTransitions(hasEnabledTransitions: Boolean) {

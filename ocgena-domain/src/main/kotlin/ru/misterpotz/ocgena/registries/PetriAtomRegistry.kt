@@ -33,6 +33,7 @@ fun PetriAtomRegistry(elements: Map<PetriAtomId, PetriAtom>): PetriAtomRegistry 
 @Serializable
 @SerialName("atoms")
 data class PetriAtomRegistryStruct(
+    @SerialName("per_id")
     val map: MutableMap<PetriAtomId, PetriAtom> = mutableMapOf(),
 ) : PetriAtomRegistry {
     @Transient

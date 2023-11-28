@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.simulation.config;
 
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -155,8 +156,9 @@ data class TransitionIntervals(
 
 @Serializable
 data class TokenGenerationConfig(
-    @Contextual
+    @Contextual @SerialName("default")
     val defaultPeriod: Period = Period(10..10),
+    @SerialName("places_targets")
     val placeIdToGenerationTarget: MarkingScheme
 ) : Config {
     override val type: ConfigEnum = ConfigEnum.GENERATION

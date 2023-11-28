@@ -1,13 +1,10 @@
 package ru.misterpotz.ocgena.dsl.serialization
 
-import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.dsl.tool.buildOCNet
-import ru.misterpotz.ocgena.dsl.tool.defaultSimConfig
-import ru.misterpotz.ocgena.dsl.tool.domainComponent
+import ru.misterpotz.ocgena.dsl.tool.*
+import ru.misterpotz.ocgena.simulation.config.SettingsSimulationConfig
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import java.io.File
 
 class SerializationTest {
     val simpleOcNet = buildOCNet {
@@ -22,44 +19,46 @@ class SerializationTest {
     val simCOnfig = defaultSimConfig(
         ocNet = simpleOcNet
     )
+    val json_path = "serialized_with_types.json"
+    val yaml_path = "serialized_with_types.yaml"
+    val json_settings_path = "serialized_settings.json"
+    val yaml_settings_path = "serialized_settings.yaml"
 
     @Test
     fun jsonSerialization() {
-        val serialized = domainComponent()
-        val string = serialized.json().encodeToString(SimulationConfig.serializer(), simCOnfig)
-        Assertions.assertTrue(string.isNotBlank())
+        Assertions.assertTrue(simCOnfig.toJson().isNotBlank())
     }
 
     @Test
     fun yamlSerialization() {
-        val serialized = domainComponent()
-        val string = serialized.yaml.encodeToString(SimulationConfig.serializer(), simCOnfig)
-        Assertions.assertTrue(string.isNotBlank())
+        Assertions.assertTrue(simCOnfig.toYaml().isNotBlank())
     }
 
     @Test
     fun jsonSimpleDeserialization() {
-        val comp = domainComponent()
-        val path = "src/test/resources/serialized_with_types.json"
-        val file = File(path)
-
-        val json = file.inputStream().bufferedReader().readText()
-
-        val decoded = comp.json.decodeFromString<SimulationConfig>(json)
+        val decoded = readConfig<SimulationConfig>(json_path)
 
         Assertions.assertEquals(simCOnfig, decoded)
     }
 
     @Test
     fun yamlSimpleDeserialization() {
-        val comp = domainComponent()
-        val path = "src/test/resources/serialized_with_types.yaml"
-        val file = File(path)
-
-        val yaml = file.inputStream().bufferedReader().readText()
-
-        val decoded = comp.yaml.decodeFromString<SimulationConfig>(yaml)
+        val decoded = readConfig<SimulationConfig>(yaml_path)
 
         Assertions.assertEquals(simCOnfig, decoded)
+    }
+
+    @Test
+    fun `merging model and settings works for json`() {
+        val settings = readConfig<SettingsSimulationConfig>(json_settings_path)
+
+        Assertions.assertTrue(simCOnfig.settingsEqual(settings))
+    }
+
+    @Test
+    fun `merging model and settings works for yaml`() {
+        val settings = readConfig<SettingsSimulationConfig>(yaml_settings_path)
+
+        Assertions.assertTrue(simCOnfig.settingsEqual(settings))
     }
 }

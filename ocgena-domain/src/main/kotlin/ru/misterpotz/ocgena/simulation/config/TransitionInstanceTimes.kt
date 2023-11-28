@@ -1,13 +1,14 @@
 package ru.misterpotz.ocgena.simulation.config
 
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class TransitionInstanceTimes(
-    @Contextual
+    @Contextual @SerialName("duration")
     val duration: Duration,
-    @Contextual
+    @Contextual @SerialName("until_next_permit")
     val timeUntilNextInstanceIsAllowed: TimeUntilNextInstanceIsAllowed,
 ) {
     val earlyFiringTime

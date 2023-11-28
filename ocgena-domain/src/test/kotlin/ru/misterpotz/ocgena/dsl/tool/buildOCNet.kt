@@ -1,9 +1,10 @@
 package ru.misterpotz.ocgena.dsl.tool
 
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions.assertTrue
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.error.prettyPrint
-import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
@@ -12,9 +13,14 @@ import ru.misterpotz.ocgena.simulation.SimulationTask
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 import ru.misterpotz.ocgena.validation.OCNetChecker
+import java.io.File
+import java.lang.IllegalStateException
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.div
+import kotlin.io.path.pathString
 
 fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNetStruct {
     val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
@@ -79,4 +85,86 @@ fun component(
 
 fun simTask(component: SimulationComponent): SimulationTask {
     return component.simulationTask()
+}
+
+class FacadeSimulation(
+    val simulationComponent: SimulationComponent,
+    val simulationTask: SimulationTask,
+)
+
+//fun facadeCreateSimulation(
+//    simulationConfig: SimulationConfig,
+//    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()
+//
+//): FacadeSimulation {
+//    return
+//}
+
+val resPath = "src/test/resources/"
+val res = File(resPath)
+
+fun config(name: String): File {
+    return File(res, name)
+}
+
+fun config(path: Path): File {
+    return File(path.pathString)
+}
+
+val comp = domainComponent()
+inline fun <reified T> jsonConfig(name: String): T {
+    val text = config(name).readText()
+
+    return comp.json.decodeFromString<T>(text)
+}
+
+inline fun <reified T> yamlConfig(name: String): T {
+    val text = config(name).readText()
+
+    return comp.yaml.decodeFromString<T>(text)
+}
+
+inline fun <reified T> jsonConfig(path: Path): T {
+    val text = config(path).readText()
+
+    return comp.json.decodeFromString<T>(text)
+}
+
+inline fun <reified T> yamlConfig(path: Path): T {
+    val text = config(path).readText()
+
+    return comp.yaml.decodeFromString<T>(text)
+}
+
+inline fun <reified T> T.toYaml(): String {
+    return comp.yaml.encodeToString(this)
+}
+
+inline fun <reified T> T.toJson(): String {
+    return comp.json.encodeToString(this)
+}
+
+
+
+inline fun <reified T> readConfig(name: String): T {
+    return if (name.endsWith(".json")) {
+        jsonConfig<T>(name)
+    } else if (name.endsWith(".yaml")) {
+        yamlConfig<T>(name)
+    } else {
+        throw IllegalStateException()
+    }
+}
+
+inline fun <reified T> readFolderConfig(folderName: String, name: String): T {
+    val withFolderPath = Path(resPath) / folderName / name
+
+    val string = withFolderPath.pathString
+    return if (string.endsWith(".json")) {
+        jsonConfig<T>(withFolderPath)
+    } else if (string.endsWith(".yaml")) {
+        yamlConfig<T>(withFolderPath)
+    } else {
+        throw IllegalStateException()
+    }
 }
