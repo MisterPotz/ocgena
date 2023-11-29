@@ -21,25 +21,20 @@ class InputArcMultiplicityValue(
 }
 
 interface OutputArcMultiplicity {
-    fun sourceBufferHasEnoughTokens(): Boolean
     fun requiredTokenAmount(): Int
-    fun getTokenSourceForThisArc() : TokenBuffer
+    fun getTokenSourceForThisArc() : TokenBuffer?
 }
 
 class OutputArcMultiplicityValue(
-    private val bufferHasEnoughTokens: Boolean,
     private val requiredTokenAmount: Int,
-    private val tokenBuffer: TokenBuffer
+    private val tokenBuffer: TokenBuffer?
 ) : OutputArcMultiplicity {
-    override fun sourceBufferHasEnoughTokens(): Boolean {
-        return bufferHasEnoughTokens
-    }
 
     override fun requiredTokenAmount(): Int {
         return requiredTokenAmount
     }
 
-    override fun getTokenSourceForThisArc(): TokenBuffer {
+    override fun getTokenSourceForThisArc(): TokenBuffer? {
         return tokenBuffer
     }
 }

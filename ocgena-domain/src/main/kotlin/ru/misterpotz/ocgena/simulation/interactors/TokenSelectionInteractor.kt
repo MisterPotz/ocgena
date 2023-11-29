@@ -99,11 +99,11 @@ class TokenSelectionInteractorImpl @Inject constructor(
 
         val randomizer = createRandomizerOrNoOp()
         val randomIterator = RandomIterator(
-            amount = selectionAmount,
+            amount = selectionAmount.coerceAtMost(bufferSize),
             randomizer = randomizer
         )
 
-        while (randomIterator.hasNext() && tokenBuffer.isNotEmpty()) {
+        while (randomIterator.hasNext()) {
             val randomIndex = randomIterator.next()
             val objectTokenId = tokenBuffer.elementAt(randomIndex)
             targetSet.add(objectTokenId)

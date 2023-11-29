@@ -1,0 +1,80 @@
+package ru.misterpotz.ocgena.dsl.token_buffer
+
+import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.dsl.*
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.NormalArcMeta
+import ru.misterpotz.ocgena.simulation.ObjectTokenId
+import ru.misterpotz.ocgena.simulation.config.MarkingScheme
+import ru.misterpotz.ocgena.simulation.config.withUntilNext
+import ru.misterpotz.ocgena.simulation.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation.logging.fastFullDev
+import java.util.SortedSet
+
+class OutputMissingTokensFillerTest {
+    private fun configureSimComponent(): SimulationComponent {
+        val simConfig = readAndBuildConfig(
+            DEFAULT_SETTINGS,
+            ModelPath.ONE_IN_TWO_OUT
+        )
+
+        Assertions.assertNotNull(simConfig)
+
+        val updatedSimConfig = simConfig.withInitialMarking {
+            put("p1", 5)
+        }.withTransitionsTimes {
+            put("t1", (15..15).withUntilNext(0..0))
+        }.withGenerationPlaces {
+            put("p1", 5)
+        }
+
+        return simComponent(
+            updatedSimConfig,
+            developmentDebugConfig = fastFullDev()
+        )
+    }
+
+    @Test
+    fun `when token buffer becomes empty, generates unique tokens at outputs`() {
+        val simComp = configureSimComponent()
+
+        val outputMissingTokensGeneratorFactory = simComp.outputMissingTokensGeneratorFactory()
+        val transition = simComp.transition("t1")
+
+        val transitionBufferInfo = simComp.mockTransitionBufferInfo(
+            "t1"
+        ) {
+            add("o1".withArcMeta(NormalArcMeta).withTokenBuffer(sortedSetOf()))
+            add("o2".withArcMeta(NormalArcMeta).withTokenBuffer(sortedSetOf()))
+        }
+
+        val outputMissingTokensFiller = outputMissingTokensGeneratorFactory.create(
+            transitionBufferInfo = transitionBufferInfo,
+            transition = transition,
+            outputMarking = PlaceToObjectMarking(
+                buildMap<PetriAtomId, SortedSet<ObjectTokenId>> {
+                    put("p2", sortedSetOf(1, 2))
+                }.toMutableMap()
+            )
+        )
+
+        val outputTokens = outputMissingTokensFiller.generateMissingTokens()
+
+        val allSets = outputTokens.keys.map { outputTokens[it] }
+
+        var foundRepetition = false
+
+        allSets.fold(
+            mutableSetOf<ObjectTokenId>()
+        ) { acc, right ->
+            foundRepetition = acc.intersect(right).isNotEmpty()
+            acc.addAll(right)
+            acc
+        }
+        println(outputTokens)
+        Assertions.assertFalse(foundRepetition)
+    }
+}

@@ -64,12 +64,9 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
         val requiredTokenAmount = roundUpIfNeeded(requiredTokensAmount)
 
-        val bufferHasEnoughTokens = requiredTokenAmount <= totalAvailableTokensForArc
-
         return OutputArcMultiplicityValue(
             tokenBuffer = sourceBatch,
             requiredTokenAmount = requiredTokenAmount,
-            bufferHasEnoughTokens = bufferHasEnoughTokens
         )
     }
 

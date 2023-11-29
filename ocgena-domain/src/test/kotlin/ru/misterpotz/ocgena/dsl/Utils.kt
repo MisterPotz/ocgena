@@ -33,6 +33,8 @@ import kotlin.io.path.div
 import kotlin.io.path.pathString
 
 val DEFAULT_SETTINGS = Path("default_settings.yaml")
+val DOMAIN_COMPONENT = domainComponent()
+
 fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNetStruct {
     val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
     val errors = OCNetChecker(ocNet).checkConsistency()
@@ -103,7 +105,7 @@ fun simComponent(
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
-        componentDependencies = DomainComponent.create(),
+        componentDependencies = DOMAIN_COMPONENT,
         developmentDebugConfig = developmentDebugConfig
     )
 }
@@ -112,9 +114,18 @@ fun simTask(component: SimulationComponent): SimulationTask {
     return component.simulationTask()
 }
 
-class FacadeSimulation(
-    val simulationComponent: SimulationComponent,
-    val simulationTask: SimulationTask,
+fun SimulationComponent.facade(): FacadeSim {
+    return FacadeSim(
+        this,
+        task = simulationTask(),
+        config = simulationConfig()
+    )
+}
+
+data class FacadeSim(
+    val component: SimulationComponent,
+    val task: SimulationTask,
+    val config: SimulationConfig
 )
 
 //fun facadeCreateSimulation(
@@ -141,38 +152,37 @@ fun String.writeConfig(path: Path) {
     pathCorrected.toFile().writeText(this)
 }
 
-val comp = domainComponent()
 inline fun <reified T> jsonConfig(name: String): T {
     val text = config(name).readText()
 
-    return comp.json.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.json.decodeFromString<T>(text)
 }
 
 inline fun <reified T> yamlConfig(name: String): T {
     val text = config(name).readText()
 
-    return comp.yaml.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.yaml.decodeFromString<T>(text)
 }
 
 inline fun <reified T> jsonConfig(path: Path): T {
 
     val text = config(path).readText()
 
-    return comp.json.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.json.decodeFromString<T>(text)
 }
 
 inline fun <reified T> yamlConfig(path: Path): T {
     val text = config(path).readText()
 
-    return comp.yaml.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.yaml.decodeFromString<T>(text)
 }
 
 inline fun <reified T> T.toYaml(): String {
-    return comp.yaml.encodeToString(this)
+    return DOMAIN_COMPONENT.yaml.encodeToString(this)
 }
 
 inline fun <reified T> T.toJson(): String {
-    return comp.json.encodeToString(this)
+    return DOMAIN_COMPONENT.json.encodeToString(this)
 }
 
 inline fun <reified T> readConfig(name: String): T {

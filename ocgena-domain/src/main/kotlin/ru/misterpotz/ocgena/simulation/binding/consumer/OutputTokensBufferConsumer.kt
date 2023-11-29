@@ -39,11 +39,13 @@ class OutputTokensBufferConsumerImpl(
             val tokensToConsume = arcMultiplicity.requiredTokenAmount()
 
             val consumedTokens =
-                transitionTokenSelectionInteractor.selectTokensFromBuffer(sourceBuffer, tokensToConsume)
+                sourceBuffer
+                    ?.let { transitionTokenSelectionInteractor.selectTokensFromBuffer(it, tokensToConsume) }
 
-            sourceBuffer.removeAll(consumedTokens)
-
-            outputMarking[outputPlace].addAll(consumedTokens)
+            if (consumedTokens != null) {
+                sourceBuffer.removeAll(consumedTokens)
+                outputMarking[outputPlace].addAll(consumedTokens)
+            }
         }
 
         return outputMissingTokensGeneratorFactory.create(

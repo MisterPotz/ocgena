@@ -4,85 +4,80 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import ru.misterpotz.ocgena.dsl.buildSimplestOCNetNoVar
-import ru.misterpotz.ocgena.dsl.simComponent
-import ru.misterpotz.ocgena.dsl.defaultSimConfig
-import ru.misterpotz.ocgena.dsl.simTask
+import ru.misterpotz.ocgena.dsl.*
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
+import java.util.concurrent.TimeUnit
 
 class OCNetTest {
     @Test()
     fun checkInitialMarkingIsApplied() {
         val ocNet = buildSimplestOCNetNoVar()
-
-        val config = defaultSimConfig(ocNet).copy(
-            initialMarking = MarkingScheme.of {
-                put("p1", 10)
+        val settingsConfig = readConfig<SettingsSimulationConfig>(DEFAULT_SETTINGS)
+        val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)
+            .withInitialMarking {
+                put("p1", 5)
             }
-        )
+            .withGenerationPlaces {
+                put("p1", 2)
+            }
 
-        val component = simComponent(config)
+        val component = simComponent(simConfig)
         val simTask = simTask(component)
+
         simTask.prepareRun()
         val objectTokenRealAmountRegistry = component.objectTokenRealAmountRegistry()
 
         assertTrue(
-            objectTokenRealAmountRegistry.getRealAmountAt("p1") == 10,
+            objectTokenRealAmountRegistry.getRealAmountAt("p1") == 5,
             "seems initial marking scheme doesn't work"
         )
     }
 
     @Test
-    @Timeout(value = 1,  threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    @Timeout(value = 1, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     fun simpleRunPerforms() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
+        val settingsConfig = readConfig<SettingsSimulationConfig>(DEFAULT_SETTINGS)
 
-        val config = defaultSimConfig(ocNet)
-            .copy(
-                initialMarking = MarkingScheme.of {
-                    put("p1", 1)
-                },
-                transitionInstancesTimesSpec = TransitionInstancesTimesSpec(
-                    defaultTransitionTimeSpec = TransitionInstanceTimes(
-                        duration = Duration(10..10),
-                        timeUntilNextInstanceIsAllowed = TimeUntilNextInstanceIsAllowed(10..10)
-                    )
-                ),
-                tokenGeneration = TokenGenerationConfig(
-                    placeIdToGenerationTarget = MarkingScheme.of {
-                        put("p1", 1)
-                    }
-                )
-            )
-        val component = simComponent(config)
+        val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)
+            .withInitialMarking {
+                put("p1", 5)
+            }
+            .withGenerationPlaces {
+                put("p1", 2)
+            }
+
+        val component = simComponent(simConfig)
         val simTask = simTask(component)
 
         simTask.prepareAndRunAll()
     }
 
     @Test
+    @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD, unit = TimeUnit.SECONDS)
     fun simpleRunPerformHugeTokenAmount() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
+        val settingsConfig = readConfig<SettingsSimulationConfig>(DEFAULT_SETTINGS)
 
-        val config = defaultSimConfig(ocNet).copy(
-            initialMarking = MarkingScheme.of {
+        val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)
+            .withInitialMarking {
                 put("p1", 100000)
-            },
-            tokenGeneration = TokenGenerationConfig(
-                placeIdToGenerationTarget = MarkingScheme.of {
-                    put("p1", 100000)
-                },
-            ),
+            }
+            .withGenerationPlaces {
+                put("p1", 100000)
+            }
 
-            )
         val component = simComponent(
-            config,
-            developmentDebugConfig = fastNoDevSetup().copy(markEachNStep = true, stepNMarkGranularity = 1000)
+            simConfig,
+            developmentDebugConfig = fastNoDevSetup()
+                .copy(
+                    markEachNStep = true,
+                    stepNMarkGranularity = 1000
+                )
         )
         val simTask = simTask(component)
 
-        (0..20).shuffled()
         simTask.prepareAndRunAll()
     }
 

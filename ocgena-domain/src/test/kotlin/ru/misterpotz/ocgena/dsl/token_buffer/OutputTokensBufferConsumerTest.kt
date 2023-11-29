@@ -34,7 +34,7 @@ class OutputTokensBufferConsumerTest {
     }
 
     @Test
-    fun `when aalst and all tokens consumed works ok`() = runTest {
+    fun `when aalst and token buffer becomes empty continues with no failure`() = runTest {
         val simComp = configureSimComponent()
 
         val outputTokensBufferConsumerFactory = simComp.outputTokensBufferConsumerFactory()
@@ -53,7 +53,6 @@ class OutputTokensBufferConsumerTest {
         )
 
         val outputMissingTokensGenerator = outputTokensBufferConsumer.consumeTokenBuffer()
-
 
         Assertions.assertEquals(
             1,

@@ -23,22 +23,22 @@ class OutputMissingTokensFillerImpl(
         val outputPlaces = transition.toPlaces
 
         for (outputPlace in outputPlaces) {
-            val outputArcId = outputPlace.arcIdTo(transition.id)
+            val outputArcId = transition.id.arcIdTo(outputPlace)
 
             val arcMultiplicity = arcsMultiplicityRegistry.transitionOutputMultiplicity(
                 transitionBufferInfo,
                 outputArcId
             )
 
-            val needToGenerateTokens = !arcMultiplicity.sourceBufferHasEnoughTokens()
+            val needToGenerateTokens =
 
             if (needToGenerateTokens) {
-                val tokensToConsume = arcMultiplicity.requiredTokenAmount()
+                val tokensToGenerate = arcMultiplicity.requiredTokenAmount() -
 
                 val outputPlaceType = ocNet.placeToObjectTypeRegistry[outputPlace]
 
                 val consumedTokens =
-                    transitionTokenSelectionInteractor.generateTokens(outputPlaceType, tokensToConsume)
+                    transitionTokenSelectionInteractor.generateTokens(outputPlaceType, tokensToGenerate)
 
                 currentPlaceToObjectMarking[outputPlace].addAll(consumedTokens)
             }
