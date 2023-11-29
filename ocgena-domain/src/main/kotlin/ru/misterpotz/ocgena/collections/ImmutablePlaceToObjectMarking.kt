@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.collections
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
@@ -25,7 +26,8 @@ fun <S : SortedSet<ObjectTokenId>> ImmutablePlaceToObjectMarking(placesToObjectT
 }
 
 @Serializable
-internal data class ImmutablePlaceToObjectMarkingMap(val placesToObjectTokens: Map<PetriAtomId, SortedSet<ObjectTokenId>>) :
+@SerialName("placeToObject")
+data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesToObjectTokens: Map<PetriAtomId, SortedSet<ObjectTokenId>>) :
     ImmutablePlaceToObjectMarking {
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {

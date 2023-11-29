@@ -10,6 +10,8 @@ enum class SerializationMode {
 
 val DEFAULT_SERIALIZATION_TEST_MODE = SerializationMode.READ
 
+val USE_SPECIAL_SYMBOL_OBJ_TYPE_NAME = true
+
 inline fun <reified T> writeOrAssertYaml(
     expected: T,
     path: Path,

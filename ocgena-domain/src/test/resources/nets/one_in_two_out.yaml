@@ -1,20 +1,20 @@
 object_types:
   per_object_type_id:
-    "o1":
-      label: "o1"
-    "o2":
-      label: "o2"
+    "△o1":
+      label: "△o1"
+    "△o2":
+      label: "△o2"
 place_types:
   per_place:
     "p1": "INPUT"
     "p2": "OUTPUT"
     "p3": "OUTPUT"
 place_object_types:
-  default: "obj"
+  default: "△0"
   per_place:
-    "p1": "o1"
-    "p2": "o1"
-    "p3": "o2"
+    "p1": "△o1"
+    "p2": "△o1"
+    "p3": "△o2"
 petri_atoms:
   per_id:
     "p1":

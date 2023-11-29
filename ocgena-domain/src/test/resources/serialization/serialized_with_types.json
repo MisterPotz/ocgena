@@ -2,11 +2,11 @@
     "ocNet": {
         "object_types": {
             "per_object_type_id": {
-                "obj": {
-                    "label": "obj"
+                "△0": {
+                    "label": "△0"
                 },
-                "2": {
-                    "label": "2"
+                "△2": {
+                    "label": "△2"
                 }
             }
         },
@@ -19,12 +19,12 @@
             }
         },
         "place_object_types": {
-            "default": "obj",
+            "default": "△0",
             "per_place": {
-                "p1": "obj",
-                "p2": "obj",
-                "o1": "2",
-                "o2": "2"
+                "p1": "△0",
+                "p2": "△0",
+                "o1": "△2",
+                "o2": "△2"
             }
         },
         "petri_atoms": {

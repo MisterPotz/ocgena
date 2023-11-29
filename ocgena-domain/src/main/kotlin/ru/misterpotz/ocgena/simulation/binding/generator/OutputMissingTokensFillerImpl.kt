@@ -30,10 +30,12 @@ class OutputMissingTokensFillerImpl(
                 outputArcId
             )
 
-            val needToGenerateTokens =
+            val existingTokens = currentPlaceToObjectMarking[outputPlace]
+            val needToGenerateAdditionalTokens =
+                existingTokens.size < arcMultiplicity.requiredTokenAmount()
 
-            if (needToGenerateTokens) {
-                val tokensToGenerate = arcMultiplicity.requiredTokenAmount() -
+            if (needToGenerateAdditionalTokens) {
+                val tokensToGenerate = arcMultiplicity.requiredTokenAmount() - existingTokens.size
 
                 val outputPlaceType = ocNet.placeToObjectTypeRegistry[outputPlace]
 

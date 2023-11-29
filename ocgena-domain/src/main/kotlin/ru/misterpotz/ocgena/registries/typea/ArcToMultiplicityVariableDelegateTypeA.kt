@@ -46,7 +46,6 @@ class ArcToMultiplicityVariableDelegateTypeA @Inject constructor(
         val tokensAtBuffer = batchForType.size
 
         return OutputArcMultiplicityValue(
-            bufferHasEnoughTokens = (tokensAtBuffer) > 1,
             requiredTokenAmount = tokensAtBuffer,
             tokenBuffer = batchForType,
         )

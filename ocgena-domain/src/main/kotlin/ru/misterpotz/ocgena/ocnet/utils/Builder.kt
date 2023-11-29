@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
-import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -10,14 +9,33 @@ import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
 import ru.misterpotz.ocgena.simulation.ObjectType
 
-const val defaultObjTypeId = "obj"
+const val objTypePrefix = "△"
+const val objPrefix = "●"
+const val defaultObjTypeId = "${objTypePrefix}0"
+fun ObjectTypeId.prependId(): ObjectTypeId {
+    return if (startsWith(objTypePrefix)) {
+        this
+    } else {
+        "$objTypePrefix$this"
+    }
+}
+
+fun ObjectTypeId.firstLetter(): String {
+    return (if (!startsWith(objTypePrefix)) {
+        first()
+    } else {
+        get(1)
+    }).toString()
+}
 
 val defaultObjType = ObjectType(defaultObjTypeId, defaultObjTypeId)
 typealias ArrowAtomId = PetriAtomId
 
-class OCNetBuilder() {
+class OCNetBuilder(
+    private var useSpecialSymbolsInNaming : Boolean = true
+) {
     fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNetStruct {
-        val atomBlock = AtomDefinitionBlockImpl()
+        val atomBlock = AtomDefinitionBlockImpl(useSpecialSymbolsInNaming)
         atomBlock.atomDefinitionBlock()
         val builderRegistry = atomBlock.builderRegistry
 
@@ -42,8 +60,8 @@ class OCNetBuilder() {
         ): ArrowAtomId
     }
 
-    class AtomDefinitionBlockImpl() : AtomDefinitionBlock {
-        internal val builderRegistry = BuilderRegistry()
+    class AtomDefinitionBlockImpl(useSpecialSymbolsInNaming: Boolean) : AtomDefinitionBlock {
+        internal val builderRegistry = BuilderRegistry(useSpecialSymbolsInNaming)
         override val String.t: String
             get() {
                 return this.t()
@@ -69,7 +87,7 @@ class OCNetBuilder() {
             return this
         }
 
-        override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)? ): String {
+        override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)?): String {
             val arcId = arcIdTo(petriAtomId)
             val receiver = builderRegistry.getArc(arcId)
             if (block != null) {

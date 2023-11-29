@@ -1,9 +1,9 @@
 object_types:
   per_object_type_id:
-    "1":
-      label: "1"
-    "2":
-      label: "2"
+    "△1":
+      label: "△1"
+    "△2":
+      label: "△2"
 place_types:
   per_place:
     "p1": "INPUT"
@@ -12,13 +12,13 @@ place_types:
     "p3": "OUTPUT"
     "o2": "OUTPUT"
 place_object_types:
-  default: "obj"
+  default: "△0"
   per_place:
-    "p1": "1"
-    "p2": "1"
-    "o1": "2"
-    "p3": "1"
-    "o2": "2"
+    "p1": "△1"
+    "p2": "△1"
+    "o1": "△2"
+    "p3": "△1"
+    "o2": "△2"
 petri_atoms:
   per_id:
     "p1":

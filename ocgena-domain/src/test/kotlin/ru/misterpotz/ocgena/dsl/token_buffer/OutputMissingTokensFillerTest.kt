@@ -3,10 +3,12 @@ package ru.misterpotz.ocgena.dsl.token_buffer
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.dsl.*
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.NormalArcMeta
+import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.withUntilNext
@@ -40,6 +42,9 @@ class OutputMissingTokensFillerTest {
     @Test
     fun `when token buffer becomes empty, generates unique tokens at outputs`() {
         val simComp = configureSimComponent()
+        simComp.withTokens {
+            addAll(withType("o1", 1, 2))
+        }
 
         val outputMissingTokensGeneratorFactory = simComp.outputMissingTokensGeneratorFactory()
         val transition = simComp.transition("t1")
@@ -74,7 +79,7 @@ class OutputMissingTokensFillerTest {
             acc.addAll(right)
             acc
         }
-        println(outputTokens)
+        println(outputTokens.loggableString(simComp))
         Assertions.assertFalse(foundRepetition)
     }
 }

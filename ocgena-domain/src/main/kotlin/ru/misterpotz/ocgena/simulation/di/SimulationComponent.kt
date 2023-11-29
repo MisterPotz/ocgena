@@ -12,10 +12,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.AALST
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.LOMAZOVA
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
-import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
-import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
-import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistryDelegating
-import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
+import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.registries.delegates.CompoundArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityVariableDelegateTypeA
@@ -23,7 +20,6 @@ import ru.misterpotz.ocgena.registries.typel.ArcToMultiplicityVariableDelegateTy
 import ru.misterpotz.ocgena.simulation.*
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
-import ru.misterpotz.ocgena.simulation.binding.buffer.LockedTokensBufferizerFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import ru.misterpotz.ocgena.simulation.binding.consumer.OutputTokensBufferConsumerFactory
 import ru.misterpotz.ocgena.simulation.binding.generator.OutputMissingTokensGeneratorFactory
@@ -152,8 +148,8 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun objectTokenGenerator(): ObjectTokenGenerator {
-            return ObjectTokenGenerator()
+        fun objectTokenGenerator(objectTokenSet: ObjectTokenSet): ObjectTokenGenerator {
+            return ObjectTokenGenerator(objectTokenSet)
         }
 
         @Provides
@@ -292,8 +288,8 @@ interface SimulationComponent {
     fun outputTokensBufferConsumerFactory(): OutputTokensBufferConsumerFactory
     fun outputMissingTokensGeneratorFactory(): OutputMissingTokensGeneratorFactory
     fun batchGroupingStrategy(): TransitionBufferInfo.BatchGroupingStrategy
-
-
+    fun objectTokenSet(): ObjectTokenSet
+    fun objectTokenGenerator() : ObjectTokenGenerator
     @Component.Factory
     interface Factory {
         fun create(

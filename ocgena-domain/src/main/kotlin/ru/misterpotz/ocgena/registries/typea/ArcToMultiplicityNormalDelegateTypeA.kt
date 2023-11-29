@@ -40,17 +40,12 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
     ): OutputArcMultiplicity {
         require(arc is NormalArc)
 
-        val requiredTokens = arc.multiplicity
-
         val place = arc.arrowNodeId!!
         val objectType = placeToObjectTypeRegistry[place]
 
         val tokenBuffer = transitionBufferInfo.getBatchBy(objectType, outputArcMeta = arc.arcMeta)
-        val sourceNodeItemsSize = tokenBuffer?.size ?: 0
-        val transitionBufferHasEnoughTokens = sourceNodeItemsSize >= requiredTokens
 
         return OutputArcMultiplicityValue(
-            transitionBufferHasEnoughTokens,
             arc.multiplicity,
             tokenBuffer = tokenBuffer
         )
