@@ -49,8 +49,8 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
                 .transitionOutputMultiplicity(transitionBufferInfo, arc)
 
         val sourceBatch = transitionBufferInfo.getBatchBy(
-            objectTypeId = objectTypeId,
-            arcMeta = arc.arcMeta
+            toPlaceObjectTypeId = objectTypeId,
+            outputArcMeta = arc.arcMeta
         )!!
         val totalAvailableTokensForArc = sourceBatch.size
 

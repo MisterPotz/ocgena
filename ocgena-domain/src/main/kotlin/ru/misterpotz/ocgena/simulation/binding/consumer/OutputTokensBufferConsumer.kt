@@ -4,7 +4,7 @@ import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
-import ru.misterpotz.ocgena.simulation.binding.buffer.OutputMissingTokensGenerator
+import ru.misterpotz.ocgena.simulation.binding.buffer.OutputMissingTokensFiller
 import ru.misterpotz.ocgena.simulation.binding.buffer.OutputTokensBufferConsumer
 import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import ru.misterpotz.ocgena.simulation.binding.generator.OutputMissingTokensGeneratorFactory
@@ -23,12 +23,12 @@ class OutputTokensBufferConsumerImpl(
         return transitionBufferInfo
     }
 
-    override fun consumeTokenBuffer(): OutputMissingTokensGenerator {
+    override fun consumeTokenBuffer(): OutputMissingTokensFiller {
         val outputPlaces = transition.toPlaces
         val outputMarking = PlaceToObjectMarking()
 
         for (outputPlace in outputPlaces) {
-            val outputArcId = outputPlace.arcIdTo(transition.id)
+            val outputArcId = transition.id.arcIdTo(outputPlace)
 
             val arcMultiplicity = arcsMultiplicityRegistry.transitionOutputMultiplicity(
                 transitionBufferInfo,
@@ -39,7 +39,9 @@ class OutputTokensBufferConsumerImpl(
             val tokensToConsume = arcMultiplicity.requiredTokenAmount()
 
             val consumedTokens =
-                transitionTokenSelectionInteractor.selectAndRemoveTokensFromBuffer(sourceBuffer, tokensToConsume)
+                transitionTokenSelectionInteractor.selectTokensFromBuffer(sourceBuffer, tokensToConsume)
+
+            sourceBuffer.removeAll(consumedTokens)
 
             outputMarking[outputPlace].addAll(consumedTokens)
         }

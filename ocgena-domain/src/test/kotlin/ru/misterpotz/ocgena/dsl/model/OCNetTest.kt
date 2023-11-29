@@ -4,13 +4,11 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import ru.misterpotz.ocgena.dsl.tool.buildSimplestOCNetNoVar
-import ru.misterpotz.ocgena.dsl.tool.component
-import ru.misterpotz.ocgena.dsl.tool.defaultSimConfig
-import ru.misterpotz.ocgena.dsl.tool.simTask
+import ru.misterpotz.ocgena.dsl.buildSimplestOCNetNoVar
+import ru.misterpotz.ocgena.dsl.simComponent
+import ru.misterpotz.ocgena.dsl.defaultSimConfig
+import ru.misterpotz.ocgena.dsl.simTask
 import ru.misterpotz.ocgena.simulation.config.*
-import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
-import ru.misterpotz.ocgena.simulation.logging.fastFullDev
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 
 class OCNetTest {
@@ -24,7 +22,7 @@ class OCNetTest {
             }
         )
 
-        val component = component(config)
+        val component = simComponent(config)
         val simTask = simTask(component)
         simTask.prepareRun()
         val objectTokenRealAmountRegistry = component.objectTokenRealAmountRegistry()
@@ -57,7 +55,7 @@ class OCNetTest {
                     }
                 )
             )
-        val component = component(config)
+        val component = simComponent(config)
         val simTask = simTask(component)
 
         simTask.prepareAndRunAll()
@@ -78,7 +76,7 @@ class OCNetTest {
             ),
 
             )
-        val component = component(
+        val component = simComponent(
             config,
             developmentDebugConfig = fastNoDevSetup().copy(markEachNStep = true, stepNMarkGranularity = 1000)
         )

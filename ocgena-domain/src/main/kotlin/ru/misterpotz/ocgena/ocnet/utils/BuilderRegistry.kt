@@ -88,11 +88,11 @@ internal class BuilderRegistry() {
         return filter { it.startsWith(petriAtomId) && it.length != petriAtomId.length }
     }
 
-    private fun Collection<PetriAtomId>.mapArcsTail() : List<PetriAtomId> {
+    private fun Collection<PetriAtomId>.mapArcsTail(): List<PetriAtomId> {
         return map { it.arcTailId() }
     }
 
-    private fun Collection<PetriAtomId>.mapArcsHead() : List<PetriAtomId> {
+    private fun Collection<PetriAtomId>.mapArcsHead(): List<PetriAtomId> {
         return map { it.arcArrowId() }
     }
 
@@ -136,7 +136,7 @@ internal class BuilderRegistry() {
                 is OCNetBuilder.ArcBlock -> {
                     when (it.type) {
                         VAR -> VariableArc(id = it.id)
-                        NORMAL -> NormalArc(id = it.id)
+                        NORMAL -> NormalArc(id = it.id, multiplicity = it.multiplicity)
                     }
                 }
 

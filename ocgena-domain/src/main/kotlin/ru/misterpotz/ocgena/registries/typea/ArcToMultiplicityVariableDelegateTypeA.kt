@@ -40,8 +40,8 @@ class ArcToMultiplicityVariableDelegateTypeA @Inject constructor(
         val targetPlace = arc.arrowNodeId!!
         val objectTypeId = placeToObjectTypeRegistry[targetPlace]
         val batchForType = transitionBufferInfo.getBatchBy(
-            objectTypeId = objectTypeId,
-            arcMeta = VariableArcMetaTypeA
+            toPlaceObjectTypeId = objectTypeId,
+            outputArcMeta = VariableArcMetaTypeA
         )!!
         val tokensAtBuffer = batchForType.size
 

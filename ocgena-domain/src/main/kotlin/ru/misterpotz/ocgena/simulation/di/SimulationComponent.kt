@@ -25,6 +25,7 @@ import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
 import ru.misterpotz.ocgena.simulation.binding.buffer.LockedTokensBufferizerFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.consumer.OutputTokensBufferConsumerFactory
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeAndArcGroupingStrategy
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeGroupingStrategy
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
@@ -286,6 +287,9 @@ interface SimulationComponent {
     fun ocNet(): OCNet
     fun enabledBindingsResolver(): EnabledBindingResolverInteractor
     fun objectTokenRealAmountRegistry(): ObjectTokenRealAmountRegistry
+    fun outputTokensBufferConsumerFactory() : OutputTokensBufferConsumerFactory
+
+    fun batchGroupingStrategy() : TransitionBufferInfo.BatchGroupingStrategy
 
     @Component.Factory
     interface Factory {

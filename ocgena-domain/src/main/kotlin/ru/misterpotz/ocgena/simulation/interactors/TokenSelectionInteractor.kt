@@ -28,7 +28,7 @@ interface TokenSelectionInteractor {
         amount: Int
     ): SelectedAndGeneratedTokens
 
-    fun selectAndRemoveTokensFromBuffer(
+    fun  selectTokensFromBuffer(
         tokenBuffer: TokenBuffer,
         selectionAmount: Int
     ): SortedSet<ObjectTokenId>
@@ -90,7 +90,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
         )
     }
 
-    override fun selectAndRemoveTokensFromBuffer(
+    override fun selectTokensFromBuffer(
         tokenBuffer: TokenBuffer,
         selectionAmount: Int
     ): SortedSet<ObjectTokenId> {
@@ -103,7 +103,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
             randomizer = randomizer
         )
 
-        while (randomIterator.hasNext()) {
+        while (randomIterator.hasNext() && tokenBuffer.isNotEmpty()) {
             val randomIndex = randomIterator.next()
             val objectTokenId = tokenBuffer.elementAt(randomIndex)
             targetSet.add(objectTokenId)

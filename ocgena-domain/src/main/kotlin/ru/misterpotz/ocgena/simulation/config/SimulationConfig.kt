@@ -4,6 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 
 @Serializable
@@ -29,6 +30,70 @@ data class SimulationConfig(
                 nodeToLabelRegistry == settingsSimulationConfig.nodeToLabelRegistry &&
                 tokenGeneration == settingsSimulationConfig.tokenGeneration &&
                 ocNetType == settingsSimulationConfig.ocNetType
+    }
+
+    fun settings(): SettingsSimulationConfig {
+        return SettingsSimulationConfig(
+            initialMarking = initialMarking,
+            transitionInstancesTimesSpec = transitionInstancesTimesSpec,
+            randomSeed = randomSeed,
+            nodeToLabelRegistry = nodeToLabelRegistry,
+            tokenGeneration = tokenGeneration,
+            ocNetType = ocNetType
+        )
+    }
+
+    fun withInitialMarking(map: MutableMap<PetriAtomId, Int>.() -> Unit): SimulationConfig {
+        val initialMarking = initialMarking.placesToTokens.toMutableMap()
+        initialMarking.map()
+
+        return copy(initialMarking = MarkingScheme(initialMarking))
+    }
+
+    fun withTransitionsTimes(
+        block: MutableMap<PetriAtomId, TransitionInstanceTimes>.() -> Unit
+    ): SimulationConfig {
+        val updatedTransitionTimes = transitionInstancesTimesSpec.transitionToTimeSpec.toMutableMap()
+        updatedTransitionTimes.block()
+
+        return copy(
+            transitionInstancesTimesSpec = TransitionInstancesTimesSpec(
+                defaultTransitionTimeSpec = transitionInstancesTimesSpec.defaultTransitionTimeSpec,
+                transitionToTimeSpec = updatedTransitionTimes
+            )
+        )
+    }
+
+    fun withGenerationPlaces(
+        map: MutableMap<PetriAtomId, Int>.() -> Unit
+    ): SimulationConfig {
+        if (tokenGeneration == null) return this
+        val generationPlaces = tokenGeneration.placeIdToGenerationTarget.placesToTokens.toMutableMap()
+        generationPlaces.map()
+
+        return copy(
+            tokenGeneration = TokenGenerationConfig(
+                defaultPeriod = tokenGeneration.defaultPeriod,
+                placeIdToGenerationTarget = MarkingScheme(generationPlaces)
+            )
+        )
+    }
+
+    companion object {
+        fun fromNetAndSettings(
+            ocNet: OCNetStruct,
+            settingsSimulationConfig: SettingsSimulationConfig
+        ): SimulationConfig {
+            return SimulationConfig(
+                ocNet = ocNet,
+                initialMarking = settingsSimulationConfig.initialMarking,
+                transitionInstancesTimesSpec = settingsSimulationConfig.transitionInstancesTimesSpec,
+                randomSeed = settingsSimulationConfig.randomSeed,
+                nodeToLabelRegistry = settingsSimulationConfig.nodeToLabelRegistry,
+                tokenGeneration = settingsSimulationConfig.tokenGeneration,
+                ocNetType = settingsSimulationConfig.ocNetType
+            )
+        }
     }
 }
 

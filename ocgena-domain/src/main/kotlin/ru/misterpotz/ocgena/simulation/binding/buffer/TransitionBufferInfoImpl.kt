@@ -56,15 +56,15 @@ class TransitionBufferInfoImpl(
         )
     }
 
-    override fun getBatchBy(objectTypeId: ObjectTypeId, arcMeta: ArcMeta): TokenBuffer? {
-        return tokenBatchList.getBatchBy(objectTypeId, arcMeta)
+    override fun getBatchBy(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenBuffer? {
+        return tokenBatchList.getBatchBy(toPlaceObjectTypeId, outputArcMeta)
     }
 
-    override fun getInputArcs(): Collection<Arc> {
-        return arcPerBatchSize.keys
-    }
-
-    override fun getTokenAmountComingThroughArc(arc: Arc): Int {
-        return arcPerBatchSize[arc]!!
-    }
+//    override fun getInputArcs(): Collection<Arc> {
+//        return arcPerBatchSize.keys
+//    }
+//
+//    override fun getTokenAmountComingThroughInputArc(arc: Arc): Int {
+//        return arcPerBatchSize[arc]!!
+//    }
 }

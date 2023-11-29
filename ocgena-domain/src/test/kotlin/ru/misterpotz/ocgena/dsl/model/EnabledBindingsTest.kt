@@ -2,10 +2,10 @@ package ru.misterpotz.ocgena.dsl.model
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.dsl.tool.buildSimplestOCNetNoVar
-import ru.misterpotz.ocgena.dsl.tool.component
-import ru.misterpotz.ocgena.dsl.tool.defaultSimConfig
-import ru.misterpotz.ocgena.dsl.tool.simTask
+import ru.misterpotz.ocgena.dsl.buildSimplestOCNetNoVar
+import ru.misterpotz.ocgena.dsl.simComponent
+import ru.misterpotz.ocgena.dsl.defaultSimConfig
+import ru.misterpotz.ocgena.dsl.simTask
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.TransitionInstancesTimesSpec
 
@@ -21,7 +21,7 @@ class EnabledBindingsTest {
             transitionInstancesTimesSpec = TransitionInstancesTimesSpec(),
         )
 
-        val component = component(config)
+        val component = simComponent(config)
         val simTask = simTask(component)
         simTask.prepareRun()
 

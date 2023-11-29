@@ -1,15 +1,7 @@
-package ru.misterpotz.ocgena.dsl.serialization
+package ru.misterpotz.ocgena.dsl
 
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.dsl.tool.buildOCNet
-import ru.misterpotz.ocgena.dsl.tool.readConfig
-import ru.misterpotz.ocgena.dsl.tool.toYaml
-import ru.misterpotz.ocgena.dsl.tool.writeConfig
-import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.OCNetStruct
-import kotlin.io.path.Path
-import kotlin.io.path.div
+
 
 class ModelYamlCreator {
     @Test
@@ -27,11 +19,7 @@ class ModelYamlCreator {
                 }
         }
 
-        val recordedConfig = readConfig<OCNetStruct>(Path("nets") / "one_in_two_out.yaml")
-
-        Assertions.assertEquals(recordedConfig, ocNet)
-//        val yaml = ocNet.toYaml()
-//        yaml.writeConfig(Path("nets") / "one_in_two_out.yaml")
+        writeOrAssertYaml(ocNet, ModelPath.ONE_IN_TWO_OUT.path)
     }
 
     @Test
@@ -46,10 +34,7 @@ class ModelYamlCreator {
                 .arc("o2".p { output; objectTypeId = "2" }) { vari }
         }
 
-        val serialized = readConfig<OCNetStruct>(Path("nets") / "two_in_two_out_var.yaml")
-        Assertions.assertEquals(ocNet, serialized)
-//        val yaml = ocNet.toYaml()
-//        yaml.writeConfig(Path("nets") / "two_in_two_out_var.yaml")
+        writeOrAssertYaml(ocNet, ModelPath.TWO_IN_TWO_OUT.path)
     }
 
     @Test
@@ -72,9 +57,6 @@ class ModelYamlCreator {
             "t3".arc("p3") { norm; multiplicity = 0 }
         }
 
-        val serialized = readConfig<OCNetStruct>(Path("nets") / "one_in_two_middle.yaml")
-        Assertions.assertEquals(ocNet, serialized)
-//        val yaml = ocNet.toYaml()
-//        yaml.writeConfig(Path("nets") / "one_in_two_middle.yaml")
+        writeOrAssertYaml(ocNet, ModelPath.ONE_IN_TWO_MIDDLE.path)
     }
 }

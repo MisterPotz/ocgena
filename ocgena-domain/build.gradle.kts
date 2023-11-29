@@ -28,10 +28,12 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation(kotlin("reflect"))
+    testImplementation("io.mockk:mockk:1.13.8")
+
 }
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(11)
 }
 
 tasks.test {

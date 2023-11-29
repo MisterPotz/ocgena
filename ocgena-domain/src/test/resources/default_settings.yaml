@@ -1,0 +1,13 @@
+init_marking:
+  per_place: {}
+transition_times:
+  default:
+    duration: [10, 10]
+    until_next_permit: [3, 3]
+    per_transition: {}
+seed: 42
+token_gen:
+  default: [25, 25]
+  places_targets:
+    per_place: {}
+oc_net_type: "aalst"

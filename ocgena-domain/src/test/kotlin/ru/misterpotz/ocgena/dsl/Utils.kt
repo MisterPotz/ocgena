@@ -1,5 +1,7 @@
-package ru.misterpotz.ocgena.dsl.tool
+package ru.misterpotz.ocgena.dsl
 
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -7,10 +9,16 @@ import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.dsl.simulation.TestFolder
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
+import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.simulation.SimulationTask
+import ru.misterpotz.ocgena.simulation.binding.TokenBuffer
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
@@ -24,6 +32,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
+val DEFAULT_SETTINGS = Path("default_settings.yaml")
 fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNetStruct {
     val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
     val errors = OCNetChecker(ocNet).checkConsistency()
@@ -70,11 +79,25 @@ fun defaultSimConfig(
     )
 }
 
+
+fun readAndBuildConfig(
+    settingsPath: Path,
+    modelPath: ModelPath,
+): SimulationConfig {
+    val defaultSettings = readConfig<SettingsSimulationConfig>(settingsPath)
+    val model = modelPath.load()
+
+    return SimulationConfig.fromNetAndSettings(
+        model,
+        defaultSettings
+    )
+}
+
 fun domainComponent(): DomainComponent {
     return DomainComponent.create()
 }
 
-fun component(
+fun simComponent(
     simulationConfig: SimulationConfig,
     developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()
 ): SimulationComponent {
@@ -110,7 +133,7 @@ fun config(name: String): File {
 }
 
 fun config(path: Path): File {
-    return File(path.pathString)
+    return path.toFile()
 }
 
 fun String.writeConfig(path: Path) {
@@ -205,4 +228,52 @@ inline fun <reified T, reified R : Any> T.readFolderConfig(name: String): R {
     return withFolderName {
         readFolderConfig<R>(it, name)
     }
+}
+
+fun SimulationComponent.transition(t: PetriAtomId): Transition {
+    val ocNet = ocNet()
+    return ocNet.petriAtomRegistry.getTransition(t)
+}
+
+fun SimulationComponent.mockTransitionBufferInfo(
+    t: PetriAtomId,
+    block: MutableCollection<BatchKeyWithBuffer>.() -> Unit
+): TransitionBufferInfo {
+
+    val trans = transition(t)
+    val simBatchGroupingStrategy = batchGroupingStrategy()
+
+    return mockk<TransitionBufferInfo> {
+        every { transition } returns trans
+        every { batchGroupingStrategy } returns simBatchGroupingStrategy
+
+        val mutableCollection = mutableListOf<BatchKeyWithBuffer>()
+        mutableCollection.block()
+
+        for (i in mutableCollection) {
+            every {
+                getBatchBy(
+                    i.batchKey.objectTypeId,
+                    i.batchKey.arcMeta,
+                )
+            } returns i.tokenBuffer
+        }
+    }
+}
+
+
+data class BatchKey(val objectTypeId: ObjectTypeId, val arcMeta: ArcMeta)
+data class BatchKeyWithBuffer(val batchKey: BatchKey, val tokenBuffer: TokenBuffer)
+
+fun ObjectTypeId.withArcMeta(arcMeta: ArcMeta): BatchKey {
+    return BatchKey(this, arcMeta)
+}
+
+fun BatchKey.withTokenBuffer(set: TokenBuffer): BatchKeyWithBuffer {
+    return BatchKeyWithBuffer(this, set)
+}
+
+
+infix fun MutableCollection<BatchKeyWithBuffer>.unaryPlus(batchKey: BatchKeyWithBuffer) {
+    add(batchKey)
 }

@@ -1,10 +1,11 @@
 package ru.misterpotz.ocgena.dsl.serialization
 
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.dsl.tool.*
-import ru.misterpotz.ocgena.simulation.config.SettingsSimulationConfig
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.dsl.buildOCNet
+import ru.misterpotz.ocgena.dsl.defaultSimConfig
+import ru.misterpotz.ocgena.dsl.writeOrAssertJson
+import ru.misterpotz.ocgena.dsl.writeOrAssertYaml
+import kotlin.io.path.Path
 
 class SerializationTest {
     private val simpleOcNet = buildOCNet {
@@ -19,46 +20,28 @@ class SerializationTest {
     private val simCOnfig = defaultSimConfig(
         ocNet = simpleOcNet
     )
-    private val json_path = "serialized_with_types.json"
-    private val yaml_path = "serialized_with_types.yaml"
-    private val json_settings_path = "serialized_settings.json"
-    private val yaml_settings_path = "serialized_settings.yaml"
+    private val json_path = Path("serialization", "serialized_with_types.json")
+    private val yaml_path = Path("serialization", "serialized_with_types.yaml")
+    private val json_settings_path = Path("serialization", "serialized_settings.json")
+    private val yaml_settings_path = Path("serialization", "serialized_settings.yaml")
 
     @Test
-    fun jsonSerialization() {
-        Assertions.assertTrue(simCOnfig.toJson().isNotBlank())
+    fun jsonInAndOUt() {
+        writeOrAssertJson(simCOnfig, json_path)
     }
 
     @Test
-    fun yamlSerialization() {
-        Assertions.assertTrue(simCOnfig.toYaml().isNotBlank())
-    }
-
-    @Test
-    fun jsonSimpleDeserialization() {
-        val decoded = readConfig<SimulationConfig>(json_path)
-
-        Assertions.assertEquals(simCOnfig, decoded)
-    }
-
-    @Test
-    fun yamlSimpleDeserialization() {
-        val decoded = readConfig<SimulationConfig>(yaml_path)
-
-        Assertions.assertEquals(simCOnfig, decoded)
+    fun yamlInAndOut() {
+        writeOrAssertYaml(simCOnfig, yaml_path)
     }
 
     @Test
     fun `merging model and settings works for json`() {
-        val settings = readConfig<SettingsSimulationConfig>(json_settings_path)
-
-        Assertions.assertTrue(simCOnfig.settingsEqual(settings))
+        writeOrAssertJson(simCOnfig.settings(), json_settings_path)
     }
 
     @Test
     fun `merging model and settings works for yaml`() {
-        val settings = readConfig<SettingsSimulationConfig>(yaml_settings_path)
-
-        Assertions.assertTrue(simCOnfig.settingsEqual(settings))
+        writeOrAssertJson(simCOnfig.settings(), yaml_settings_path)
     }
 }

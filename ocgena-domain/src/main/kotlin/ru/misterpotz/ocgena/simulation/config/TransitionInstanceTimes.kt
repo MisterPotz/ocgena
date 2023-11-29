@@ -15,6 +15,21 @@ data class TransitionInstanceTimes(
         get() = duration.intRange.first
     val latestFiringTime
         get() = duration.intRange.last
+
+    companion object {
+
+    }
+}
+
+fun IntRange.toDuration(): Duration {
+    return Duration(this)
+}
+
+fun IntRange.withUntilNext(intRange: IntRange): TransitionInstanceTimes {
+    return TransitionInstanceTimes(
+        Duration(this),
+        timeUntilNextInstanceIsAllowed = TimeUntilNextInstanceIsAllowed(intRange)
+    )
 }
 
 @Serializable

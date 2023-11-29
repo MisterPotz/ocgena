@@ -6,19 +6,19 @@ import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
-import ru.misterpotz.ocgena.simulation.binding.buffer.OutputMissingTokensGenerator
+import ru.misterpotz.ocgena.simulation.binding.buffer.OutputMissingTokensFiller
 import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import javax.inject.Inject
 
-class OutputMissingTokensGeneratorImpl(
+class OutputMissingTokensFillerImpl(
     private val transitionBufferInfo: TransitionBufferInfo,
     private val transition: Transition,
     private val ocNet: OCNet,
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     private val transitionTokenSelectionInteractor: TokenSelectionInteractor,
-    private val outputMarking: PlaceToObjectMarking
-) : OutputMissingTokensGenerator {
+    override val currentPlaceToObjectMarking: PlaceToObjectMarking
+) : OutputMissingTokensFiller {
     override fun generateMissingTokens(): ImmutablePlaceToObjectMarking {
         val outputPlaces = transition.toPlaces
 
@@ -40,10 +40,10 @@ class OutputMissingTokensGeneratorImpl(
                 val consumedTokens =
                     transitionTokenSelectionInteractor.generateTokens(outputPlaceType, tokensToConsume)
 
-                outputMarking[outputPlace].addAll(consumedTokens)
+                currentPlaceToObjectMarking[outputPlace].addAll(consumedTokens)
             }
         }
-        return outputMarking.toImmutable()
+        return currentPlaceToObjectMarking.toImmutable()
     }
 }
 
@@ -56,8 +56,8 @@ class OutputMissingTokensGeneratorFactory @Inject constructor(
         transitionBufferInfo: TransitionBufferInfo,
         transition: Transition,
         outputMarking: PlaceToObjectMarking
-    ): OutputMissingTokensGenerator {
-        return OutputMissingTokensGeneratorImpl(
+    ): OutputMissingTokensFiller {
+        return OutputMissingTokensFillerImpl(
             transitionBufferInfo,
             transition,
             ocNet,

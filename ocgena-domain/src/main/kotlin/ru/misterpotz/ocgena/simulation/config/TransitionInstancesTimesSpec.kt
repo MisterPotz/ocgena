@@ -30,10 +30,7 @@ data class TransitionInstancesTimesSpec(
                 defaultTransitionTimeSpec = defaultTransitionInstanceTimes,
                 buildMap {
                     block()
-                }.toList().fold(mutableMapOf()) { accum, entry ->
-                    accum[entry.first] = entry.second
-                    accum
-                }
+                }.toMutableMap()
             )
         }
     }
