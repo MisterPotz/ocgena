@@ -8,7 +8,7 @@ enum class SerializationMode {
     READ
 }
 
-val MODE = SerializationMode.WRITE
+val MODE = SerializationMode.READ
 
 inline fun <reified T> writeOrAssertYaml(
     expected: T,
@@ -36,8 +36,8 @@ inline fun <reified T> writeOrAssertJson(
     val corrMode = mode ?: MODE
     when (corrMode) {
         SerializationMode.WRITE -> {
-            val yaml = expected.toJson()
-            yaml.writeConfig(path)
+            val json = expected.toJson()
+            json.writeConfig(path)
         }
         SerializationMode.READ -> {
             val recordedItem = readConfig<T>(path)

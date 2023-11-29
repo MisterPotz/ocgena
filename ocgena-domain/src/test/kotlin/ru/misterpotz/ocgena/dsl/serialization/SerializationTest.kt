@@ -42,6 +42,6 @@ class SerializationTest {
 
     @Test
     fun `merging model and settings works for yaml`() {
-        writeOrAssertJson(simCOnfig.settings(), yaml_settings_path)
+        writeOrAssertYaml(simCOnfig.settings(), yaml_settings_path)
     }
 }

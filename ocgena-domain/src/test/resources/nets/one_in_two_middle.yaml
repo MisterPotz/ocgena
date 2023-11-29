@@ -93,3 +93,4 @@ petri_atoms:
     "t3_p3":
       type: "arc"
       id: "t3_p3"
+      multiplicity: 0

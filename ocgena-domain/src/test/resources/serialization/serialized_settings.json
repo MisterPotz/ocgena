@@ -1,32 +1,32 @@
 {
-  "init_marking": {
-    "per_place": {
-      "p1": 10
-    }
-  },
-  "transition_times": {
-    "default": {
-      "duration": [
-        2,
-        10
-      ],
-      "until_next_permit": [
-        10,
-        100
-      ]
-    }
-  },
-  "seed": 42,
-  "token_gen": {
-    "default": [
-      100,
-      120
-    ],
-    "places_targets": {
-      "per_place": {
-        "p1": 15
-      }
-    }
-  },
-  "oc_net_type": "aalst"
+    "init_marking": {
+        "per_place": {
+            "p1": 10
+        }
+    },
+    "transition_times": {
+        "default": {
+            "duration": [
+                2,
+                10
+            ],
+            "until_next_permit": [
+                10,
+                100
+            ]
+        }
+    },
+    "seed": 42,
+    "token_gen": {
+        "default": [
+            100,
+            120
+        ],
+        "places_targets": {
+            "per_place": {
+                "p1": 15
+            }
+        }
+    },
+    "oc_net_type": "aalst"
 }

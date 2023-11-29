@@ -41,9 +41,11 @@ petri_atoms:
     "p1_t1":
       type: "arc"
       id: "p1_t1"
+      multiplicity: 2
     "t1_p2":
       type: "arc"
       id: "t1_p2"
+      multiplicity: 4
     "t1_p3":
       type: "arc"
       id: "t1_p3"
