@@ -1,0 +1,242 @@
+type: "ru.misterpotz.ocgena.ocnet.OCNetStruct"
+object_types:
+  per_object_type_id:
+    "△order":
+      label: "△order"
+    "△item":
+      label: "△item"
+    "△route":
+      label: "△route"
+place_types:
+  per_place:
+    "o1": "INPUT"
+    "o2": "NORMAL"
+    "o3": "NORMAL"
+    "o4": "NORMAL"
+    "o5": "OUTPUT"
+    "i1": "INPUT"
+    "i2": "NORMAL"
+    "i3": "NORMAL"
+    "i4": "NORMAL"
+    "i5": "NORMAL"
+    "i6": "OUTPUT"
+    "r1": "INPUT"
+    "r2": "NORMAL"
+    "r3": "OUTPUT"
+place_object_types:
+  default: "△0"
+  per_place:
+    "o1": "△order"
+    "o2": "△order"
+    "o3": "△order"
+    "o4": "△order"
+    "o5": "△order"
+    "i1": "△item"
+    "i2": "△item"
+    "i3": "△item"
+    "i4": "△item"
+    "i5": "△item"
+    "i6": "△item"
+    "r1": "△route"
+    "r2": "△route"
+    "r3": "△route"
+petri_atoms:
+  per_id:
+    "o1":
+      type: "place"
+      id: "o1"
+      label: "o1"
+      to_transtns: ["place order"]
+    "o2":
+      type: "place"
+      id: "o2"
+      label: "o2"
+      from_transtns: ["place order"]
+      to_transtns: ["send invoice"]
+    "o3":
+      type: "place"
+      id: "o3"
+      label: "o3"
+      from_transtns: ["send invoice", "send reminder"]
+      to_transtns: ["send reminder", "pay order"]
+    "o4":
+      type: "place"
+      id: "o4"
+      label: "o4"
+      from_transtns: ["pay order"]
+      to_transtns: ["mark as completed"]
+    "o5":
+      type: "place"
+      id: "o5"
+      label: "o5"
+      from_transtns: ["mark as completed"]
+    "i1":
+      type: "place"
+      id: "i1"
+      label: "i1"
+      to_transtns: ["place order"]
+    "i2":
+      type: "place"
+      id: "i2"
+      label: "i2"
+      from_transtns: ["place order"]
+      to_transtns: ["pick item"]
+    "i3":
+      type: "place"
+      id: "i3"
+      label: "i3"
+      from_transtns: ["pick item"]
+      to_transtns: ["start route"]
+    "i4":
+      type: "place"
+      id: "i4"
+      label: "i4"
+      from_transtns: ["start route"]
+      to_transtns: ["end route"]
+    "i5":
+      type: "place"
+      id: "i5"
+      label: "i5"
+      from_transtns: ["end route"]
+      to_transtns: ["mark as completed"]
+    "i6":
+      type: "place"
+      id: "i6"
+      label: "i6"
+      from_transtns: ["mark as completed"]
+    "r1":
+      type: "place"
+      id: "r1"
+      label: "r1"
+      to_transtns: ["start route"]
+    "r2":
+      type: "place"
+      id: "r2"
+      label: "r2"
+      from_transtns: ["start route"]
+      to_transtns: ["end route"]
+    "r3":
+      type: "place"
+      id: "r3"
+      label: "r3"
+      from_transtns: ["end route"]
+    "place order":
+      type: "transition"
+      id: "place order"
+      label: "place order"
+      from_places: ["o1", "i1"]
+      to_places: ["o2", "i2"]
+    "send invoice":
+      type: "transition"
+      id: "send invoice"
+      label: "send invoice"
+      from_places: ["o2"]
+      to_places: ["o3"]
+    "pick item":
+      type: "transition"
+      id: "pick item"
+      label: "pick item"
+      from_places: ["i2"]
+      to_places: ["i3"]
+    "start route":
+      type: "transition"
+      id: "start route"
+      label: "start route"
+      from_places: ["i3", "r1"]
+      to_places: ["i4", "r2"]
+    "end route":
+      type: "transition"
+      id: "end route"
+      label: "end route"
+      from_places: ["i4", "r2"]
+      to_places: ["i5", "r3"]
+    "mark as completed":
+      type: "transition"
+      id: "mark as completed"
+      label: "mark as completed"
+      from_places: ["o4", "i5"]
+      to_places: ["o5", "i6"]
+    "pay order":
+      type: "transition"
+      id: "pay order"
+      label: "pay order"
+      from_places: ["o3"]
+      to_places: ["o4"]
+    "send reminder":
+      type: "transition"
+      id: "send reminder"
+      label: "send reminder"
+      from_places: ["o3"]
+      to_places: ["o3"]
+    "o1_place order":
+      type: "arc"
+      id: "o1_place order"
+    "place order_o2":
+      type: "arc"
+      id: "place order_o2"
+    "o2_send invoice":
+      type: "arc"
+      id: "o2_send invoice"
+    "send invoice_o3":
+      type: "arc"
+      id: "send invoice_o3"
+    "o3_send reminder":
+      type: "arc"
+      id: "o3_send reminder"
+    "send reminder_o3":
+      type: "arc"
+      id: "send reminder_o3"
+    "o3_pay order":
+      type: "arc"
+      id: "o3_pay order"
+    "pay order_o4":
+      type: "arc"
+      id: "pay order_o4"
+    "o4_mark as completed":
+      type: "arc"
+      id: "o4_mark as completed"
+    "mark as completed_o5":
+      type: "arc"
+      id: "mark as completed_o5"
+    "i1_place order":
+      type: "vararc"
+      id: "i1_place order"
+    "place order_i2":
+      type: "vararc"
+      id: "place order_i2"
+    "i2_pick item":
+      type: "arc"
+      id: "i2_pick item"
+    "pick item_i3":
+      type: "arc"
+      id: "pick item_i3"
+    "i3_start route":
+      type: "vararc"
+      id: "i3_start route"
+    "start route_i4":
+      type: "vararc"
+      id: "start route_i4"
+    "i4_end route":
+      type: "vararc"
+      id: "i4_end route"
+    "end route_i5":
+      type: "vararc"
+      id: "end route_i5"
+    "i5_mark as completed":
+      type: "vararc"
+      id: "i5_mark as completed"
+    "mark as completed_i6":
+      type: "vararc"
+      id: "mark as completed_i6"
+    "r1_start route":
+      type: "arc"
+      id: "r1_start route"
+    "start route_r2":
+      type: "arc"
+      id: "start route_r2"
+    "r2_end route":
+      type: "arc"
+      id: "r2_end route"
+    "end route_r3":
+      type: "arc"
+      id: "end route_r3"
