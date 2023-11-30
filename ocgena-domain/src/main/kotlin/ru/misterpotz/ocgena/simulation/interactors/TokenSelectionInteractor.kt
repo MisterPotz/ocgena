@@ -17,26 +17,22 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 interface TokenSelectionInteractor {
-
-    class SelectedAndGeneratedTokens(
-        val selected: SortedSet<ObjectTokenId>,
-        val initialized: SortedSet<ObjectTokenId>
-    )
-
     fun selectAndInitializeTokensFromPlace(
         petriAtomId: PetriAtomId,
         amount: Int
     ): SelectedAndGeneratedTokens
 
-    fun  selectTokensFromBuffer(
+    fun selectTokensFromBuffer(
         tokenBuffer: TokenBuffer,
         selectionAmount: Int
     ): SortedSet<ObjectTokenId>
 
     fun generateTokens(objectTypeId: ObjectTypeId, amount: Int): SortedSet<ObjectTokenId>
 
-    fun shuffleTokens(tokens: List<ObjectTokenId>): List<ObjectTokenId>
-    fun shuffleTokens(tokens: SortedSet<ObjectTokenId>): SortedSet<ObjectTokenId>
+    class SelectedAndGeneratedTokens(
+        val selected: SortedSet<ObjectTokenId>,
+        val initialized: SortedSet<ObjectTokenId>
+    )
 }
 
 class TokenSelectionInteractorImpl @Inject constructor(
@@ -126,17 +122,6 @@ class TokenSelectionInteractorImpl @Inject constructor(
         return random?.let {
             ByRandomRandomizer(random)
         } ?: NoOpIteratorRandomizer()
-    }
-
-    override fun shuffleTokens(tokens: List<ObjectTokenId>): List<ObjectTokenId> {
-        if (random == null) return repeatabilityInteractor.sortTokens(tokens)
-        return repeatabilityInteractor.sortTokens(tokens).shuffled(random)
-    }
-
-    override fun shuffleTokens(tokens: SortedSet<ObjectTokenId>): SortedSet<ObjectTokenId> {
-        if (random == null) return tokens
-
-        return tokens.shuffled(random).toSortedSet()
     }
 
     companion object {

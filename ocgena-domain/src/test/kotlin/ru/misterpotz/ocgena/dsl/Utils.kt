@@ -21,7 +21,6 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.ocnet.utils.prependId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
-import ru.misterpotz.ocgena.simulation.ObjectToken
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.SimulationTask
 import ru.misterpotz.ocgena.simulation.binding.TokenBuffer
@@ -136,7 +135,11 @@ fun Int.withType(objectTypeId: ObjectTypeId): ObjectTokenIdAndType {
     return ObjectTokenIdAndType(this.toLong(), objectTypeId)
 }
 
-fun withType(objectTypeId: ObjectTypeId, vararg objectTokenId: ObjectTokenId): List<ObjectTokenIdAndType> {
+fun MutableList<ObjectTokenIdAndType>.addOfType(objectTypeId: ObjectTypeId, vararg objectTokenId: ObjectTokenId) {
+    addAll(ofType(objectTypeId, *objectTokenId))
+}
+
+fun ofType(objectTypeId: ObjectTypeId, vararg objectTokenId: ObjectTokenId): List<ObjectTokenIdAndType> {
     val list = mutableListOf<ObjectTokenIdAndType>()
     for (i in objectTokenId) {
         list.add(

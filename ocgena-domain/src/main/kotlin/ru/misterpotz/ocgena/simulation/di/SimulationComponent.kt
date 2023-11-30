@@ -289,7 +289,9 @@ interface SimulationComponent {
     fun outputMissingTokensGeneratorFactory(): OutputMissingTokensGeneratorFactory
     fun batchGroupingStrategy(): TransitionBufferInfo.BatchGroupingStrategy
     fun objectTokenSet(): ObjectTokenSet
-    fun objectTokenGenerator() : ObjectTokenGenerator
+    fun objectTokenGenerator(): ObjectTokenGenerator
+    fun tokenSelectionInteractor(): TokenSelectionInteractor
+
     @Component.Factory
     interface Factory {
         fun create(
