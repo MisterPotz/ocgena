@@ -59,4 +59,10 @@ class ModelYamlCreator {
 
         writeOrAssertYaml(ocNet, ModelPath.ONE_IN_TWO_MIDDLE.path)
     }
+
+    @Test
+    fun aalst() {
+        val ocnet = createExampleModel()
+        writeOrAssertYaml(ocnet, ModelPath.AALST.path)
+    }
 }
