@@ -1,10 +1,10 @@
 init_marking:
   per_place: {}
-transition_times:
+transitions:
   default:
     duration: [10, 10]
-    until_next_permit: [3, 3]
-    per_transition: {}
+    until_next_permit: [0, 0]
+    per_transition:
 seed: 42
 token_gen:
   default: [25, 25]

@@ -98,7 +98,7 @@
             "p1": 10
         }
     },
-    "transition_times": {
+    "transitions": {
         "default": {
             "duration": [
                 2,

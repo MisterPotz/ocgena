@@ -4,7 +4,7 @@ import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
-import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
 import javax.inject.Inject
 
 class PlaceToObjectMarkingBySchemeCreatorFactory @Inject constructor(

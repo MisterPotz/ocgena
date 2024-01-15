@@ -6,14 +6,15 @@ import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
 
 @Serializable
 data class SimulationConfig(
     val ocNet: OCNetStruct,
     @SerialName("init_marking")
     val initialMarking: MarkingScheme,
-    @SerialName("transition_times")
-    val transitionInstancesTimesSpec: TransitionInstancesTimesSpec,
+    @SerialName("transitions")
+    val transitionsSpec: TransitionsSpec,
     @SerialName("seed")
     val randomSeed: Int?,
     @SerialName("labels")
@@ -22,10 +23,13 @@ data class SimulationConfig(
     val tokenGeneration: TokenGenerationConfig?,
     @SerialName("oc_net_type")
     val ocNetType: OcNetType,
+    @SerialName("semantics")
+    val simulationSemantics: SimulationSemantics
+
 ) {
     fun settingsEqual(settingsSimulationConfig: SettingsSimulationConfig): Boolean {
         return initialMarking == settingsSimulationConfig.initialMarking &&
-                transitionInstancesTimesSpec == settingsSimulationConfig.transitionInstancesTimesSpec &&
+                transitionsSpec == settingsSimulationConfig.transitionsSpec &&
                 randomSeed == settingsSimulationConfig.randomSeed &&
                 nodeToLabelRegistry == settingsSimulationConfig.nodeToLabelRegistry &&
                 tokenGeneration == settingsSimulationConfig.tokenGeneration &&
@@ -35,11 +39,12 @@ data class SimulationConfig(
     fun settings(): SettingsSimulationConfig {
         return SettingsSimulationConfig(
             initialMarking = initialMarking,
-            transitionInstancesTimesSpec = transitionInstancesTimesSpec,
+            transitionsSpec = transitionsSpec,
             randomSeed = randomSeed,
             nodeToLabelRegistry = nodeToLabelRegistry,
             tokenGeneration = tokenGeneration,
-            ocNetType = ocNetType
+            ocNetType = ocNetType,
+            simulationSemantics = simulationSemantics
         )
     }
 
@@ -50,17 +55,19 @@ data class SimulationConfig(
         return copy(initialMarking = MarkingScheme(initialMarking))
     }
 
-    fun withTransitionsTimes(
-        block: MutableMap<PetriAtomId, TransitionInstanceTimes>.() -> Unit
+    @Suppress("UNCHECKED_CAST")
+    fun <T : TransitionsSpec> castTransitions(): T {
+        return transitionsSpec as T
+    }
+
+    inline fun <reified T : TransitionsSpec> withTransitionsTimes(
+        block: T.() -> T
     ): SimulationConfig {
-        val updatedTransitionTimes = transitionInstancesTimesSpec.transitionToTimeSpec.toMutableMap()
-        updatedTransitionTimes.block()
+        val t: T = transitionsSpec as T
+        val newTransSpec = t.block()
 
         return copy(
-            transitionInstancesTimesSpec = TransitionInstancesTimesSpec(
-                defaultTransitionTimeSpec = transitionInstancesTimesSpec.defaultTransitionTimeSpec,
-                transitionToTimeSpec = updatedTransitionTimes
-            )
+            transitionsSpec = newTransSpec
         )
     }
 
@@ -87,11 +94,12 @@ data class SimulationConfig(
             return SimulationConfig(
                 ocNet = ocNet,
                 initialMarking = settingsSimulationConfig.initialMarking,
-                transitionInstancesTimesSpec = settingsSimulationConfig.transitionInstancesTimesSpec,
+                transitionsSpec = settingsSimulationConfig.transitionsSpec,
                 randomSeed = settingsSimulationConfig.randomSeed,
                 nodeToLabelRegistry = settingsSimulationConfig.nodeToLabelRegistry,
                 tokenGeneration = settingsSimulationConfig.tokenGeneration,
-                ocNetType = settingsSimulationConfig.ocNetType
+                ocNetType = settingsSimulationConfig.ocNetType,
+                simulationSemantics = settingsSimulationConfig.simulationSemantics
             )
         }
     }
@@ -101,8 +109,8 @@ data class SimulationConfig(
 data class SettingsSimulationConfig(
     @SerialName("init_marking")
     val initialMarking: MarkingScheme,
-    @SerialName("transition_times")
-    val transitionInstancesTimesSpec: TransitionInstancesTimesSpec,
+    @SerialName("transitions")
+    val transitionsSpec: TransitionsSpec,
     @SerialName("seed")
     val randomSeed: Int?,
     @SerialName("labels")
@@ -111,4 +119,6 @@ data class SettingsSimulationConfig(
     val tokenGeneration: TokenGenerationConfig?,
     @SerialName("oc_net_type")
     val ocNetType: OcNetType,
+    @SerialName("semantics")
+    val simulationSemantics: SimulationSemantics
 )

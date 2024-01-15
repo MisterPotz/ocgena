@@ -5,6 +5,7 @@ import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import ru.misterpotz.ocgena.simulation.logging.LogEvent
 import ru.misterpotz.ocgena.simulation.logging.LoggingEvent
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
 import javax.inject.Inject
 
 class StepAggregatingLogCreator @Inject constructor(

@@ -1,38 +1,57 @@
 package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.registries.original.TransitionToInstancesRegistryOriginal
+import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
-import ru.misterpotz.ocgena.simulation.generator.TransitionNextInstanceAllowedTimeGenerator
+import ru.misterpotz.ocgena.simulation.generator.original.TransitionNextInstanceAllowedTimeGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.logging.Logger
+import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
 import javax.inject.Inject
 
+
+interface SimulationTaskPreparator {
+    fun prepare()
+}
+
+class SimulationTaskPreparatorOriginal(
+    val simulationConfig: SimulationConfig,
+    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
+    private val activityAllowedTimeSelector: TransitionNextInstanceAllowedTimeGeneratorOriginal,
+    private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
+    private val transitionToInstancesRegistry: TransitionToInstancesRegistryOriginal,
+    private val currentSimulationStateOriginal: CurrentSimulationStateOriginal
+) : SimulationTaskPreparator {
+    override fun prepare() {
+        simulationConfig.initialMarking.placesToTokens.forEach { (petriAtomId, amount) ->
+            objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, amount)
+        }
+        for (transition in simulationConfig.ocNet.transitionsRegistry.iterable) {
+            val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
+            currentSimulationStateOriginal.tTimesMarking.setNextAllowedTime(transition.id, nextAllowedTime)
+        }
+        newTokenTimeBasedGenerator.planTokenGenerationForEveryone()
+
+    }
+}
 
 class SimulationTask @Inject constructor(
     private val simulationStateProvider: SimulationStateProvider,
     private val executionConditions: ExecutionConditions,
     private val logger: Logger,
-    private val activityAllowedTimeSelector: TransitionNextInstanceAllowedTimeGenerator,
-    private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
+    private val simulationTaskPreparator: SimulationTaskPreparator,
     private val currentStateDelegate: CurrentSimulationDelegate,
     private val stepExecutor: SimulationTaskStepExecutor,
     private val developmentDebugConfig: DevelopmentDebugConfig,
-    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
     private val executionContinuation: ExecutionContinuation
 ) : CurrentSimulationDelegate by currentStateDelegate {
     private var finishRequested = false;
 
     private fun prepare() {
-        initialMarkingScheme.placesToTokens.forEach { (petriAtomId, amount) ->
-            objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, amount)
-        }
-        for (transition in ocNet.ocNet.transitionsRegistry.iterable) {
-            val nextAllowedTime = activityAllowedTimeSelector.getNewActivityNextAllowedTime(transition.id)
-            state.tTimesMarking.setNextAllowedTime(transition.id, nextAllowedTime)
-        }
-        newTokenTimeBasedGenerator.planTokenGenerationForEveryone()
+        simulationTaskPreparator.prepare()
     }
 
 

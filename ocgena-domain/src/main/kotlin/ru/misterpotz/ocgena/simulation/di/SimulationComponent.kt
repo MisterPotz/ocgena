@@ -14,6 +14,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.OcNetType.LOMAZOVA
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.registries.delegates.CompoundArcsMultiplicityDelegate
+import ru.misterpotz.ocgena.registries.original.TransitionToInstancesRegistryOriginal
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityVariableDelegateTypeA
 import ru.misterpotz.ocgena.registries.typel.ArcToMultiplicityVariableDelegateTypeL
@@ -26,27 +27,39 @@ import ru.misterpotz.ocgena.simulation.binding.generator.OutputMissingTokensGene
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeAndArcGroupingStrategy
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeGroupingStrategy
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.continuation.NoOpExecutionContinuation
 import ru.misterpotz.ocgena.simulation.generator.*
+import ru.misterpotz.ocgena.simulation.generator.original.TransitionInstanceDurationGeneratorOriginal
+import ru.misterpotz.ocgena.simulation.generator.original.TransitionNextInstanceAllowedTimeGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.interactors.*
+import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
+import ru.misterpotz.ocgena.simulation.interactors.original.EnabledBindingResolverInteractorOriginalImpl
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
 import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
 import ru.misterpotz.ocgena.simulation.logging.Logger
-import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegate
-import ru.misterpotz.ocgena.simulation.logging.loggers.CurrentSimulationDelegateImpl
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegateImpl
 import ru.misterpotz.ocgena.simulation.logging.loggers.NoOpStepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
+import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
+import ru.misterpotz.ocgena.simulation.stepexecutor.OriginalStepExecutor
+import ru.misterpotz.ocgena.simulation.stepexecutor.StepExecutor
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
 import ru.misterpotz.ocgena.simulation.structure.State
 import ru.misterpotz.ocgena.simulation.token_generation.ObjectTokenGenerator
+import ru.misterpotz.ocgena.simulation.transition.TransitionInstanceCreatorFacadeOriginal
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import simulation.random.RandomFactoryImpl
+import java.lang.IllegalStateException
+import javax.inject.Provider
 import javax.inject.Scope
 import kotlin.random.Random
 
@@ -88,7 +101,7 @@ internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun enabledBindingResolverInteractor(
-        enabledBindingResolverInteractorImpl: EnabledBindingResolverInteractorImpl
+        enabledBindingResolverInteractorOriginalImpl: EnabledBindingResolverInteractorOriginalImpl
     ): EnabledBindingResolverInteractor
 
     companion object {
@@ -115,10 +128,10 @@ internal abstract class SimulationModule {
         fun provideTransitionDurationSelector(
             random: Random,
             simulationConfig: SimulationConfig
-        ): TransitionInstanceDurationGenerator {
-            return TransitionInstanceDurationGenerator(
+        ): TransitionInstanceDurationGeneratorOriginal {
+            return TransitionInstanceDurationGeneratorOriginal(
                 random,
-                transitionInstancesTimesSpec = simulationConfig.transitionInstancesTimesSpec
+                transitionsOriginalSpec = simulationConfig.castTransitions()
             )
         }
 
@@ -152,17 +165,6 @@ internal abstract class SimulationModule {
             return ObjectTokenGenerator(objectTokenSet)
         }
 
-        @Provides
-        @SimulationScope
-        fun transitionInstanceOccurrenceDeltaSelector(
-            random: Random,
-            simulationConfig: SimulationConfig
-        ): TransitionNextInstanceAllowedTimeGenerator {
-            return TransitionNextInstanceAllowedTimeGenerator(
-                random,
-                transitionInstancesTimesSpec = simulationConfig.transitionInstancesTimesSpec
-            )
-        }
 
         @Provides
         @SimulationScope
@@ -183,6 +185,65 @@ internal abstract class SimulationModule {
             newTokenTimeBasedGeneratorFactory: NewTokenTimeBasedGeneratorFactory
         ): NewTokenTimeBasedGenerator {
             return newTokenTimeBasedGeneratorFactory.createGenerationQueue(simulationConfig)
+        }
+
+        @Provides
+        @SimulationScope
+        fun provideSimulationTaskPreparatorOriginal(
+            simulationConfig: SimulationConfig,
+            objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
+            transitionNextInstanceAllowedTimeGeneratorOriginal: TransitionNextInstanceAllowedTimeGeneratorOriginal,
+            newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
+            transitionToInstancesRegistryOriginal: TransitionToInstancesRegistryOriginal,
+            currentSimulationStateOriginal: CurrentSimulationStateOriginal,
+        ): SimulationTaskPreparatorOriginal {
+            return SimulationTaskPreparatorOriginal(
+                simulationConfig = simulationConfig,
+                objectTokenRealAmountRegistry = objectTokenRealAmountRegistry,
+                activityAllowedTimeSelector = transitionNextInstanceAllowedTimeGeneratorOriginal,
+                newTokenTimeBasedGenerator = newTokenTimeBasedGenerator,
+                transitionToInstancesRegistry = transitionToInstancesRegistryOriginal,
+                currentSimulationStateOriginal = currentSimulationStateOriginal
+            )
+        }
+
+        @Provides
+        @SimulationScope
+        fun provideTransitionToInstancesRegistryOriginal(): TransitionToInstancesRegistryOriginal {
+            return TransitionToInstancesRegistryOriginal()
+        }
+
+        @Provides
+        @SimulationScope
+        fun provideSimulationTaskPreparator(
+            simulationConfig: SimulationConfig,
+            simulationTaskPreparatorProvider: Provider<SimulationTaskPreparatorOriginal>
+        ): SimulationTaskPreparator {
+            val simulationTaskPreparator = when (simulationConfig.simulationSemantics.type) {
+                SimulationSemanticsType.ORIGINAL -> {
+                    require(simulationConfig.transitionsSpec is TransitionsOriginalSpec)
+                    val new = simulationTaskPreparatorProvider.get()
+                    require(new is SimulationTaskPreparatorOriginal)
+                    new
+                }
+
+                SimulationSemanticsType.SIMPLE_TIME_PN -> {
+                    throw IllegalStateException()
+                }
+            }
+            return simulationTaskPreparator
+        }
+
+        @Provides
+        @SimulationScope
+        fun provideTransitionNextInstanceAllowedTimeGenerator(
+            random: Random,
+            simulationConfig: SimulationConfig
+        ): TransitionNextInstanceAllowedTimeGeneratorOriginal {
+            return TransitionNextInstanceAllowedTimeGeneratorOriginal(
+                random = random,
+                transitionsOriginalSpec = simulationConfig.castTransitions()
+            )
         }
 
         @Provides
@@ -209,6 +270,46 @@ internal abstract class SimulationModule {
             )
         }
 
+        @Provides
+        @SimulationScope
+        fun providesCurrentSimulationStateOriginal() = CurrentSimulationStateOriginal()
+
+
+        @Provides
+        @SimulationScope
+        fun provideStepExecutor(
+            simulationConfig: SimulationConfig,
+            simulationStateProvider: SimulationStateProvider,
+            bindingSelectionInteractor: BindingSelectionInteractor,
+            tiFinisher: TIFinisher,
+            transitionToInstancesRegistryOriginal: Provider<TransitionInstanceCreatorFacadeOriginal>,
+            logger : Logger,
+            newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
+            enabledBindingsCollectorInteractor : EnabledBindingsCollectorInteractor,
+            objectTokenSet: ObjectTokenSet,
+            objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
+            currentSimulationStateOriginal: Provider<CurrentSimulationStateOriginal>
+        ): StepExecutor {
+            return when (simulationConfig.simulationSemantics.type) {
+                SimulationSemanticsType.ORIGINAL -> {
+                    OriginalStepExecutor(
+                        simulationStateProvider,
+                        bindingSelectionInteractor = bindingSelectionInteractor,
+                        transitionFinisher = tiFinisher,
+                        transitionInstanceCreatorFacadeOriginal = transitionToInstancesRegistryOriginal.get(),
+                        logger = logger,
+                        newTokenTimeBasedGenerator = newTokenTimeBasedGenerator,
+                        bindingsCollector = enabledBindingsCollectorInteractor,
+                        objectTokenSet = objectTokenSet,
+                        objectTokenRealAmountRegistry = objectTokenRealAmountRegistry,
+                        currentSimulationStateOriginal = currentSimulationStateOriginal.get()
+                    )
+                }
+                SimulationSemanticsType.SIMPLE_TIME_PN -> {
+                    throw IllegalStateException()
+                }
+            }
+        }
 
         @Provides
         @SimulationScope
@@ -265,6 +366,7 @@ internal abstract class SimulationModule {
         ): TransitionBufferInfo.BatchGroupingStrategy {
             return byObjTypeGroupingStrategy
         }
+
     }
 }
 

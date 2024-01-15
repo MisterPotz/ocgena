@@ -61,7 +61,7 @@ ocNet:
 init_marking:
   per_place:
     "p1": 10
-transition_times:
+transitions:
   default:
     duration: [2, 10]
     until_next_permit: [10, 100]
