@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.test_config.original
+package ru.misterpotz.ocgena.serialization
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

@@ -1,6 +1,10 @@
-package ru.misterpotz.ocgena
+package ru.misterpotz.ocgena.serialization
 
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.ModelPath
+import ru.misterpotz.ocgena.buildOCNet
+import ru.misterpotz.ocgena.createExampleModel
+import ru.misterpotz.ocgena.writeOrAssertYaml
 
 
 class ModelYamlCreator {

@@ -6,6 +6,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.config.TransitionsSpec
 
 @Serializable
+@SerialName("original")
 data class TransitionsOriginalSpec(
     @SerialName("default")
     val defaultTransitionTimeSpec: TransitionInstanceTimes = TransitionInstanceTimes(

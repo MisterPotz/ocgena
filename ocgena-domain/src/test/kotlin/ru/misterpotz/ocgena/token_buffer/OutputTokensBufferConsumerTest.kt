@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.token_buffer.original
+package ru.misterpotz.ocgena.token_buffer
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions

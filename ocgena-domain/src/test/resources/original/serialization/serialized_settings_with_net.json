@@ -99,6 +99,7 @@
         }
     },
     "transitions": {
+        "type": "original",
         "default": {
             "duration": [
                 2,
@@ -122,5 +123,8 @@
             }
         }
     },
-    "oc_net_type": "aalst"
+    "oc_net_type": "aalst",
+    "semantics": {
+        "type": "original"
+    }
 }

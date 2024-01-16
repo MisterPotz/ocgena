@@ -4,13 +4,10 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions.assertTrue
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.di.DomainComponent
-import ru.misterpotz.ocgena.simulation.original.TestFolder
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
@@ -33,16 +30,11 @@ import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
-import ru.misterpotz.ocgena.utils.findInstance
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.validation.OCNetChecker
-import java.io.File
-import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.div
-import kotlin.io.path.pathString
 
-val DEFAULT_SETTINGS = Path("default_settings.yaml")
 val DOMAIN_COMPONENT = domainComponent()
 
 fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNetStruct {
@@ -65,7 +57,7 @@ fun buildSimplestOCNetNoVar(): OCNetStruct {
     }
 }
 
-fun defaultSimConfig(
+fun defaultSimConfigOriginal(
     ocNet: OCNetStruct,
 ): SimulationConfig {
     return SimulationConfig(
@@ -87,23 +79,38 @@ fun defaultSimConfig(
                 put("p1", 15)
             }
         ),
-        ocNetType = OcNetType.AALST
+        ocNetType = OcNetType.AALST,
+        simulationSemantics = SimulationSemantics(type = SimulationSemanticsType.ORIGINAL)
     )
 }
 
-
-fun readAndBuildConfig(
-    settingsPath: Path,
-    modelPath: ModelPath,
+fun defaultSimConfigTimePN(
+    ocNet: OCNetStruct,
 ): SimulationConfig {
-    val defaultSettings = readConfig<SettingsSimulationConfig>(settingsPath)
-    val model = modelPath.load()
-
-    return SimulationConfig.fromNetAndSettings(
-        model,
-        defaultSettings
+    return SimulationConfig(
+        ocNet,
+        initialMarking = MarkingScheme.of {
+            put("p1", 10)
+        },
+        transitionsSpec = TransitionsOriginalSpec(
+            defaultTransitionTimeSpec = TransitionInstanceTimes(
+                duration = Duration(2..10),
+                timeUntilNextInstanceIsAllowed = TimeUntilNextInstanceIsAllowed(10..100)
+            )
+        ),
+        randomSeed = 42,
+        nodeToLabelRegistry = NodeToLabelRegistry(),
+        tokenGeneration = TokenGenerationConfig(
+            defaultPeriod = Period(100..120),
+            placeIdToGenerationTarget = MarkingScheme.of {
+                put("p1", 15)
+            }
+        ),
+        ocNetType = OcNetType.AALST,
+        simulationSemantics = SimulationSemantics(type = SimulationSemanticsType.SIMPLE_TIME_PN)
     )
 }
+
 
 fun domainComponent(): DomainComponent {
     return DomainComponent.create()
@@ -207,109 +214,7 @@ data class FacadeSim(
 //    return
 //}
 
-val resPath = "src/test/resources/"
-val res = File(resPath)
 
-fun config(name: String): File {
-    return File(res, name)
-}
-
-fun config(path: Path): File {
-    return path.toFile()
-}
-
-fun String.writeConfig(path: Path) {
-    val pathCorrected = appendPathWithRes(path = path)
-    pathCorrected.toFile().writeText(this)
-}
-
-inline fun <reified T> jsonConfig(name: String): T {
-    val text = config(name).readText()
-
-    return DOMAIN_COMPONENT.json.decodeFromString<T>(text)
-}
-
-inline fun <reified T> yamlConfig(name: String): T {
-    val text = config(name).readText()
-
-    return DOMAIN_COMPONENT.yaml.decodeFromString<T>(text)
-}
-
-inline fun <reified T> jsonConfig(path: Path): T {
-
-    val text = config(path).readText()
-
-    return DOMAIN_COMPONENT.json.decodeFromString<T>(text)
-}
-
-inline fun <reified T> yamlConfig(path: Path): T {
-    val text = config(path).readText()
-
-    return DOMAIN_COMPONENT.yaml.decodeFromString<T>(text)
-}
-
-inline fun <reified T> T.toYaml(): String {
-    return DOMAIN_COMPONENT.yaml.encodeToString(this)
-}
-
-inline fun <reified T> T.toJson(): String {
-    return DOMAIN_COMPONENT.json.encodeToString(this)
-}
-
-inline fun <reified T> readConfig(name: String): T {
-    return if (name.endsWith(".json")) {
-        jsonConfig<T>(name)
-    } else if (name.endsWith(".yaml")) {
-        yamlConfig<T>(name)
-    } else {
-        throw IllegalStateException()
-    }
-}
-
-fun appendPathWithRes(path: Path): Path {
-    val resPath = Path(resPath)
-    return if (path.first() == resPath) {
-        path
-    } else {
-        resPath / path
-    }
-}
-
-inline fun <reified T> readConfig(path: Path): T {
-    val path = appendPathWithRes(path = path)
-
-    return if (path.pathString.endsWith(".json")) {
-        jsonConfig<T>(path)
-    } else if (path.pathString.endsWith(".yaml")) {
-        yamlConfig<T>(path)
-    } else {
-        throw IllegalStateException()
-    }
-}
-
-inline fun <reified T> readFolderConfig(folderName: String, name: String): T {
-    val withFolderPath = Path(resPath) / folderName / name
-
-    val string = withFolderPath.pathString
-    return if (string.endsWith(".json")) {
-        jsonConfig<T>(withFolderPath)
-    } else if (string.endsWith(".yaml")) {
-        yamlConfig<T>(withFolderPath)
-    } else {
-        throw IllegalStateException()
-    }
-}
-
-inline fun <reified T, R : Any> T.withFolderName(action: (String) -> R): R {
-    val folderName = this!!::class.annotations.findInstance<TestFolder>()!!.folderName
-    return action(folderName)
-}
-
-inline fun <reified T, reified R : Any> T.readFolderConfig(name: String): R {
-    return withFolderName {
-        readFolderConfig<R>(it, name)
-    }
-}
 
 fun SimulationComponent.transition(t: PetriAtomId): Transition {
     val ocNet = ocNet()

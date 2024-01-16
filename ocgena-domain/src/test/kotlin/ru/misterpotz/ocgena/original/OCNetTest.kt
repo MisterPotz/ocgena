@@ -1,11 +1,10 @@
-package ru.misterpotz.ocgena.model
+package ru.misterpotz.ocgena.original
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import ru.misterpotz.ocgena.*
-import ru.misterpotz.ocgena.dsl.*
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 import java.util.concurrent.TimeUnit

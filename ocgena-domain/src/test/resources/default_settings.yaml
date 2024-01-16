@@ -1,13 +1,10 @@
-init_marking:
-  per_place: {}
+init_marking: {}
 transitions:
-  default:
-    duration: [10, 10]
-    until_next_permit: [0, 0]
-    per_transition:
+  type: "original"
 seed: 42
 token_gen:
   default: [25, 25]
-  places_targets:
-    per_place: {}
+  places_targets: {}
 oc_net_type: "aalst"
+semantics:
+  type: "original"

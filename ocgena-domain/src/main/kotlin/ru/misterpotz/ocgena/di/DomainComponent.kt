@@ -25,6 +25,9 @@ import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
 import ru.misterpotz.ocgena.serialization.*
+import ru.misterpotz.ocgena.simulation.config.TransitionsSpec
+import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import javax.inject.Scope
 
@@ -71,6 +74,10 @@ class DomainModule {
                 }
                 polymorphic(PlaceToObjectMarking::class) {
                     subclass(PlaceToObjectMarkingMap.serializer())
+                }
+                polymorphic(TransitionsSpec::class) {
+                    subclass(TransitionsOriginalSpec.serializer())
+                    subclass(TransitionsTimePNSpec.serializer())
                 }
             }
         }

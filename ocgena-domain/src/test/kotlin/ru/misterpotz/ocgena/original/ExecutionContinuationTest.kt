@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.simulation.original
+package ru.misterpotz.ocgena.original
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions

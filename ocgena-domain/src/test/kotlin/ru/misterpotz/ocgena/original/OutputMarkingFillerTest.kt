@@ -1,24 +1,24 @@
-package ru.misterpotz.ocgena.model
+package ru.misterpotz.ocgena.original
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.buildSimplestOCNetNoVar
 import ru.misterpotz.ocgena.simComponent
-import ru.misterpotz.ocgena.defaultSimConfig
+import ru.misterpotz.ocgena.defaultSimConfigOriginal
 import ru.misterpotz.ocgena.simTask
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 
-class EnabledBindingsTest {
+class OutputMarkingFillerTest {
     @Test
     fun enabledBindingsAreFound() {
         val ocNet = buildSimplestOCNetNoVar()
 
-        val config = defaultSimConfig(ocNet).copy(
+        val config = defaultSimConfigOriginal(ocNet).copy(
             initialMarking = MarkingScheme.of {
                 put("p1", 10)
             },
-            transitionsSpec = TransitionsOriginalSpec(),
+            transitionsSpec = TransitionsOriginalSpec()
         )
 
         val component = simComponent(config)

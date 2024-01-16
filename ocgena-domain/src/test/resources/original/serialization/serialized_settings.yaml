@@ -2,6 +2,7 @@ init_marking:
   per_place:
     "p1": 10
 transitions:
+  type: "original"
   default:
     duration: [2, 10]
     until_next_permit: [10, 100]
@@ -12,3 +13,5 @@ token_gen:
     per_place:
       "p1": 15
 oc_net_type: "aalst"
+semantics:
+  type: "original"
