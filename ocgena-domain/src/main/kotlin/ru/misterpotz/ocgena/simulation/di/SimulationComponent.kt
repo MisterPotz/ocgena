@@ -358,8 +358,8 @@ internal abstract class SimulationModule {
         fun prePlaceRegistry(
             ocNet: OCNet,
             arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
-        ): PrePostPlaceRegistry {
-            return PrePostPlaceRegistryImpl.create(
+        ): PrePlaceRegistry {
+            return PrePlaceRegistryImpl.create(
                 ocNet,
                 arcPrePlaceHasEnoughTokensChecker = arcPrePlaceHasEnoughTokensChecker
             )
@@ -415,7 +415,7 @@ interface SimulationComponent {
     fun objectTokenGenerator(): ObjectTokenGenerator
     fun newTokenGenerationFacade(): NewTokenGenerationFacade
     fun tokenSelectionInteractor(): TokenSelectionInteractor
-    fun prePostPlaceRegistry(): PrePostPlaceRegistry
+    fun prePostPlaceRegistry(): PrePlaceRegistry
     fun arcPrePlaceHasEnoughTokensChecker(): ArcPrePlaceHasEnoughTokensChecker
 
     @Component.Factory

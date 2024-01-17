@@ -15,7 +15,7 @@ import ru.misterpotz.ocgena.simComponent
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import java.util.stream.Stream
 
-class PrePostPlaceRegistryTest {
+class PrePlaceRegistryTest {
 
     @Test
     fun transitionPrePlaceContainEnoughtTokens() {

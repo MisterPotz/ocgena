@@ -7,7 +7,7 @@ import ru.misterpotz.ocgena.simulation.interactors.ArcPrePlaceHasEnoughTokensChe
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import ru.misterpotz.ocgena.utils.DefinitionRef
 
-interface PrePostPlaceRegistry {
+interface PrePlaceRegistry {
     fun getPrePlaces(transition: PetriAtomId): Set<PetriAtomId>
 
     //    fun getPostPlaces(transition: PetriAtomId): Set<PetriAtomId>
@@ -23,12 +23,12 @@ interface PrePostPlaceRegistry {
     }
 }
 
-class PrePostPlaceRegistryImpl(
+class PrePlaceRegistryImpl(
     private val preplaceMap: Map<PetriAtomId, Set<PetriAtomId>>,
 //    private val postplaceMap: MutableMap<PetriAtomId, Set<PetriAtomId>>,
-    private val preplaceAccessorCache: MutableMap<PetriAtomId, PrePostPlaceRegistry.PrePlaceAccessor> = mutableMapOf(),
+    private val preplaceAccessorCache: MutableMap<PetriAtomId, PrePlaceRegistry.PrePlaceAccessor> = mutableMapOf(),
     private val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
-) : PrePostPlaceRegistry {
+) : PrePlaceRegistry {
     override fun getPrePlaces(transition: PetriAtomId): Set<PetriAtomId> {
         return preplaceMap[transition]!!
     }
@@ -37,7 +37,7 @@ class PrePostPlaceRegistryImpl(
 //        return postplaceMap[transition]!!
 //    }
 
-    override fun transitionPrePlaces(transition: PetriAtomId): PrePostPlaceRegistry.PrePlaceAccessor {
+    override fun transitionPrePlaces(transition: PetriAtomId): PrePlaceRegistry.PrePlaceAccessor {
         return preplaceAccessorCache.getOrPut(transition) {
             PrePlaceAccessorImpl(getPrePlaces(transition), transition, arcPrePlaceHasEnoughTokensChecker)
         }
@@ -47,7 +47,7 @@ class PrePostPlaceRegistryImpl(
         val places: Set<PetriAtomId>,
         val transition: PetriAtomId,
         val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
-    ) : PrePostPlaceRegistry.PrePlaceAccessor {
+    ) : PrePlaceRegistry.PrePlaceAccessor {
         override fun compareTo(objectTokenRealAmountRegistry: TokenAmountStorage): Int {
             val allHasRequiredTokens = places.all {
                 arcPrePlaceHasEnoughTokensChecker.arcInputPlaceHasEnoughTokens(
@@ -68,14 +68,14 @@ class PrePostPlaceRegistryImpl(
         fun create(
             ocNet: OCNet,
             arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
-        ): PrePostPlaceRegistry {
+        ): PrePlaceRegistry {
             val preplaceMap = buildMap<PetriAtomId, Set<PetriAtomId>> {
                 for (transition in ocNet.transitionsRegistry.iterable) {
                     val inputPlaces = transition.fromPlaces
                     put(transition.id, inputPlaces.toSet())
                 }
             }
-            return PrePostPlaceRegistryImpl(
+            return PrePlaceRegistryImpl(
                 preplaceMap,
                 arcPrePlaceHasEnoughTokensChecker = arcPrePlaceHasEnoughTokensChecker
             )
