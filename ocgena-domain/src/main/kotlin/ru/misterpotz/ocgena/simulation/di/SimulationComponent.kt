@@ -85,7 +85,7 @@ internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun generationQueueFactory(
-        simulationConfig: NewTokenTimeBasedGeneratorFactoryImpl
+        simulationConfig: NewTokenTimeBasedGeneratorFactoryImpl,
     ): NewTokenTimeBasedGeneratorFactory
 
     @Binds
@@ -101,7 +101,7 @@ internal abstract class SimulationModule {
     @Binds
     @SimulationScope
     abstract fun enabledBindingResolverInteractor(
-        enabledBindingResolverInteractorOriginalImpl: EnabledBindingResolverInteractorOriginalImpl
+        enabledBindingResolverInteractorOriginalImpl: EnabledBindingResolverInteractorOriginalImpl,
     ): EnabledBindingResolverInteractor
 
     companion object {
@@ -127,7 +127,7 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun provideTransitionDurationSelector(
             random: Random,
-            simulationConfig: SimulationConfig
+            simulationConfig: SimulationConfig,
         ): TransitionInstanceDurationGeneratorOriginal {
             return TransitionInstanceDurationGeneratorOriginal(
                 random,
@@ -182,7 +182,7 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun generationQueue(
             simulationConfig: SimulationConfig,
-            newTokenTimeBasedGeneratorFactory: NewTokenTimeBasedGeneratorFactory
+            newTokenTimeBasedGeneratorFactory: NewTokenTimeBasedGeneratorFactory,
         ): NewTokenTimeBasedGenerator {
             return newTokenTimeBasedGeneratorFactory.createGenerationQueue(simulationConfig)
         }
@@ -217,7 +217,7 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun provideSimulationTaskPreparator(
             simulationConfig: SimulationConfig,
-            simulationTaskPreparatorProvider: Provider<SimulationTaskPreparatorOriginal>
+            simulationTaskPreparatorProvider: Provider<SimulationTaskPreparatorOriginal>,
         ): SimulationTaskPreparator {
             val simulationTaskPreparator = when (simulationConfig.simulationSemantics.type) {
                 SimulationSemanticsType.ORIGINAL -> {
@@ -238,7 +238,7 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun provideTransitionNextInstanceAllowedTimeGenerator(
             random: Random,
-            simulationConfig: SimulationConfig
+            simulationConfig: SimulationConfig,
         ): TransitionNextInstanceAllowedTimeGeneratorOriginal {
             return TransitionNextInstanceAllowedTimeGeneratorOriginal(
                 random = random,
@@ -262,12 +262,20 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun arcMultiplicityRegistry(
             ocNet: OCNet,
-            arcsMultiplicityDelegate: ArcsMultiplicityDelegate
+            arcsMultiplicityDelegate: ArcsMultiplicityDelegate,
         ): ArcsMultiplicityRegistry {
             return ArcsMultiplicityRegistryDelegating(
                 arcsRegistry = ocNet.arcsRegistry,
                 arcsMultiplicityDelegate = arcsMultiplicityDelegate
             )
+        }
+
+        @Provides
+        @SimulationScope
+        fun arcPrePlaceHasEnoughTokensChecker(
+            arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
+        ): ArcPrePlaceHasEnoughTokensChecker {
+            return ArcPrePlaceHasEnoughTokensCheckerImpl(arcsMultiplicityRegistry)
         }
 
         @Provides
@@ -283,12 +291,12 @@ internal abstract class SimulationModule {
             bindingSelectionInteractor: BindingSelectionInteractor,
             tiFinisher: TIFinisher,
             transitionToInstancesRegistryOriginal: Provider<TransitionInstanceCreatorFacadeOriginal>,
-            logger : Logger,
+            logger: Logger,
             newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
-            enabledBindingsCollectorInteractor : EnabledBindingsCollectorInteractor,
+            enabledBindingsCollectorInteractor: EnabledBindingsCollectorInteractor,
             objectTokenSet: ObjectTokenSet,
             objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
-            currentSimulationStateOriginal: Provider<CurrentSimulationStateOriginal>
+            currentSimulationStateOriginal: Provider<CurrentSimulationStateOriginal>,
         ): StepExecutor {
             return when (simulationConfig.simulationSemantics.type) {
                 SimulationSemanticsType.ORIGINAL -> {
@@ -305,6 +313,7 @@ internal abstract class SimulationModule {
                         currentSimulationStateOriginal = currentSimulationStateOriginal.get()
                     )
                 }
+
                 SimulationSemanticsType.SIMPLE_TIME_PN -> {
                     throw IllegalStateException()
                 }
@@ -317,7 +326,7 @@ internal abstract class SimulationModule {
             arcToMultiplicityNormalDelegateTypeA: ArcToMultiplicityNormalDelegateTypeA,
             arcToMultiplicityVariableDelegateTypeA: ArcToMultiplicityVariableDelegateTypeA,
             arcToMultiplicityVariableDelegateTypeL: ArcToMultiplicityVariableDelegateTypeL,
-            ocNetType: OcNetType
+            ocNetType: OcNetType,
         ): ArcsMultiplicityDelegate {
             return CompoundArcsMultiplicityDelegate(
                 arcMultiplicityDelegates = buildMap {
@@ -346,6 +355,18 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
+        fun prePlaceRegistry(
+            ocNet: OCNet,
+            arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
+        ): PrePostPlaceRegistry {
+            return PrePostPlaceRegistryImpl.create(
+                ocNet,
+                arcPrePlaceHasEnoughTokensChecker = arcPrePlaceHasEnoughTokensChecker
+            )
+        }
+
+        @Provides
+        @SimulationScope
         fun state(
             ocNet: OCNet,
             arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
@@ -362,7 +383,7 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun tokenBatchGroupingStrategy(
             byObjTypeGroupingStrategy: ByObjTypeGroupingStrategy,
-            byObjTypeAndArcGroupingStrategy: ByObjTypeAndArcGroupingStrategy
+            byObjTypeAndArcGroupingStrategy: ByObjTypeAndArcGroupingStrategy,
         ): TransitionBufferInfo.BatchGroupingStrategy {
             return byObjTypeGroupingStrategy
         }
@@ -392,7 +413,10 @@ interface SimulationComponent {
     fun batchGroupingStrategy(): TransitionBufferInfo.BatchGroupingStrategy
     fun objectTokenSet(): ObjectTokenSet
     fun objectTokenGenerator(): ObjectTokenGenerator
+    fun newTokenGenerationFacade(): NewTokenGenerationFacade
     fun tokenSelectionInteractor(): TokenSelectionInteractor
+    fun prePostPlaceRegistry(): PrePostPlaceRegistry
+    fun arcPrePlaceHasEnoughTokensChecker(): ArcPrePlaceHasEnoughTokensChecker
 
     @Component.Factory
     interface Factory {
@@ -412,7 +436,7 @@ interface SimulationComponent {
             simulationConfig: SimulationConfig,
             componentDependencies: SimulationComponentDependencies,
             developmentDebugConfig: DevelopmentDebugConfig,
-            executionContinuation: ExecutionContinuation = NoOpExecutionContinuation()
+            executionContinuation: ExecutionContinuation = NoOpExecutionContinuation(),
         ): SimulationComponent {
             return create(
                 simulationParams = simulationConfig,

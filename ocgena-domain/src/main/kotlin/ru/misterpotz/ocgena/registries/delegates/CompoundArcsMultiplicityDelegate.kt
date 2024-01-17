@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.registries.delegates
 
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
+import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
@@ -12,6 +13,10 @@ class CompoundArcsMultiplicityDelegate(
 ) : ArcsMultiplicityDelegate() {
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         return arcMultiplicityDelegates[arc.arcType]!!.transitionInputMultiplicity(arc)
+    }
+
+    override fun transitionInputMultiplicityDynamic(arc: Arc): InputArcMultiplicityDynamic {
+        return arcMultiplicityDelegates[arc.arcType]!!.transitionInputMultiplicityDynamic(arc)
     }
 
     override fun transitionOutputMultiplicity(

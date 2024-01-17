@@ -1,7 +1,7 @@
 plugins {
-    id("kotlin")
+    kotlin("jvm") version "1.9.20"
     //kotlin("kapt") // fallback to this if ksp goes crazy
-    id("com.google.devtools.ksp") version "1.9.0-1.0.12"
+    id("com.google.devtools.ksp") version "1.9.20-1.0.14"
     kotlin("plugin.serialization") version "1.9.20"
 }
 
@@ -40,3 +40,11 @@ kotlin {
 tasks.test {
     useJUnitPlatform()
 }
+//
+//compileKotlin {
+//    kotlinOptions.jvmTarget = '11'
+//}
+//
+//compileTestKotlin {
+//    kotlinOptions.jvmTarget = '11'
+//}

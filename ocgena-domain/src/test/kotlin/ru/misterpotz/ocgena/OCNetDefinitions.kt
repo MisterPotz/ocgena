@@ -13,7 +13,7 @@ fun createExampleInputOutputPlaces(): PlaceTypeRegistry {
 }
 
 /**
- * @see <img src="src/jvmTest/resources/img.png" >
+ * @see <img src="src/jvmTest/resources/oneintwoout.png" >
  */
 fun createExampleModel(): OCNet {
     return OCNetBuilder().defineAtoms {

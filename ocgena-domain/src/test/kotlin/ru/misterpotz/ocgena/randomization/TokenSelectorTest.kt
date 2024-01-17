@@ -25,7 +25,7 @@ class TokenSelectorTest {
     fun `when no random doesn't select randomly`() {
         val (component, task, config) = createSimComponent()
 
-        component.withTokens {
+        component.withGenerateTokens {
             addOfType("o1", 1, 2, 3, 4, 5, 6)
         }
         val tokenSelector = component.tokenSelectionInteractor()

@@ -7,6 +7,7 @@ import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Assertions.assertTrue
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
@@ -118,7 +119,7 @@ fun domainComponent(): DomainComponent {
 
 fun simComponent(
     simulationConfig: SimulationConfig,
-    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()
+    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
@@ -176,14 +177,14 @@ fun ImmutablePlaceToObjectMarking.loggableString(simulationComponent: Simulation
 @Serializable
 @SerialName("placeToObject")
 private data class LoggableImmutablePlaceToObjectMarkingMap(
-    @SerialName("per_place") val placesToObjectTokens: Map<PetriAtomId, SortedSet<String>>
+    @SerialName("per_place") val placesToObjectTokens: Map<PetriAtomId, SortedSet<String>>,
 )
 
 fun Long.withType(objectTypeId: ObjectTypeId): ObjectTokenIdAndType {
     return ObjectTokenIdAndType(this, objectTypeId)
 }
 
-fun SimulationComponent.withTokens(ids: MutableList<ObjectTokenIdAndType>.() -> Unit) {
+fun SimulationComponent.withGenerateTokens(ids: MutableList<ObjectTokenIdAndType>.() -> Unit): SimulationComponent {
     val objectTokenSet = objectTokenSet()
     val generator = objectTokenGenerator()
     val mutableList = mutableListOf<ObjectTokenIdAndType>()
@@ -198,12 +199,47 @@ fun SimulationComponent.withTokens(ids: MutableList<ObjectTokenIdAndType>.() -> 
             )
         )
     }
+    return this
+}
+
+fun SimulationComponent.addTokens(block: AddTokensBlock.() -> Unit): SimulationComponent {
+    val generator = newTokenGenerationFacade()
+    val objectTokenRealAmountRegistry = objectTokenRealAmountRegistry()
+//    val state = state()
+//    val ocNet = ocNet()
+    val receiver = AddTokensBlockImpl(this)
+    receiver.block()
+//    val deltaMarking = PlaceToObjectMarking()
+    for ((place, amount) in receiver.placeToAmount) {
+        objectTokenRealAmountRegistry.incrementRealAmountAt(place, amount)
+
+//        for (i in 0 until amount) {
+//            val objectTypeId = ocNet.placeToObjectTypeRegistry[place]
+//            val objectToken = generator.generateRealToken(objectTypeId)
+//            deltaMarking.add(place, objectToken.id)
+//        }
+    }
+//    state.pMarking.plus(deltaMarking.toImmutable())
+    return this
+}
+
+interface AddTokensBlock {
+    fun forPlace(place : PetriAtomId, amount: Int)
+}
+
+private class AddTokensBlockImpl(private val simulationComponent: SimulationComponent) : AddTokensBlock {
+    val placeToAmount: MutableMap<PetriAtomId, Int> = mutableMapOf()
+
+    override fun forPlace(place: PetriAtomId, amount: Int) {
+        val amount = placeToAmount.getOrPut(place) { 0 } + amount
+        placeToAmount.put(place, amount)
+    }
 }
 
 data class FacadeSim(
     val component: SimulationComponent,
     val task: SimulationTask,
-    val config: SimulationConfig
+    val config: SimulationConfig,
 )
 
 //fun facadeCreateSimulation(
@@ -215,7 +251,6 @@ data class FacadeSim(
 //}
 
 
-
 fun SimulationComponent.transition(t: PetriAtomId): Transition {
     val ocNet = ocNet()
     return ocNet.petriAtomRegistry.getTransition(t)
@@ -223,7 +258,7 @@ fun SimulationComponent.transition(t: PetriAtomId): Transition {
 
 fun SimulationComponent.mockTransitionBufferInfo(
     t: PetriAtomId,
-    block: MutableCollection<BatchKeyWithBuffer>.() -> Unit
+    block: MutableCollection<BatchKeyWithBuffer>.() -> Unit,
 ): TransitionBufferInfo {
 
     val trans = transition(t)

@@ -21,3 +21,11 @@ tasks.test {
 kotlin {
     jvmToolchain(8)
 }
+
+//compileKotlin {
+//    kotlinOptions.jvmTarget = '1.8'
+//}
+//
+//compileTestKotlin {
+//    kotlinOptions.jvmTarget = '1.8'
+//}

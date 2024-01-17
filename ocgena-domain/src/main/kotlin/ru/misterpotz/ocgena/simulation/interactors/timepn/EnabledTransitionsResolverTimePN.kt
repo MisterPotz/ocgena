@@ -15,13 +15,12 @@ class EnabledTransitionsResolverTimePNImpl(
     val timePNTransitionMarking: TimePNTransitionMarking
 ) : EnabledTransitionsResolverTimePN {
     override fun getEnabledTransitions(): List<PetriAtomId> {
-
+        return listOf()
     }
 
     fun isTransitionEnabled(petriAtomId: PetriAtomId) : Boolean {
         // TODO: verifying preplace token amount
-
-
-        return timePNTransitionMarking.getDataForTransition(petriAtomId)
+        return true
+//        return timePNTransitionMarking.getDataForTransition(petriAtomId)
     }
 }

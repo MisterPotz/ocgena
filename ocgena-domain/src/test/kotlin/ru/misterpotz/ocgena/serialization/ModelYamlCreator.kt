@@ -2,12 +2,17 @@ package ru.misterpotz.ocgena.serialization
 
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.ModelPath
+import ru.misterpotz.ocgena.SerializationMode
 import ru.misterpotz.ocgena.buildOCNet
 import ru.misterpotz.ocgena.createExampleModel
 import ru.misterpotz.ocgena.writeOrAssertYaml
 
-
+/**
+ * Images are here
+ * <img src="./doc-files/img.png" >
+ */
 class ModelYamlCreator {
+
     @Test
     fun oneInTwoOut() {
         val ocNet = buildOCNet {
@@ -62,6 +67,25 @@ class ModelYamlCreator {
         }
 
         writeOrAssertYaml(ocNet, ModelPath.ONE_IN_TWO_MIDDLE.path)
+    }
+
+    @Test
+    fun threeInTwoOut() {
+        val ocNet = buildOCNet {
+            "p1".p { input; objectTypeId = "1" }
+                .arc("t1".t)
+                .arc("p2".p { output; objectTypeId = "1" })
+
+            "o1".p { input; objectTypeId = "2" }
+                .arc("t1".t) { vari }
+                .arc("o2".p { output; objectTypeId = "2" }) { vari }
+
+            "p3".p { input; objectTypeId = "1" }
+                .arc("t1".t) { norm; multiplicity = 3 }
+        }
+
+        writeOrAssertYaml(ocNet, ModelPath.THREE_IN_TWO_OUT.path)
+
     }
 
     @Test

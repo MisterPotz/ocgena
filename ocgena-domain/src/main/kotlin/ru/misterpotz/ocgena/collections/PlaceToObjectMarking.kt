@@ -7,10 +7,11 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransform
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
+import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import java.util.*
 import javax.inject.Inject
 
-interface ObjectTokenRealAmountRegistry {
+interface ObjectTokenRealAmountRegistry : TokenAmountStorage {
     fun getRealAmountAt(place: PetriAtomId): Int
     fun zeroAmountAt(place: PetriAtomId)
     fun incrementRealAmountAt(place: PetriAtomId, incrementValue: Int)
@@ -69,12 +70,17 @@ internal class ObjectTokenRealAmountRegistryImpl @Inject constructor(
     override fun decrementRealAmountOfType(objectTypeId: ObjectTypeId, decrementValue: Int) {
         typeToAmount[objectTypeId] = (typeToAmount.getOrPut(objectTypeId) { 0 } - decrementValue).coerceAtLeast(0)
     }
+
+    override fun getTokensAt(place: PetriAtomId): Int {
+        return placeToAmount[place]!!
+    }
 }
 
-interface PlaceToObjectMarking {
+interface PlaceToObjectMarking: TokenAmountStorage {
     val tokensIterator: Iterator<ObjectTokenId>
     operator fun get(place: PetriAtomId): SortedSet<ObjectTokenId>
     operator fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?)
+    fun add(place: PetriAtomId, objectTokenId: ObjectTokenId)
     fun removePlace(placeId: PetriAtomId)
     fun plus(delta: PlaceToObjectMarkingDelta)
     fun minus(delta: PlaceToObjectMarkingDelta)
@@ -119,6 +125,10 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
         }.addAll(tokens ?: return)
     }
 
+    override fun add(place: PetriAtomId, objectTokenId: ObjectTokenId) {
+        placesToObjectTokens.getOrPut(place) { sortedSetOf() }.add(objectTokenId)
+    }
+
     override fun removePlace(placeId: PetriAtomId) {
         placesToObjectTokens.remove(placeId)
     }
@@ -153,5 +163,9 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
 
     override fun clear() {
         placesToObjectTokens.clear()
+    }
+
+    override fun getTokensAt(place: PetriAtomId): Int {
+        return get(place).size
     }
 }

@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransformMutable
+import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import java.util.SortedSet
 
 interface PlaceToObjectMarkingDelta {
@@ -12,7 +13,7 @@ interface PlaceToObjectMarkingDelta {
     operator fun get(placeId: PetriAtomId): Set<ObjectTokenId>?
 }
 
-interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta, java.io.Serializable {
+interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta, java.io.Serializable, TokenAmountStorage {
     val tokensIterator: Iterator<ObjectTokenId>
     override operator fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>
     override val keys: Set<PetriAtomId>
@@ -58,6 +59,10 @@ data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesT
                 it.toSortedSet()
             }
         )
+    }
+
+    override fun getTokensAt(place: PetriAtomId): Int {
+        return get(place).size
     }
 }
 

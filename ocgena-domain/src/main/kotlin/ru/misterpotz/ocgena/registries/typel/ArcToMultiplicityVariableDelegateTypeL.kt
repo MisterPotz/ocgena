@@ -4,14 +4,17 @@ import ru.misterpotz.expression.paramspace.VariableParameterSpace
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
+import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
 import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityValue
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicityValue
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
 import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
 class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
@@ -19,6 +22,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     private val arcToMultiplicityNormalDelegateTypeA: ArcToMultiplicityNormalDelegateTypeA,
     ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
+    private val inputArcMultiplicityCache: MutableMap<PetriAtomId, InputArcMultiplicityDynamic> = mutableMapOf()
     private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         require(arc is VariableArc)
@@ -35,9 +39,30 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         )
     }
 
+    override fun transitionInputMultiplicityDynamic(arc: Arc): InputArcMultiplicityDynamic {
+        require(arc is VariableArc)
+        if (arc.variableName == null)
+            return arcToMultiplicityNormalDelegateTypeA.transitionInputMultiplicityDynamic(arc)
+
+        val inputNodeId = arc.tailNodeId!!
+
+        return inputArcMultiplicityCache.getOrPut(arc.id) {
+            object : InputArcMultiplicityDynamic {
+                override fun inputPlaceHasEnoughTokens(tokenAmountStorage: TokenAmountStorage): Boolean {
+                    return tokenAmountStorage.getTokensAt(inputNodeId) >= 1
+                }
+
+                override fun requiredTokenAmount(tokenAmountStorage: TokenAmountStorage): Int {
+                    return tokenAmountStorage.getTokensAt(inputNodeId)
+                }
+            }
+        }
+    }
+
+
     override fun transitionOutputMultiplicity(
         transitionBufferInfo: TransitionBufferInfo,
-        arc: Arc
+        arc: Arc,
     ): OutputArcMultiplicity {
         require(arc is VariableArc)
 

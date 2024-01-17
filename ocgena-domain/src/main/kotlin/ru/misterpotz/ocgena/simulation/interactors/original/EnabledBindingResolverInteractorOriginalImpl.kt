@@ -7,6 +7,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
+import ru.misterpotz.ocgena.simulation.interactors.ArcPrePlaceHasEnoughTokensChecker
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
@@ -20,6 +21,7 @@ class EnabledBindingResolverInteractorOriginalImpl @Inject constructor(
     private val currentSimulationDelegate: CurrentSimulationDelegate,
     private val ocNetInstance: SimulatableOcNetInstance,
     private val currentSimulationStateOriginal: CurrentSimulationStateOriginal,
+    private val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
 ) : EnabledBindingResolverInteractor, CurrentSimulationDelegate by currentSimulationDelegate {
 
     private fun arcInputPlaceHasEnoughTokens(place: PetriAtomId, transition: Transition): Boolean {
