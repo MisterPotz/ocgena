@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.registries
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
-interface TransitionsRegistry {
+interface TransitionsRegistry : Iterable<Transition> {
     operator fun get(transition: PetriAtomId): Transition
     val iterable: Iterable<Transition>
     val size: Int
@@ -25,4 +25,8 @@ internal class TransitionsRegistryMap(
     }
     override val size: Int
         get() = iterable.size
+
+    override fun iterator(): Iterator<Transition> {
+        return iterable.iterator()
+    }
 }
