@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Assertions.assertTrue
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
@@ -21,8 +20,8 @@ import ru.misterpotz.ocgena.ocnet.utils.prependId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.SimulationTask
-import ru.misterpotz.ocgena.simulation.binding.TokenBuffer
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.TokenGroup
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.config.original.Duration
 import ru.misterpotz.ocgena.simulation.config.original.TimeUntilNextInstanceIsAllowed
@@ -259,32 +258,32 @@ fun SimulationComponent.transition(t: PetriAtomId): Transition {
 fun SimulationComponent.mockTransitionBufferInfo(
     t: PetriAtomId,
     block: MutableCollection<BatchKeyWithBuffer>.() -> Unit,
-): TransitionBufferInfo {
+): TransitionGroupedTokenInfo {
 
     val trans = transition(t)
     val simBatchGroupingStrategy = batchGroupingStrategy()
 
-    return mockk<TransitionBufferInfo> {
+    return mockk<TransitionGroupedTokenInfo> {
         every { transition } returns trans
-        every { batchGroupingStrategy } returns simBatchGroupingStrategy
+        every { tokenGroupingStrategy } returns simBatchGroupingStrategy
 
         val mutableCollection = mutableListOf<BatchKeyWithBuffer>()
         mutableCollection.block()
 
         for (i in mutableCollection) {
             every {
-                getBatchBy(
+                getGroup(
                     i.batchKey.objectTypeId,
                     i.batchKey.arcMeta,
                 )
-            } returns i.tokenBuffer
+            } returns i.tokenGroup
         }
     }
 }
 
 
 data class BatchKey(val objectTypeId: ObjectTypeId, val arcMeta: ArcMeta)
-data class BatchKeyWithBuffer(val batchKey: BatchKey, val tokenBuffer: TokenBuffer)
+data class BatchKeyWithBuffer(val batchKey: BatchKey, val tokenGroup: TokenGroup)
 
 fun ObjectTypeId.withArcMeta(arcMeta: ArcMeta): BatchKey {
     return BatchKey(this.objTypeId(), arcMeta)
@@ -298,7 +297,7 @@ fun String.objTypeId(): ObjectTypeId {
     }
 }
 
-fun BatchKey.withTokenBuffer(set: TokenBuffer): BatchKeyWithBuffer {
+fun BatchKey.withTokenBuffer(set: TokenGroup): BatchKeyWithBuffer {
     return BatchKeyWithBuffer(this, set)
 }
 

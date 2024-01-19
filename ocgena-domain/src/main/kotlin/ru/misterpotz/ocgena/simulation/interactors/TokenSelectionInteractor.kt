@@ -1,13 +1,12 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.binding.TokenBuffer
+import ru.misterpotz.ocgena.simulation.binding.TokenGroup
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
-import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.utils.ByRandomRandomizer
 import ru.misterpotz.ocgena.utils.NoOpIteratorRandomizer
 import ru.misterpotz.ocgena.utils.RandomIterator
@@ -19,40 +18,39 @@ import kotlin.random.Random
 interface TokenSelectionInteractor {
     fun selectAndInitializeTokensFromPlace(
         petriAtomId: PetriAtomId,
-        amount: Int
+        amount: Int,
+        tokenBunch: SparseTokenBunch,
     ): SelectedAndGeneratedTokens
 
     fun selectTokensFromBuffer(
-        tokenBuffer: TokenBuffer,
-        selectionAmount: Int
+        tokenGroup: TokenGroup,
+        selectionAmount: Int,
     ): SortedSet<ObjectTokenId>
 
     fun generateTokens(objectTypeId: ObjectTypeId, amount: Int): SortedSet<ObjectTokenId>
 
     class SelectedAndGeneratedTokens(
         val selected: SortedSet<ObjectTokenId>,
-        val initialized: SortedSet<ObjectTokenId>
+        val generated: SortedSet<ObjectTokenId>,
     )
 }
 
 class TokenSelectionInteractorImpl @Inject constructor(
     private val random: Random?,
-    private val repeatabilityInteractor: RepeatabilityInteractor,
     private val newTokenGenerationFacade: NewTokenGenerationFacade,
-    private val pMarkingProvider: PMarkingProvider,
     ocNet: OCNet,
-    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
 ) : TokenSelectionInteractor {
     val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
-    val pMarking get() = pMarkingProvider.get()
+//    val pMarking get() = pMarkingProvider.get()
 
     override fun selectAndInitializeTokensFromPlace(
         petriAtomId: PetriAtomId,
-        amount: Int
+        amount: Int,
+        tokenBunch: SparseTokenBunch,
     ): TokenSelectionInteractor.SelectedAndGeneratedTokens {
-        val markingAtPlace = pMarking[petriAtomId]
-        val realTokenAmountAtPlace = objectTokenRealAmountRegistry.getRealAmountAt(petriAtomId)
+        val markingAtPlace = tokenBunch.objectMarking()[petriAtomId]
+        val tokensAtPlace = tokenBunch.tokenAmountStorage().getTokensAt(petriAtomId)
         val existing = markingAtPlace.size
         fun indexBelongsToExisting(index: Int): Boolean {
             return index < existing
@@ -63,7 +61,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
         val objectTypeId = placeToObjectTypeRegistry[petriAtomId]
         val randomIterator = RandomIterator(amount = amount, randomizer = randomizer)
 
-        require(realTokenAmountAtPlace >= amount) {
+        require(tokensAtPlace >= amount) {
             "can't request from a place more tokens than the real amount of them"
         }
         val newlyGeneratedTokens = sortedSetOf<ObjectTokenId>()
@@ -82,15 +80,15 @@ class TokenSelectionInteractorImpl @Inject constructor(
         }
         return TokenSelectionInteractor.SelectedAndGeneratedTokens(
             selected = sortedSet,
-            initialized = newlyGeneratedTokens
+            generated = newlyGeneratedTokens
         )
     }
 
     override fun selectTokensFromBuffer(
-        tokenBuffer: TokenBuffer,
-        selectionAmount: Int
+        tokenGroup: TokenGroup,
+        selectionAmount: Int,
     ): SortedSet<ObjectTokenId> {
-        val bufferSize = tokenBuffer.size
+        val bufferSize = tokenGroup.size
         val targetSet = sortedSetOf<ObjectTokenId>()
 
         val randomizer = createRandomizerOrNoOp()
@@ -101,7 +99,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
 
         while (randomIterator.hasNext()) {
             val randomIndex = randomIterator.next()
-            val objectTokenId = tokenBuffer.elementAt(randomIndex)
+            val objectTokenId = tokenGroup.elementAt(randomIndex)
             targetSet.add(objectTokenId)
         }
 

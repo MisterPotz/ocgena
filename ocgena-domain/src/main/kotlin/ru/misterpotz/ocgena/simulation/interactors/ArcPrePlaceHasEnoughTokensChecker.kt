@@ -8,7 +8,7 @@ interface ArcPrePlaceHasEnoughTokensChecker {
     fun arcInputPlaceHasEnoughTokens(
         place: PetriAtomId,
         transition: PetriAtomId,
-        tokenAmountStorage: TokenAmountStorage
+        tokenAmountStorage: TokenAmountStorage,
     ): Boolean
 }
 
@@ -18,7 +18,7 @@ class ArcPrePlaceHasEnoughTokensCheckerImpl(
     override fun arcInputPlaceHasEnoughTokens(
         place: PetriAtomId,
         transition: PetriAtomId,
-        tokenAmountStorage: TokenAmountStorage
+        tokenAmountStorage: TokenAmountStorage,
     ): Boolean {
         val arc = place.arcIdTo(transition)
         val arcMultiplicity = arcsMultiplicityRegistry.transitionInputMultiplicityDynamic(arcId = arc)
@@ -27,5 +27,23 @@ class ArcPrePlaceHasEnoughTokensCheckerImpl(
 }
 
 interface TokenAmountStorage {
-    fun getTokensAt(place: PetriAtomId) : Int
+    fun getTokensAt(place: PetriAtomId): Int
+    fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int
+}
+
+class SimpleTokenAmountStorage(
+    private val placeToTokens: MutableMap<PetriAtomId, Int> = mutableMapOf(),
+) : TokenAmountStorage {
+    override fun getTokensAt(place: PetriAtomId): Int {
+        return placeToTokens[place]!!
+    }
+
+    override fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int {
+        val new = (placeToTokens.getOrPut(place) {
+            0
+        } + tokensDelta).coerceAtLeast(0)
+        placeToTokens[place] = new
+        return new
+    }
+
 }

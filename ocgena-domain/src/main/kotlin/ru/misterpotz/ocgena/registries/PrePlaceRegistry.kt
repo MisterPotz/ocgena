@@ -14,7 +14,9 @@ interface PrePlaceRegistry {
     @DefinitionRef("t^-")
     fun transitionPrePlaces(transition: PetriAtomId): PrePlaceAccessor
 
-    interface PrePlaceAccessor {
+    interface PrePlaceAccessor : Iterable<PetriAtomId> {
+        val transitionId : PetriAtomId
+
         operator fun compareTo(objectTokenRealAmountRegistry: TokenAmountStorage): Int
     }
 
@@ -45,14 +47,15 @@ class PrePlaceRegistryImpl(
 
     private class PrePlaceAccessorImpl(
         val places: Set<PetriAtomId>,
-        val transition: PetriAtomId,
+        override val transitionId: PetriAtomId,
         val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
-    ) : PrePlaceRegistry.PrePlaceAccessor {
+    ) : PrePlaceRegistry.PrePlaceAccessor, Iterable<PetriAtomId> by places {
+
         override fun compareTo(objectTokenRealAmountRegistry: TokenAmountStorage): Int {
             val allHasRequiredTokens = places.all {
                 arcPrePlaceHasEnoughTokensChecker.arcInputPlaceHasEnoughTokens(
                     it,
-                    transition,
+                    transitionId,
                     objectTokenRealAmountRegistry
                 )
             }

@@ -11,15 +11,15 @@ class RandomIterator(
     private val amount: Int,
     private val randomizer: Randomizer,
 ) : Iterator<Int> {
-    val set = sortedSetOf<Int>()
+    val attemptsSet = sortedSetOf<Int>()
     val range = 0..<amount
     override fun hasNext(): Boolean {
-        return set.size < amount
+        return attemptsSet.size < amount
     }
 
     private fun checkValueAndReturn(i : Int) : Boolean {
-        if (i !in set) {
-            set.add(i)
+        if (i !in attemptsSet) {
+            attemptsSet.add(i)
             return true
         }
         return false
@@ -34,8 +34,8 @@ class RandomIterator(
         // try generate truly randomly
         while (guardCounter < TokenSelectionInteractorImpl.GUARD_MULTIPLIER * amount) {
             attempt = randomizer.nextRandom(range)
-            if (attempt !in set) {
-                set.add(attempt)
+            if (attempt !in attemptsSet) {
+                attemptsSet.add(attempt)
                 return attempt
             } else {
                 guardCounter++

@@ -30,7 +30,7 @@ class EnabledBindingResolverInteractorOriginalImpl @Inject constructor(
         return arcMultiplicity.inputPlaceHasEnoughTokens()
     }
 
-    private fun getObjectTokens(
+    private fun getAndInitializeObjectTokensInPlace(
         transition: Transition,
         place: PetriAtomId,
     ): SortedSet<ObjectTokenId> {
@@ -40,7 +40,7 @@ class EnabledBindingResolverInteractorOriginalImpl @Inject constructor(
             petriAtomId = place,
             amount = requiredTokensAmount,
         )
-        pMarking[place].addAll(selectedAndInitializedTokens.initialized)
+        pMarking[place].addAll(selectedAndInitializedTokens.generated)
         return selectedAndInitializedTokens.selected
     }
 
@@ -67,7 +67,7 @@ class EnabledBindingResolverInteractorOriginalImpl @Inject constructor(
 
         val placeToObjectTokenMap = buildMap {
             for (inputPlace in inputPlaces) {
-                put(inputPlace, getObjectTokens(transition, inputPlace))
+                put(inputPlace, getAndInitializeObjectTokensInPlace(transition, inputPlace))
             }
         }
 

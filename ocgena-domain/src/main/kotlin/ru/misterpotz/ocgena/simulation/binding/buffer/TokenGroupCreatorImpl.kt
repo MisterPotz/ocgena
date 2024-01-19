@@ -7,12 +7,12 @@ import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.simulation.binding.consumer.OutputTokensBufferConsumerFactory
 import javax.inject.Inject
 
-class LockedTokenBufferizerImpl(
-    private val transitionBufferInfoImpl: TransitionBufferInfoImpl,
+class TokenGroupCreatorImpl(
+    private val transitionBufferInfoImpl: TransitionGroupedTokenInfoImpl,
     override val transition: Transition,
     private val outputTokensBufferConsumerFactory: OutputTokensBufferConsumerFactory
-) : LockedTokenBufferizer, TransitionBufferInfo by transitionBufferInfoImpl {
-    override fun bufferize(fromPlacesMarking: ImmutablePlaceToObjectMarking) {
+) : TokenGroupCreator, TransitionGroupedTokenInfo by transitionBufferInfoImpl {
+    override fun group(fromPlacesMarking: ImmutablePlaceToObjectMarking) {
         for (place in fromPlacesMarking.keys) {
             val tokensAtPlace = fromPlacesMarking[place]
             transitionBufferInfoImpl.bufferize(place, tokensAtPlace)
@@ -27,26 +27,26 @@ class LockedTokenBufferizerImpl(
     }
 }
 
-class LockedTokensBufferizerFactory @Inject constructor(
+class TokenGroupCreatorFactory @Inject constructor(
     private val ocNet: OCNet,
     private val tokenBatchListFactory: TokenBatchListFactory,
-    private val batchGroupingStrategy: TransitionBufferInfo.BatchGroupingStrategy,
+    private val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy,
     private val outputTokensBufferConsumerFactory: OutputTokensBufferConsumerFactory
 ) {
     private val petriAtomRegistry: PetriAtomRegistry = ocNet.petriAtomRegistry
     fun create(
         transition: Transition,
-    ): LockedTokenBufferizer {
+    ): TokenGroupCreator {
 
-        val transitionBufferInfoImpl = TransitionBufferInfoImpl(
+        val transitionBufferInfoImpl = TransitionGroupedTokenInfoImpl(
             transition = transition,
             petriAtomRegistry = petriAtomRegistry,
             tokenBatchListFactory = tokenBatchListFactory,
             ocNet = ocNet,
-            batchGroupingStrategy = batchGroupingStrategy
+            tokenGroupingStrategy = tokenGroupingStrategy
         )
 
-        return LockedTokenBufferizerImpl(
+        return TokenGroupCreatorImpl(
             transitionBufferInfoImpl = transitionBufferInfoImpl,
             transition = transition,
             outputTokensBufferConsumerFactory = outputTokensBufferConsumerFactory

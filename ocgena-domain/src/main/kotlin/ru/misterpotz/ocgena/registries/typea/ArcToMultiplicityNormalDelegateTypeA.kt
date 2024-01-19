@@ -12,7 +12,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
@@ -58,7 +58,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
 
 
     override fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arc: Arc
     ): OutputArcMultiplicity {
         require(arc is NormalArc)
@@ -66,11 +66,11 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
         val place = arc.arrowNodeId!!
         val objectType = placeToObjectTypeRegistry[place]
 
-        val tokenBuffer = transitionBufferInfo.getBatchBy(objectType, outputArcMeta = arc.arcMeta)
+        val tokenBuffer = transitionGroupedTokenInfo.getGroup(objectType, outputArcMeta = arc.arcMeta)
 
         return OutputArcMultiplicityValue(
             arc.multiplicity,
-            tokenBuffer = tokenBuffer
+            tokenGroup = tokenBuffer
         )
     }
 }

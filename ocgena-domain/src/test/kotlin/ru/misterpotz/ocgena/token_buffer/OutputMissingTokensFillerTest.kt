@@ -56,7 +56,7 @@ class OutputMissingTokensFillerTest {
         }
 
         val outputMissingTokensFiller = outputMissingTokensGeneratorFactory.create(
-            transitionBufferInfo = transitionBufferInfo,
+            transitionGroupedTokenInfo = transitionBufferInfo,
             transition = transition,
             outputMarking = PlaceToObjectMarking(
                 buildMap<PetriAtomId, SortedSet<ObjectTokenId>> {

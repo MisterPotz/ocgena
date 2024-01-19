@@ -13,7 +13,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcMetaTypeA
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
@@ -52,14 +52,14 @@ class ArcToMultiplicityVariableDelegateTypeA @Inject constructor(
     }
 
     override fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arc: Arc
     ): OutputArcMultiplicity {
         require(arc is VariableArc)
 
         val targetPlace = arc.arrowNodeId!!
         val objectTypeId = placeToObjectTypeRegistry[targetPlace]
-        val batchForType = transitionBufferInfo.getBatchBy(
+        val batchForType = transitionGroupedTokenInfo.getGroup(
             toPlaceObjectTypeId = objectTypeId,
             outputArcMeta = VariableArcMetaTypeA
         )!!
@@ -67,7 +67,7 @@ class ArcToMultiplicityVariableDelegateTypeA @Inject constructor(
 
         return OutputArcMultiplicityValue(
             requiredTokenAmount = tokensAtBuffer,
-            tokenBuffer = batchForType,
+            tokenGroup = batchForType,
         )
     }
 }

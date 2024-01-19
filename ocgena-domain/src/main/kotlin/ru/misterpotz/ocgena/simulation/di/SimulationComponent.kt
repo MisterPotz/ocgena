@@ -21,7 +21,7 @@ import ru.misterpotz.ocgena.registries.typel.ArcToMultiplicityVariableDelegateTy
 import ru.misterpotz.ocgena.simulation.*
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import ru.misterpotz.ocgena.simulation.binding.consumer.OutputTokensBufferConsumerFactory
 import ru.misterpotz.ocgena.simulation.binding.generator.OutputMissingTokensGeneratorFactory
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeAndArcGroupingStrategy
@@ -48,7 +48,9 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
 import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
+import ru.misterpotz.ocgena.simulation.stepexecutor.GlobalSparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.OriginalStepExecutor
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.StepExecutor
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
@@ -384,8 +386,21 @@ internal abstract class SimulationModule {
         fun tokenBatchGroupingStrategy(
             byObjTypeGroupingStrategy: ByObjTypeGroupingStrategy,
             byObjTypeAndArcGroupingStrategy: ByObjTypeAndArcGroupingStrategy,
-        ): TransitionBufferInfo.BatchGroupingStrategy {
+        ): TransitionGroupedTokenInfo.TokenGroupingStrategy {
             return byObjTypeGroupingStrategy
+        }
+
+        @Provides
+        @GlobalTokenBunch
+        @SimulationScope
+        fun globalTokenBunch(
+            pMarkingProvider: PMarkingProvider,
+            objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
+        ): SparseTokenBunch {
+            return GlobalSparseTokenBunch(
+                pMarkingProvider,
+                objectTokenRealAmountRegistry
+            )
         }
 
     }
@@ -410,7 +425,7 @@ interface SimulationComponent {
     fun objectTokenRealAmountRegistry(): ObjectTokenRealAmountRegistry
     fun outputTokensBufferConsumerFactory(): OutputTokensBufferConsumerFactory
     fun outputMissingTokensGeneratorFactory(): OutputMissingTokensGeneratorFactory
-    fun batchGroupingStrategy(): TransitionBufferInfo.BatchGroupingStrategy
+    fun batchGroupingStrategy(): TransitionGroupedTokenInfo.TokenGroupingStrategy
     fun objectTokenSet(): ObjectTokenSet
     fun objectTokenGenerator(): ObjectTokenGenerator
     fun newTokenGenerationFacade(): NewTokenGenerationFacade

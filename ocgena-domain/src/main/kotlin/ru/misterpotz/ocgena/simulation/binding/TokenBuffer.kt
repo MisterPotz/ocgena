@@ -4,14 +4,14 @@ import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenBatch
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import java.util.*
 
-typealias TokenBuffer = SortedSet<ObjectTokenId>
+typealias TokenGroup = SortedSet<ObjectTokenId>
 
 
 class TokenBatchList(
-    private val batchGroupingStrategy: TransitionBufferInfo.BatchGroupingStrategy
+    private val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy
 ) {
     private val tokenBatches: MutableList<TokenBatch> = mutableListOf()
 
@@ -20,7 +20,7 @@ class TokenBatchList(
         arcMeta: ArcMeta,
         sortedSet: SortedSet<ObjectTokenId>
     ) {
-        val similarTokenBatch = batchGroupingStrategy.findTokenBatchForOTypeAndArc(
+        val similarTokenBatch = tokenGroupingStrategy.findTokenBatchForOTypeAndArc(
             tokenBatches,
             objectTypeId,
             arcMeta
@@ -43,8 +43,8 @@ class TokenBatchList(
     fun getBatchBy(
         objectTypeId: ObjectTypeId,
         arcMeta: ArcMeta
-    ): TokenBuffer? {
-        val batch = batchGroupingStrategy.findTokenBatchForOTypeAndArc(
+    ): TokenGroup? {
+        val batch = tokenGroupingStrategy.findTokenBatchForOTypeAndArc(
             tokenBatches,
             objectTypeId,
             arcMeta

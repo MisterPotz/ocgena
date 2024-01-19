@@ -64,6 +64,10 @@ data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesT
     override fun getTokensAt(place: PetriAtomId): Int {
         return get(place).size
     }
+
+    override fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int {
+        throw IllegalStateException("cannot modify immutable place to object marking")
+    }
 }
 
 interface ObjectMarkingModifier {

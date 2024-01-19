@@ -13,7 +13,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
@@ -61,7 +61,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
 
     override fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arc: Arc,
     ): OutputArcMultiplicity {
         require(arc is VariableArc)
@@ -71,9 +71,9 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
         val variableName = arc.variableName
             ?: return arcToMultiplicityNormalDelegateTypeA
-                .transitionOutputMultiplicity(transitionBufferInfo, arc)
+                .transitionOutputMultiplicity(transitionGroupedTokenInfo, arc)
 
-        val sourceBatch = transitionBufferInfo.getBatchBy(
+        val sourceBatch = transitionGroupedTokenInfo.getGroup(
             toPlaceObjectTypeId = objectTypeId,
             outputArcMeta = arc.arcMeta
         )!!
@@ -90,7 +90,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         val requiredTokenAmount = roundUpIfNeeded(requiredTokensAmount)
 
         return OutputArcMultiplicityValue(
-            tokenBuffer = sourceBatch,
+            tokenGroup = sourceBatch,
             requiredTokenAmount = requiredTokenAmount,
         )
     }

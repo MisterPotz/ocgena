@@ -6,7 +6,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 
 class CompoundArcsMultiplicityDelegate(
     private val arcMultiplicityDelegates: Map<ArcType, ArcsMultiplicityDelegate>
@@ -20,12 +20,12 @@ class CompoundArcsMultiplicityDelegate(
     }
 
     override fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arc: Arc
     ): OutputArcMultiplicity {
         return arcMultiplicityDelegates[arc.arcType]!!.transitionOutputMultiplicity(
             arc = arc,
-            transitionBufferInfo = transitionBufferInfo
+            transitionGroupedTokenInfo = transitionGroupedTokenInfo
         )
     }
 }

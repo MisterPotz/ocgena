@@ -6,21 +6,21 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.simulation.binding.buffer.OutputMissingTokensFiller
 import ru.misterpotz.ocgena.simulation.binding.buffer.OutputTokensBufferConsumer
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 import ru.misterpotz.ocgena.simulation.binding.generator.OutputMissingTokensGeneratorFactory
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import javax.inject.Inject
 
 class OutputTokensBufferConsumerImpl(
-    private val transitionBufferInfo: TransitionBufferInfo,
+    private val transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
     private val transition: Transition,
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     private val transitionTokenSelectionInteractor: TokenSelectionInteractor,
     private val outputMissingTokensGeneratorFactory: OutputMissingTokensGeneratorFactory
 ) : OutputTokensBufferConsumer {
 
-    override fun transitionBufferInfo(): TransitionBufferInfo {
-        return transitionBufferInfo
+    override fun transitionBufferInfo(): TransitionGroupedTokenInfo {
+        return transitionGroupedTokenInfo
     }
 
     override fun consumeTokenBuffer(): OutputMissingTokensFiller {
@@ -31,7 +31,7 @@ class OutputTokensBufferConsumerImpl(
             val outputArcId = transition.id.arcIdTo(outputPlace)
 
             val arcMultiplicity = arcsMultiplicityRegistry.transitionOutputMultiplicity(
-                transitionBufferInfo,
+                transitionGroupedTokenInfo,
                 outputArcId
             )
 
@@ -49,7 +49,7 @@ class OutputTokensBufferConsumerImpl(
         }
 
         return outputMissingTokensGeneratorFactory.create(
-            transitionBufferInfo,
+            transitionGroupedTokenInfo,
             transition,
             outputMarking
         )
@@ -62,11 +62,11 @@ class OutputTokensBufferConsumerFactory @Inject constructor(
     private val outputMissingTokensGeneratorFactory: OutputMissingTokensGeneratorFactory
 ) {
     fun create(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         transition: Transition,
     ): OutputTokensBufferConsumer {
         return OutputTokensBufferConsumerImpl(
-            transitionBufferInfo = transitionBufferInfo,
+            transitionGroupedTokenInfo = transitionGroupedTokenInfo,
             transition = transition,
             arcsMultiplicityRegistry = arcsMultiplicityRegistry,
             transitionTokenSelectionInteractor = transitionTokenSelectionInteractor,

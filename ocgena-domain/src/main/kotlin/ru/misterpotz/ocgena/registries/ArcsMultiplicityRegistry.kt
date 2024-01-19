@@ -5,13 +5,13 @@ import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionBufferInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
 
 interface ArcsMultiplicityRegistry {
     fun transitionInputMultiplicity(arcId: PetriAtomId): InputArcMultiplicity
     fun transitionInputMultiplicityDynamic(arcId: PetriAtomId) : InputArcMultiplicityDynamic
     fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arcId: PetriAtomId
     ): OutputArcMultiplicity
 }
@@ -22,7 +22,7 @@ abstract class ArcsMultiplicityDelegate {
     abstract fun transitionInputMultiplicityDynamic(arc: Arc) : InputArcMultiplicityDynamic
 
     abstract fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arc: Arc
     ): OutputArcMultiplicity
 }
@@ -42,12 +42,12 @@ internal class ArcsMultiplicityRegistryDelegating(
     }
 
     override fun transitionOutputMultiplicity(
-        transitionBufferInfo: TransitionBufferInfo,
+        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
         arcId: PetriAtomId
     ): OutputArcMultiplicity {
         val arc = arcsRegistry[arcId]
         return arcsMultiplicityDelegate.transitionOutputMultiplicity(
-            transitionBufferInfo,
+            transitionGroupedTokenInfo,
             arc
         )
     }

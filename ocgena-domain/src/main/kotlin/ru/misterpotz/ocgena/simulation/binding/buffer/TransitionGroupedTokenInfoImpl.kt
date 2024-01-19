@@ -10,27 +10,27 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.TokenBatchList
-import ru.misterpotz.ocgena.simulation.binding.TokenBuffer
+import ru.misterpotz.ocgena.simulation.binding.TokenGroup
 import java.util.*
 import javax.inject.Inject
 
 class TokenBatchListFactory @Inject constructor(
-    private val batchGroupingStrategy: TransitionBufferInfo.BatchGroupingStrategy
+    private val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy
 ) {
     fun createFor(): TokenBatchList {
         return TokenBatchList(
-            batchGroupingStrategy = batchGroupingStrategy
+            tokenGroupingStrategy = tokenGroupingStrategy
         )
     }
 }
 
-class TransitionBufferInfoImpl(
+class TransitionGroupedTokenInfoImpl(
     override val transition: Transition,
     private val petriAtomRegistry: PetriAtomRegistry,
     tokenBatchListFactory: TokenBatchListFactory,
     ocNet: OCNet,
-    override val batchGroupingStrategy: TransitionBufferInfo.BatchGroupingStrategy,
-) : TransitionBufferInfo {
+    override val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy,
+) : TransitionGroupedTokenInfo {
     private val tokenBatchList: TokenBatchList = tokenBatchListFactory.createFor()
     private val arcPerBatchSize = mutableMapOf<Arc, Int>()
     private val bufferizedPlaces = mutableSetOf<PetriAtomId>()
@@ -56,7 +56,7 @@ class TransitionBufferInfoImpl(
         )
     }
 
-    override fun getBatchBy(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenBuffer? {
+    override fun getGroup(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenGroup? {
         return tokenBatchList.getBatchBy(toPlaceObjectTypeId, outputArcMeta)
     }
 
