@@ -4,7 +4,7 @@ import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.binding.TokenGroup
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.utils.ByRandomRandomizer
@@ -23,7 +23,7 @@ interface TokenSelectionInteractor {
     ): SelectedAndGeneratedTokens
 
     fun selectTokensFromBuffer(
-        tokenGroup: TokenGroup,
+        tokenSet: TokenSet,
         selectionAmount: Int,
     ): SortedSet<ObjectTokenId>
 
@@ -85,10 +85,10 @@ class TokenSelectionInteractorImpl @Inject constructor(
     }
 
     override fun selectTokensFromBuffer(
-        tokenGroup: TokenGroup,
+        tokenSet: TokenSet,
         selectionAmount: Int,
     ): SortedSet<ObjectTokenId> {
-        val bufferSize = tokenGroup.size
+        val bufferSize = tokenSet.size
         val targetSet = sortedSetOf<ObjectTokenId>()
 
         val randomizer = createRandomizerOrNoOp()
@@ -99,7 +99,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
 
         while (randomIterator.hasNext()) {
             val randomIndex = randomIterator.next()
-            val objectTokenId = tokenGroup.elementAt(randomIndex)
+            val objectTokenId = tokenSet.elementAt(randomIndex)
             targetSet.add(objectTokenId)
         }
 

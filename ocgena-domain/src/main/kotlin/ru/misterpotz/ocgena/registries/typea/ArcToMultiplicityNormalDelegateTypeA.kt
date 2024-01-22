@@ -2,17 +2,13 @@ package ru.misterpotz.ocgena.registries.typea
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
-import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
-import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityValue
-import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
-import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicityValue
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
@@ -21,6 +17,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
     ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
     private val inputArcMultiplicityCache : MutableMap<PetriAtomId, InputArcMultiplicityDynamic> = mutableMapOf()
+    private val outputArcMultiplicityCache : MutableMap<PetriAtomId, OutputArcMultiplicityDynamic> = mutableMapOf()
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
@@ -58,7 +55,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
 
 
     override fun transitionOutputMultiplicity(
-        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
+        tokenGroupedInfo: TokenGroupedInfo,
         arc: Arc
     ): OutputArcMultiplicity {
         require(arc is NormalArc)
@@ -66,11 +63,31 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
         val place = arc.arrowNodeId!!
         val objectType = placeToObjectTypeRegistry[place]
 
-        val tokenBuffer = transitionGroupedTokenInfo.getGroup(objectType, outputArcMeta = arc.arcMeta)
+        val tokenBuffer = tokenGroupedInfo.getTokenSetBy(objectType, outputArcMeta = arc.arcMeta)
 
         return OutputArcMultiplicityValue(
             arc.multiplicity,
-            tokenGroup = tokenBuffer
+            tokenSet = tokenBuffer
         )
+    }
+
+    override fun transitionOutputMultiplicityDynamic(arc: Arc): OutputArcMultiplicityDynamic {
+        require(arc is NormalArc)
+
+        return outputArcMultiplicityCache.getOrPut(arc.id) {
+            object : OutputArcMultiplicityDynamic {
+                override fun requiredTokenAmount(tokenGroupedInfo: TokenGroupedInfo): Int {
+                    return arc.multiplicity
+                }
+
+                override fun getTokenSourceForThisArc(tokenGroupedInfo: TokenGroupedInfo): TokenSet? {
+                    val place = arc.arrowNodeId!!
+                    val objectType = placeToObjectTypeRegistry[place]
+
+                    return tokenGroupedInfo.getTokenSetBy(objectType, outputArcMeta = arc.arcMeta)
+                }
+
+            }
+        }
     }
 }

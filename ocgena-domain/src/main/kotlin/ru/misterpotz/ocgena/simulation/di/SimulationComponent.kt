@@ -21,7 +21,7 @@ import ru.misterpotz.ocgena.registries.typel.ArcToMultiplicityVariableDelegateTy
 import ru.misterpotz.ocgena.simulation.*
 import ru.misterpotz.ocgena.simulation.binding.TIFinisher
 import ru.misterpotz.ocgena.simulation.binding.TIFinisherImpl
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.binding.consumer.OutputTokensBufferConsumerFactory
 import ru.misterpotz.ocgena.simulation.binding.generator.OutputMissingTokensGeneratorFactory
 import ru.misterpotz.ocgena.simulation.binding.groupstrat.ByObjTypeAndArcGroupingStrategy
@@ -386,7 +386,7 @@ internal abstract class SimulationModule {
         fun tokenBatchGroupingStrategy(
             byObjTypeGroupingStrategy: ByObjTypeGroupingStrategy,
             byObjTypeAndArcGroupingStrategy: ByObjTypeAndArcGroupingStrategy,
-        ): TransitionGroupedTokenInfo.TokenGroupingStrategy {
+        ): TokenGroupedInfo.TokenGroupingStrategy {
             return byObjTypeGroupingStrategy
         }
 
@@ -425,7 +425,7 @@ interface SimulationComponent {
     fun objectTokenRealAmountRegistry(): ObjectTokenRealAmountRegistry
     fun outputTokensBufferConsumerFactory(): OutputTokensBufferConsumerFactory
     fun outputMissingTokensGeneratorFactory(): OutputMissingTokensGeneratorFactory
-    fun batchGroupingStrategy(): TransitionGroupedTokenInfo.TokenGroupingStrategy
+    fun batchGroupingStrategy(): TokenGroupedInfo.TokenGroupingStrategy
     fun objectTokenSet(): ObjectTokenSet
     fun objectTokenGenerator(): ObjectTokenGenerator
     fun newTokenGenerationFacade(): NewTokenGenerationFacade

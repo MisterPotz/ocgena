@@ -51,7 +51,7 @@ class OutputTokensBufferConsumerTest {
         }
 
         val outputTokensBufferConsumer = outputTokensBufferConsumerFactory.create(
-            transitionGroupedTokenInfo = transitionBufferInfo,
+            tokenGroupedInfo = transitionBufferInfo,
             transition = transition
         )
 

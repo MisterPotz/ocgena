@@ -92,6 +92,7 @@ interface PlaceToObjectMarking: TokenAmountStorage {
     fun add(place: PetriAtomId, objectTokenId: ObjectTokenId)
     fun removePlace(placeId: PetriAtomId)
     fun plus(delta: PlaceToObjectMarkingDelta)
+    fun plus(placeToObjectMarking: PlaceToObjectMarking)
     operator fun minus(delta: PlaceToObjectMarkingDelta)
     fun removeAllPlaceTokens(place: PetriAtomId)
     fun toImmutable(): ImmutablePlaceToObjectMarking
@@ -128,6 +129,17 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
     override fun get(place: PetriAtomId): SortedSet<ObjectTokenId> {
         return placesToObjectTokens.getOrPut(place) {
             sortedSetOf()
+        }
+    }
+
+    override fun plus(placeToObjectMarking: PlaceToObjectMarking) {
+        for (i in placeToObjectMarking.places) {
+            placesToObjectTokens[i] = placesToObjectTokens.getOrPut(i) {
+                sortedSetOf()
+            }.apply {
+                val atMaskMarking = placeToObjectMarking[i]
+                addAll(atMaskMarking)
+            }
         }
     }
 

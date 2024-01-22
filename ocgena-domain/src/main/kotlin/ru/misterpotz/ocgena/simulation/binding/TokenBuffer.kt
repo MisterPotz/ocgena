@@ -3,17 +3,17 @@ package ru.misterpotz.ocgena.simulation.binding
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenBatch
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroup
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import java.util.*
 
-typealias TokenGroup = SortedSet<ObjectTokenId>
+typealias TokenSet = SortedSet<ObjectTokenId>
 
 
 class TokenBatchList(
-    private val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy
+    private val tokenGroupingStrategy: TokenGroupedInfo.TokenGroupingStrategy
 ) {
-    private val tokenBatches: MutableList<TokenBatch> = mutableListOf()
+    private val tokenGroups: MutableList<TokenGroup> = mutableListOf()
 
     fun addTokens(
         objectTypeId: ObjectTypeId,
@@ -21,7 +21,7 @@ class TokenBatchList(
         sortedSet: SortedSet<ObjectTokenId>
     ) {
         val similarTokenBatch = tokenGroupingStrategy.findTokenBatchForOTypeAndArc(
-            tokenBatches,
+            tokenGroups,
             objectTypeId,
             arcMeta
         )
@@ -30,8 +30,8 @@ class TokenBatchList(
         if (similarTokenBatch != null) {
             similarTokenBatch.sortedSet.addAll(sortedSet)
         } else {
-            tokenBatches.add(
-                TokenBatch(
+            tokenGroups.add(
+                TokenGroup(
                     sortedSet = sortedSet,
                     objectTypeId = objectTypeId,
                     arcMeta = arcMeta
@@ -40,12 +40,12 @@ class TokenBatchList(
         }
     }
 
-    fun getBatchBy(
+    fun getTokenSetBy(
         objectTypeId: ObjectTypeId,
         arcMeta: ArcMeta
-    ): TokenGroup? {
+    ): TokenSet? {
         val batch = tokenGroupingStrategy.findTokenBatchForOTypeAndArc(
-            tokenBatches,
+            tokenGroups,
             objectTypeId,
             arcMeta
         )

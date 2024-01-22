@@ -20,8 +20,8 @@ import ru.misterpotz.ocgena.ocnet.utils.prependId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.SimulationTask
-import ru.misterpotz.ocgena.simulation.binding.TokenGroup
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.config.*
 import ru.misterpotz.ocgena.simulation.config.original.Duration
 import ru.misterpotz.ocgena.simulation.config.original.TimeUntilNextInstanceIsAllowed
@@ -258,12 +258,12 @@ fun SimulationComponent.transition(t: PetriAtomId): Transition {
 fun SimulationComponent.mockTransitionBufferInfo(
     t: PetriAtomId,
     block: MutableCollection<BatchKeyWithBuffer>.() -> Unit,
-): TransitionGroupedTokenInfo {
+): TokenGroupedInfo {
 
     val trans = transition(t)
     val simBatchGroupingStrategy = batchGroupingStrategy()
 
-    return mockk<TransitionGroupedTokenInfo> {
+    return mockk<TokenGroupedInfo> {
         every { transition } returns trans
         every { tokenGroupingStrategy } returns simBatchGroupingStrategy
 
@@ -272,18 +272,18 @@ fun SimulationComponent.mockTransitionBufferInfo(
 
         for (i in mutableCollection) {
             every {
-                getGroup(
+                getTokenSetBy(
                     i.batchKey.objectTypeId,
                     i.batchKey.arcMeta,
                 )
-            } returns i.tokenGroup
+            } returns i.tokenSet
         }
     }
 }
 
 
 data class BatchKey(val objectTypeId: ObjectTypeId, val arcMeta: ArcMeta)
-data class BatchKeyWithBuffer(val batchKey: BatchKey, val tokenGroup: TokenGroup)
+data class BatchKeyWithBuffer(val batchKey: BatchKey, val tokenSet: TokenSet)
 
 fun ObjectTypeId.withArcMeta(arcMeta: ArcMeta): BatchKey {
     return BatchKey(this.objTypeId(), arcMeta)
@@ -297,7 +297,7 @@ fun String.objTypeId(): ObjectTypeId {
     }
 }
 
-fun BatchKey.withTokenBuffer(set: TokenGroup): BatchKeyWithBuffer {
+fun BatchKey.withTokenBuffer(set: TokenSet): BatchKeyWithBuffer {
     return BatchKeyWithBuffer(this, set)
 }
 

@@ -6,16 +6,18 @@ import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.binding.TokenGroup
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import java.util.*
 
 interface TokenGroupCreator {
-    fun group(fromPlacesMarking: ImmutablePlaceToObjectMarking)
+    fun group(fromPlacesMarking: SparseTokenBunch)
+    fun getGroupedInfo() : TokenGroupedInfo
     fun createTokensConsumer(): OutputTokensBufferConsumer
 }
 
 interface OutputTokensBufferConsumer {
-    fun transitionBufferInfo(): TransitionGroupedTokenInfo
+    fun transitionBufferInfo(): TokenGroupedInfo
     fun consumeTokenBuffer(): OutputMissingTokensFiller
 }
 
@@ -24,28 +26,28 @@ interface OutputMissingTokensFiller {
     fun generateMissingTokens(): ImmutablePlaceToObjectMarking
 }
 
-class TokenBatch(
+class TokenGroup(
     val sortedSet: SortedSet<ObjectTokenId>,
     val objectTypeId: ObjectTypeId,
     val arcMeta: ArcMeta,
 )
 
-interface TransitionGroupedTokenInfo {
+interface TokenGroupedInfo {
     val transition: Transition
     val tokenGroupingStrategy: TokenGroupingStrategy
-    fun getGroup(
+    fun getTokenSetBy(
         toPlaceObjectTypeId: ObjectTypeId,
         outputArcMeta: ArcMeta
-    ): TokenGroup?
+    ): TokenSet?
 
 //    fun getInputArcs(): Collection<Arc>
 //    fun getTokenAmountComingThroughInputArc(arc: Arc): Int
 
     interface TokenGroupingStrategy {
         fun findTokenBatchForOTypeAndArc(
-            sourceTokenBatches: List<TokenBatch>,
+            sourceTokenGroups: List<TokenGroup>,
             objectTypeId: ObjectTypeId,
             arcMeta: ArcMeta
-        ): TokenBatch?
+        ): TokenGroup?
     }
 }

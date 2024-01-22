@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.ocnet.primitives
 
-import ru.misterpotz.ocgena.simulation.binding.TokenGroup
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 
 interface InputArcMultiplicity {
@@ -29,19 +30,24 @@ class InputArcMultiplicityValue(
 
 interface OutputArcMultiplicity {
     fun requiredTokenAmount(): Int
-    fun getTokenSourceForThisArc() : TokenGroup?
+    fun getTokenSourceForThisArc() : TokenSet?
+}
+
+interface OutputArcMultiplicityDynamic {
+    fun requiredTokenAmount(tokenGroupedInfo: TokenGroupedInfo): Int
+    fun getTokenSourceForThisArc(tokenGroupedInfo: TokenGroupedInfo) : TokenSet?
 }
 
 class OutputArcMultiplicityValue(
     private val requiredTokenAmount: Int,
-    private val tokenGroup: TokenGroup?
+    private val tokenSet: TokenSet?
 ) : OutputArcMultiplicity {
 
     override fun requiredTokenAmount(): Int {
         return requiredTokenAmount
     }
 
-    override fun getTokenSourceForThisArc(): TokenGroup? {
-        return tokenGroup
+    override fun getTokenSourceForThisArc(): TokenSet? {
+        return tokenSet
     }
 }

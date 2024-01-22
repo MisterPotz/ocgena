@@ -7,12 +7,12 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.simulation.binding.buffer.OutputMissingTokensFiller
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import javax.inject.Inject
 
 class OutputMissingTokensFillerImpl(
-    private val transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
+    private val tokenGroupedInfo: TokenGroupedInfo,
     private val transition: Transition,
     private val ocNet: OCNet,
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
@@ -26,7 +26,7 @@ class OutputMissingTokensFillerImpl(
             val outputArcId = transition.id.arcIdTo(outputPlace)
 
             val arcMultiplicity = arcsMultiplicityRegistry.transitionOutputMultiplicity(
-                transitionGroupedTokenInfo,
+                tokenGroupedInfo,
                 outputArcId
             )
 
@@ -55,12 +55,12 @@ class OutputMissingTokensGeneratorFactory @Inject constructor(
     private val transitionTokenSelectionInteractor: TokenSelectionInteractor,
 ) {
     fun create(
-        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
+        tokenGroupedInfo: TokenGroupedInfo,
         transition: Transition,
         outputMarking: PlaceToObjectMarking
     ): OutputMissingTokensFiller {
         return OutputMissingTokensFillerImpl(
-            transitionGroupedTokenInfo,
+            tokenGroupedInfo,
             transition,
             ocNet,
             arcsMultiplicityRegistry,

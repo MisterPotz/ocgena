@@ -3,19 +3,17 @@ package ru.misterpotz.ocgena.simulation.binding.buffer
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.TokenBatchList
-import ru.misterpotz.ocgena.simulation.binding.TokenGroup
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import java.util.*
 import javax.inject.Inject
 
 class TokenBatchListFactory @Inject constructor(
-    private val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy
+    private val tokenGroupingStrategy: TokenGroupedInfo.TokenGroupingStrategy
 ) {
     fun createFor(): TokenBatchList {
         return TokenBatchList(
@@ -24,26 +22,20 @@ class TokenBatchListFactory @Inject constructor(
     }
 }
 
-class TransitionGroupedTokenInfoImpl(
+class TokenGroupedInfoImpl(
     override val transition: Transition,
-    private val petriAtomRegistry: PetriAtomRegistry,
     tokenBatchListFactory: TokenBatchListFactory,
     ocNet: OCNet,
-    override val tokenGroupingStrategy: TransitionGroupedTokenInfo.TokenGroupingStrategy,
-) : TransitionGroupedTokenInfo {
+    override val tokenGroupingStrategy: TokenGroupedInfo.TokenGroupingStrategy,
+) : TokenGroupedInfo {
     private val tokenBatchList: TokenBatchList = tokenBatchListFactory.createFor()
-    private val arcPerBatchSize = mutableMapOf<Arc, Int>()
     private val bufferizedPlaces = mutableSetOf<PetriAtomId>()
     private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
     private val arcsRegistry = ocNet.arcsRegistry
 
-    fun bufferize(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>) {
+    fun group(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>) {
         if (bufferizedPlaces.contains(place)) return
         bufferizedPlaces.add(place)
-
-        val arc = petriAtomRegistry.getArc(place.arcIdTo(transition.id))
-        val batchSize = tokens.size
-        arcPerBatchSize[arc] = batchSize
 
         val objectType = placeToObjectTypeRegistry[place]
         val arcId = place.arcIdTo(transition.id)
@@ -56,8 +48,8 @@ class TransitionGroupedTokenInfoImpl(
         )
     }
 
-    override fun getGroup(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenGroup? {
-        return tokenBatchList.getBatchBy(toPlaceObjectTypeId, outputArcMeta)
+    override fun getTokenSetBy(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenSet? {
+        return tokenBatchList.getTokenSetBy(toPlaceObjectTypeId, outputArcMeta)
     }
 
 //    override fun getInputArcs(): Collection<Arc> {

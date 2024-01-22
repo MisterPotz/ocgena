@@ -3,17 +3,13 @@ package ru.misterpotz.ocgena.registries.typel
 import ru.misterpotz.expression.paramspace.VariableParameterSpace
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicity
-import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
-import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityValue
-import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
-import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicityValue
-import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
-import ru.misterpotz.ocgena.simulation.binding.buffer.TransitionGroupedTokenInfo
+import ru.misterpotz.ocgena.simulation.binding.TokenSet
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
@@ -23,7 +19,9 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
     private val inputArcMultiplicityCache: MutableMap<PetriAtomId, InputArcMultiplicityDynamic> = mutableMapOf()
+    private val outputArcMultiplicityCache : MutableMap<PetriAtomId, OutputArcMultiplicityDynamic> = mutableMapOf()
     private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
+
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         require(arc is VariableArc)
 
@@ -61,7 +59,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
 
     override fun transitionOutputMultiplicity(
-        transitionGroupedTokenInfo: TransitionGroupedTokenInfo,
+        tokenGroupedInfo: TokenGroupedInfo,
         arc: Arc,
     ): OutputArcMultiplicity {
         require(arc is VariableArc)
@@ -71,9 +69,9 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
         val variableName = arc.variableName
             ?: return arcToMultiplicityNormalDelegateTypeA
-                .transitionOutputMultiplicity(transitionGroupedTokenInfo, arc)
+                .transitionOutputMultiplicity(tokenGroupedInfo, arc)
 
-        val sourceBatch = transitionGroupedTokenInfo.getGroup(
+        val sourceBatch = tokenGroupedInfo.getTokenSetBy(
             toPlaceObjectTypeId = objectTypeId,
             outputArcMeta = arc.arcMeta
         )!!
@@ -90,7 +88,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         val requiredTokenAmount = roundUpIfNeeded(requiredTokensAmount)
 
         return OutputArcMultiplicityValue(
-            tokenGroup = sourceBatch,
+            tokenSet = sourceBatch,
             requiredTokenAmount = requiredTokenAmount,
         )
     }
@@ -100,6 +98,44 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
             kotlin.math.ceil(value).toInt()
         } else {
             value.toInt()
+        }
+    }
+
+    override fun transitionOutputMultiplicityDynamic(arc: Arc): OutputArcMultiplicityDynamic {
+        require(arc is VariableArc)
+        if (arc.variableName == null) {
+            return arcToMultiplicityNormalDelegateTypeA.transitionOutputMultiplicityDynamic(arc)
+        }
+
+        return outputArcMultiplicityCache.getOrPut(arc.id) {
+            object : OutputArcMultiplicityDynamic {
+                override fun requiredTokenAmount(tokenGroupedInfo: TokenGroupedInfo): Int {
+
+                    val variableName = arc.variableName!!
+                    val totalAvailableTokensForArc = getTokenSourceForThisArc(tokenGroupedInfo)!!.size
+
+                    // calculate the amount of tokens needed for this arc
+                    val requiredTokensAmount = arc.mathNode!!.evaluate(
+                        parameterSpace =
+                        VariableParameterSpace(
+                            variableName to totalAvailableTokensForArc.toDouble()
+                        )
+                    )
+
+                    return roundUpIfNeeded(requiredTokensAmount)
+
+                }
+
+                override fun getTokenSourceForThisArc(tokenGroupedInfo: TokenGroupedInfo): TokenSet? {
+                    val targetPlace = arc.arrowNodeId!!
+                    val objectTypeId = placeToObjectTypeRegistry[targetPlace]
+
+                    return tokenGroupedInfo.getTokenSetBy(
+                        toPlaceObjectTypeId = objectTypeId,
+                        outputArcMeta = arc.arcMeta
+                    )!!
+                }
+            }
         }
     }
 }
