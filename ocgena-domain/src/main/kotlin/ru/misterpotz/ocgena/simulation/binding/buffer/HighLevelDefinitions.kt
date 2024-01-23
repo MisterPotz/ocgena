@@ -11,8 +11,7 @@ import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import java.util.*
 
 interface TokenGroupCreator {
-    fun group(fromPlacesMarking: SparseTokenBunch)
-    fun getGroupedInfo() : TokenGroupedInfo
+    fun group(fromPlacesMarking: SparseTokenBunch): TokenGroupedInfoImpl
     fun createTokensConsumer(): OutputTokensBufferConsumer
 }
 

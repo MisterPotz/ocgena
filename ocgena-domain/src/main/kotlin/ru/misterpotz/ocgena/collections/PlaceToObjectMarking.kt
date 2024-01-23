@@ -19,6 +19,8 @@ interface ObjectTokenRealAmountRegistry : TokenAmountStorage {
     fun getRealAmountOfType(objectTypeId: ObjectTypeId): Int
     fun incrementRealAmountOfType(objectTypeId: ObjectTypeId, incrementValue: Int)
     fun decrementRealAmountOfType(objectTypeId: ObjectTypeId, decrementValue: Int)
+    override operator fun plus(tokenAmountStorage: TokenAmountStorage)
+    operator fun minus(tokenAmountStorage: TokenAmountStorage)
 }
 
 fun ObjectTokenRealAmountRegistry(placeToObjectTypeRegistry: PlaceToObjectTypeRegistry): ObjectTokenRealAmountRegistry {
@@ -30,6 +32,9 @@ internal class ObjectTokenRealAmountRegistryImpl @Inject constructor(
 ) : ObjectTokenRealAmountRegistry {
     private val placeToAmount = mutableMapOf<PetriAtomId, Int>()
     private val typeToAmount = mutableMapOf<ObjectTypeId, Int>()
+    override val places
+        get() = placeToAmount.keys
+
     override fun getRealAmountAt(place: PetriAtomId): Int {
         return placeToAmount.getOrPut(place) { 0 }
     }
@@ -71,6 +76,33 @@ internal class ObjectTokenRealAmountRegistryImpl @Inject constructor(
         typeToAmount[objectTypeId] = (typeToAmount.getOrPut(objectTypeId) { 0 } - decrementValue).coerceAtLeast(0)
     }
 
+    override fun plus(tokenAmountStorage: TokenAmountStorage) {
+        for (place in tokenAmountStorage.places) {
+            val typeAmount = typeToAmount.getOrPut(placeToObjectTypeRegistry[place]) {
+                0
+            }
+            val appending = tokenAmountStorage.getTokensAt(place)
+            placeToAmount[place] = placeToAmount.getOrPut(place) {
+                0
+            } + appending
+            typeToAmount[place] = typeAmount + appending
+        }
+    }
+
+    override fun minus(tokenAmountStorage: TokenAmountStorage) {
+        for (place in tokenAmountStorage.places) {
+            val typeAmount = typeToAmount.getOrPut(placeToObjectTypeRegistry[place]) {
+                0
+            }
+            val reducing = tokenAmountStorage.getTokensAt(place)
+            val totalPlace = (placeToAmount.getOrPut(place) { 0 } - reducing).coerceAtLeast(0)
+            if (totalPlace == 0) {
+                placeToAmount.remove(place)
+            }
+            typeToAmount[place] = (typeAmount - reducing).coerceAtLeast(0)
+        }
+    }
+
     override fun getTokensAt(place: PetriAtomId): Int {
         return placeToAmount[place]!!
     }
@@ -84,9 +116,9 @@ internal class ObjectTokenRealAmountRegistryImpl @Inject constructor(
     }
 }
 
-interface PlaceToObjectMarking: TokenAmountStorage {
+interface PlaceToObjectMarking : TokenAmountStorage {
     val tokensIterator: Iterator<ObjectTokenId>
-    val places : Iterable<PetriAtomId>
+    override val places: Iterable<PetriAtomId>
     operator fun get(place: PetriAtomId): SortedSet<ObjectTokenId>
     operator fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?)
     fun add(place: PetriAtomId, objectTokenId: ObjectTokenId)
@@ -94,6 +126,7 @@ interface PlaceToObjectMarking: TokenAmountStorage {
     fun plus(delta: PlaceToObjectMarkingDelta)
     fun plus(placeToObjectMarking: PlaceToObjectMarking)
     operator fun minus(delta: PlaceToObjectMarkingDelta)
+    operator fun minus(placeToObjectMarking: PlaceToObjectMarking)
     fun removeAllPlaceTokens(place: PetriAtomId)
     fun toImmutable(): ImmutablePlaceToObjectMarking
     fun modify(modifier: ObjectMarkingModifier)
@@ -143,6 +176,10 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
         }
     }
 
+    override fun plus(tokenAmountStorage: TokenAmountStorage) {
+
+    }
+
     override fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?) {
         placesToObjectTokens.getOrPut(place) {
             sortedSetOf()
@@ -171,6 +208,18 @@ data class PlaceToObjectMarkingMap(val placesToObjectTokens: MutableMap<PetriAto
             get(key)!!.removeAll(delta[key]!!)
             if (get(key)!!.isEmpty()) {
                 removePlace(key)
+            }
+        }
+    }
+
+    override fun minus(placeToObjectMarking: PlaceToObjectMarking) {
+        for (i in placeToObjectMarking.places) {
+            if (i in placesToObjectTokens) {
+                (placesToObjectTokens[i]!!.removeAll(placeToObjectMarking[i]))
+                val resulting = placeToObjectMarking[i]
+                if (resulting.isEmpty()) {
+                    placesToObjectTokens.remove(i)
+                }
             }
         }
     }

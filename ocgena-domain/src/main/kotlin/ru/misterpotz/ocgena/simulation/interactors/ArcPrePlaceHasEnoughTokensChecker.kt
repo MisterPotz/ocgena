@@ -28,7 +28,7 @@ class ArcPrePlaceHasEnoughTokensCheckerImpl(
 }
 
 interface TokenAmountStorage {
-    val places : List<PetriAtomId>
+    val places : Iterable<PetriAtomId>
     fun getTokensAt(place: PetriAtomId): Int
     fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int
     fun plus(tokenAmountStorage: TokenAmountStorage)
