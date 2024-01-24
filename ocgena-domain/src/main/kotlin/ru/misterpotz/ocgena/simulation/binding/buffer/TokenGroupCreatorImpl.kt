@@ -1,15 +1,20 @@
 package ru.misterpotz.ocgena.simulation.binding.buffer
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
-import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.simulation.binding.consumer.OutputTokensBufferConsumerFactory
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import javax.inject.Inject
 
-class TokenGroupCreatorImpl(
-    private val tokenGroupedInfo: TokenGroupedInfoImpl,
+
+class TokenGroupCreatorImpl @AssistedInject constructor(
+    @Assisted
     override val transition: Transition,
+    @Assisted
+    private val tokenGroupedInfo: TokenGroupedInfoImpl,
     private val outputTokensBufferConsumerFactory: OutputTokensBufferConsumerFactory
 ) : TokenGroupCreator, TokenGroupedInfo by tokenGroupedInfo {
     override fun group(tokenBunch: SparseTokenBunch): TokenGroupedInfoImpl {
@@ -30,28 +35,25 @@ class TokenGroupCreatorImpl(
     }
 }
 
+
+@AssistedFactory
+interface TokenGroupCreatorFactoryAssisted {
+    fun create(
+        transition: Transition,
+        tokenGroupedInfo: TokenGroupedInfoImpl
+    ): TokenGroupCreatorImpl
+}
+
 class TokenGroupCreatorFactory @Inject constructor(
-    private val ocNet: OCNet,
-    private val tokenBatchListFactory: TokenBatchListFactory,
-    private val tokenGroupingStrategy: TokenGroupedInfo.TokenGroupingStrategy,
-    private val outputTokensBufferConsumerFactory: OutputTokensBufferConsumerFactory
+    private val tokenGroupedInfoFactory: TokenGroupedInfoFactory,
+    private val tokenGroupCreatorFactoryAssisted: TokenGroupCreatorFactoryAssisted
 ) {
-    private val petriAtomRegistry: PetriAtomRegistry = ocNet.petriAtomRegistry
     fun create(
         transition: Transition,
     ): TokenGroupCreator {
 
-        val transitionBufferInfoImpl = TokenGroupedInfoImpl(
-            transition = transition,
-            tokenBatchListFactory = tokenBatchListFactory,
-            ocNet = ocNet,
-            tokenGroupingStrategy = tokenGroupingStrategy
-        )
+        val transitionBufferInfoImpl = tokenGroupedInfoFactory.create(transition)
 
-        return TokenGroupCreatorImpl(
-            tokenGroupedInfo = transitionBufferInfoImpl,
-            transition = transition,
-            outputTokensBufferConsumerFactory = outputTokensBufferConsumerFactory
-        )
+        return tokenGroupCreatorFactoryAssisted.create(transition, transitionBufferInfoImpl)
     }
 }

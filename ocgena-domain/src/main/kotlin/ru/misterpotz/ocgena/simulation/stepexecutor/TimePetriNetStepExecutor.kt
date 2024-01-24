@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation.stepexecutor
 
+import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
@@ -12,6 +13,7 @@ import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
+import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactoryAssisted
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
@@ -19,15 +21,15 @@ import ru.misterpotz.ocgena.simulation.interactors.*
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.utils.TimePNRef
 import javax.inject.Inject
+import kotlin.IllegalStateException
 import kotlin.random.Random
 
-class TimePetriNetStepExecutor(
+class TimePetriNetStepExecutor @Inject constructor(
     private val newTimeDeltaInteractor: NewTimeDeltaInteractor,
     val ocNet: OCNet,
-    @GlobalTokenBunch
     private val timePNTransitionMarking: TimePNTransitionMarking,
     private val transitionToFireSelector: TransitionToFireSelector,
-    private val transitionFireExecutor: TransitionFiringRuleExecutor
+    private val transitionFireExecutor: TransitionFiringRuleExecutor,
 ) : StepExecutor {
     override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
         // generate next time
@@ -56,7 +58,7 @@ class TimePetriNetStepExecutor(
     }
 }
 
-class TransitionToFireSelector(val random: Random?) {
+class TransitionToFireSelector @Inject constructor(val random: Random?) {
     fun select(transitions: List<Transition>): Transition? {
         if (transitions.isEmpty()) return null
         return transitions.let {
@@ -70,16 +72,17 @@ class TransitionToFireSelector(val random: Random?) {
 }
 
 @TimePNRef("h(t)=#")
-class TransitionDisabledChecker(
+class TransitionDisabledChecker @Inject constructor(
     private val prePlaceRegistry: PrePlaceRegistry,
-    private val tokenAmountStorage: TokenAmountStorage,
+    @GlobalTokenBunch
+    private val globalTokenBunch: SparseTokenBunch,
 ) {
     fun transitionIsDisabled(transition: PetriAtomId): Boolean {
-        return prePlaceRegistry.transitionPrePlaces(transition) > tokenAmountStorage
+        return prePlaceRegistry.transitionPrePlaces(transition) > globalTokenBunch.tokenAmountStorage()
     }
 }
 
-class TimeShiftSelector(val random: Random?) {
+class TimeShiftSelector @Inject constructor(val random: Random?) {
     fun selectTimeDelta(max: Long): Long {
         return (1..max).let {
             if (random == null) {
@@ -91,7 +94,7 @@ class TimeShiftSelector(val random: Random?) {
     }
 }
 
-class NewTimeDeltaInteractor(
+class NewTimeDeltaInteractor @Inject constructor(
     private val timeShiftSelector: TimeShiftSelector,
     private val maxTimeDeltaFinder: MaxTimeDeltaFinder,
     private val timePNTransitionMarking: TimePNTransitionMarking,
@@ -108,7 +111,7 @@ class NewTimeDeltaInteractor(
 }
 
 @TimePNRef("elapsing of time")
-class MaxTimeDeltaFinder(
+class MaxTimeDeltaFinder @Inject constructor(
     private val ocNet: OCNet,
     private val timePNTransitionMarking: TimePNTransitionMarking,
     private val transitionDisabledChecker: TransitionDisabledChecker,
@@ -159,6 +162,27 @@ class GlobalSparseTokenBunch(
     }
 }
 
+class ImmutableSparseTokenBunchImpl(
+    val marking: ImmutablePlaceToObjectMarking,
+) : SparseTokenBunch {
+    override fun objectMarking(): PlaceToObjectMarking {
+        return marking
+    }
+
+    override fun tokenAmountStorage(): TokenAmountStorage {
+        return marking
+    }
+
+    override fun append(tokenBunch: SparseTokenBunch) {
+        throw IllegalStateException()
+    }
+
+    override fun minus(tokenBunch: SparseTokenBunch) {
+        throw IllegalStateException()
+    }
+
+}
+
 class SparseTokenBunchImpl(
     val marking: PlaceToObjectMarking = PlaceToObjectMarkingMap(),
     val tokenAmountStorage: SimpleTokenAmountStorage = SimpleTokenAmountStorage(),
@@ -185,6 +209,9 @@ class SparseTokenBunchImpl(
     }
 }
 
+fun ImmutablePlaceToObjectMarking.toImmutableBunch(): SparseTokenBunch {
+    return ImmutableSparseTokenBunchImpl(this)
+}
 
 class TransitionTokenSelector(
     private val transitionPrePlaceAccessor: PrePlaceRegistry.PrePlaceAccessor,
@@ -324,9 +351,12 @@ class TransitionOutputTokensCreator(
 }
 
 
-class TimePNTransitionMarking(
+class TimePNTransitionMarking @Inject constructor(
     private val mutableMap: MutableMap<PetriAtomId, TimePnTransitionData>,
 ) {
+    init {
+        println("timepntransitionmarking instantiated")
+    }
 
     fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData {
         return mutableMap[petriAtomId]!!

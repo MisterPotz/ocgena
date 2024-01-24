@@ -131,6 +131,10 @@ fun simTask(component: SimulationComponent): SimulationTask {
     return component.simulationTask()
 }
 
+fun SimulationConfig.toSimComponent(developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()): SimulationComponent {
+    return simComponent(this, developmentDebugConfig)
+}
+
 fun SimulationComponent.facade(): FacadeSim {
     return FacadeSim(
         this,
@@ -223,7 +227,7 @@ fun SimulationComponent.addTokens(block: AddTokensBlock.() -> Unit): SimulationC
 }
 
 interface AddTokensBlock {
-    fun forPlace(place : PetriAtomId, amount: Int)
+    fun forPlace(place: PetriAtomId, amount: Int)
 }
 
 private class AddTokensBlockImpl(private val simulationComponent: SimulationComponent) : AddTokensBlock {

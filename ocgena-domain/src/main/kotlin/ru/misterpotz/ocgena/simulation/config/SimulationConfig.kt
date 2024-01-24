@@ -6,7 +6,9 @@ import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
+import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 
 @Serializable
 data class SimulationConfig(
@@ -53,6 +55,19 @@ data class SimulationConfig(
         initialMarking.map()
 
         return copy(initialMarking = MarkingScheme(initialMarking))
+    }
+
+//    fun asTimePNConfig() : SimulationConfig {
+//        return copy(
+//            simulationSemantics = SimulationSemantics(type = SimulationSemanticsType.SIMPLE_TIME_PN)
+//        )
+//    }
+//
+    fun asTimePNwithSpec(timePNSpec: TransitionsTimePNSpec) : SimulationConfig {
+        return copy(
+            transitionsSpec = timePNSpec,
+            simulationSemantics = SimulationSemantics(type = SimulationSemanticsType.SIMPLE_TIME_PN)
+        )
     }
 
     @Suppress("UNCHECKED_CAST")

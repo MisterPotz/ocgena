@@ -7,11 +7,13 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.EnabledBinding
 import ru.misterpotz.ocgena.simulation.binding.EnabledBindingWithTokens
+import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
 import ru.misterpotz.ocgena.simulation.interactors.ArcPrePlaceHasEnoughTokensChecker
 import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import java.util.*
 import javax.inject.Inject
@@ -22,6 +24,8 @@ class EnabledBindingResolverInteractorOriginalImpl @Inject constructor(
     private val ocNetInstance: SimulatableOcNetInstance,
     private val currentSimulationStateOriginal: CurrentSimulationStateOriginal,
     private val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
+    @GlobalTokenBunch
+    private val globalTokenBunch: SparseTokenBunch,
 ) : EnabledBindingResolverInteractor, CurrentSimulationDelegate by currentSimulationDelegate {
 
     private fun arcInputPlaceHasEnoughTokens(place: PetriAtomId, transition: Transition): Boolean {
@@ -39,6 +43,7 @@ class EnabledBindingResolverInteractorOriginalImpl @Inject constructor(
         val selectedAndInitializedTokens = tokenSelectionInteractor.selectAndInitializeTokensFromPlace(
             petriAtomId = place,
             amount = requiredTokensAmount,
+            tokenBunch = globalTokenBunch
         )
         pMarking[place].addAll(selectedAndInitializedTokens.generated)
         return selectedAndInitializedTokens.selected

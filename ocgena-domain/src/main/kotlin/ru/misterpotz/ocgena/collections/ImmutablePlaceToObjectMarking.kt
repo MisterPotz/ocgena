@@ -13,8 +13,12 @@ interface PlaceToObjectMarkingDelta {
     operator fun get(placeId: PetriAtomId): Set<ObjectTokenId>?
 }
 
-interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta, java.io.Serializable, TokenAmountStorage {
-    val tokensIterator: Iterator<ObjectTokenId>
+interface ImmutablePlaceToObjectMarking : PlaceToObjectMarkingDelta,
+    java.io.Serializable,
+    TokenAmountStorage,
+    PlaceToObjectMarking {
+
+    override val tokensIterator: Iterator<ObjectTokenId>
     override operator fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId>
     override val keys: Set<PetriAtomId>
     fun isEmpty(): Boolean
@@ -30,6 +34,9 @@ fun <S : SortedSet<ObjectTokenId>> ImmutablePlaceToObjectMarking(placesToObjectT
 @SerialName("placeToObject")
 data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesToObjectTokens: Map<PetriAtomId, SortedSet<ObjectTokenId>>) :
     ImmutablePlaceToObjectMarking {
+    override val places by lazy(LazyThreadSafetyMode.NONE) {
+        placesToObjectTokens.keys
+    }
     override val tokensIterator: Iterator<ObjectTokenId>
         get() {
             return iterator {
@@ -67,6 +74,54 @@ data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesT
 
     override fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int {
         throw IllegalStateException("cannot modify immutable place to object marking")
+    }
+
+    override fun plus(tokenAmountStorage: TokenAmountStorage) {
+        throw IllegalStateException("canno modify immutable place to object marking")
+    }
+
+    override fun plus(delta: PlaceToObjectMarkingDelta) {
+        throw IllegalStateException()
+    }
+
+    override fun plus(placeToObjectMarking: PlaceToObjectMarking) {
+        throw IllegalStateException()
+    }
+
+    override fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?) {
+        throw IllegalStateException()
+    }
+
+    override fun add(place: PetriAtomId, objectTokenId: ObjectTokenId) {
+        throw IllegalStateException()
+    }
+
+    override fun removePlace(placeId: PetriAtomId) {
+        throw IllegalStateException()
+    }
+
+    override fun minus(delta: PlaceToObjectMarkingDelta) {
+        throw IllegalStateException()
+    }
+
+    override fun minus(placeToObjectMarking: PlaceToObjectMarking) {
+        throw IllegalStateException()
+    }
+
+    override fun removeAllPlaceTokens(place: PetriAtomId) {
+        throw IllegalStateException()
+    }
+
+    override fun toImmutable(): ImmutablePlaceToObjectMarking {
+        return this
+    }
+
+    override fun modify(modifier: ObjectMarkingModifier) {
+        throw IllegalStateException()
+    }
+
+    override fun clear() {
+        throw IllegalStateException()
     }
 }
 

@@ -58,7 +58,7 @@ inline fun <reified T> writeOrAssertJson(
 }
 
 fun readAndBuildConfig(
-    settingsPath: Path,
+    settingsPath: Path = DEFAULT_SETTINGS,
     modelPath: ModelPath,
 ): SimulationConfig {
     val defaultSettings = readConfig<SettingsSimulationConfig>(settingsPath)

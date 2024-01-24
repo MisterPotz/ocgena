@@ -1,5 +1,8 @@
 package ru.misterpotz.ocgena.simulation.binding.buffer
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -22,7 +25,8 @@ class TokenBatchListFactory @Inject constructor(
     }
 }
 
-class TokenGroupedInfoImpl(
+class TokenGroupedInfoImpl @AssistedInject constructor(
+    @Assisted
     override val transition: Transition,
     tokenBatchListFactory: TokenBatchListFactory,
     ocNet: OCNet,
@@ -51,12 +55,9 @@ class TokenGroupedInfoImpl(
     override fun getTokenSetBy(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenSet? {
         return tokenBatchList.getTokenSetBy(toPlaceObjectTypeId, outputArcMeta)
     }
+}
 
-//    override fun getInputArcs(): Collection<Arc> {
-//        return arcPerBatchSize.keys
-//    }
-//
-//    override fun getTokenAmountComingThroughInputArc(arc: Arc): Int {
-//        return arcPerBatchSize[arc]!!
-//    }
+@AssistedFactory
+interface TokenGroupedInfoFactory {
+    fun create(transition: Transition): TokenGroupedInfoImpl
 }

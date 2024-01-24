@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.simulation.di
 
 import com.charleskorn.kaml.Yaml
 import dagger.*
+import dagger.assisted.AssistedInject
 import kotlinx.serialization.json.Json
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
@@ -48,10 +49,7 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
 import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
-import ru.misterpotz.ocgena.simulation.stepexecutor.GlobalSparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.OriginalStepExecutor
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.StepExecutor
+import ru.misterpotz.ocgena.simulation.stepexecutor.*
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
 import ru.misterpotz.ocgena.simulation.structure.State
@@ -106,12 +104,18 @@ internal abstract class SimulationModule {
         enabledBindingResolverInteractorOriginalImpl: EnabledBindingResolverInteractorOriginalImpl,
     ): EnabledBindingResolverInteractor
 
+    @Binds
+    @SimulationScope
+    abstract fun bindTimePNTransitionMarking(timePNTransitionMarking: TimePNTransitionMarking): TimePNTransitionMarking
+
     companion object {
         @Provides
         @SimulationScope
         fun logger(fullLoggerFactory: FullLoggerFactory): Logger {
             return fullLoggerFactory.createLogger()
         }
+
+
 
         @Provides
         @SimulationScope
@@ -143,6 +147,12 @@ internal abstract class SimulationModule {
             return ObjectTokenRealAmountRegistryImpl(
                 ocNet.placeToObjectTypeRegistry
             )
+        }
+
+        @Provides
+        @SimulationScope
+        fun providePlaceToObjectTypeRegistry(ocNet: OCNet) : PlaceToObjectTypeRegistry {
+            return ocNet.placeToObjectTypeRegistry
         }
 
         @Provides
@@ -403,6 +413,7 @@ internal abstract class SimulationModule {
             )
         }
 
+
     }
 }
 
@@ -432,6 +443,10 @@ interface SimulationComponent {
     fun tokenSelectionInteractor(): TokenSelectionInteractor
     fun prePostPlaceRegistry(): PrePlaceRegistry
     fun arcPrePlaceHasEnoughTokensChecker(): ArcPrePlaceHasEnoughTokensChecker
+
+    fun newTimeDeltaInteractor() : NewTimeDeltaInteractor
+
+    fun create(transition: Transition)
 
     @Component.Factory
     interface Factory {
@@ -486,3 +501,4 @@ interface SimulationComponent {
 
 @Scope
 annotation class SimulationScope
+

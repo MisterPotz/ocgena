@@ -4,6 +4,7 @@ import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
+import ru.misterpotz.ocgena.simulation.stepexecutor.toImmutableBunch
 import javax.inject.Inject
 
 
@@ -19,7 +20,7 @@ class TIOutputPlacesResolverInteractorImpl @Inject constructor(
 
         val lockedTokensBufferizer = tokenGroupCreatorFactory.create(transition = transition)
 
-        lockedTokensBufferizer.group(lockedTokens)
+        lockedTokensBufferizer.group(lockedTokens.toImmutableBunch())
 
         val tokenConsumer = lockedTokensBufferizer.createTokensConsumer()
 

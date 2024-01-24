@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.simulation.transition
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingDelta
 import ru.misterpotz.ocgena.simulation.generator.original.TransitionInstanceDurationGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.generator.original.TransitionNextInstanceAllowedTimeGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
@@ -42,7 +43,7 @@ class TransitionInstanceCreatorFacadeOriginal @Inject constructor(
     }
 
     private fun lockTokensInPMarking(enabledBindingWithTokens: EnabledBindingWithTokens) {
-        pMarking.minus(enabledBindingWithTokens.involvedObjectTokens)
+        pMarking.minus(enabledBindingWithTokens.involvedObjectTokens as PlaceToObjectMarkingDelta)
         for (place in enabledBindingWithTokens.involvedObjectTokens.keys) {
             val tokens = enabledBindingWithTokens.involvedObjectTokens[place].size
             objectTokenRealAmountRegistry.decreaseRealAmountAt(place, decrementValue = tokens)
