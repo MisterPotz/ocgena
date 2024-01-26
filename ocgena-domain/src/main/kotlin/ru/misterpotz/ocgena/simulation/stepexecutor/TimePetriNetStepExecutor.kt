@@ -11,6 +11,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
+import ru.misterpotz.ocgena.registries.TransitionsRegistry
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactoryAssisted
@@ -112,16 +113,16 @@ class NewTimeDeltaInteractor @Inject constructor(
 
 @TimePNRef("elapsing of time")
 class MaxTimeDeltaFinder @Inject constructor(
-    private val ocNet: OCNet,
+    private val transitionsRegistry: TransitionsRegistry,
     private val timePNTransitionMarking: TimePNTransitionMarking,
     private val transitionDisabledChecker: TransitionDisabledChecker,
 ) {
     fun findMaxPossibleTimeDelta(): Long? {
-        val partiallyEnabledTransitions = ocNet.transitionsRegistry.iterable.filter { transition ->
+        val partiallyEnabledTransitions = transitionsRegistry.iterable.filter { transition ->
             !transitionDisabledChecker.transitionIsDisabled(transition.id)
         }
         val minimumLftTransition = partiallyEnabledTransitions.minByOrNull { transition ->
-            timePNTransitionMarking.forTransition(transition.id).lft
+            timePNTransitionMarking.forTransition(transition.id).timeUntilLFT()
         } ?: return null
 
         val transitionData = timePNTransitionMarking.forTransition(minimumLftTransition.id)
@@ -350,19 +351,28 @@ class TransitionOutputTokensCreator(
     }
 }
 
+interface TimePNTransitionMarking {
+    fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData
 
-class TimePNTransitionMarking @Inject constructor(
-    private val mutableMap: MutableMap<PetriAtomId, TimePnTransitionData>,
-) {
+    fun appendClockTime(delta: Long)
+}
+
+fun TimePNTransitionMarking(): TimePNTransitionMarkingImpl {
+    return TimePNTransitionMarkingImpl(mutableMapOf())
+}
+
+class TimePNTransitionMarkingImpl @Inject constructor(
+    private val mutableMap: MutableMap<PetriAtomId, TimePnTransitionData> = mutableMapOf(),
+) : TimePNTransitionMarking {
     init {
         println("timepntransitionmarking instantiated")
     }
 
-    fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData {
+    override fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData {
         return mutableMap[petriAtomId]!!
     }
 
-    fun appendClockTime(delta: Long) {
+    override fun appendClockTime(delta: Long) {
         for (transition in mutableMap.values) {
             transition.incrementCounter(delta)
         }

@@ -104,9 +104,7 @@ internal abstract class SimulationModule {
         enabledBindingResolverInteractorOriginalImpl: EnabledBindingResolverInteractorOriginalImpl,
     ): EnabledBindingResolverInteractor
 
-    @Binds
-    @SimulationScope
-    abstract fun bindTimePNTransitionMarking(timePNTransitionMarking: TimePNTransitionMarking): TimePNTransitionMarking
+
 
     companion object {
         @Provides
@@ -115,7 +113,11 @@ internal abstract class SimulationModule {
             return fullLoggerFactory.createLogger()
         }
 
-
+        @Provides
+        @SimulationScope
+        fun provideTimePNTransitionMarking(): TimePNTransitionMarking {
+            return TimePNTransitionMarking()
+        }
 
         @Provides
         @SimulationScope
@@ -268,6 +270,12 @@ internal abstract class SimulationModule {
         @SimulationScope
         fun ocNet(simulationConfig: SimulationConfig): OCNet {
             return simulationConfig.ocNet
+        }
+
+        @Provides
+        @SimulationScope
+        fun transitionsRegistry(ocNet: OCNet) : TransitionsRegistry {
+            return ocNet.transitionsRegistry
         }
 
         @Provides
