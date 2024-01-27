@@ -173,7 +173,7 @@ data class GlobalSparseTokenBunch(
             throw IllegalStateException("cannot contain more places than token storage")
         }
         for (i in objectTokenRealAmountRegistry.places) {
-            if (objectTokenRealAmountRegistry.getTokensAt(i) <  pMarkingProvider.get()[i].size) {
+            if (objectTokenRealAmountRegistry.getTokensAt(i) < pMarkingProvider.get()[i].size) {
                 throw IllegalStateException("cannot contain more than expected")
             }
         }
@@ -224,10 +224,23 @@ data class SparseTokenBunchImpl(
         tokenAmountStorage().plus(tokenBunch.tokenAmountStorage())
     }
 
+
+
     override fun minus(tokenBunch: SparseTokenBunch) {
         tokenAmountStorage().minus(tokenBunch.tokenAmountStorage())
         objectMarking().minus(tokenBunch.objectMarking())
+        validateState()
+    }
 
+    private fun validateState() {
+        if (tokenAmountStorage.places.count() < objectMarking().places.count()) {
+            throw IllegalStateException("cannot contain more places than token storage")
+        }
+        for (i in tokenAmountStorage.places) {
+            if (tokenAmountStorage.getTokensAt(i) < objectMarking()[i].size) {
+                throw IllegalStateException("cannot contain more than expected")
+            }
+        }
     }
 
     fun reindex() {
@@ -268,17 +281,18 @@ data class SparseTokenBunchImpl(
         }
 
         override fun buildTokenBunch(): SparseTokenBunchImpl {
+            val marking = forPlace.mapValues { (id, block) ->
+                block.initializedTokens.toSortedSet()
+            }.let {
+                PlaceToObjectMarkingMap(it.toMutableMap())
+            }
             return SparseTokenBunchImpl(
                 tokenAmountStorage = SimpleTokenAmountStorage(
                     placeToTokens = forPlace.mapValues { (id, block) ->
-                        block.realTokens
+                        block.realTokens.coerceAtLeast(marking[id].size)
                     }.toMutableMap(),
                 ),
-                marking = forPlace.mapValues { (id, block) ->
-                    block.initializedTokens.toSortedSet()
-                }.let {
-                    PlaceToObjectMarkingMap(it.toMutableMap())
-                }
+                marking = marking
             )
         }
 

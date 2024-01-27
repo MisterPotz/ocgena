@@ -1,73 +1,50 @@
 package ru.misterpotz.ocgena.tokens
 
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.createArgProvider
-import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
-import ru.misterpotz.ocgena.simulation.stepexecutor.GlobalSparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 
-class GlobalTokenBunchTest {
-
-    private fun createGlobalTokenBunch(
-        placeToObjectMarking: PlaceToObjectMarking,
-        objectTokenRealAmountRegistryImpl: ObjectTokenRealAmountRegistry
-    ): GlobalSparseTokenBunch {
-        val pMarkingProvider = mockk<PMarkingProvider> {
-            every { get() } returns placeToObjectMarking
-        }
-
-        return GlobalSparseTokenBunch(
-            pMarkingProvider,
-            objectTokenRealAmountRegistry = objectTokenRealAmountRegistryImpl
-        )
-    }
-
+class SimpleSparseTokenBunchTest {
     @ParameterizedTest
     @ArgumentsSource(ConcatAndDeductCases::class)
     fun `token bunch performs operation as expected`(testData: TestData) {
-        val globalTokenBunch = createGlobalTokenBunch(testData.starter, testData.amountData)
+        val sparseTokenBunch = testData.starterBunch
 
         if (testData.operationSign > 0) {
-            globalTokenBunch.append(testData.appliedBunch)
+            sparseTokenBunch.append(testData.appliedBunch)
         } else {
-            globalTokenBunch.minus(testData.appliedBunch)
+            sparseTokenBunch.minus(testData.appliedBunch)
         }
-        Assertions.assertTrue(globalTokenBunch.bunchesEqual(testData.expectedBunch))
+        Assertions.assertTrue(sparseTokenBunch.bunchesEqual(testData.expectedBunch))
     }
 
     @ParameterizedTest
     @ArgumentsSource(DeductMoreThanAbleCase::class)
     fun `fails when tries to deduct more than able according to token amount storage`(testData: TestData) {
-        val globalTokenBunch = createGlobalTokenBunch(testData.starter, testData.amountData)
+        val sparseTokenBunch = testData.starterBunch
         Assertions.assertThrows(IllegalStateException::class.java) {
-            globalTokenBunch.minus(testData.appliedBunch)
+            sparseTokenBunch.minus(testData.appliedBunch)
         }
     }
 
     @ParameterizedTest
     @ArgumentsSource(DeductForInvalidState::class)
     fun `fails when after deduction there are more tokens in the marking than according to token amount storage`(testData: TestData) {
-        val globalTokenBunch = createGlobalTokenBunch(testData.starter, testData.amountData)
+        val sparseTokenBunch = testData.starterBunch
         Assertions.assertThrows(IllegalStateException::class.java) {
-            globalTokenBunch.minus(testData.appliedBunch)
+            sparseTokenBunch.minus(testData.appliedBunch)
         }
     }
 
     companion object {
 
         data class TestData(
-            val starter: PlaceToObjectMarking,
-            val amountData: ObjectTokenRealAmountRegistry,
+            val starterBunch : SparseTokenBunch,
             val appliedBunch: SparseTokenBunch,
             val operationSign: Int,
             val expectedBunch: SparseTokenBunch
@@ -75,10 +52,7 @@ class GlobalTokenBunchTest {
 
         fun emptyConcatSome(): TestData {
             return TestData(
-                starter = PlaceToObjectMarkingMap.build {
-                },
-                amountData = ObjectTokenRealAmountRegistryImpl.build {
-                },
+                starterBunch = SparseTokenBunchImpl.makeBuilder {  }.buildTokenBunch(),
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 10
@@ -96,17 +70,18 @@ class GlobalTokenBunchTest {
         }
 
         private fun someConcatSome(): TestData {
-            val (tokens, amounts) = PlaceToObjectMarkingMap.buildWithAmount {
-                put("p1", setOf(1, 2, 3))
-                put("p2", setOf(21))
-            }
-            amounts.apply {
-                incrementRealAmountAt("p1", 5)
-            }
+            val starterBunch = SparseTokenBunchImpl.makeBuilder {
+                forPlace("p1") {
+                    addAll(1, 2, 3)
+                    realTokens = 8
+                }
+                forPlace("p2") {
+                    addAll(21)
+                }
+            }.buildTokenBunch()
 
             return TestData(
-                starter = tokens,
-                amountData = amounts,
+                starterBunch = starterBunch,
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 10
@@ -128,18 +103,19 @@ class GlobalTokenBunchTest {
         }
 
         private fun someDeductUnexistingSome(): TestData {
-            val (tokens, amounts) = PlaceToObjectMarkingMap.buildWithAmount {
-                put("p1", setOf(1, 2, 3))
-                put("p2", setOf(21))
-            }
-            amounts.apply {
-                incrementRealAmountAt("p1", 5)
-                incrementRealAmountAt("p2", 5)
-            }
+            val starterBunch = SparseTokenBunchImpl.makeBuilder {
+                forPlace("p1") {
+                    addAll(1, 2, 3)
+                    realTokens = 8
+                }
+                forPlace("p2") {
+                    addAll(21)
+                    realTokens = 6
+                }
+            }.buildTokenBunch()
 
             return TestData(
-                starter = tokens,
-                amountData = amounts,
+                starterBunch = starterBunch,
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 6
@@ -166,22 +142,27 @@ class GlobalTokenBunchTest {
 
 
         private fun someDeductSome(): TestData {
-            val (tokens, amounts) = PlaceToObjectMarkingMap.buildWithAmount {
-                put("p1", setOf(1, 2, 3))
-                put("p2", setOf(21))
-                put("p3", setOf(31, 32))
-                put("p4", setOf(41, 42))
-            }
-            amounts.apply {
-                incrementRealAmountAt("p1", 5)
-                incrementRealAmountAt("p2", 5)
-
-                incrementRealAmountAt("p4", 5)
-            }
+            val starterBunch = SparseTokenBunchImpl.makeBuilder {
+                forPlace("p1") {
+                    addAll(1, 2, 3)
+                    realTokens = 8
+                }
+                forPlace("p2") {
+                    addAll(21)
+                    realTokens = 6
+                }
+                forPlace("p3") {
+                    addAll(31, 32)
+                    realTokens = 2
+                }
+                forPlace("p4") {
+                    addAll(41, 42)
+                    realTokens = 7
+                }
+            }.buildTokenBunch()
 
             return TestData(
-                starter = tokens,
-                amountData = amounts,
+                starterBunch = starterBunch,
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 6
@@ -223,9 +204,20 @@ class GlobalTokenBunchTest {
                 incrementRealAmountAt("p2", 5)
             }
 
+            val starterBunch = SparseTokenBunchImpl.makeBuilder {
+                forPlace("p1") {
+                    addAll(1, 2, 3)
+                    realTokens = 8
+                }
+                forPlace("p2") {
+                    addAll(21)
+                    realTokens = 6
+                }
+            }.buildTokenBunch()
+
+
             return TestData(
-                starter = tokens,
-                amountData = amounts,
+                starterBunch = starterBunch,
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 10
@@ -247,16 +239,15 @@ class GlobalTokenBunchTest {
         }
 
         private fun someDeductInvalidAmountsEdgeCase(): TestData {
-            val (tokens, amounts) = PlaceToObjectMarkingMap.buildWithAmount {
-                put("p1", setOf(1, 2, 3))
-            }
-            amounts.apply {
-                incrementRealAmountAt("p1", 5)
-            }
+            val starterBunch = SparseTokenBunchImpl.makeBuilder {
+                forPlace("p1") {
+                    addAll(1, 2, 3)
+                    realTokens = 8
+                }
+            }.buildTokenBunch()
 
             return TestData(
-                starter = tokens,
-                amountData = amounts,
+                starterBunch = starterBunch,
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 8
@@ -272,16 +263,15 @@ class GlobalTokenBunchTest {
         }
 
         private fun someDeductInvalidAmounts(): TestData {
-            val (tokens, amounts) = PlaceToObjectMarkingMap.buildWithAmount {
-                put("p1", setOf(1, 2, 3))
-            }
-            amounts.apply {
-                incrementRealAmountAt("p1", 5)
-            }
+            val starterBunch = SparseTokenBunchImpl.makeBuilder {
+                forPlace("p1") {
+                    addAll(1, 2, 3)
+                    realTokens = 8
+                }
+            }.buildTokenBunch()
 
             return TestData(
-                starter = tokens,
-                amountData = amounts,
+                starterBunch = starterBunch,
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {
                         realTokens = 7

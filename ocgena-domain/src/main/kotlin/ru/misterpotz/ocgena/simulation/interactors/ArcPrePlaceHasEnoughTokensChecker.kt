@@ -51,11 +51,10 @@ interface TokenAmountStorage {
     }
 }
 
-class SimpleTokenAmountStorage(
+data class SimpleTokenAmountStorage(
     val placeToTokens: MutableMap<PetriAtomId, Int> = mutableMapOf(),
 ) : TokenAmountStorage {
 
-    val tokenAmountStorageEqualsArg: Any = placeToTokens
     override val places: List<PetriAtomId>
         get() = placeToTokens.keys.toList()
 
@@ -101,5 +100,4 @@ class SimpleTokenAmountStorage(
             placeToTokens[place] = placeToObjectMarking[place].size
         }
     }
-
 }
