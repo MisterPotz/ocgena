@@ -7,6 +7,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
+import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.ObjectType
 
 const val objTypePrefix = "△"
@@ -18,6 +19,10 @@ fun ObjectTypeId.makeObjTypeId(): ObjectTypeId {
     } else {
         "$objTypePrefix$this"
     }
+}
+
+fun ObjectTokenId.toObjTokenString(): String {
+    return "$objPrefix$this"
 }
 
 fun ObjectTypeId.firstLetter(): String {
@@ -32,7 +37,7 @@ val defaultObjType = ObjectType(defaultObjTypeId, defaultObjTypeId)
 typealias ArrowAtomId = PetriAtomId
 
 class OCNetBuilder(
-    private var useSpecialSymbolsInNaming : Boolean = true
+    private var useSpecialSymbolsInNaming: Boolean = true
 ) {
     fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNetStruct {
         val atomBlock = AtomDefinitionBlockImpl(useSpecialSymbolsInNaming)

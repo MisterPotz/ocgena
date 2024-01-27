@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.copyWithValueTransformMutable
+import ru.misterpotz.ocgena.ocnet.utils.toObjTokenString
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import java.util.SortedSet
 
@@ -45,6 +46,12 @@ data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesT
                 }
             }
         }
+
+    override fun cleanString(): String {
+        return placesToObjectTokens.map {
+            "${it.key} ↦ ${it.value.joinToString(separator = ",", prefix = "<", postfix = ">") { it.toObjTokenString() }}"
+        }.joinToString(separator = "|") { it }
+    }
 
     override fun get(placeId: PetriAtomId): SortedSet<ObjectTokenId> {
         return placesToObjectTokens[placeId] ?: sortedSetOf()
@@ -88,6 +95,10 @@ data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesT
         throw IllegalStateException()
     }
 
+    override fun minus(tokenAmountStorage: TokenAmountStorage) {
+        throw IllegalStateException("not applicable")
+    }
+
     override fun set(place: PetriAtomId, tokens: SortedSet<ObjectTokenId>?) {
         throw IllegalStateException()
     }
@@ -122,6 +133,11 @@ data class ImmutablePlaceToObjectMarkingMap(@SerialName("per_place") val placesT
 
     override fun clear() {
         throw IllegalStateException()
+    }
+
+    override fun markingEquals(placeToObjectMarking: PlaceToObjectMarking): Boolean {
+        return placesToObjectTokens.all { it.value == placeToObjectMarking[it.key] } &&
+                placesToObjectTokens.keys.size == placeToObjectMarking.places.count()
     }
 }
 

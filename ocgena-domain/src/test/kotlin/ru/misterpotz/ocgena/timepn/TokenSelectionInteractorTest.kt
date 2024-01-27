@@ -5,9 +5,9 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
+import ru.misterpotz.ocgena.createArgProvider
 import ru.misterpotz.ocgena.createPartiallyPredefinedSeq
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
@@ -16,7 +16,6 @@ import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractorImpl
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
-import java.util.stream.Stream
 import kotlin.random.Random
 
 internal class TokenSelectionInteractorTest {
@@ -180,14 +179,6 @@ internal class TokenSelectionInteractorTest {
     }
 
     companion object {
-
-        fun <PerTest> createArgProvider(list: List<PerTest>): ArgumentsProvider {
-            return ArgumentsProvider {
-                val arrayOfArgs: Array<Arguments> = list.map { Arguments.of(it) }.toTypedArray()
-                Stream.of(*arrayOfArgs)
-            }
-        }
-
 
         private class NotEnoughTokensInitializationProvider : ArgumentsProvider by createArgProvider(
             list = listOf(

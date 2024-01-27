@@ -2,7 +2,6 @@ package ru.misterpotz.ocgena.simulation.di
 
 import com.charleskorn.kaml.Yaml
 import dagger.*
-import dagger.assisted.AssistedInject
 import kotlinx.serialization.json.Json
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
@@ -146,9 +145,7 @@ internal abstract class SimulationModule {
         @Provides
         @SimulationScope
         fun providesObjectRealTokenAmountRegistry(ocNet: OCNet): ObjectTokenRealAmountRegistry {
-            return ObjectTokenRealAmountRegistryImpl(
-                ocNet.placeToObjectTypeRegistry
-            )
+            return ObjectTokenRealAmountRegistryImpl()
         }
 
         @Provides

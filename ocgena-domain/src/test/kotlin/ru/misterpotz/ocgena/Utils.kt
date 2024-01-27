@@ -5,6 +5,8 @@ import io.mockk.mockk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.ArgumentsProvider
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.di.DomainComponent
@@ -34,6 +36,7 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.validation.OCNetChecker
 import java.util.*
+import java.util.stream.Stream
 import kotlin.random.Random
 
 val DOMAIN_COMPONENT = domainComponent()
@@ -147,15 +150,7 @@ fun SimulationComponent.facade(): FacadeSim {
 
 data class ObjectTokenIdAndType(val objectTokenId: ObjectTokenId, val objectTypeId: ObjectTypeId)
 
-fun Int.withType(objectTypeId: ObjectTypeId): ObjectTokenIdAndType {
-    return ObjectTokenIdAndType(this.toLong(), objectTypeId)
-}
-
-fun MutableList<ObjectTokenIdAndType>.addOfType(objectTypeId: ObjectTypeId, vararg objectTokenId: ObjectTokenId) {
-    addAll(ofType(objectTypeId, *objectTokenId))
-}
-
-fun ofType(objectTypeId: ObjectTypeId, vararg objectTokenId: ObjectTokenId): List<ObjectTokenIdAndType> {
+fun generateTokensOfType(objectTypeId: ObjectTypeId, vararg objectTokenId: ObjectTokenId): List<ObjectTokenIdAndType> {
     val list = mutableListOf<ObjectTokenIdAndType>()
     for (i in objectTokenId) {
         list.add(
@@ -317,5 +312,12 @@ fun createPartiallyPredefinedSeq(seq: List<Int>): Random {
         every { nextInt(any(), any()) } answers {
             mSeq.removeFirstOrNull() ?: Random.nextInt(0, 6)
         }
+    }
+}
+
+fun <PerTest> createArgProvider(list: List<PerTest>): ArgumentsProvider {
+    return ArgumentsProvider {
+        val arrayOfArgs: Array<Arguments> = list.map { Arguments.of(it) }.toTypedArray()
+        Stream.of(*arrayOfArgs)
     }
 }

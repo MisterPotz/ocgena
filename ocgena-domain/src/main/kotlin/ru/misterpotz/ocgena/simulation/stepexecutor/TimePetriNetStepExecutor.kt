@@ -22,6 +22,7 @@ import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
 import ru.misterpotz.ocgena.simulation.interactors.*
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
+import ru.misterpotz.ocgena.utils.LOG
 import ru.misterpotz.ocgena.utils.TimePNRef
 import javax.inject.Inject
 import kotlin.IllegalStateException
@@ -140,9 +141,17 @@ interface SparseTokenBunch {
     fun tokenAmountStorage(): TokenAmountStorage
     fun append(tokenBunch: SparseTokenBunch)
     fun minus(tokenBunch: SparseTokenBunch)
+    fun bunchesEqual(tokenBunch: SparseTokenBunch): Boolean {
+        return objectMarking().markingEquals(tokenBunch.objectMarking()).LOG { "marking equals" }!! &&
+                tokenAmountStorage().amountsEquals(tokenBunch.tokenAmountStorage()).LOG { "token amount equals" }!!
+    }
+
+    fun cleanString(): String {
+        return objectMarking().cleanString() + " ❇️ " + tokenAmountStorage().cleanString()
+    }
 }
 
-class GlobalSparseTokenBunch(
+data class GlobalSparseTokenBunch(
     private val pMarkingProvider: PMarkingProvider,
     private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
 ) : SparseTokenBunch {
@@ -159,9 +168,21 @@ class GlobalSparseTokenBunch(
         objectTokenRealAmountRegistry.plus(tokenBunch.tokenAmountStorage())
     }
 
+    private fun validateState() {
+        if (objectTokenRealAmountRegistry.places.count() < pMarkingProvider.get().places.count()) {
+            throw IllegalStateException("cannot contain more places than token storage")
+        }
+        for (i in objectTokenRealAmountRegistry.places) {
+            if (objectTokenRealAmountRegistry.getTokensAt(i) <  pMarkingProvider.get()[i].size) {
+                throw IllegalStateException("cannot contain more than expected")
+            }
+        }
+    }
+
     override fun minus(tokenBunch: SparseTokenBunch) {
-        pMarkingProvider.get().minus(tokenBunch.objectMarking())
         objectTokenRealAmountRegistry.minus(tokenBunch.tokenAmountStorage())
+        pMarkingProvider.get().minus(tokenBunch.objectMarking())
+        validateState()
     }
 }
 
@@ -186,7 +207,7 @@ class ImmutableSparseTokenBunchImpl(
 
 }
 
-class SparseTokenBunchImpl(
+data class SparseTokenBunchImpl(
     val marking: PlaceToObjectMarking = PlaceToObjectMarkingMap(),
     val tokenAmountStorage: SimpleTokenAmountStorage = SimpleTokenAmountStorage(),
 ) : SparseTokenBunch {
@@ -204,7 +225,9 @@ class SparseTokenBunchImpl(
     }
 
     override fun minus(tokenBunch: SparseTokenBunch) {
+        tokenAmountStorage().minus(tokenBunch.tokenAmountStorage())
         objectMarking().minus(tokenBunch.objectMarking())
+
     }
 
     fun reindex() {
@@ -215,6 +238,7 @@ class SparseTokenBunchImpl(
         fun forPlace(petriAtomId: PetriAtomId, block: PlaceAccessa.() -> Unit): Builder
         fun buildTokenBunch(): SparseTokenBunchImpl
         fun buildWithTypeRegistry(): Pair<SparseTokenBunchImpl, PlaceToObjectTypeRegistry>
+
     }
 
     private class BuilderImpl : Builder {
@@ -230,6 +254,10 @@ class SparseTokenBunchImpl(
                 set(value) {
                     realType = value
                 }
+
+            override fun addAll(vararg tokens: Int) {
+                initializedTokens.addAll(tokens.toList().map { it.toLong() })
+            }
         }
 
         override fun forPlace(petriAtomId: PetriAtomId, block: PlaceAccessa.() -> Unit): Builder {
@@ -270,6 +298,7 @@ class SparseTokenBunchImpl(
         var realTokens: Int
         val initializedTokens: MutableSet<ObjectTokenId>
         var type: ObjectTypeId
+        fun addAll(vararg tokens: Int)
     }
 
     companion object {

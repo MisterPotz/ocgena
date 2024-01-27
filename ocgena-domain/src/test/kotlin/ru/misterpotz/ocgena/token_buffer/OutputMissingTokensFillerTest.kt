@@ -42,7 +42,7 @@ class OutputMissingTokensFillerTest {
     fun `when token buffer becomes empty, generates unique tokens at outputs`() {
         val simComp = configureSimComponent()
         simComp.withGenerateTokens {
-            addAll(ofType("o1", 1, 2))
+            addAll(generateTokensOfType("o1", 1, 2))
         }
 
         val outputMissingTokensGeneratorFactory = simComp.outputMissingTokensGeneratorFactory()

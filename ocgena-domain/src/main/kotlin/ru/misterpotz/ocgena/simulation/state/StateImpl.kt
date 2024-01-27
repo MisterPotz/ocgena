@@ -3,15 +3,12 @@ package ru.misterpotz.ocgena.simulation.state
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.registries.*
-import ru.misterpotz.ocgena.registries.original.TransitionToInstancesRegistryOriginal
-import ru.misterpotz.ocgena.registries.original.TransitionToTimeUntilInstanceAllowedMarking
-import ru.misterpotz.ocgena.registries.original.TransitionToTimeUntilInstanceAllowedRegistryOriginal
 import ru.misterpotz.ocgena.simulation.di.SimulationScope
 import ru.misterpotz.ocgena.simulation.structure.State
 import javax.inject.Inject
 
 @SimulationScope
-class PMarkingProvider @Inject constructor(private val ocNet: OCNet) {
+class PMarkingProvider @Inject constructor() {
     init {
         println("pmarking provider created")
     }
@@ -23,6 +20,10 @@ class PMarkingProvider @Inject constructor(private val ocNet: OCNet) {
 
     fun get(): PlaceToObjectMarking {
         return placeToObjectMarking
+    }
+
+    override fun toString(): String {
+        return "PMarkingProvider(placeToObjectMarking=$placeToObjectMarking)"
     }
 }
 
