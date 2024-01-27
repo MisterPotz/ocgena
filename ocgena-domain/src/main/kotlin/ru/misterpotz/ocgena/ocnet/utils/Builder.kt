@@ -12,7 +12,7 @@ import ru.misterpotz.ocgena.simulation.ObjectType
 const val objTypePrefix = "△"
 const val objPrefix = "●"
 const val defaultObjTypeId = "${objTypePrefix}0"
-fun ObjectTypeId.prependId(): ObjectTypeId {
+fun ObjectTypeId.makeObjTypeId(): ObjectTypeId {
     return if (startsWith(objTypePrefix)) {
         this
     } else {

@@ -16,7 +16,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
-import ru.misterpotz.ocgena.ocnet.utils.prependId
+import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.SimulationTask
@@ -34,6 +34,7 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.validation.OCNetChecker
 import java.util.*
+import kotlin.random.Random
 
 val DOMAIN_COMPONENT = domainComponent()
 
@@ -295,7 +296,7 @@ fun ObjectTypeId.withArcMeta(arcMeta: ArcMeta): BatchKey {
 
 fun String.objTypeId(): ObjectTypeId {
     return if (USE_SPECIAL_SYMBOL_OBJ_TYPE_NAME) {
-        prependId()
+        makeObjTypeId()
     } else {
         this
     }
@@ -308,4 +309,13 @@ fun BatchKey.withTokenBuffer(set: TokenSet): BatchKeyWithBuffer {
 
 infix fun MutableCollection<BatchKeyWithBuffer>.unaryPlus(batchKey: BatchKeyWithBuffer) {
     add(batchKey)
+}
+
+fun createPartiallyPredefinedSeq(seq: List<Int>): Random {
+    val mSeq = seq.toMutableList()
+    return mockk<Random> {
+        every { nextInt(any(), any()) } answers {
+            mSeq.removeFirstOrNull() ?: Random.nextInt(0, 6)
+        }
+    }
 }

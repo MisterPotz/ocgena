@@ -15,8 +15,13 @@ class RandomIteratorTest {
 
     @ParameterizedTest()
     @ArgumentsSource(ArgsProvider::class)
-    fun producesUniqueKeys(size : Int) {
-        val randomIterator = RandomIterator(amount = size, randomizer = ByRandomRandomizer(random = Random(42)))
+    fun producesUniqueKeys(size: Int) {
+        val randomIterator =
+            RandomIterator(
+                size = size,
+                rangeToSelectFrom = 0 until size,
+                randomizer = ByRandomRandomizer(random = Random(42))
+            )
 
         val verificationSet = mutableSetOf<Int>()
 
@@ -29,7 +34,7 @@ class RandomIteratorTest {
     }
 
     object ArgsProvider : ArgumentsProvider {
-        class Args(val arr: Array<Any>) : Arguments {
+        class Args(private val arr: Array<Any>) : Arguments {
             override fun get(): Array<Any> {
                 return arr
             }

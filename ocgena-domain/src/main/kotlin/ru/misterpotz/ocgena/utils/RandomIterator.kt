@@ -8,13 +8,13 @@ import java.lang.IllegalStateException
  * uses simple search fallback if can't find non-duplicate answer
  */
 class RandomIterator(
-    private val amount: Int,
+    private val size : Int,
+    private val rangeToSelectFrom : IntRange,
     private val randomizer: Randomizer,
 ) : Iterator<Int> {
     val attemptsSet = sortedSetOf<Int>()
-    val range = 0..<amount
     override fun hasNext(): Boolean {
-        return attemptsSet.size < amount
+        return attemptsSet.size < size
     }
 
     private fun checkValueAndReturn(i : Int) : Boolean {
@@ -32,8 +32,8 @@ class RandomIterator(
 
 
         // try generate truly randomly
-        while (guardCounter < TokenSelectionInteractorImpl.GUARD_MULTIPLIER * amount) {
-            attempt = randomizer.nextRandom(range)
+        while (guardCounter < TokenSelectionInteractorImpl.GUARD_MULTIPLIER * size) {
+            attempt = randomizer.nextRandom(rangeToSelectFrom)
             if (attempt !in attemptsSet) {
                 attemptsSet.add(attempt)
                 return attempt
@@ -42,18 +42,17 @@ class RandomIterator(
             }
         }
         // try generate with heuristics
-        attempt = randomizer.nextRandom(range)
+        attempt = randomizer.nextRandom(rangeToSelectFrom)
 
         val checkingRangeLeft = attempt.downTo(0)
         for (i in checkingRangeLeft) {
             if (checkValueAndReturn(i)) return i
         }
-        val checkingRangeRight = (attempt + 1)..<amount
+        val checkingRangeRight = (attempt + 1)..<size
         for (i in checkingRangeRight) {
             if (checkValueAndReturn(i)) return i
         }
 
         throw IllegalStateException("hi, random iterator doesn't feel well")
     }
-
 }

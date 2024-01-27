@@ -1,8 +1,8 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
-import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
@@ -38,9 +38,8 @@ interface TokenSelectionInteractor {
 class TokenSelectionInteractorImpl @Inject constructor(
     private val random: Random?,
     private val newTokenGenerationFacade: NewTokenGenerationFacade,
-    ocNet: OCNet,
+    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
 ) : TokenSelectionInteractor {
-    val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
 //    val pMarking get() = pMarkingProvider.get()
 
@@ -59,7 +58,11 @@ class TokenSelectionInteractorImpl @Inject constructor(
         val sortedSet = sortedSetOf<ObjectTokenId>()
         val randomizer = createRandomizerOrNoOp()
         val objectTypeId = placeToObjectTypeRegistry[petriAtomId]
-        val randomIterator = RandomIterator(amount = amount, randomizer = randomizer)
+        val randomIterator = RandomIterator(
+            size = amount,
+            randomizer = randomizer,
+            rangeToSelectFrom = 0 until tokensAtPlace
+        )
 
         require(tokensAtPlace >= amount) {
             "can't request from a place more tokens than the real amount of them"
@@ -88,13 +91,17 @@ class TokenSelectionInteractorImpl @Inject constructor(
         tokenSet: TokenSet,
         selectionAmount: Int,
     ): SortedSet<ObjectTokenId> {
-        val bufferSize = tokenSet.size
+        if (selectionAmount >= tokenSet.size) {
+            return tokenSet.toSortedSet()
+        }
         val targetSet = sortedSetOf<ObjectTokenId>()
 
         val randomizer = createRandomizerOrNoOp()
+
         val randomIterator = RandomIterator(
-            amount = selectionAmount.coerceAtMost(bufferSize),
-            randomizer = randomizer
+            size = selectionAmount.coerceAtMost(tokenSet.size),
+            randomizer = randomizer,
+            rangeToSelectFrom = 0 until tokenSet.size
         )
 
         while (randomIterator.hasNext()) {

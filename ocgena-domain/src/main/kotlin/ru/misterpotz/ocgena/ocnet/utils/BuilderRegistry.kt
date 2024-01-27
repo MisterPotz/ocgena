@@ -38,7 +38,7 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean) {
         atomBuilders.values
             .asSequence()
             .filterIsInstance<OCNetBuilder.PlaceBlock>()
-            .map { if (useSpecialSymbolsInNaming) it.objectTypeId.prependId() else it.objectTypeId }
+            .map { if (useSpecialSymbolsInNaming) it.objectTypeId.makeObjTypeId() else it.objectTypeId }
             .toSet()
             .map {
                 ObjectType(id = it, label = it)
@@ -74,7 +74,7 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean) {
                 },
                 valueTransform = {
                     if (useSpecialSymbolsInNaming) {
-                        it.objectTypeId.prependId()
+                        it.objectTypeId.makeObjTypeId()
                     } else {
                         it.objectTypeId
                     }

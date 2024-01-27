@@ -5,16 +5,18 @@ import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
+import ru.misterpotz.ocgena.ocnet.utils.defaultObjTypeId
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
 import ru.misterpotz.ocgena.registries.TransitionsRegistry
+import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactoryAssisted
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
@@ -208,7 +210,77 @@ class SparseTokenBunchImpl(
     fun reindex() {
         tokenAmountStorage.reindexFrom(marking)
     }
+
+    interface Builder {
+        fun forPlace(petriAtomId: PetriAtomId, block: PlaceAccessa.() -> Unit): Builder
+        fun buildTokenBunch(): SparseTokenBunchImpl
+        fun buildWithTypeRegistry(): Pair<SparseTokenBunchImpl, PlaceToObjectTypeRegistry>
+    }
+
+    private class BuilderImpl : Builder {
+        val forPlace = mutableMapOf<PetriAtomId, PlaceAccessaImpl>()
+
+        class PlaceAccessaImpl : PlaceAccessa {
+            override var realTokens: Int = 0
+
+            override val initializedTokens: MutableSet<ObjectTokenId> = mutableSetOf()
+            var realType: ObjectTypeId? = null
+            override var type: ObjectTypeId
+                get() = realType!!
+                set(value) {
+                    realType = value
+                }
+        }
+
+        override fun forPlace(petriAtomId: PetriAtomId, block: PlaceAccessa.() -> Unit): Builder {
+            forPlace.getOrPut(petriAtomId) {
+                PlaceAccessaImpl()
+            }.block()
+            return this
+        }
+
+        override fun buildTokenBunch(): SparseTokenBunchImpl {
+            return SparseTokenBunchImpl(
+                tokenAmountStorage = SimpleTokenAmountStorage(
+                    placeToTokens = forPlace.mapValues { (id, block) ->
+                        block.realTokens
+                    }.toMutableMap(),
+                ),
+                marking = forPlace.mapValues { (id, block) ->
+                    block.initializedTokens.toSortedSet()
+                }.let {
+                    PlaceToObjectMarkingMap(it.toMutableMap())
+                }
+            )
+        }
+
+        override fun buildWithTypeRegistry(): Pair<SparseTokenBunchImpl, PlaceToObjectTypeRegistry> {
+            val sparseTokenBunch = buildTokenBunch()
+            val placeToObjectTypeRegistry = PlaceToObjectTypeRegistry(
+                defaultObjTypeId,
+                placeIdToObjectType = forPlace.mapValues { (_, block) ->
+                    block.realType ?: defaultObjTypeId
+                }.toMutableMap()
+            )
+            return Pair(sparseTokenBunch, placeToObjectTypeRegistry)
+        }
+    }
+
+    interface PlaceAccessa {
+        var realTokens: Int
+        val initializedTokens: MutableSet<ObjectTokenId>
+        var type: ObjectTypeId
+    }
+
+    companion object {
+        fun makeBuilder(builda: Builder.() -> Unit): Builder {
+            val builder = BuilderImpl()
+            builder.builda()
+            return builder
+        }
+    }
 }
+
 
 fun ImmutablePlaceToObjectMarking.toImmutableBunch(): SparseTokenBunch {
     return ImmutableSparseTokenBunchImpl(this)
