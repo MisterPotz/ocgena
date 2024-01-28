@@ -36,7 +36,7 @@ class TimePetriNetStepExecutor @Inject constructor(
     private val transitionFireExecutor: TransitionFiringRuleExecutor,
 ) : StepExecutor {
     override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
-        // generate next time
+        // generate next time based on place and transitions marking
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
         // find transitions that are enforced to fire now, and list their random order
