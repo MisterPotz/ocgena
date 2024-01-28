@@ -34,6 +34,8 @@ import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.validation.OCNetChecker
 import java.util.*
 import java.util.stream.Stream
@@ -41,7 +43,16 @@ import kotlin.random.Random
 
 val DOMAIN_COMPONENT = domainComponent()
 
-fun buildOCNet(atomDefinitionBlock: OCNetBuilder.AtomDefinitionBlock.() -> Unit): OCNetStruct {
+typealias OCNetBuildingCodeBlock = OCNetBuilder.AtomDefinitionBlock.() -> Unit
+
+fun OCNetBuilder.AtomDefinitionBlock.install(oCNetBuildingCodeBlock: OCNetBuildingCodeBlock) {
+    oCNetBuildingCodeBlock.invoke(this)
+}
+
+fun OCNetBuildingCodeBlock.installOnto(builder : OCNetBuilder.AtomDefinitionBlock) {
+    builder.install(this)
+}
+fun buildOCNet(atomDefinitionBlock: OCNetBuildingCodeBlock): OCNetStruct {
     val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
     val errors = OCNetChecker(ocNet).checkConsistency()
 
@@ -202,23 +213,18 @@ fun SimulationComponent.withGenerateTokens(ids: MutableList<ObjectTokenIdAndType
 }
 
 fun SimulationComponent.addTokens(block: AddTokensBlock.() -> Unit): SimulationComponent {
-    val generator = newTokenGenerationFacade()
-    val objectTokenRealAmountRegistry = objectTokenRealAmountRegistry()
-//    val state = state()
-//    val ocNet = ocNet()
+    val tokenBunch = tokenBunch()
     val receiver = AddTokensBlockImpl(this)
     receiver.block()
-//    val deltaMarking = PlaceToObjectMarking()
     for ((place, amount) in receiver.placeToAmount) {
-        objectTokenRealAmountRegistry.incrementRealAmountAt(place, amount)
-
-//        for (i in 0 until amount) {
-//            val objectTypeId = ocNet.placeToObjectTypeRegistry[place]
-//            val objectToken = generator.generateRealToken(objectTypeId)
-//            deltaMarking.add(place, objectToken.id)
-//        }
+        tokenBunch.tokenAmountStorage().applyDeltaTo(place, +amount)
     }
-//    state.pMarking.plus(deltaMarking.toImmutable())
+    return this
+}
+
+fun SimulationComponent.addBunch(sparseTokenBunch: SparseTokenBunch): SimulationComponent {
+    val globalTokenBunch = tokenBunch()
+    globalTokenBunch.append(sparseTokenBunch)
     return this
 }
 
@@ -253,6 +259,17 @@ data class FacadeSim(
 fun SimulationComponent.transition(t: PetriAtomId): Transition {
     val ocNet = ocNet()
     return ocNet.petriAtomRegistry.getTransition(t)
+}
+
+fun SimulationComponent.emptyTokenBunchBuilder(): SparseTokenBunchImpl.Builder {
+    val places = ocNet().placeRegistry.places
+    return SparseTokenBunchImpl.makeBuilder {
+        for (i in places) {
+            forPlace(i.id) {
+
+            }
+        }
+    }
 }
 
 fun SimulationComponent.mockTransitionBufferInfo(

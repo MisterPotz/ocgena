@@ -28,7 +28,6 @@ data class SparseTokenBunchImpl(
     }
 
 
-
     override fun minus(tokenBunch: SparseTokenBunch) {
         tokenAmountStorage().minus(tokenBunch.tokenAmountStorage())
         objectMarking().minus(tokenBunch.objectMarking())
@@ -108,6 +107,12 @@ data class SparseTokenBunchImpl(
                 }.toMutableMap()
             )
             return Pair(sparseTokenBunch, placeToObjectTypeRegistry)
+        }
+    }
+
+    override fun toString(): String {
+        return tokenAmountStorage.places.joinToString(separator = "  ##  ") {
+            "${it} -- ${tokenAmountStorage.getTokensAt(it)}"
         }
     }
 

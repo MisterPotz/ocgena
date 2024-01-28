@@ -137,9 +137,9 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean) {
                     )
                 }
 
-                is OCNetBuilder.ArcBlock -> {
+                is OCNetBuilder.ArcBlockImpl -> {
                     when (it.type) {
-                        VAR -> VariableArc(id = it.id)
+                        VAR -> VariableArc(id = it.id, mathExpression = it.innerMathExpr)
                         NORMAL -> NormalArc(id = it.id, multiplicity = it.multiplicity)
                     }
                 }

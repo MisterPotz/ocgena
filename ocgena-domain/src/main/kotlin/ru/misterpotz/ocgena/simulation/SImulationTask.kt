@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.simulation
 
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.registries.original.TransitionToInstancesRegistryOriginal
+import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
@@ -26,7 +27,7 @@ class SimulationTaskPreparatorOriginal(
     private val currentSimulationStateOriginal: CurrentSimulationStateOriginal
 ) : SimulationTaskPreparator {
     override fun prepare() {
-        simulationConfig.initialMarking.placesToTokens.forEach { (petriAtomId, amount) ->
+        (simulationConfig.initialMarking ?: MarkingScheme()).placesToTokens.forEach { (petriAtomId, amount) ->
             objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, amount)
         }
         for (transition in simulationConfig.ocNet.transitionsRegistry.iterable) {

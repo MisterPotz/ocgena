@@ -43,8 +43,8 @@ class ConfigLoadTest {
             put("p1", 10)
         }
 
-        Assertions.assertEquals(10, updatedSimConfig.initialMarking["p1"])
-        Assertions.assertEquals(30, updatedSimConfig.initialMarking["p2"])
+        Assertions.assertEquals(10, updatedSimConfig.initialMarking!!["p1"])
+        Assertions.assertEquals(30, updatedSimConfig.initialMarking!!["p2"])
         Assertions.assertEquals(
             15..15,
             updatedSimConfig.castTransitions<TransitionsOriginalSpec>()["t1"].duration.intRange

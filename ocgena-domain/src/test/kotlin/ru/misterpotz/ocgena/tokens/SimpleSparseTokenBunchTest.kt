@@ -20,7 +20,7 @@ class SimpleSparseTokenBunchTest {
         } else {
             sparseTokenBunch.minus(testData.appliedBunch)
         }
-        Assertions.assertTrue(sparseTokenBunch.bunchesEqual(testData.expectedBunch))
+        Assertions.assertTrue(sparseTokenBunch.bunchesExactlyEqual(testData.expectedBunch))
     }
 
     @ParameterizedTest

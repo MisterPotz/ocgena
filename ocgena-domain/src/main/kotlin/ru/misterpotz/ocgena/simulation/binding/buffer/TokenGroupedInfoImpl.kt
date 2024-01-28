@@ -55,6 +55,13 @@ class TokenGroupedInfoImpl @AssistedInject constructor(
     override fun getTokenSetBy(toPlaceObjectTypeId: ObjectTypeId, outputArcMeta: ArcMeta): TokenSet? {
         return tokenBatchList.getTokenSetBy(toPlaceObjectTypeId, outputArcMeta)
     }
+
+    override fun toString(): String {
+        val str = String.format(
+            "%s || %s || %s", transition.id, tokenBatchList, bufferizedPlaces
+        )
+        return str
+    }
 }
 
 @AssistedFactory

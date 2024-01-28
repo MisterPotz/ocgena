@@ -61,10 +61,6 @@ internal class ObjectTokenRealAmountRegistryImpl @Inject constructor() : ObjectT
                 throw IllegalStateException("can't deduct from what doesn't exist")
             }
             placeToTokens[place] = totalPlace
-
-            if (totalPlace == 0) {
-                placeToTokens.remove(place)
-            }
         }
     }
 

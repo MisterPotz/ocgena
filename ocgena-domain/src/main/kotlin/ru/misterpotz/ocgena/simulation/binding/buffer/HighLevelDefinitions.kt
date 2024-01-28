@@ -29,7 +29,25 @@ class TokenGroup(
     val sortedSet: SortedSet<ObjectTokenId>,
     val objectTypeId: ObjectTypeId,
     val arcMeta: ArcMeta,
-)
+) {
+    override fun toString(): String {
+        return String.format(
+            "%-5s | %-20s | size %s",
+            objectTypeId,
+            arcMeta,
+            sortedSet.size
+        )
+    }
+
+    fun shortString() : String {
+        return String.format(
+            "%s|%s|%s",
+            objectTypeId,
+            arcMeta.shortString(),
+            sortedSet.size
+        )
+    }
+}
 
 interface TokenGroupedInfo {
     val transition: Transition

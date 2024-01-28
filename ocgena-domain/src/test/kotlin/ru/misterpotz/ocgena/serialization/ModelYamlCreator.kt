@@ -1,11 +1,7 @@
 package ru.misterpotz.ocgena.serialization
 
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.ModelPath
-import ru.misterpotz.ocgena.SerializationMode
-import ru.misterpotz.ocgena.buildOCNet
-import ru.misterpotz.ocgena.createExampleModel
-import ru.misterpotz.ocgena.writeOrAssertYaml
+import ru.misterpotz.ocgena.*
 
 /**
  * Images are here
@@ -47,26 +43,11 @@ class ModelYamlCreator {
     }
 
     @Test
-    fun oneInTwoMiddle() {
+    fun twoInTwoOutMiddle() {
         val ocNet = buildOCNet {
-            "p1".p { input; objectTypeId = "1" }
-                .arc("t1".t)
-                .arc("p2".p { objectTypeId = "1" })
-
-            "t1".arc("o1".p { objectTypeId = "2" })
-
-            "p2".arc("t2".t)
-                .arc("p3".p { objectTypeId = "1"; output })
-
-            "p2".arc("t3".t)
-
-            "o1".arc("t3".t) { vari; }
-                .arc("o2".p { objectTypeId = "2"; output }) { vari; }
-
-            "t3".arc("p3") { norm; multiplicity = 0 }
+            buildingBlockTwoInTwoOutMiddle().installOnto(this)
         }
-
-        writeOrAssertYaml(ocNet, ModelPath.ONE_IN_TWO_MIDDLE.path)
+        writeOrAssertYaml(ocNet, ModelPath.TWO_IN_TWO_OUT_MIDDLE.path)
     }
 
     @Test
@@ -92,5 +73,27 @@ class ModelYamlCreator {
     fun aalst() {
         val ocnet = createExampleModel()
         writeOrAssertYaml(ocnet, ModelPath.AALST.path)
+    }
+
+    companion object {
+        fun buildingBlockTwoInTwoOutMiddle(): OCNetBuildingCodeBlock {
+            return {
+                "p1".p { input; objectTypeId = "1" }
+                    .arc("t1".t)
+                    .arc("p2".p { objectTypeId = "1" })
+
+                "t1".arc("o1".p { objectTypeId = "2" })
+
+                "p2".arc("t2".t)
+                    .arc("p3".p { objectTypeId = "1"; output })
+
+                "p2".arc("t3".t)
+
+                "o1".arc("t3".t) { vari; }
+                    .arc("o2".p { objectTypeId = "2"; output }) { vari; }
+
+                "t3".arc("p3") { norm; multiplicity = 0 }
+            }
+        }
     }
 }

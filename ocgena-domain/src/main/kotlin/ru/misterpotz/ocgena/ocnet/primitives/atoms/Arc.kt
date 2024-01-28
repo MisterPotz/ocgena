@@ -11,9 +11,19 @@ enum class ArcType {
     VARIABLE,
 }
 
-interface ArcMeta
+interface ArcMeta {
+    fun shortString() : String
+}
 
-object NormalArcMeta : ArcMeta
+object NormalArcMeta : ArcMeta {
+    override fun toString(): String {
+        return "norm."
+    }
+
+    override fun shortString() : String {
+        return "n  "
+    }
+}
 
 abstract class Arc : PetriAtom {
     val arrowNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {

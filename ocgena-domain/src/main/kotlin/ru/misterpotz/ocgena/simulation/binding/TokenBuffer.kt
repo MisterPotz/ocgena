@@ -51,4 +51,11 @@ class TokenBatchList(
         )
         return batch?.sortedSet
     }
+
+    override fun toString(): String {
+        val str = String.format(
+            "tot. groups ${tokenGroups.size}  ||  ${tokenGroups.joinToString("  ##  ") { it.shortString() }}"
+        )
+        return str
+    }
 }

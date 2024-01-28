@@ -3,9 +3,16 @@ package ru.misterpotz.ocgena
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.original.TestFolder
+import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.SettingsSimulationConfig
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.original.TestFolder
+import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.utils.findInstance
 import java.io.File
 import java.nio.file.Path
@@ -32,7 +39,7 @@ inline fun <reified T> writeOrAssertYaml(
         }
 
         SerializationMode.READ -> {
-            val recordedItem = readConfig<T>(path)
+            val recordedItem = deserializeResourceByClassWithPath<T>(path)
             Assertions.assertEquals(expected, recordedItem)
         }
     }
@@ -51,7 +58,7 @@ inline fun <reified T> writeOrAssertJson(
         }
 
         SerializationMode.READ -> {
-            val recordedItem = readConfig<T>(path)
+            val recordedItem = deserializeResourceByClassWithPath<T>(path)
             Assertions.assertEquals(expected, recordedItem)
         }
     }
@@ -61,7 +68,7 @@ fun readAndBuildConfig(
     settingsPath: Path = DEFAULT_SETTINGS,
     modelPath: ModelPath,
 ): SimulationConfig {
-    val defaultSettings = readConfig<SettingsSimulationConfig>(settingsPath)
+    val defaultSettings = deserializeResourceByClassWithPath<SettingsSimulationConfig>(settingsPath)
     val model = modelPath.load()
 
     return SimulationConfig.fromNetAndSettings(
@@ -70,6 +77,41 @@ fun readAndBuildConfig(
     )
 }
 
+interface ConfigBuilderBlock {
+    var model: ModelPath?
+    var ocNetStruct : OCNetStruct?
+    var semanticsType: SimulationSemanticsType?
+    var ocNetType: OcNetType?
+}
+
+private class ConfigBuilderBlockImpl() : ConfigBuilderBlock {
+    override var model: ModelPath? = null
+    override var ocNetStruct: OCNetStruct? = null
+    override var semanticsType: SimulationSemanticsType? = null
+    override var ocNetType: OcNetType? = null
+}
+
+fun buildConfig(configBuilderBlock: ConfigBuilderBlock.() -> Unit): SimulationConfig {
+    val receiver = ConfigBuilderBlockImpl()
+    receiver.configBuilderBlock()
+    return SimulationConfig(
+        ocNet = receiver.model?.load() ?: receiver.ocNetStruct!!,
+        transitionsSpec = when (receiver.semanticsType!!) {
+            SimulationSemanticsType.ORIGINAL -> {
+                TransitionsOriginalSpec()
+            }
+
+            SimulationSemanticsType.SIMPLE_TIME_PN -> {
+                TransitionsTimePNSpec()
+            }
+        },
+        initialMarking = MarkingScheme.of { },
+        randomSeed = null,
+        tokenGeneration = null,
+        ocNetType = receiver.ocNetType!!,
+        simulationSemantics = SimulationSemantics(receiver.semanticsType!!)
+    )
+}
 
 fun config(name: String): File {
     return File(res, name)
@@ -117,7 +159,7 @@ inline fun <reified T> T.toJson(): String {
     return DOMAIN_COMPONENT.json.encodeToString(this)
 }
 
-inline fun <reified T> readConfig(name: String): T {
+inline fun <reified T> deserializeResourceByClassWithPath(name: String): T {
     return if (name.endsWith(".json")) {
         jsonConfig<T>(name)
     } else if (name.endsWith(".yaml")) {
@@ -136,7 +178,7 @@ fun appendPathWithRes(path: Path): Path {
     }
 }
 
-inline fun <reified T> readConfig(path: Path): T {
+inline fun <reified T> deserializeResourceByClassWithPath(path: Path): T {
     val path = appendPathWithRes(path = path)
 
     return if (path.pathString.endsWith(".json")) {

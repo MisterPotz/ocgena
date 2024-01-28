@@ -1,6 +1,8 @@
-package ru.misterpotz.ocgena.simulation.stepexecutor
+package ru.misterpotz.ocgena.simulation.stepexecutor.timepn
 
 import ru.misterpotz.ocgena.registries.TransitionsRegistry
+import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledChecker
 import ru.misterpotz.ocgena.utils.TimePNRef
 import javax.inject.Inject
 

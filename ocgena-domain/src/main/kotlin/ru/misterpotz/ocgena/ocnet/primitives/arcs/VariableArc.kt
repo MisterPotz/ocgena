@@ -12,9 +12,25 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 
 data class VariableArcMeta(
     val variableName: String?
-) : ArcMeta
+) : ArcMeta {
+    override fun toString(): String {
+        return "var. l. $variableName"
+    }
 
-object VariableArcMetaTypeA : ArcMeta
+    override fun shortString(): String {
+        return "vl${variableName ?: " "}"
+    }
+}
+
+object VariableArcMetaTypeA : ArcMeta {
+    override fun toString(): String {
+        return "var. aalst"
+    }
+
+    override fun shortString(): String {
+        return "va "
+    }
+}
 
 @Serializable
 @SerialName("vararc")

@@ -21,7 +21,7 @@ interface CurrentSimulationDelegate : OCNet {
     val simulationStepState: SimulationStepState
     val simGlobalTime: Time
     val simTime: SimulationTime
-    val initialMarkingScheme: MarkingScheme
+    val initialMarkingScheme: MarkingScheme?
     val newTokenGenerationFacade: NewTokenGenerationFacade
     val pMarking: PlaceToObjectMarking
         get() = state.pMarking

@@ -8,6 +8,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
+import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityVariableDelegateTypeA
 import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
@@ -15,7 +16,7 @@ import javax.inject.Inject
 
 class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
-    private val arcToMultiplicityNormalDelegateTypeA: ArcToMultiplicityNormalDelegateTypeA,
+    private val arcToMultiplicityVariableDelegateTypeA: ArcToMultiplicityVariableDelegateTypeA,
     ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
     private val inputArcMultiplicityCache: MutableMap<PetriAtomId, InputArcMultiplicityDynamic> = mutableMapOf()
@@ -27,7 +28,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
         // use fallback
         arc.variableName
-            ?: return arcToMultiplicityNormalDelegateTypeA.transitionInputMultiplicity(arc)
+            ?: return arcToMultiplicityVariableDelegateTypeA.transitionInputMultiplicity(arc)
 
         val realTokenAmount = objectTokenRealAmountRegistry.getRealAmountAt(arc.tailNodeId!!)
 
@@ -40,7 +41,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     override fun transitionInputMultiplicityDynamic(arc: Arc): InputArcMultiplicityDynamic {
         require(arc is VariableArc)
         if (arc.variableName == null)
-            return arcToMultiplicityNormalDelegateTypeA.transitionInputMultiplicityDynamic(arc)
+            return arcToMultiplicityVariableDelegateTypeA.transitionInputMultiplicityDynamic(arc)
 
         val inputNodeId = arc.tailNodeId!!
 
@@ -68,7 +69,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         val objectTypeId = placeToObjectTypeRegistry[targetPlace]
 
         val variableName = arc.variableName
-            ?: return arcToMultiplicityNormalDelegateTypeA
+            ?: return arcToMultiplicityVariableDelegateTypeA
                 .transitionOutputMultiplicity(tokenGroupedInfo, arc)
 
         val sourceBatch = tokenGroupedInfo.getTokenSetBy(
@@ -104,7 +105,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
     override fun transitionOutputMultiplicityDynamic(arc: Arc): OutputArcMultiplicityDynamic {
         require(arc is VariableArc)
         if (arc.variableName == null) {
-            return arcToMultiplicityNormalDelegateTypeA.transitionOutputMultiplicityDynamic(arc)
+            return arcToMultiplicityVariableDelegateTypeA.transitionOutputMultiplicityDynamic(arc)
         }
 
         return outputArcMultiplicityCache.getOrPut(arc.id) {

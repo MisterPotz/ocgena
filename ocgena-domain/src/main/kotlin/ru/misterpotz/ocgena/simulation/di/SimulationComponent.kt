@@ -49,6 +49,7 @@ import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
 import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
 import ru.misterpotz.ocgena.simulation.stepexecutor.*
+import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstance
 import ru.misterpotz.ocgena.simulation.structure.SimulatableOcNetInstanceImpl
 import ru.misterpotz.ocgena.simulation.structure.State
@@ -104,7 +105,6 @@ internal abstract class SimulationModule {
     ): EnabledBindingResolverInteractor
 
 
-
     companion object {
         @Provides
         @SimulationScope
@@ -114,8 +114,8 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun provideTimePNTransitionMarking(): TimePNTransitionMarking {
-            return TimePNTransitionMarking()
+        fun provideTimePNTransitionMarking(ocNet: OCNet): TimePNTransitionMarking {
+            return TimePNTransitionMarking(ocNet.transitionsRegistry.iterable.map { it.id })
         }
 
         @Provides
@@ -145,12 +145,16 @@ internal abstract class SimulationModule {
         @Provides
         @SimulationScope
         fun providesObjectRealTokenAmountRegistry(ocNet: OCNet): ObjectTokenRealAmountRegistry {
-            return ObjectTokenRealAmountRegistryImpl()
+            return ObjectTokenRealAmountRegistryImpl().apply {
+                for (place in ocNet.placeRegistry.places) {
+                    placeToTokens[place.id] = 0
+                }
+            }
         }
 
         @Provides
         @SimulationScope
-        fun providePlaceToObjectTypeRegistry(ocNet: OCNet) : PlaceToObjectTypeRegistry {
+        fun providePlaceToObjectTypeRegistry(ocNet: OCNet): PlaceToObjectTypeRegistry {
             return ocNet.placeToObjectTypeRegistry
         }
 
@@ -229,6 +233,7 @@ internal abstract class SimulationModule {
         fun provideSimulationTaskPreparator(
             simulationConfig: SimulationConfig,
             simulationTaskPreparatorProvider: Provider<SimulationTaskPreparatorOriginal>,
+            timePNPreparatorProvider: Provider<SimulationTaskTimePNPreparator>,
         ): SimulationTaskPreparator {
             val simulationTaskPreparator = when (simulationConfig.simulationSemantics.type) {
                 SimulationSemanticsType.ORIGINAL -> {
@@ -239,7 +244,7 @@ internal abstract class SimulationModule {
                 }
 
                 SimulationSemanticsType.SIMPLE_TIME_PN -> {
-                    throw IllegalStateException()
+                    timePNPreparatorProvider.get() as SimulationTaskTimePNPreparator
                 }
             }
             return simulationTaskPreparator
@@ -271,7 +276,7 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun transitionsRegistry(ocNet: OCNet) : TransitionsRegistry {
+        fun transitionsRegistry(ocNet: OCNet): TransitionsRegistry {
             return ocNet.transitionsRegistry
         }
 
@@ -417,8 +422,6 @@ internal abstract class SimulationModule {
                 objectTokenRealAmountRegistry
             )
         }
-
-
     }
 }
 
@@ -439,6 +442,10 @@ interface SimulationComponent {
     fun ocNet(): OCNet
     fun enabledBindingsResolver(): EnabledBindingResolverInteractor
     fun objectTokenRealAmountRegistry(): ObjectTokenRealAmountRegistry
+
+    @GlobalTokenBunch
+    fun tokenBunch(): SparseTokenBunch
+    fun transitionFiringRuleExecutor(): TransitionFiringRuleExecutor
     fun outputTokensBufferConsumerFactory(): OutputTokensBufferConsumerFactory
     fun outputMissingTokensGeneratorFactory(): OutputMissingTokensGeneratorFactory
     fun batchGroupingStrategy(): TokenGroupedInfo.TokenGroupingStrategy
@@ -449,7 +456,7 @@ interface SimulationComponent {
     fun prePostPlaceRegistry(): PrePlaceRegistry
     fun arcPrePlaceHasEnoughTokensChecker(): ArcPrePlaceHasEnoughTokensChecker
 
-    fun newTimeDeltaInteractor() : NewTimeDeltaInteractor
+    fun newTimeDeltaInteractor(): NewTimeDeltaInteractor
 
     fun create(transition: Transition)
 

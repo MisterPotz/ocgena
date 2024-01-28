@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
+import ru.misterpotz.expression.node.MathNode
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -9,6 +10,7 @@ import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.ObjectType
+import java.lang.IllegalStateException
 
 const val objTypePrefix = "△"
 const val objPrefix = "●"
@@ -147,6 +149,8 @@ class OCNetBuilder(
         var type: Type
         var multiplicity: Int
 
+        var mathExpr : String
+
         val vari: Unit
         val norm: Unit
 
@@ -175,5 +179,13 @@ class OCNetBuilder(
         override fun m(multiplicity: Int) {
             this.multiplicity = multiplicity
         }
+
+        var innerMathExpr : String? = null
+
+        override var mathExpr: String
+            get() = throw IllegalStateException()
+            set(value) {
+                innerMathExpr = value
+            }
     }
 }

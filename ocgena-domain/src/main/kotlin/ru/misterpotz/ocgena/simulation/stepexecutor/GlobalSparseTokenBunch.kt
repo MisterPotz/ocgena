@@ -38,4 +38,10 @@ data class GlobalSparseTokenBunch(
         pMarkingProvider.get().minus(tokenBunch.objectMarking())
         validateState()
     }
+
+    override fun toString(): String {
+        return tokenAmountStorage().places.joinToString(separator = "  ##  ") {
+            "$it -- ${tokenAmountStorage().getTokensAt(it)}"
+        }
+    }
 }

@@ -1,10 +1,8 @@
 package ru.misterpotz.ocgena.simulation.interactors
 
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.ocnet.utils.toObjTokenString
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.utils.LOG
 
@@ -36,12 +34,12 @@ interface TokenAmountStorage {
     fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int
     fun plus(tokenAmountStorage: TokenAmountStorage)
     fun minus(tokenAmountStorage: TokenAmountStorage)
-    fun amountsEquals(tokenAmountStorage: TokenAmountStorage): Boolean {
+    fun projectAmountsEqual(tokenAmountStorage: TokenAmountStorage): Boolean {
         val places = places
         return places.all {
             getTokensAt(it) == tokenAmountStorage.getTokensAt(it)
         }
-            .LOG { "amountEquals " }!! && (places.count() == tokenAmountStorage.places.count()).LOG { "== places iterables" }!!
+            .LOG { "projectAmountsEqual " }!!
     }
 
     fun cleanString(): String {
@@ -59,7 +57,7 @@ data class SimpleTokenAmountStorage(
         get() = placeToTokens.keys.toList()
 
     override fun getTokensAt(place: PetriAtomId): Int {
-        return placeToTokens[place]!!
+        return placeToTokens[place] ?: 0
     }
 
     override fun applyDeltaTo(place: PetriAtomId, tokensDelta: Int): Int {
@@ -98,6 +96,16 @@ data class SimpleTokenAmountStorage(
 
         for (place in placeToObjectMarking.places) {
             placeToTokens[place] = placeToObjectMarking[place].size
+        }
+    }
+
+    companion object {
+        fun build(mapBlock: MutableMap<PetriAtomId, Int>.() -> Unit): SimpleTokenAmountStorage {
+            return SimpleTokenAmountStorage(
+                buildMap {
+                    mapBlock()
+                }.toMutableMap()
+            )
         }
     }
 }

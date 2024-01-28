@@ -10,9 +10,11 @@ import ru.misterpotz.ocgena.simulation.config.original.Duration
 @SerialName("time_pn")
 data class TransitionsTimePNSpec(
     @SerialName("default")
-    val default: TransitionTimePNTimes = TransitionTimePNTimes(
-        duration = Duration(10..10),
-    ),
+    val default: TransitionTimePNTimes? = null,
     @SerialName("per_transition")
     val transitionToTimeSpec: MutableMap<PetriAtomId, TransitionTimePNTimes> = mutableMapOf(),
-) : TransitionsSpec
+) : TransitionsSpec {
+    fun getForTransition(transitionId : PetriAtomId) : TransitionTimePNTimes? {
+        return transitionToTimeSpec[transitionId] ?: default
+    }
+}

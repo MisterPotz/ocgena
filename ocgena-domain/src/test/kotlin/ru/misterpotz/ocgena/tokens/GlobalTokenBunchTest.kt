@@ -42,7 +42,7 @@ class GlobalTokenBunchTest {
         } else {
             globalTokenBunch.minus(testData.appliedBunch)
         }
-        Assertions.assertTrue(globalTokenBunch.bunchesEqual(testData.expectedBunch))
+        Assertions.assertTrue(globalTokenBunch.bunchesExactlyEqual(testData.expectedBunch))
     }
 
     @ParameterizedTest

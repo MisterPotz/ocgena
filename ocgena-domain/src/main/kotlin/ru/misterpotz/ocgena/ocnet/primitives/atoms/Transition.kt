@@ -28,18 +28,25 @@ data class Transition(
         toPlaces.add(place)
     }
 
+    fun neighbourhood(): Iterable<PetriAtomId> {
+        return sequence {
+            yieldAll(fromPlaces)
+            yieldAll(toPlaces)
+        }.asIterable()
+    }
+
     override fun isSameType(other: PetriAtom): Boolean {
         return other is Transition
     }
 
-    override fun getArcTo(node: PetriAtomId) : PetriAtomId {
+    override fun getArcTo(node: PetriAtomId): PetriAtomId {
         if (node in toPlaces) {
             return id.arcIdTo(node)
         }
         throw IllegalArgumentException("$node is not in destinations of ${this.id}")
     }
 
-    override fun getArcFrom(node: PetriAtomId) : PetriAtomId {
+    override fun getArcFrom(node: PetriAtomId): PetriAtomId {
         if (node in fromPlaces) {
             return node.arcIdTo(id)
         }
@@ -56,4 +63,12 @@ data class Transition(
             toPlaces = mutableListOf()
         )
     }
+
+    override fun toString(): String {
+        return String.format(
+            "trans. $id pre:$fromPlaces / post:$toPlaces"
+        )
+    }
+
+
 }

@@ -1,6 +1,8 @@
-package ru.misterpotz.ocgena.simulation.stepexecutor
+package ru.misterpotz.ocgena.simulation.stepexecutor.timepn
 
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
+import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation.stepexecutor.TimeShiftSelector
 import javax.inject.Inject
 
 class NewTimeDeltaInteractor @Inject constructor(

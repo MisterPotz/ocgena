@@ -13,7 +13,7 @@ class OCNetTest {
     @Test()
     fun checkInitialMarkingIsApplied() {
         val ocNet = buildSimplestOCNetNoVar()
-        val settingsConfig = readConfig<SettingsSimulationConfig>(DEFAULT_SETTINGS)
+        val settingsConfig = deserializeResourceByClassWithPath<SettingsSimulationConfig>(DEFAULT_SETTINGS)
         val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)
             .withInitialMarking {
                 put("p1", 5)
@@ -38,7 +38,7 @@ class OCNetTest {
     @Timeout(value = 1, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     fun simpleRunPerforms() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
-        val settingsConfig = readConfig<SettingsSimulationConfig>(DEFAULT_SETTINGS)
+        val settingsConfig = deserializeResourceByClassWithPath<SettingsSimulationConfig>(DEFAULT_SETTINGS)
 
         val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)
             .withInitialMarking {
@@ -58,7 +58,7 @@ class OCNetTest {
     @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD, unit = TimeUnit.SECONDS)
     fun simpleRunPerformHugeTokenAmount() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
-        val settingsConfig = readConfig<SettingsSimulationConfig>(DEFAULT_SETTINGS)
+        val settingsConfig = deserializeResourceByClassWithPath<SettingsSimulationConfig>(DEFAULT_SETTINGS)
 
         val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)
             .withInitialMarking {

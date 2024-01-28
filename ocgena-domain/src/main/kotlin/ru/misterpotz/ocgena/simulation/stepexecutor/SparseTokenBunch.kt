@@ -1,6 +1,9 @@
 package ru.misterpotz.ocgena.simulation.stepexecutor
 
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.simulation.interactors.SimpleTokenAmountStorage
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import ru.misterpotz.ocgena.utils.LOG
 
@@ -9,9 +12,28 @@ interface SparseTokenBunch {
     fun tokenAmountStorage(): TokenAmountStorage
     fun append(tokenBunch: SparseTokenBunch)
     fun minus(tokenBunch: SparseTokenBunch)
-    fun bunchesEqual(tokenBunch: SparseTokenBunch): Boolean {
+    fun bunchesExactlyEqual(tokenBunch: SparseTokenBunch): Boolean {
         return objectMarking().markingEquals(tokenBunch.objectMarking()).LOG { "marking equals" }!! &&
-                tokenAmountStorage().amountsEquals(tokenBunch.tokenAmountStorage()).LOG { "token amount equals" }!!
+                tokenAmountStorage().projectAmountsEqual(tokenBunch.tokenAmountStorage()).LOG { "token amount equals" }!!
+    }
+
+    fun narrowTo(places: Iterable<PetriAtomId>): SparseTokenBunch {
+        return SparseTokenBunchImpl(
+            marking = PlaceToObjectMarkingMap.build {
+                for (place in places) {
+                    put(place, objectMarking()[place])
+                }
+            },
+            tokenAmountStorage = SimpleTokenAmountStorage.build {
+                for (place in places) {
+                    put(place, tokenAmountStorage().getTokensAt(place))
+                }
+            }
+        )
+    }
+
+    fun projectBunchAmountsEqual(tokenBunch: SparseTokenBunch): Boolean {
+        return tokenAmountStorage().projectAmountsEqual(tokenBunch.tokenAmountStorage())
     }
 
     fun cleanString(): String {

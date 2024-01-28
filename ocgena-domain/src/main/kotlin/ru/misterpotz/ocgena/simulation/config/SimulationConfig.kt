@@ -14,9 +14,9 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 data class SimulationConfig(
     val ocNet: OCNetStruct,
     @SerialName("init_marking")
-    val initialMarking: MarkingScheme,
+    val initialMarking: MarkingScheme?,
     @SerialName("transitions")
-    val transitionsSpec: TransitionsSpec,
+    val transitionsSpec: TransitionsSpec?,
     @SerialName("seed")
     val randomSeed: Int?,
     @SerialName("labels")
@@ -27,7 +27,6 @@ data class SimulationConfig(
     val ocNetType: OcNetType,
     @SerialName("semantics")
     val simulationSemantics: SimulationSemantics
-
 ) {
     fun settingsEqual(settingsSimulationConfig: SettingsSimulationConfig): Boolean {
         return initialMarking == settingsSimulationConfig.initialMarking &&
@@ -51,7 +50,7 @@ data class SimulationConfig(
     }
 
     fun withInitialMarking(map: MutableMap<PetriAtomId, Int>.() -> Unit): SimulationConfig {
-        val initialMarking = initialMarking.placesToTokens.toMutableMap()
+        val initialMarking = (initialMarking ?: MarkingScheme()).placesToTokens.toMutableMap()
         initialMarking.map()
 
         return copy(initialMarking = MarkingScheme(initialMarking))
@@ -123,9 +122,9 @@ data class SimulationConfig(
 @Serializable
 data class SettingsSimulationConfig(
     @SerialName("init_marking")
-    val initialMarking: MarkingScheme,
+    val initialMarking: MarkingScheme?,
     @SerialName("transitions")
-    val transitionsSpec: TransitionsSpec,
+    val transitionsSpec: TransitionsSpec?,
     @SerialName("seed")
     val randomSeed: Int?,
     @SerialName("labels")

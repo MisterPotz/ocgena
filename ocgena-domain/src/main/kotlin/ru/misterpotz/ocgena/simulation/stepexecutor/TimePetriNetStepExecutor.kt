@@ -1,5 +1,8 @@
 package ru.misterpotz.ocgena.simulation.stepexecutor
 
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
@@ -8,14 +11,20 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
+import ru.misterpotz.ocgena.simulation.SimulationTaskPreparator
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation.config.MarkingScheme
+import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.interactors.SimpleTokenAmountStorage
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
+import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.utils.TimePNRef
+import ru.misterpotz.ocgena.utils.cast
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -135,9 +144,7 @@ class TransitionFiringRuleExecutor @Inject constructor(
     private val tokenSelectionInteractor: TokenSelectionInteractor,
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     private val tokenGroupCreatorFactory: TokenGroupCreatorFactory,
-    private val transitionTokenSelectionInteractor: TokenSelectionInteractor,
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
-    private val repeatabilityInteractor: RepeatabilityInteractor
+    private val transitionsOutputTokensCreatorFactory: TransitionOutputTokensCreatorFactory
 ) {
     fun fireTransition(transition: Transition) {
         // grab tokens captured by this transition
@@ -158,14 +165,7 @@ class TransitionFiringRuleExecutor @Inject constructor(
             .group(selectedTokens)
 
         // using the grouped tokens, get output tokens of this transition
-        val transitionOutputTokensCreator = TransitionOutputTokensCreator(
-            tokenGroupedInfo = groupedTokenInfo,
-            transition = transition,
-            arcsMultiplicityRegistry = arcsMultiplicityRegistry,
-            transitionTokenSelectionInteractor = transitionTokenSelectionInteractor,
-            placeToObjectTypeRegistry = placeToObjectTypeRegistry,
-            repeatabilityInteractor = repeatabilityInteractor
-        )
+        val transitionOutputTokensCreator = transitionsOutputTokensCreatorFactory.create(groupedTokenInfo, transition)
         val outputTokenBunch = transitionOutputTokensCreator.createOutputTokens()
 
         // append those to marking
@@ -173,8 +173,46 @@ class TransitionFiringRuleExecutor @Inject constructor(
     }
 }
 
-class TransitionOutputTokensCreator(
+class DefaultTimePNProvider @Inject constructor() {
+    fun getDefaultEarliestFiringTime(): Int {
+        return 5
+    }
+
+    fun getDefaultLatestfiringTime(): Int {
+        return 10
+    }
+}
+
+class SimulationTaskTimePNPreparator @Inject constructor(
+    private val simulationConfig: SimulationConfig,
+    @GlobalTokenBunch
+    private val tokenBunch: SparseTokenBunch,
+    private val timePNTransitionMarking: TimePNTransitionMarking,
+    private val defaultTimePNProvider: DefaultTimePNProvider,
+) : SimulationTaskPreparator {
+
+    private val transitionsTimePNSpec: TransitionsTimePNSpec = simulationConfig.cast()
+    override fun prepare() {
+        (simulationConfig.initialMarking ?: MarkingScheme()).placesToTokens.forEach { (petriAtomId, amount) ->
+            tokenBunch.tokenAmountStorage().applyDeltaTo(petriAtomId, +amount)
+        }
+        for (transition in simulationConfig.ocNet.transitionsRegistry.iterable) {
+            timePNTransitionMarking
+                .forTransition(transition.id)
+                .updateBoundsAndReset(
+                    eft = (transitionsTimePNSpec.getForTransition(transition.id)?.earlyFiringTime
+                        ?: defaultTimePNProvider.getDefaultEarliestFiringTime()).toLong(),
+                    lft = (transitionsTimePNSpec.getForTransition(transition.id)?.latestFiringTime
+                        ?: defaultTimePNProvider.getDefaultEarliestFiringTime()).toLong(),
+                )
+        }
+    }
+}
+
+class TransitionOutputTokensCreator @AssistedInject constructor(
+    @Assisted
     private val tokenGroupedInfo: TokenGroupedInfo,
+    @Assisted
     private val transition: Transition,
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     private val transitionTokenSelectionInteractor: TokenSelectionInteractor,
@@ -226,14 +264,26 @@ class TransitionOutputTokensCreator(
     }
 }
 
+@AssistedFactory
+interface TransitionOutputTokensCreatorFactory {
+    fun create(tokenGroupedInfo: TokenGroupedInfo, transition: Transition): TransitionOutputTokensCreator
+}
+
 interface TimePNTransitionMarking {
     fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData
 
     fun appendClockTime(delta: Long)
 }
 
-fun TimePNTransitionMarking(): TimePNTransitionMarkingImpl {
-    return TimePNTransitionMarkingImpl(mutableMapOf())
+fun TimePNTransitionMarking(map: Map<PetriAtomId, TimePnTransitionData>): TimePNTransitionMarkingImpl {
+    return TimePNTransitionMarkingImpl(map.toMutableMap())
+}
+
+fun TimePNTransitionMarking(list: List<PetriAtomId>): TimePNTransitionMarkingImpl {
+    return TimePNTransitionMarkingImpl(
+        list.associateWith { TimePnTransitionData(counter = 0, lft = 0, eft = 0) }
+            .toMutableMap()
+    )
 }
 
 class TimePNTransitionMarkingImpl @Inject constructor(
