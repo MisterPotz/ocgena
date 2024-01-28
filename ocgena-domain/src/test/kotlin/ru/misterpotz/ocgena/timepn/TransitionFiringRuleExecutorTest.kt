@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.timepn
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -36,6 +37,11 @@ class TransitionFiringRuleExecutorTest {
                     testConfig.expectedEndLocalBunch
                 )
         )
+    }
+
+    @Test
+    fun `firing transition resets the counters of transitions with common preplaces`() {
+        throw NotImplementedError()
     }
 
     companion object {
