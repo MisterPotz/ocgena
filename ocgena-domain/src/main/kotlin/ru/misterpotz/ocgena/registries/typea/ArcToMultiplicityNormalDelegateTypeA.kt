@@ -9,16 +9,18 @@ import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import javax.inject.Inject
 
 class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
-    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
-    ocNet: OCNet,
+    @GlobalTokenBunch
+    private val sparseTokenBunch: SparseTokenBunch,
+    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
 ) : ArcsMultiplicityDelegate() {
     private val inputArcMultiplicityCache : MutableMap<PetriAtomId, InputArcMultiplicityDynamic> = mutableMapOf()
     private val outputArcMultiplicityCache : MutableMap<PetriAtomId, OutputArcMultiplicityDynamic> = mutableMapOf()
-    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         require(arc is NormalArc)
@@ -26,7 +28,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
         val requiredTokens = arc.multiplicity
         val inputNodeId = arc.tailNodeId!!
 
-        val tokensAtPlace = objectTokenRealAmountRegistry.getRealAmountAt(inputNodeId)
+        val tokensAtPlace = sparseTokenBunch.tokenAmountStorage().getTokensAt(inputNodeId)
         val inputPlaceHasEnoughTokens = tokensAtPlace >= requiredTokens
 
         return InputArcMultiplicityValue(

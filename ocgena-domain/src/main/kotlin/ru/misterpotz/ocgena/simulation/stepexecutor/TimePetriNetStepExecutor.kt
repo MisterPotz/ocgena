@@ -76,19 +76,20 @@ class TransitionToFireSelector @Inject constructor(val random: Random?) {
 }
 
 @TimePNRef("h(t)=#")
-class TransitionDisabledChecker @Inject constructor(
+class TransitionDisabledByMarkingChecker @Inject constructor(
     private val prePlaceRegistry: PrePlaceRegistry,
     @GlobalTokenBunch
     private val globalTokenBunch: SparseTokenBunch,
 ) {
-    fun transitionIsDisabled(transition: PetriAtomId): Boolean {
+    fun transitionIsDisabledByMarking(transition: PetriAtomId): Boolean {
         return prePlaceRegistry.transitionPrePlaces(transition) > globalTokenBunch.tokenAmountStorage()
     }
 }
 
 class TimeShiftSelector @Inject constructor(val random: Random?) {
-    fun selectTimeDelta(max: Long): Long {
-        return (1..max).let {
+    @TimePNRef("tau")
+    fun selectTimeDelta(possibleTimeRange: LongRange): Long {
+        return possibleTimeRange.let {
             if (random == null) {
                 it.random()
             } else {
@@ -315,6 +316,10 @@ data class TimePnTransitionData(
 
     fun timeUntilLFT(): Long {
         return lft - counter
+    }
+
+    fun timeUntilEft() : Long {
+        return eft - counter
     }
 
     fun countup(units: Long) {

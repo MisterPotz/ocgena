@@ -1,27 +1,27 @@
 package ru.misterpotz.ocgena.registries.typel
 
 import ru.misterpotz.expression.paramspace.VariableParameterSpace
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
-import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
-import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityVariableDelegateTypeA
 import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import javax.inject.Inject
 
 class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
-    private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
+    @GlobalTokenBunch
+    private val sparseTokenBunch: SparseTokenBunch,
+    private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val arcToMultiplicityVariableDelegateTypeA: ArcToMultiplicityVariableDelegateTypeA,
-    ocNet: OCNet,
 ) : ArcsMultiplicityDelegate() {
     private val inputArcMultiplicityCache: MutableMap<PetriAtomId, InputArcMultiplicityDynamic> = mutableMapOf()
     private val outputArcMultiplicityCache : MutableMap<PetriAtomId, OutputArcMultiplicityDynamic> = mutableMapOf()
-    private val placeToObjectTypeRegistry = ocNet.placeToObjectTypeRegistry
 
     override fun transitionInputMultiplicity(arc: Arc): InputArcMultiplicity {
         require(arc is VariableArc)
@@ -30,9 +30,9 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         arc.variableName
             ?: return arcToMultiplicityVariableDelegateTypeA.transitionInputMultiplicity(arc)
 
-        val realTokenAmount = objectTokenRealAmountRegistry.getRealAmountAt(arc.tailNodeId!!)
-
+        val realTokenAmount = sparseTokenBunch.tokenAmountStorage().getTokensAt(arc.tailNodeId!!)
         return InputArcMultiplicityValue(
+
             sourceNodeHasEnoughTokens = (realTokenAmount) > 1,
             requiredTokenAmount = realTokenAmount // require as much tokens as there are
         )

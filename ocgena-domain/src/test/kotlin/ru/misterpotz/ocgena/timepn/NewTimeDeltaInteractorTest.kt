@@ -18,7 +18,7 @@ class NewTimeDeltaInteractorTest {
     }
 
     @Test
-    fun `dont shifts time if max time is 0`() {
+    fun `dont shifts time if cant resolve possible firing time range`() {
         val slotTime = slot<Long>()
 
         val timePNTransitionMarking = mockk<TimePNTransitionMarking> {
@@ -35,7 +35,7 @@ class NewTimeDeltaInteractorTest {
                 every { selectTimeDelta(any()) } returns 5
             },
             maxTimeDeltaFinder = mockk {
-                every { findMaxPossibleTimeDelta() } returns 0
+                every { findPossibleFiringTimeRange() } returns null
             },
             timePNTransitionMarking = timePNTransitionMarking,
             simulationStateProvider = simuStateProvider
@@ -68,7 +68,7 @@ class NewTimeDeltaInteractorTest {
                 every { selectTimeDelta(any()) } returns SELECTED_TIME
             },
             maxTimeDeltaFinder = mockk {
-                every { findMaxPossibleTimeDelta() } returns MAX_TIME
+                every { findPossibleFiringTimeRange() } returns 0..MAX_TIME
             },
             timePNTransitionMarking = timePNTransitionMarking,
             simulationStateProvider = simuStateProvider

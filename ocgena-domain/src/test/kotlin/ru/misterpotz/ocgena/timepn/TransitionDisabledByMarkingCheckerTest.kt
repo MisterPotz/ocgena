@@ -6,9 +6,9 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledChecker
+import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledByMarkingChecker
 
-class TransitionDisabledCheckerTest {
+class TransitionDisabledByMarkingCheckerTest {
 
     @Test
     fun `transition checks if disabled correctly`() {
@@ -24,12 +24,12 @@ class TransitionDisabledCheckerTest {
             every { tokenAmountStorage() } returns mockk()
         }
 
-        val transitionDisabledChecker = TransitionDisabledChecker(
+        val transitionDisabledByMarkingChecker = TransitionDisabledByMarkingChecker(
             prePlaceRegistry = prePlaceRegistry,
             globalTokenBunch = globalTokenBunch
         )
 
-        Assertions.assertTrue(transitionDisabledChecker.transitionIsDisabled("test"))
+        Assertions.assertTrue(transitionDisabledByMarkingChecker.transitionIsDisabledByMarking("test"))
     }
 
     @Test
@@ -46,11 +46,11 @@ class TransitionDisabledCheckerTest {
             every { tokenAmountStorage() } returns mockk()
         }
 
-        val transitionDisabledChecker = TransitionDisabledChecker(
+        val transitionDisabledByMarkingChecker = TransitionDisabledByMarkingChecker(
             prePlaceRegistry = prePlaceRegistry,
             globalTokenBunch = globalTokenBunch
         )
 
-        Assertions.assertFalse(transitionDisabledChecker.transitionIsDisabled("test"))
+        Assertions.assertFalse(transitionDisabledByMarkingChecker.transitionIsDisabledByMarking("test"))
     }
 }
