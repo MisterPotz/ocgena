@@ -50,6 +50,42 @@ class NewTimeDeltaInteractorTest {
     }
 
     @Test
+    fun `shifts time even if time range is zero to zero`() {
+        val slotTime = slot<Long>()
+
+        val timePNTransitionMarking = mockk<TimePNTransitionMarking> {
+            every { appendClockTime(capture(slotTime)) } returns Unit
+        }
+
+        val simuStateProvider = mockk<SimulationStateProvider> {
+            every { getSimulationStepState() } returns mockk {
+                every { onHasEnabledTransitions(true) } returns Unit
+            }
+        }
+        val captSlot = slot<LongRange>()
+        val zeroRange = 0..0L
+        val newTimeDeltaInteractor = NewTimeDeltaInteractor(
+            timeShiftSelector = mockk {
+                every { selectTimeDelta(capture(captSlot)) } returns 0L
+            },
+            maxTimeDeltaFinder = mockk {
+                every { findPossibleFiringTimeRange() } returns zeroRange
+            },
+            timePNTransitionMarking = timePNTransitionMarking,
+            simulationStateProvider = simuStateProvider
+        )
+
+        newTimeDeltaInteractor.generateAndShiftTimeDelta()
+
+        verify(exactly = 1) {
+            simuStateProvider.getSimulationStepState()
+            timePNTransitionMarking.appendClockTime(any())
+        }
+        Assertions.assertSame(slotTime.captured, 0L)
+        Assertions.assertSame(captSlot.captured, zeroRange)
+    }
+
+    @Test
     fun `shifts the randomized time if max not zero`() {
 
         val slotTime = slot<Long>()
