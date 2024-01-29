@@ -25,6 +25,7 @@ import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.utils.TimePNRef
 import ru.misterpotz.ocgena.utils.cast
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -34,13 +35,12 @@ class TimePetriNetStepExecutor @Inject constructor(
     private val timePNTransitionMarking: TimePNTransitionMarking,
     private val transitionToFireSelector: TransitionToFireSelector,
     private val transitionFireExecutor: TransitionFiringRuleExecutor,
+    private val prePlaceRegistry: PrePlaceRegistry,
+    private val transitionsEnabledStepCache: TransitionsEnabledStepCache
 ) : StepExecutor {
-    override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
-        // generate next time based on place and transitions marking
-        newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
-        // find transitions that are enforced to fire now, and list their random order
-        val transitionsThatCanBeSelectedForFiring = buildList {
+    private fun collectTransitionsThatCanBeSelected(): List<Transition> {
+        return buildList {
             val transitionsThatMustFireNow = ocNet.transitionsRegistry.iterable.filter {
                 timePNTransitionMarking.forTransition(it.id).mustFireNow()
             }
@@ -53,12 +53,42 @@ class TimePetriNetStepExecutor @Inject constructor(
                 addAll(transitionsThatCanFireNow)
             }
         }.sortedBy { it.id }
+    }
+
+    private fun resetClocksOfTransitionsWithSharedPreplaces(transition: Transition) {
+        val t_pre = prePlaceRegistry.transitionPrePlaces(transition.id)
+        val transitionsWithCommonPreplaces = t_pre.getTransitionsWithSharedPreplaces()
+        for (transition in transitionsWithCommonPreplaces) {
+            timePNTransitionMarking.forTransition(transition)
+                .apply {
+                    resetCounter()
+                }
+        }
+    }
+
+    override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
+        // generate next time based on place and transitions marking
+        newTimeDeltaInteractor.generateAndShiftTimeDelta()
+
+        // find transitions that are enforced to fire now, and list their random order
+        val transitionsThatCanBeSelectedForFiring = collectTransitionsThatCanBeSelected()
 
         // select the transition to fire
         val transitionToFire = transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return
 
         // fire transition using transition rule
         transitionFireExecutor.fireTransition(transitionToFire)
+
+        // clocks of transitions with shared preplaces are reset anyway
+        resetClocksOfTransitionsWithSharedPreplaces(transitionToFire)
+
+        // update the caches
+        val t_pre = prePlaceRegistry.transitionPrePlaces(transitionToFire.id)
+        val transitionsWithCommonPreplaces = t_pre.getTransitionsWithSharedPreplaces()
+
+        for (transition in transitionsWithCommonPreplaces) {
+            transition
+        }
     }
 }
 
@@ -137,6 +167,19 @@ class TransitionTokenSelector(
 
 class Transition
 
+class TransitionsEnabledStepCache @Inject constructor() {
+    private val transitionToEnabled = mutableMapOf<PetriAtomId, Boolean>()
+    fun compareAndSetEnabledByMarking(transition: PetriAtomId, isEnabledByMarking: Boolean): Boolean {
+        val oldValue = transitionToEnabled[transition]
+        transitionToEnabled[transition] = isEnabledByMarking
+        return oldValue != isEnabledByMarking
+    }
+
+    fun getTransitionEnabledByMarking(transition: PetriAtomId): Boolean {
+        return transitionToEnabled[transition]!!
+    }
+}
+
 @TimePNRef("firing")
 class TransitionFiringRuleExecutor @Inject constructor(
     private val prePlaceRegistry: PrePlaceRegistry,
@@ -145,7 +188,7 @@ class TransitionFiringRuleExecutor @Inject constructor(
     private val tokenSelectionInteractor: TokenSelectionInteractor,
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     private val tokenGroupCreatorFactory: TokenGroupCreatorFactory,
-    private val transitionsOutputTokensCreatorFactory: TransitionOutputTokensCreatorFactory
+    private val transitionsOutputTokensCreatorFactory: TransitionOutputTokensCreatorFactory,
 ) {
     fun fireTransition(transition: Transition) {
         // grab tokens captured by this transition
@@ -318,7 +361,7 @@ data class TimePnTransitionData(
         return lft - counter
     }
 
-    fun timeUntilEft() : Long {
+    fun timeUntilEft(): Long {
         return eft - counter
     }
 

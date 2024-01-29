@@ -14,19 +14,18 @@ interface PrePlaceRegistry {
     @DefinitionRef("t^-")
     fun transitionPrePlaces(transition: PetriAtomId): PrePlaceAccessor
 
+
     interface PrePlaceAccessor : Iterable<PetriAtomId> {
-        val transitionId : PetriAtomId
+        val transitionId: PetriAtomId
+        fun getTransitionsWithSharedPreplaces(): List<PetriAtomId>
 
         operator fun compareTo(objectTokenRealAmountRegistry: TokenAmountStorage): Int
-    }
-
-    interface PostPlaceAccessor {
-        operator fun compareTo(objectMarking: PlaceToObjectMarking): Int
     }
 }
 
 class PrePlaceRegistryImpl(
     private val preplaceMap: Map<PetriAtomId, Set<PetriAtomId>>,
+    private val transitionsRegistry: TransitionsRegistry,
 //    private val postplaceMap: MutableMap<PetriAtomId, Set<PetriAtomId>>,
     private val preplaceAccessorCache: MutableMap<PetriAtomId, PrePlaceRegistry.PrePlaceAccessor> = mutableMapOf(),
     private val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
@@ -41,15 +40,37 @@ class PrePlaceRegistryImpl(
 
     override fun transitionPrePlaces(transition: PetriAtomId): PrePlaceRegistry.PrePlaceAccessor {
         return preplaceAccessorCache.getOrPut(transition) {
-            PrePlaceAccessorImpl(getPrePlaces(transition), transition, arcPrePlaceHasEnoughTokensChecker)
+            PrePlaceAccessorImpl(
+                getPrePlaces(transition),
+                transition,
+                getTransitionsWithSharedPreplacesFor(transition),
+                arcPrePlaceHasEnoughTokensChecker
+            )
         }
     }
 
+    private fun getTransitionsWithSharedPreplacesFor(transition: PetriAtomId): List<PetriAtomId> {
+        val share = mutableSetOf<PetriAtomId>()
+        val preplacesOfThisTransition = transitionsRegistry.get(transition).fromPlaces.toSet()
+
+        for (transition in transitionsRegistry.iterable) {
+            if (transition.fromPlaces.intersect(preplacesOfThisTransition).isNotEmpty()) {
+                share.add(transition.id)
+            }
+        }
+        return share.toList()
+    }
+
     private class PrePlaceAccessorImpl(
-        val places: Set<PetriAtomId>,
+        private val places: Set<PetriAtomId>,
         override val transitionId: PetriAtomId,
-        val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
+        private val transitionsWithSharedPreplaces: List<PetriAtomId>,
+        private val arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
     ) : PrePlaceRegistry.PrePlaceAccessor, Iterable<PetriAtomId> by places {
+
+        override fun getTransitionsWithSharedPreplaces(): List<PetriAtomId> {
+            return transitionsWithSharedPreplaces
+        }
 
         override fun compareTo(objectTokenRealAmountRegistry: TokenAmountStorage): Int {
             val allHasRequiredTokens = places.all {
@@ -72,7 +93,7 @@ class PrePlaceRegistryImpl(
             ocNet: OCNet,
             arcPrePlaceHasEnoughTokensChecker: ArcPrePlaceHasEnoughTokensChecker,
         ): PrePlaceRegistry {
-            val preplaceMap = buildMap<PetriAtomId, Set<PetriAtomId>> {
+            val preplaceMap = buildMap {
                 for (transition in ocNet.transitionsRegistry.iterable) {
                     val inputPlaces = transition.fromPlaces
                     put(transition.id, inputPlaces.toSet())
@@ -80,6 +101,7 @@ class PrePlaceRegistryImpl(
             }
             return PrePlaceRegistryImpl(
                 preplaceMap,
+                transitionsRegistry = ocNet.transitionsRegistry,
                 arcPrePlaceHasEnoughTokensChecker = arcPrePlaceHasEnoughTokensChecker
             )
         }
