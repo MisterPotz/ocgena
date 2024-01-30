@@ -3,8 +3,11 @@ package ru.misterpotz.ocgena.simulation.config.timepn
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.registries.TransitionsRegistry
 import ru.misterpotz.ocgena.simulation.config.TransitionsSpec
 import ru.misterpotz.ocgena.simulation.config.original.Duration
+import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarkingImpl
 
 @Serializable
 @SerialName("time_pn")

@@ -37,6 +37,7 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.validation.OCNetChecker
+import java.lang.IllegalStateException
 import java.util.*
 import java.util.stream.Stream
 import kotlin.random.Random
@@ -49,9 +50,10 @@ fun OCNetBuilder.AtomDefinitionBlock.install(oCNetBuildingCodeBlock: OCNetBuildi
     oCNetBuildingCodeBlock.invoke(this)
 }
 
-fun OCNetBuildingCodeBlock.installOnto(builder : OCNetBuilder.AtomDefinitionBlock) {
+fun OCNetBuildingCodeBlock.installOnto(builder: OCNetBuilder.AtomDefinitionBlock) {
     builder.install(this)
 }
+
 fun buildOCNet(atomDefinitionBlock: OCNetBuildingCodeBlock): OCNetStruct {
     val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
     val errors = OCNetChecker(ocNet).checkConsistency()
@@ -134,10 +136,12 @@ fun domainComponent(): DomainComponent {
 fun simComponent(
     simulationConfig: SimulationConfig,
     developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
+    randomInstance: Random? = null
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
         componentDependencies = DOMAIN_COMPONENT,
+        randomInstance = randomInstance,
         developmentDebugConfig = developmentDebugConfig
     )
 }
@@ -146,8 +150,11 @@ fun simTask(component: SimulationComponent): SimulationTask {
     return component.simulationTask()
 }
 
-fun SimulationConfig.toSimComponent(developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()): SimulationComponent {
-    return simComponent(this, developmentDebugConfig)
+fun SimulationConfig.toSimComponent(
+    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
+    randomInstance: Random? = null
+): SimulationComponent {
+    return simComponent(this, developmentDebugConfig, randomInstance = randomInstance)
 }
 
 fun SimulationComponent.facade(): FacadeSim {
@@ -323,11 +330,17 @@ infix fun MutableCollection<BatchKeyWithBuffer>.unaryPlus(batchKey: BatchKeyWith
     add(batchKey)
 }
 
-fun createPartiallyPredefinedSeq(seq: List<Int>): Random {
+fun createPartiallyPredefinedRandSeq(
+    seq: List<Int>,
+    fallback: () -> Int = { throw IllegalStateException("unexpectedly reached test fallback") }
+): Random {
     val mSeq = seq.toMutableList()
     return mockk<Random> {
         every { nextInt(any(), any()) } answers {
-            mSeq.removeFirstOrNull() ?: Random.nextInt(0, 6)
+            mSeq.removeFirstOrNull() ?: fallback()
+        }
+        every { nextLong(any(), any()) } answers {
+            mSeq.removeFirstOrNull()?.toLong() ?: fallback().toLong()
         }
     }
 }

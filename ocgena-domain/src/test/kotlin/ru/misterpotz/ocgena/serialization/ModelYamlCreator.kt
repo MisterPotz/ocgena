@@ -30,13 +30,7 @@ class ModelYamlCreator {
     @Test
     fun twoInTwoOutVar() {
         val ocNet = buildOCNet {
-            "p1".p { input; objectTypeId = "1" }
-                .arc("t1".t)
-                .arc("p2".p { output; objectTypeId = "1" })
-
-            "o1".p { input; objectTypeId = "2" }
-                .arc("t1".t) { vari }
-                .arc("o2".p { output; objectTypeId = "2" }) { vari }
+            buildTwoInTwoOut().installOnto(this)
         }
 
         writeOrAssertYaml(ocNet, ModelPath.TWO_IN_TWO_OUT.path)
@@ -93,6 +87,19 @@ class ModelYamlCreator {
                     .arc("o2".p { objectTypeId = "2"; output }) { vari; }
 
                 "t3".arc("p3") { norm; multiplicity = 0 }
+            }
+        }
+
+        fun buildTwoInTwoOut() : OCNetBuildingCodeBlock {
+            return {
+                "p1".p { input; objectTypeId = "1" }
+                    .arc("t1".t)
+                    .arc("p2".p { output; objectTypeId = "1" })
+
+                "o1".p { input; objectTypeId = "2" }
+                    .arc("t1".t) { vari }
+                    .arc("o2".p { output; objectTypeId = "2" }) { vari }
+
             }
         }
     }

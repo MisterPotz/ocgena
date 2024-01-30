@@ -14,3 +14,7 @@ fun <T> T?.LOG(block: ((T) -> String)? = null): T? {
     )
     return this
 }
+
+inline fun <K, V> buildMutableMap(builderAction: MutableMap<K, V>.() -> Unit): MutableMap<K, V> {
+    return buildMap(builderAction).toMutableMap()
+}

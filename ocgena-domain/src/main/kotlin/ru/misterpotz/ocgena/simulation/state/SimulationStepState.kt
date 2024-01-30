@@ -9,7 +9,7 @@ class SimulationStepState {
 
 
     fun onStart() {
-        current = BySteps(noEnabledTransitions = false, noPlannedTransitions = false, noPlannedTokenGenerations = false)
+        current = BySteps()
     }
 
     fun onNewStep() {

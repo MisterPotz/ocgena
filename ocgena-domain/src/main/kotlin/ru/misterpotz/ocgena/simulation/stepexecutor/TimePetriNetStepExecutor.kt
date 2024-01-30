@@ -8,9 +8,7 @@ import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.registries.PrePlaceRegistry
+import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.simulation.SimulationTaskPreparator
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
@@ -24,10 +22,9 @@ import ru.misterpotz.ocgena.simulation.interactors.SimpleTokenAmountStorage
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.utils.TimePNRef
-import ru.misterpotz.ocgena.utils.cast
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.random.Random
+
 
 class TimePetriNetStepExecutor @Inject constructor(
     private val newTimeDeltaInteractor: NewTimeDeltaInteractor,
@@ -110,9 +107,17 @@ class TransitionDisabledByMarkingChecker @Inject constructor(
     private val prePlaceRegistry: PrePlaceRegistry,
     @GlobalTokenBunch
     private val globalTokenBunch: SparseTokenBunch,
+    private val transitionsRegistry: TransitionsRegistry
 ) {
     fun transitionIsDisabledByMarking(transition: PetriAtomId): Boolean {
         return prePlaceRegistry.transitionPrePlaces(transition) > globalTokenBunch.tokenAmountStorage()
+    }
+
+    fun transitionsPartiallyEnabledByMarking(): List<PetriAtomId> {
+        return transitionsRegistry.iterable.mapNotNull { transition ->
+            transition.id
+                .takeIf { !transitionIsDisabledByMarking(transition.id) }
+        }
     }
 }
 
@@ -235,7 +240,7 @@ class SimulationTaskTimePNPreparator @Inject constructor(
     private val defaultTimePNProvider: DefaultTimePNProvider,
 ) : SimulationTaskPreparator {
 
-    private val transitionsTimePNSpec: TransitionsTimePNSpec = simulationConfig.cast()
+    private val transitionsTimePNSpec: TransitionsTimePNSpec = simulationConfig.castTransitions()
     override fun prepare() {
         (simulationConfig.initialMarking ?: MarkingScheme()).placesToTokens.forEach { (petriAtomId, amount) ->
             tokenBunch.tokenAmountStorage().applyDeltaTo(petriAtomId, +amount)
@@ -247,7 +252,7 @@ class SimulationTaskTimePNPreparator @Inject constructor(
                     eft = (transitionsTimePNSpec.getForTransition(transition.id)?.earlyFiringTime
                         ?: defaultTimePNProvider.getDefaultEarliestFiringTime()).toLong(),
                     lft = (transitionsTimePNSpec.getForTransition(transition.id)?.latestFiringTime
-                        ?: defaultTimePNProvider.getDefaultEarliestFiringTime()).toLong(),
+                        ?: defaultTimePNProvider.getDefaultLatestfiringTime()).toLong(),
                 )
         }
     }
@@ -316,7 +321,7 @@ interface TransitionOutputTokensCreatorFactory {
 interface TimePNTransitionMarking {
     fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData
 
-    fun appendClockTime(delta: Long)
+    fun appendClockTime(transitionsToAppendTime: List<PetriAtomId>, delta: Long)
 }
 
 fun TimePNTransitionMarking(map: Map<PetriAtomId, TimePnTransitionData>): TimePNTransitionMarkingImpl {
@@ -330,7 +335,7 @@ fun TimePNTransitionMarking(list: List<PetriAtomId>): TimePNTransitionMarkingImp
     )
 }
 
-class TimePNTransitionMarkingImpl @Inject constructor(
+data class TimePNTransitionMarkingImpl @Inject constructor(
     private val mutableMap: MutableMap<PetriAtomId, TimePnTransitionData> = mutableMapOf(),
 ) : TimePNTransitionMarking {
     init {
@@ -341,20 +346,20 @@ class TimePNTransitionMarkingImpl @Inject constructor(
         return mutableMap[petriAtomId]!!
     }
 
-    override fun appendClockTime(delta: Long) {
-        for (transition in mutableMap.values) {
-            transition.incrementCounter(delta)
+    override fun appendClockTime(transitionsToAppendTime: List<PetriAtomId>, delta: Long) {
+        for (transition in transitionsToAppendTime) {
+            forTransition(transition).incrementCounter(delta)
         }
     }
 }
 
 data class TimePnTransitionData(
-    @TimePNRef("h(t)")
+    @TimePNRef("h(t)", comment = "Not exactly h(t), but tracks the clocks of transitions")
     var counter: Long,
-    @TimePNRef("longest firing time")
-    var lft: Long = 0,
     @TimePNRef("earliest firing time")
     var eft: Long = 0,
+    @TimePNRef("longest firing time")
+    var lft: Long = 0,
 ) {
 
     fun timeUntilLFT(): Long {

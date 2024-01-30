@@ -91,7 +91,9 @@ private class ConfigBuilderBlockImpl() : ConfigBuilderBlock {
     override var ocNetType: OcNetType? = null
 }
 
-fun buildConfig(configBuilderBlock: ConfigBuilderBlock.() -> Unit): SimulationConfig {
+typealias ConfigBuilderBlockScope = ConfigBuilderBlock.() -> Unit
+
+fun buildConfig(configBuilderBlock: ConfigBuilderBlockScope): SimulationConfig {
     val receiver = ConfigBuilderBlockImpl()
     receiver.configBuilderBlock()
     return SimulationConfig(

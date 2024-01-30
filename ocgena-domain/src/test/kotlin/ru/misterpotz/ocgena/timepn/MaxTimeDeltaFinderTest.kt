@@ -63,7 +63,6 @@ class MaxTimeDeltaFinderTest {
             every { iterable } returns map.keys.map { mockk { every { id } returns it } }
         }
         val maxTimeDeltaFinder = MaxTimeDeltaFinder(
-            transitionsRegistry = transitionsRegistry,
             timePNTransitionMarking = mockk<TimePNTransitionMarking> {
                 every { forTransition(any()) } answers {
                     val arg = firstArg() as PetriAtomId
@@ -71,9 +70,8 @@ class MaxTimeDeltaFinderTest {
                 }
             },
             transitionDisabledByMarkingChecker = mockk<TransitionDisabledByMarkingChecker>() {
-                every { transitionIsDisabledByMarking(any()) } answers {
-                    val strg: String = firstArg()
-                    disabledMap[strg]!!
+                every { transitionsPartiallyEnabledByMarking() } answers  {
+                    disabledMap.filter { !it.value }.map { it.key }
                 }
             }
         )
@@ -87,7 +85,6 @@ class MaxTimeDeltaFinderTest {
             every { iterable } returns mapCase2DifferentTransitions.keys.map { mockk { every { id } returns it } }
         }
         val maxTimeDeltaFinder = MaxTimeDeltaFinder(
-            transitionsRegistry = transitionsRegistry,
             timePNTransitionMarking = mockk<TimePNTransitionMarking> {
                 every { forTransition(any()) } answers {
                     val arg = firstArg() as PetriAtomId
@@ -95,9 +92,8 @@ class MaxTimeDeltaFinderTest {
                 }
             },
             transitionDisabledByMarkingChecker = mockk<TransitionDisabledByMarkingChecker>() {
-                every { transitionIsDisabledByMarking(any()) } answers {
-                    val strg: String = firstArg()
-                    disabledMap[strg]!!
+                every { transitionsPartiallyEnabledByMarking() } answers  {
+                    disabledMap.filter { !it.value }.map { it.key }
                 }
             }
         )
@@ -111,7 +107,6 @@ class MaxTimeDeltaFinderTest {
             every { iterable } returns onlyDisabledMap.keys.map { mockk { every { id } returns it } }
         }
         val maxTimeDeltaFinder = MaxTimeDeltaFinder(
-            transitionsRegistry = transitionsRegistry,
             timePNTransitionMarking = mockk<TimePNTransitionMarking> {
                 every { forTransition(any()) } answers {
                     val arg = firstArg() as PetriAtomId
@@ -119,7 +114,9 @@ class MaxTimeDeltaFinderTest {
                 }
             },
             transitionDisabledByMarkingChecker = mockk<TransitionDisabledByMarkingChecker>() {
-                every { transitionIsDisabledByMarking(any()) } returns true
+                every { transitionsPartiallyEnabledByMarking() } answers  {
+                    listOf()
+                }
             }
         )
         Assertions.assertEquals(null, maxTimeDeltaFinder.findPossibleFiringTimeRange())

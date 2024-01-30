@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledByMarkingChecker
 
 class NewTimeDeltaInteractorTest {
 
@@ -17,12 +18,16 @@ class NewTimeDeltaInteractorTest {
         val MAX_TIME = 25L
     }
 
+    private val transitionDisabledByMarkingChecker = mockk<TransitionDisabledByMarkingChecker> {
+        every { transitionsPartiallyEnabledByMarking() } returns mockk()
+    }
+
     @Test
     fun `dont shifts time if cant resolve possible firing time range`() {
         val slotTime = slot<Long>()
 
         val timePNTransitionMarking = mockk<TimePNTransitionMarking> {
-            every { appendClockTime(capture(slotTime)) } returns Unit
+            every { appendClockTime(any(), capture(slotTime)) } returns Unit
         }
 
         val simuStateProvider = mockk<SimulationStateProvider> {
@@ -38,14 +43,15 @@ class NewTimeDeltaInteractorTest {
                 every { findPossibleFiringTimeRange() } returns null
             },
             timePNTransitionMarking = timePNTransitionMarking,
-            simulationStateProvider = simuStateProvider
+            simulationStateProvider = simuStateProvider,
+            transitionDisabledByMarkingChecker = transitionDisabledByMarkingChecker
         )
 
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
         verify(exactly = 0) {
             simuStateProvider.getSimulationStepState()
-            timePNTransitionMarking.appendClockTime(any())
+            timePNTransitionMarking.appendClockTime(any(), any())
         }
     }
 
@@ -54,7 +60,7 @@ class NewTimeDeltaInteractorTest {
         val slotTime = slot<Long>()
 
         val timePNTransitionMarking = mockk<TimePNTransitionMarking> {
-            every { appendClockTime(capture(slotTime)) } returns Unit
+            every { appendClockTime(any(), capture(slotTime)) } returns Unit
         }
 
         val simuStateProvider = mockk<SimulationStateProvider> {
@@ -72,14 +78,15 @@ class NewTimeDeltaInteractorTest {
                 every { findPossibleFiringTimeRange() } returns zeroRange
             },
             timePNTransitionMarking = timePNTransitionMarking,
-            simulationStateProvider = simuStateProvider
+            simulationStateProvider = simuStateProvider,
+            transitionDisabledByMarkingChecker
         )
 
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
         verify(exactly = 1) {
             simuStateProvider.getSimulationStepState()
-            timePNTransitionMarking.appendClockTime(any())
+            timePNTransitionMarking.appendClockTime(any(), any())
         }
         Assertions.assertSame(slotTime.captured, 0L)
         Assertions.assertSame(captSlot.captured, zeroRange)
@@ -91,7 +98,7 @@ class NewTimeDeltaInteractorTest {
         val slotTime = slot<Long>()
 
         val timePNTransitionMarking = mockk<TimePNTransitionMarking> {
-            every { appendClockTime(capture(slotTime)) } returns Unit
+            every { appendClockTime(any(), capture(slotTime)) } returns Unit
         }
 
         val simuStateProvider = mockk<SimulationStateProvider> {
@@ -107,14 +114,15 @@ class NewTimeDeltaInteractorTest {
                 every { findPossibleFiringTimeRange() } returns 0..MAX_TIME
             },
             timePNTransitionMarking = timePNTransitionMarking,
-            simulationStateProvider = simuStateProvider
+            simulationStateProvider = simuStateProvider,
+            transitionDisabledByMarkingChecker
         )
 
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
         verify(exactly = 1) {
             simuStateProvider.getSimulationStepState()
-            timePNTransitionMarking.appendClockTime(any())
+            timePNTransitionMarking.appendClockTime(any(), any())
         }
         Assertions.assertSame(slotTime.captured, SELECTED_TIME)
     }

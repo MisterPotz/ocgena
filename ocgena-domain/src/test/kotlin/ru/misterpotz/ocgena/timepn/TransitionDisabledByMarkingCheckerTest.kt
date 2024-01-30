@@ -26,7 +26,8 @@ class TransitionDisabledByMarkingCheckerTest {
 
         val transitionDisabledByMarkingChecker = TransitionDisabledByMarkingChecker(
             prePlaceRegistry = prePlaceRegistry,
-            globalTokenBunch = globalTokenBunch
+            globalTokenBunch = globalTokenBunch,
+            transitionsRegistry = mockk()
         )
 
         Assertions.assertTrue(transitionDisabledByMarkingChecker.transitionIsDisabledByMarking("test"))
@@ -48,7 +49,8 @@ class TransitionDisabledByMarkingCheckerTest {
 
         val transitionDisabledByMarkingChecker = TransitionDisabledByMarkingChecker(
             prePlaceRegistry = prePlaceRegistry,
-            globalTokenBunch = globalTokenBunch
+            globalTokenBunch = globalTokenBunch,
+            transitionsRegistry = mockk()
         )
 
         Assertions.assertFalse(transitionDisabledByMarkingChecker.transitionIsDisabledByMarking("test"))

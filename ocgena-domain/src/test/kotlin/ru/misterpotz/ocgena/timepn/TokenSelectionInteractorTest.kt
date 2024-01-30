@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.createArgProvider
-import ru.misterpotz.ocgena.createPartiallyPredefinedSeq
+import ru.misterpotz.ocgena.createPartiallyPredefinedRandSeq
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
 import ru.misterpotz.ocgena.simulation.ObjectToken
@@ -84,7 +84,7 @@ internal class TokenSelectionInteractorTest {
         seq: List<Int>
     ) {
         println(seq)
-        val randomMokk = createPartiallyPredefinedSeq(seq)
+        val randomMokk = createPartiallyPredefinedRandSeq(seq) { Random.nextInt(0, 6) }
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
             random = randomMokk,
             newTokenGenerationFacade = createmockkTokenGenFacade(),
@@ -104,7 +104,7 @@ internal class TokenSelectionInteractorTest {
     @ParameterizedTest
     @ArgumentsSource(NotEnoughTokensInitializationProvider::class)
     fun `token initializes all the required items if there are not enough tokens`(seq: List<Int>) {
-        val randomMokk = createPartiallyPredefinedSeq(seq)
+        val randomMokk = createPartiallyPredefinedRandSeq(seq) { Random.nextInt(0, 6) }
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
             random = randomMokk,
             newTokenGenerationFacade = createmockkTokenGenFacade(),
@@ -125,7 +125,7 @@ internal class TokenSelectionInteractorTest {
     @ParameterizedTest
     @ArgumentsSource(CanInitializeAllProvider::class)
     fun `initializes all tokens completely if there exists no tokens yet`(seq: List<Int>) {
-        val randomMokk = createPartiallyPredefinedSeq(seq)
+        val randomMokk = createPartiallyPredefinedRandSeq(seq) { Random.nextInt(0, 6) }
 
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
             random = randomMokk,
@@ -150,7 +150,7 @@ internal class TokenSelectionInteractorTest {
     fun `works correctly when random returns duplicate items`(
         repetitionsTestData: RepetitionsTestData
     ) {
-        val randomMOckk = createPartiallyPredefinedSeq(repetitionsTestData.predefinedSeq)
+        val randomMOckk = createPartiallyPredefinedRandSeq(repetitionsTestData.predefinedSeq)  { Random.nextInt(0, 6) }
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
             random = randomMOckk,
             newTokenGenerationFacade = createmockkTokenGenFacade(),

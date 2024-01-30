@@ -30,21 +30,23 @@ import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
 import ru.misterpotz.ocgena.simulation.continuation.NoOpExecutionContinuation
-import ru.misterpotz.ocgena.simulation.generator.*
+import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
+import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGenerator
+import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGeneratorFactory
+import ru.misterpotz.ocgena.simulation.generator.NewTokenTimeBasedGeneratorFactoryImpl
 import ru.misterpotz.ocgena.simulation.generator.original.TransitionInstanceDurationGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.generator.original.TransitionNextInstanceAllowedTimeGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.interactors.*
-import ru.misterpotz.ocgena.simulation.interactors.EnabledBindingResolverInteractor
 import ru.misterpotz.ocgena.simulation.interactors.original.EnabledBindingResolverInteractorOriginalImpl
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
 import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
 import ru.misterpotz.ocgena.simulation.logging.Logger
-import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
-import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegateImpl
 import ru.misterpotz.ocgena.simulation.logging.loggers.NoOpStepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegateImpl
 import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
 import ru.misterpotz.ocgena.simulation.state.StateImpl
 import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
@@ -58,8 +60,8 @@ import ru.misterpotz.ocgena.simulation.transition.TransitionInstanceCreatorFacad
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import simulation.random.RandomFactoryImpl
-import java.lang.IllegalStateException
 import javax.inject.Provider
+import javax.inject.Qualifier
 import javax.inject.Scope
 import kotlin.random.Random
 
@@ -319,6 +321,7 @@ internal abstract class SimulationModule {
             objectTokenSet: ObjectTokenSet,
             objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
             currentSimulationStateOriginal: Provider<CurrentSimulationStateOriginal>,
+            timePNStepExecutor : Provider<TimePetriNetStepExecutor>,
         ): StepExecutor {
             return when (simulationConfig.simulationSemantics.type) {
                 SimulationSemanticsType.ORIGINAL -> {
@@ -337,7 +340,7 @@ internal abstract class SimulationModule {
                 }
 
                 SimulationSemanticsType.SIMPLE_TIME_PN -> {
-                    throw IllegalStateException()
+                    timePNStepExecutor.get()
                 }
             }
         }
@@ -437,6 +440,7 @@ interface SimulationComponentDependencies {
 )
 interface SimulationComponent {
     fun simulationTask(): SimulationTask
+    fun simulationTaskPreparator(): SimulationTaskPreparator
     fun simulationConfig(): SimulationConfig
     fun state(): State
     fun ocNet(): OCNet
@@ -458,6 +462,8 @@ interface SimulationComponent {
 
     fun newTimeDeltaInteractor(): NewTimeDeltaInteractor
 
+    fun timePNTransitionMarking(): TimePNTransitionMarking
+
     fun create(transition: Transition)
 
     @Component.Factory
@@ -469,6 +475,11 @@ interface SimulationComponent {
             @BindsInstance stepAggregatingLogReceiver: StepAggregatingLogReceiver,
             @BindsInstance
             executionContinuation: ExecutionContinuation,
+            @BindsInstance
+            defaultTimePNProvider: DefaultTimePNProvider,
+            @BindsInstance
+            @RandomInstanceInput
+            randomInstance: Random?,
             componentDependencies: SimulationComponentDependencies,
         ): SimulationComponent
     }
@@ -478,6 +489,7 @@ interface SimulationComponent {
             simulationConfig: SimulationConfig,
             componentDependencies: SimulationComponentDependencies,
             developmentDebugConfig: DevelopmentDebugConfig,
+            randomInstance: Random?,
             executionContinuation: ExecutionContinuation = NoOpExecutionContinuation(),
         ): SimulationComponent {
             return create(
@@ -486,7 +498,9 @@ interface SimulationComponent {
                 developmentDebugConfig = developmentDebugConfig,
                 stepAggregatingLogReceiver = NoOpStepAggregatingLogReceiver,
                 componentDependencies = componentDependencies,
-                executionContinuation = executionContinuation
+                executionContinuation = executionContinuation,
+                defaultTimePNProvider = DefaultTimePNProvider(),
+                randomInstance = randomInstance
             )
         }
 
@@ -497,6 +511,8 @@ interface SimulationComponent {
             stepAggregatingLogReceiver: StepAggregatingLogReceiver,
             componentDependencies: SimulationComponentDependencies,
             executionContinuation: ExecutionContinuation,
+            defaultTimePNProvider: DefaultTimePNProvider,
+            randomInstance: Random?,
         ): SimulationComponent {
             return DaggerSimulationComponent.factory()
                 .create(
@@ -505,6 +521,8 @@ interface SimulationComponent {
                     developmentDebugConfig,
                     stepAggregatingLogReceiver,
                     executionContinuation,
+                    defaultTimePNProvider,
+                    randomInstance,
                     componentDependencies,
                 )
         }
@@ -514,3 +532,5 @@ interface SimulationComponent {
 @Scope
 annotation class SimulationScope
 
+@Qualifier
+annotation class RandomInstanceInput
