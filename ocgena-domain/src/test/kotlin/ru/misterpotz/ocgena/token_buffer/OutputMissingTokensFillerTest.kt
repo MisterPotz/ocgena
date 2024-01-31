@@ -32,7 +32,7 @@ class OutputMissingTokensFillerTest {
             put("p1", 5)
         }
 
-        return simComponent(
+        return simComponentOld(
             updatedSimConfig,
             developmentDebugConfig = fastFullDev()
         )

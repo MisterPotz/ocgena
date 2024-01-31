@@ -16,6 +16,7 @@ import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractorImpl
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import simulation.random.RandomSourceImpl
 import kotlin.random.Random
 
 internal class TokenSelectionInteractorTest {
@@ -63,7 +64,7 @@ internal class TokenSelectionInteractorTest {
     @Test
     fun `token selection interactor fails when more tokens requested than it can allow`() {
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
-            random = mockk(),
+            randomSource = RandomSourceImpl.forTokens(mockk()),
             newTokenGenerationFacade = createmockkTokenGenFacade(),
             placeToObjectTypeRegistry = placeToType
         )
@@ -86,7 +87,7 @@ internal class TokenSelectionInteractorTest {
         println(seq)
         val randomMokk = createPartiallyPredefinedRandSeq(seq) { Random.nextInt(0, 6) }
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
-            random = randomMokk,
+            randomSource = RandomSourceImpl.forTokens(randomMokk),
             newTokenGenerationFacade = createmockkTokenGenFacade(),
             placeToObjectTypeRegistry = placeToType
         )
@@ -106,7 +107,7 @@ internal class TokenSelectionInteractorTest {
     fun `token initializes all the required items if there are not enough tokens`(seq: List<Int>) {
         val randomMokk = createPartiallyPredefinedRandSeq(seq) { Random.nextInt(0, 6) }
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
-            random = randomMokk,
+            randomSource = RandomSourceImpl.forTokens(randomMokk),
             newTokenGenerationFacade = createmockkTokenGenFacade(),
             placeToObjectTypeRegistry = placeToType
         )
@@ -128,7 +129,7 @@ internal class TokenSelectionInteractorTest {
         val randomMokk = createPartiallyPredefinedRandSeq(seq) { Random.nextInt(0, 6) }
 
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
-            random = randomMokk,
+            randomSource = RandomSourceImpl.forTokens(randomMokk),
             newTokenGenerationFacade = createmockkTokenGenFacade(),
             placeToObjectTypeRegistry = placeToType
         )
@@ -152,7 +153,7 @@ internal class TokenSelectionInteractorTest {
     ) {
         val randomMOckk = createPartiallyPredefinedRandSeq(repetitionsTestData.predefinedSeq)  { Random.nextInt(0, 6) }
         val tokenSelectionInteractor = TokenSelectionInteractorImpl(
-            random = randomMOckk,
+            randomSource = RandomSourceImpl.forTokens(randomMOckk),
             newTokenGenerationFacade = createmockkTokenGenFacade(),
             placeToObjectTypeRegistry = placeToType,
         )

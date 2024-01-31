@@ -11,8 +11,10 @@ import ru.misterpotz.ocgena.utils.ByRandomRandomizer
 import ru.misterpotz.ocgena.utils.NoOpIteratorRandomizer
 import ru.misterpotz.ocgena.utils.RandomIterator
 import ru.misterpotz.ocgena.utils.Randomizer
+import simulation.random.RandomSource
 import java.util.*
 import javax.inject.Inject
+import javax.inject.Qualifier
 import kotlin.random.Random
 
 interface TokenSelectionInteractor {
@@ -34,9 +36,8 @@ interface TokenSelectionInteractor {
         val generated: SortedSet<ObjectTokenId>,
     )
 }
-
 class TokenSelectionInteractorImpl @Inject constructor(
-    private val random: Random?,
+    private val randomSource: RandomSource,
     private val newTokenGenerationFacade: NewTokenGenerationFacade,
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
 ) : TokenSelectionInteractor {
@@ -124,9 +125,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
     }
 
     private fun createRandomizerOrNoOp(): Randomizer {
-        return random?.let {
-            ByRandomRandomizer(random)
-        } ?: NoOpIteratorRandomizer()
+        return ByRandomRandomizer(randomSource.tokenSelection())
     }
 
     companion object {

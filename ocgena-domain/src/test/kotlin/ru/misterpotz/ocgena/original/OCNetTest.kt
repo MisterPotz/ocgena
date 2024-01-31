@@ -22,7 +22,7 @@ class OCNetTest {
                 put("p1", 2)
             }
 
-        val component = simComponent(simConfig)
+        val component = simComponentOld(simConfig)
         val simTask = simTask(component)
 
         simTask.prepareRun()
@@ -48,7 +48,7 @@ class OCNetTest {
                 put("p1", 2)
             }
 
-        val component = simComponent(simConfig)
+        val component = simComponentOld(simConfig)
         val simTask = simTask(component)
 
         simTask.prepareAndRunAll()
@@ -68,7 +68,7 @@ class OCNetTest {
                 put("p1", 100000)
             }
 
-        val component = simComponent(
+        val component = simComponentOld(
             simConfig,
             developmentDebugConfig = fastNoDevSetup()
                 .copy(

@@ -22,6 +22,7 @@ import ru.misterpotz.ocgena.simulation.interactors.SimpleTokenAmountStorage
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.utils.TimePNRef
+import simulation.random.RandomSource
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -33,7 +34,8 @@ class TimePetriNetStepExecutor @Inject constructor(
     private val transitionToFireSelector: TransitionToFireSelector,
     private val transitionFireExecutor: TransitionFiringRuleExecutor,
     private val prePlaceRegistry: PrePlaceRegistry,
-    private val transitionsEnabledStepCache: TransitionsEnabledStepCache
+    private val transitionsEnabledStepCache: TransitionsEnabledStepCache,
+    private val transitionDisabledByMarkingChecker: TransitionDisabledByMarkingChecker,
 ) : StepExecutor {
 
     private fun collectTransitionsThatCanBeSelected(): List<Transition> {
@@ -63,6 +65,14 @@ class TimePetriNetStepExecutor @Inject constructor(
         }
     }
 
+    private fun resetClocksOfTransitionsDisabledByMarking() {
+        for (transition in transitionDisabledByMarkingChecker.transitionsDisabledByMarking()) {
+            timePNTransitionMarking.forTransition(transition).resetCounter()
+        }
+    }
+
+
+
     override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
         // generate next time based on place and transitions marking
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
@@ -79,26 +89,15 @@ class TimePetriNetStepExecutor @Inject constructor(
         // clocks of transitions with shared preplaces are reset anyway
         resetClocksOfTransitionsWithSharedPreplaces(transitionToFire)
 
-        // update the caches
-        val t_pre = prePlaceRegistry.transitionPrePlaces(transitionToFire.id)
-        val transitionsWithCommonPreplaces = t_pre.getTransitionsWithSharedPreplaces()
-
-        for (transition in transitionsWithCommonPreplaces) {
-            transition
-        }
+        // clocks of transitions that became disabled by marking are now reset
+        resetClocksOfTransitionsDisabledByMarking()
     }
 }
 
-class TransitionToFireSelector @Inject constructor(val random: Random?) {
+class TransitionToFireSelector @Inject constructor(private val randomSource: RandomSource) {
     fun select(transitions: List<Transition>): Transition? {
         if (transitions.isEmpty()) return null
-        return transitions.let {
-            if (random == null) {
-                it.random()
-            } else {
-                it.random(random)
-            }
-        }
+        return transitions.random(randomSource.transitionSelection())
     }
 }
 
@@ -119,18 +118,19 @@ class TransitionDisabledByMarkingChecker @Inject constructor(
                 .takeIf { !transitionIsDisabledByMarking(transition.id) }
         }
     }
+
+    fun transitionsDisabledByMarking(): List<PetriAtomId> {
+        return transitionsRegistry.iterable.mapNotNull { transition ->
+            transition.id
+                .takeIf { transitionIsDisabledByMarking(transition = transition.id) }
+        }
+    }
 }
 
-class TimeShiftSelector @Inject constructor(val random: Random?) {
+class TimeShiftSelector @Inject constructor(private val randomSource: RandomSource) {
     @TimePNRef("tau")
     fun selectTimeDelta(possibleTimeRange: LongRange): Long {
-        return possibleTimeRange.let {
-            if (random == null) {
-                it.random()
-            } else {
-                it.random(random)
-            }
-        }
+        return possibleTimeRange.random(randomSource.timeSelection())
     }
 }
 

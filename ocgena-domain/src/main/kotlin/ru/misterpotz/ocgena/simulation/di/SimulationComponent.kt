@@ -60,6 +60,9 @@ import ru.misterpotz.ocgena.simulation.transition.TransitionInstanceCreatorFacad
 import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import simulation.random.RandomFactoryImpl
+import simulation.random.RandomSource
+import simulation.random.RandomSourceImpl
+import simulation.random.RandomUseCase
 import javax.inject.Provider
 import javax.inject.Qualifier
 import javax.inject.Scope
@@ -122,7 +125,9 @@ internal abstract class SimulationModule {
 
         @Provides
         @SimulationScope
-        fun random(randomFactory: RandomFactoryImpl): Random {
+        fun random(
+            randomFactory: RandomFactoryImpl,
+        ): RandomSource {
             return randomFactory.create()
         }
 
@@ -135,11 +140,11 @@ internal abstract class SimulationModule {
         @Provides
         @SimulationScope
         fun provideTransitionDurationSelector(
-            random: Random,
+            random: RandomSource,
             simulationConfig: SimulationConfig,
         ): TransitionInstanceDurationGeneratorOriginal {
             return TransitionInstanceDurationGeneratorOriginal(
-                random,
+                random.backwardSupport(),
                 transitionsOriginalSpec = simulationConfig.castTransitions()
             )
         }
@@ -255,11 +260,11 @@ internal abstract class SimulationModule {
         @Provides
         @SimulationScope
         fun provideTransitionNextInstanceAllowedTimeGenerator(
-            random: Random,
+            random: RandomSource,
             simulationConfig: SimulationConfig,
         ): TransitionNextInstanceAllowedTimeGeneratorOriginal {
             return TransitionNextInstanceAllowedTimeGeneratorOriginal(
-                random = random,
+                random = random.backwardSupport(),
                 transitionsOriginalSpec = simulationConfig.castTransitions()
             )
         }
@@ -321,7 +326,7 @@ internal abstract class SimulationModule {
             objectTokenSet: ObjectTokenSet,
             objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
             currentSimulationStateOriginal: Provider<CurrentSimulationStateOriginal>,
-            timePNStepExecutor : Provider<TimePetriNetStepExecutor>,
+            timePNStepExecutor: Provider<TimePetriNetStepExecutor>,
         ): StepExecutor {
             return when (simulationConfig.simulationSemantics.type) {
                 SimulationSemanticsType.ORIGINAL -> {
@@ -441,6 +446,7 @@ interface SimulationComponentDependencies {
 interface SimulationComponent {
     fun simulationTask(): SimulationTask
     fun simulationTaskPreparator(): SimulationTaskPreparator
+    fun stepExecutor(): StepExecutor
     fun simulationConfig(): SimulationConfig
     fun state(): State
     fun ocNet(): OCNet
@@ -476,10 +482,9 @@ interface SimulationComponent {
             @BindsInstance
             executionContinuation: ExecutionContinuation,
             @BindsInstance
-            defaultTimePNProvider: DefaultTimePNProvider,
+            randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random>,
             @BindsInstance
-            @RandomInstanceInput
-            randomInstance: Random?,
+            defaultTimePNProvider: DefaultTimePNProvider,
             componentDependencies: SimulationComponentDependencies,
         ): SimulationComponent
     }
@@ -489,7 +494,7 @@ interface SimulationComponent {
             simulationConfig: SimulationConfig,
             componentDependencies: SimulationComponentDependencies,
             developmentDebugConfig: DevelopmentDebugConfig,
-            randomInstance: Random?,
+            randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random>,
             executionContinuation: ExecutionContinuation = NoOpExecutionContinuation(),
         ): SimulationComponent {
             return create(
@@ -500,7 +505,7 @@ interface SimulationComponent {
                 componentDependencies = componentDependencies,
                 executionContinuation = executionContinuation,
                 defaultTimePNProvider = DefaultTimePNProvider(),
-                randomInstance = randomInstance
+                randomInstances = randomInstances
             )
         }
 
@@ -512,7 +517,7 @@ interface SimulationComponent {
             componentDependencies: SimulationComponentDependencies,
             executionContinuation: ExecutionContinuation,
             defaultTimePNProvider: DefaultTimePNProvider,
-            randomInstance: Random?,
+            randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random>,
         ): SimulationComponent {
             return DaggerSimulationComponent.factory()
                 .create(
@@ -521,8 +526,8 @@ interface SimulationComponent {
                     developmentDebugConfig,
                     stepAggregatingLogReceiver,
                     executionContinuation,
+                    randomInstances,
                     defaultTimePNProvider,
-                    randomInstance,
                     componentDependencies,
                 )
         }
@@ -531,6 +536,3 @@ interface SimulationComponent {
 
 @Scope
 annotation class SimulationScope
-
-@Qualifier
-annotation class RandomInstanceInput

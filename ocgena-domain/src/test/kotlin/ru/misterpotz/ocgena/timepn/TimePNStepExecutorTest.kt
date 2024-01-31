@@ -1,5 +1,7 @@
 package ru.misterpotz.ocgena.timepn
 
+import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -13,6 +15,7 @@ import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNData
 import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNTimes
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarkingImpl
 import ru.misterpotz.ocgena.utils.buildMutableMap
 
@@ -110,14 +113,76 @@ class TimePNStepExecutorTest {
         Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
     }
 
-    @Test
-    fun `clocks are reset when transition becomes disabled by marking`() {
+    @ParameterizedTest
+    @ArgumentsSource(SimConfigTestProvider::class)
+    fun `clocks of transitions with common preplaces are reset while others remain unaffected`(simulationConfig: SimulationConfig) =
+        runTest {
+            val starterTimePNSpec = TransitionsTimePNSpec(
+                default = (10..20).toTimePNTimes(),
+            )
 
-    }
+            val expectedMarking = TimePNTransitionMarkingImpl(buildMutableMap {
+                put("t1", (10..20L).toTimePNData(clock = 15))
+                put("t2", (10..20L).toTimePNData(clock = 0))
+                put("t3", (10..20L).toTimePNData(clock = 0))
+            })
 
-    @Test
-    fun `when transition becomes enabled by marking clocks are reset`() {
+            val simComponent = simulationConfig
+                .asTimePNwithSpec(starterTimePNSpec)
+                .toSimComponentFancy {
+                    setTimeSelectionRandom(listOf(15))
+                    setTransitionSelectionRandom(listOf(2))
+                }
+                .addTokens {
+                    forPlace("p1", 2)
+                    forPlace("p2", 2)
+                    forPlace("o1", 2)
+                }
+            simComponent.simulationTask().prepareRun()
+            simComponent.stepExecutor().executeStep(mockk())
+            Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
+        }
 
+
+    @ParameterizedTest
+    @ArgumentsSource(SimConfigTestProvider::class)
+    fun `when transition becomes enabled by marking clocks tick`(simulationConfig: SimulationConfig) = runTest {
+        val starterTimePNSpec = TransitionsTimePNSpec(
+            default = (10..20).toTimePNTimes(),
+        )
+
+        val expectedMarking = TimePNTransitionMarkingImpl(buildMutableMap {
+            put("t1", (10..20L).toTimePNData(clock = 0))
+            put("t2", (10..20L).toTimePNData(clock = 0))
+            put("t3", (10..20L).toTimePNData(clock = 0))
+        })
+
+        val expectedBunch = SparseTokenBunchImpl.makeBuilder {
+            forPlace("p1") {
+                realTokens = 1
+            }
+        }.buildTokenBunch()
+
+        val simComponent = simulationConfig
+            .asTimePNwithSpec(starterTimePNSpec)
+            .toSimComponentFancy {
+                setTimeSelectionRandom(listOf(10))
+                setTransitionSelectionRandom(listOf(0))
+            }
+
+        simComponent.simulationTask().prepareRun()
+        simComponent.addTokens {
+            forPlace("p1", 2)
+        }
+        simComponent.stepExecutor().executeStep(mockk())
+
+
+        Assertions.assertTrue(
+            simComponent.tokenBunch()
+                .narrowTo(listOf("p1"))
+                .projectBunchAmountsEqual(expectedBunch)
+        )
+        Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
     }
 
     @Test

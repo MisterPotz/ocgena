@@ -37,6 +37,7 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.validation.OCNetChecker
+import simulation.random.RandomUseCase
 import java.lang.IllegalStateException
 import java.util.*
 import java.util.stream.Stream
@@ -136,12 +137,29 @@ fun domainComponent(): DomainComponent {
 fun simComponent(
     simulationConfig: SimulationConfig,
     developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
+    randomInstances: Map<RandomUseCase, Random> = mutableMapOf()
+): SimulationComponent {
+    return SimulationComponent.defaultCreate(
+        simulationConfig = simulationConfig,
+        componentDependencies = DOMAIN_COMPONENT,
+        randomInstances = randomInstances,
+        developmentDebugConfig = developmentDebugConfig
+    )
+}
+
+
+fun simComponentOld(
+    simulationConfig: SimulationConfig,
+    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
     randomInstance: Random? = null
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
         componentDependencies = DOMAIN_COMPONENT,
-        randomInstance = randomInstance,
+        randomInstances = listOf(RandomUseCase.TIME_SELECTION to randomInstance).filter {
+            it.second != null
+        }.associateBy { it.first }
+            .mapValues { it.value.second!! },
         developmentDebugConfig = developmentDebugConfig
     )
 }
@@ -150,11 +168,48 @@ fun simTask(component: SimulationComponent): SimulationTask {
     return component.simulationTask()
 }
 
+interface SimConfigToSimComponentFancyBlock {
+    fun setTimeSelectionRandom(times: List<Int>)
+    fun setTransitionSelectionRandom(transitions: List<Int>)
+    fun setTokenSelectionRandom(times: List<Int>)
+}
+
+private class SimConfigTOSimComponentFancyBlockImpl : SimConfigToSimComponentFancyBlock {
+    val mutableMap = mutableMapOf<RandomUseCase, Random>()
+
+    override fun setTimeSelectionRandom(times: List<Int>) {
+        mutableMap[RandomUseCase.TIME_SELECTION] = createPartiallyPredefinedRandSeq(times)
+    }
+
+    override fun setTransitionSelectionRandom(transitions: List<Int>) {
+        mutableMap[RandomUseCase.TRANSITION_SELECTION] = createPartiallyPredefinedRandSeq(transitions)
+    }
+
+    override fun setTokenSelectionRandom(times: List<Int>) {
+        mutableMap[RandomUseCase.TOKEN_SELECTION] = createPartiallyPredefinedRandSeq(times)
+    }
+}
+
+fun SimulationConfig.toSimComponentFancy(
+    developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
+    block: SimulationConfigToComponentFancyBlockScope
+): SimulationComponent {
+    val simConfigTOSimComponentFancyBlockImpl = SimConfigTOSimComponentFancyBlockImpl()
+    simConfigTOSimComponentFancyBlockImpl.block()
+    return simComponent(
+        this,
+        developmentDebugConfig,
+        randomInstances = simConfigTOSimComponentFancyBlockImpl.mutableMap
+    )
+}
+
+typealias SimulationConfigToComponentFancyBlockScope = SimConfigToSimComponentFancyBlock.() -> Unit
+
 fun SimulationConfig.toSimComponent(
     developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
     randomInstance: Random? = null
 ): SimulationComponent {
-    return simComponent(this, developmentDebugConfig, randomInstance = randomInstance)
+    return simComponentOld(this, developmentDebugConfig, randomInstance = randomInstance)
 }
 
 fun SimulationComponent.facade(): FacadeSim {
@@ -341,6 +396,11 @@ fun createPartiallyPredefinedRandSeq(
         }
         every { nextLong(any(), any()) } answers {
             mSeq.removeFirstOrNull()?.toLong() ?: fallback().toLong()
+        }
+        every {
+            nextInt(any())
+        } answers {
+            mSeq.removeFirstOrNull() ?: fallback()
         }
     }
 }

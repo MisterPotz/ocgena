@@ -11,7 +11,7 @@ import ru.misterpotz.ocgena.DEFAULT_SETTINGS
 import ru.misterpotz.ocgena.ModelPath
 import ru.misterpotz.ocgena.addTokens
 import ru.misterpotz.ocgena.readAndBuildConfig
-import ru.misterpotz.ocgena.simComponent
+import ru.misterpotz.ocgena.simComponentOld
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import java.util.stream.Stream
 
@@ -20,7 +20,7 @@ class PrePlaceRegistryTest {
     @Test
     fun transitionPrePlaceContainEnoughtTokens() {
         val config = readAndBuildConfig(DEFAULT_SETTINGS, ModelPath.THREE_IN_TWO_OUT)
-        val simComp = simComponent(config).addTokens {
+        val simComp = simComponentOld(config).addTokens {
             forPlace("p1", 4)
             forPlace("o1", 1)
             forPlace("p3", 2)
@@ -67,7 +67,7 @@ class PrePlaceRegistryTest {
                     Arguments.of(
                         run {
                             val config = readAndBuildConfig(DEFAULT_SETTINGS, ModelPath.THREE_IN_TWO_OUT)
-                            val simComp = simComponent(config).addTokens {
+                            val simComp = simComponentOld(config).addTokens {
                                 forPlace("p1", 4)
                                 forPlace("o1", 1)
                                 forPlace("p3", 2)
@@ -82,7 +82,7 @@ class PrePlaceRegistryTest {
                     Arguments.of(
                         run {
                             val config = readAndBuildConfig(DEFAULT_SETTINGS, ModelPath.THREE_IN_TWO_OUT)
-                            val simComp = simComponent(config).addTokens {
+                            val simComp = simComponentOld(config).addTokens {
                                 forPlace("p1", 0)
                                 forPlace("o1", 1)
                                 forPlace("p3", 3)
@@ -97,7 +97,7 @@ class PrePlaceRegistryTest {
                     Arguments.of(
                         run {
                             val config = readAndBuildConfig(DEFAULT_SETTINGS, ModelPath.THREE_IN_TWO_OUT)
-                            val simComp = simComponent(config).addTokens {
+                            val simComp = simComponentOld(config).addTokens {
                                 forPlace("p1", 1)
                                 forPlace("o1", 1)
                                 forPlace("p3", 3)

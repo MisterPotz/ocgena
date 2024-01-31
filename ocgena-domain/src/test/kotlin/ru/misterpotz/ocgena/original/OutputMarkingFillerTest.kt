@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.original
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.buildSimplestOCNetNoVar
-import ru.misterpotz.ocgena.simComponent
+import ru.misterpotz.ocgena.simComponentOld
 import ru.misterpotz.ocgena.defaultSimConfigOriginal
 import ru.misterpotz.ocgena.simTask
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
@@ -21,7 +21,7 @@ class OutputMarkingFillerTest {
             transitionsSpec = TransitionsOriginalSpec()
         )
 
-        val component = simComponent(config)
+        val component = simComponentOld(config)
         val simTask = simTask(component)
         simTask.prepareRun()
 
