@@ -82,6 +82,7 @@ interface ConfigBuilderBlock {
     var ocNetStruct : OCNetStruct?
     var semanticsType: SimulationSemanticsType?
     var ocNetType: OcNetType?
+    var timePnSpec : TransitionsTimePNSpec?
 }
 
 private class ConfigBuilderBlockImpl() : ConfigBuilderBlock {
@@ -89,6 +90,7 @@ private class ConfigBuilderBlockImpl() : ConfigBuilderBlock {
     override var ocNetStruct: OCNetStruct? = null
     override var semanticsType: SimulationSemanticsType? = null
     override var ocNetType: OcNetType? = null
+    override var timePnSpec: TransitionsTimePNSpec? = null
 }
 
 typealias ConfigBuilderBlockScope = ConfigBuilderBlock.() -> Unit
@@ -104,7 +106,7 @@ fun buildConfig(configBuilderBlock: ConfigBuilderBlockScope): SimulationConfig {
             }
 
             SimulationSemanticsType.SIMPLE_TIME_PN -> {
-                TransitionsTimePNSpec()
+                receiver.timePnSpec ?: TransitionsTimePNSpec()
             }
         },
         initialMarking = MarkingScheme.of { },

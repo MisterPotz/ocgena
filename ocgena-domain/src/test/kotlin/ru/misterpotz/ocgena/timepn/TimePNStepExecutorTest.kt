@@ -185,10 +185,64 @@ class TimePNStepExecutorTest {
         Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
     }
 
-    @Test
-    fun `during the beginning of step the clocks of transitions disabled on last step are reset and eft,lft reassigned`() {
-        throw NotImplementedError()
-    }
+    @ParameterizedTest
+    @ArgumentsSource(T3TransitionCasesClockResettingProvider::class)
+    fun `firing transition resets the counters of transitions with common preplaces`(
+        testConfig: TransitionFiringRuleExecutorTest.Companion.TestConfig
+    ) =
+        runTest {
+            val starterTimePNSpec = TransitionsTimePNSpec(
+                default = (10..20).toTimePNTimes(),
+            )
+
+            val simComp = buildConfig {
+                ocNetType = testConfig.ocNetType
+                ocNetStruct = testConfig.model
+                semanticsType = SimulationSemanticsType.SIMPLE_TIME_PN
+                timePnSpec = starterTimePNSpec
+            }.toSimComponentFancy {
+                setTransitionSelectionRandom(listOf(1))
+            }.addBunch(testConfig.initialBunch)
+
+            simComp.simulationTask().prepareRun()
+
+            simComp.timePNTransitionMarking().apply {
+                forTransition("t2").counter = (12L)
+                forTransition("t3").counter = (15L)
+            }
+            val simulationStepExecutor = simComp.stepExecutor()
+
+            simulationStepExecutor.executeStep(mockk())
+
+            val expectedMarking = TimePNTransitionMarkingImpl(buildMutableMap {
+                put("t1", (10..20L).toTimePNData(clock = 0))
+                put("t2", (10..20L).toTimePNData(clock = 0))
+                put("t3", (10..20L).toTimePNData(clock = 0))
+            })
+
+            Assertions.assertEquals(expectedMarking, simComp.timePNTransitionMarking())
+            Assertions.assertTrue(
+                simComp.tokenBunch().narrowTo(
+                    listOf("p2", "o1", "p3", "o2")
+                ).projectBunchAmountsEqual(
+                    SparseTokenBunchImpl.makeBuilder {
+                        forPlace("p3") {
+                            realTokens = 1
+                        }
+                        forPlace("p2") {
+                            realTokens = 9
+                        }
+                        forPlace("o2") {
+                            realTokens = 4
+                        }
+                        forPlace("p3") {
+                            realTokens = 0
+                        }
+                    }.buildTokenBunch()
+                )
+
+            )
+        }
 
     companion object {
         data class TestData(val simulationConfig: SimulationConfig)
@@ -208,6 +262,12 @@ class TimePNStepExecutorTest {
                     defaultConfig()
                     this.ocNetType = OcNetType.AALST
                 }
+            )
+        )
+
+        class T3TransitionCasesClockResettingProvider : ArgumentsProvider by createArgProvider(
+            list = listOf(
+                TransitionFiringRuleExecutorTest.firingVariableArcLomazova(),
             )
         )
     }

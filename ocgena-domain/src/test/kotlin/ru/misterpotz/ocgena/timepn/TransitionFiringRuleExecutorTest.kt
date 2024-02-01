@@ -1,5 +1,7 @@
 package ru.misterpotz.ocgena.timepn
 
+import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -37,11 +39,6 @@ class TransitionFiringRuleExecutorTest {
                     testConfig.expectedEndLocalBunch
                 )
         )
-    }
-
-    @Test
-    fun `firing transition resets the counters of transitions with common preplaces`() {
-        throw NotImplementedError()
     }
 
     companion object {
@@ -94,7 +91,7 @@ class TransitionFiringRuleExecutorTest {
                     ModelYamlCreator.buildingBlockTwoInTwoOutMiddle().installOnto(this)
 
                     "o1".arc("t3".t) { vari; mathExpr = "n" }
-                        .arc("o2".p { objectTypeId = "2"; output }) { vari; mathExpr = "6*n"}
+                        .arc("o2".p { objectTypeId = "2"; output }) { vari; mathExpr = "6*n" }
 
                     "t3".arc("p3") { norm; multiplicity = 5 }
                 },
