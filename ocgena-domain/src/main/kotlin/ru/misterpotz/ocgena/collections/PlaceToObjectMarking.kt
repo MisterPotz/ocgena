@@ -115,9 +115,7 @@ interface PlaceToObjectMarking : TokenAmountStorage {
     fun dumpTokens() : Map<PetriAtomId, List<ObjectTokenId>> {
         return buildMap {
             for (place in places) {
-                get(place)?.let {
-                    put(place, it)
-                }
+                put(place, this@PlaceToObjectMarking[place].toList())
             }
         }
     }
