@@ -42,6 +42,14 @@ interface TokenAmountStorage {
             .LOG { "projectAmountsEqual " }!!
     }
 
+    fun dump(): Map<PetriAtomId, Int> {
+        return buildMap {
+            for (place in places) {
+                put(place, getTokensAt(place))
+            }
+        }
+    }
+
     fun cleanString(): String {
         return places.associateWith { getTokensAt(it) }.map {
             "${it.key} ↦ ${it.value}"

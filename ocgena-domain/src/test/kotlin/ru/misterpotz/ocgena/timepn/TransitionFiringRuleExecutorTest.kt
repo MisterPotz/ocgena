@@ -30,6 +30,7 @@ class TransitionFiringRuleExecutorTest {
         val transitionFiringRuleExecutor = simComp.transitionFiringRuleExecutor()
         val transition = simComp.transition("t3")
 
+        simComp.beforeNewStep()
         transitionFiringRuleExecutor.fireTransition(transition)
 
         Assertions.assertTrue(

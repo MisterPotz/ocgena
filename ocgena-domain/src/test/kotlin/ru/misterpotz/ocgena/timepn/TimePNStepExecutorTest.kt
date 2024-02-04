@@ -107,6 +107,7 @@ class TimePNStepExecutorTest {
 
         val newTimeDeltaInteractor = simComponent.newTimeDeltaInteractor()
         simComponent.simulationTask().prepareRun()
+        simComponent.beforeNewStep()
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
         Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
@@ -138,6 +139,7 @@ class TimePNStepExecutorTest {
                     forPlace("o1", 2)
                 }
             simComponent.simulationTask().prepareRun()
+            simComponent.beforeNewStep()
             simComponent.stepExecutor().executeStep(mockk())
             Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
         }
@@ -173,6 +175,7 @@ class TimePNStepExecutorTest {
         simComponent.addTokens {
             forPlace("p1", 2)
         }
+        simComponent.beforeNewStep()
         simComponent.stepExecutor().executeStep(mockk())
 
 
@@ -211,6 +214,7 @@ class TimePNStepExecutorTest {
             }
             val simulationStepExecutor = simComp.stepExecutor()
 
+            simComp.beforeNewStep()
             simulationStepExecutor.executeStep(mockk())
 
             val expectedMarking = TimePNTransitionMarkingImpl(buildMutableMap {

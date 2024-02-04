@@ -3,6 +3,7 @@ package ru.misterpotz.ocgena.simulation.di
 import com.charleskorn.kaml.Yaml
 import dagger.*
 import kotlinx.serialization.json.Json
+import ru.misterpotz.DBLogger
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
 import ru.misterpotz.ocgena.collections.ObjectTokenSet
@@ -61,10 +62,8 @@ import simulation.binding.BindingOutputMarkingResolverFactory
 import simulation.binding.BindingOutputMarkingResolverFactoryImpl
 import simulation.random.RandomFactoryImpl
 import simulation.random.RandomSource
-import simulation.random.RandomSourceImpl
 import simulation.random.RandomUseCase
 import javax.inject.Provider
-import javax.inject.Qualifier
 import javax.inject.Scope
 import kotlin.random.Random
 
@@ -109,6 +108,9 @@ internal abstract class SimulationModule {
         enabledBindingResolverInteractorOriginalImpl: EnabledBindingResolverInteractorOriginalImpl,
     ): EnabledBindingResolverInteractor
 
+    @Binds
+    @SimulationScope
+    abstract fun bindSimulationStepLogger(simulationStepLoggerImpl: SimulationStepLoggerImpl): SimulationStepLogger
 
     companion object {
         @Provides
@@ -224,7 +226,6 @@ internal abstract class SimulationModule {
                 objectTokenRealAmountRegistry = objectTokenRealAmountRegistry,
                 activityAllowedTimeSelector = transitionNextInstanceAllowedTimeGeneratorOriginal,
                 newTokenTimeBasedGenerator = newTokenTimeBasedGenerator,
-                transitionToInstancesRegistry = transitionToInstancesRegistryOriginal,
                 currentSimulationStateOriginal = currentSimulationStateOriginal
             )
         }
@@ -436,6 +437,7 @@ internal abstract class SimulationModule {
 interface SimulationComponentDependencies {
     val json: Json
     val yaml: Yaml
+    fun dbLogger(): DBLogger
 }
 
 @SimulationScope
@@ -452,6 +454,7 @@ interface SimulationComponent {
     fun ocNet(): OCNet
     fun enabledBindingsResolver(): EnabledBindingResolverInteractor
     fun objectTokenRealAmountRegistry(): ObjectTokenRealAmountRegistry
+    fun simulationStateProvider(): SimulationStateProvider
 
     @GlobalTokenBunch
     fun tokenBunch(): SparseTokenBunch

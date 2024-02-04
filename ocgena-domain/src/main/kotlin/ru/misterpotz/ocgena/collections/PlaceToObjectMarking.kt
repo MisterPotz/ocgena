@@ -112,6 +112,15 @@ interface PlaceToObjectMarking : TokenAmountStorage {
     fun clear()
     fun markingEquals(placeToObjectMarking: PlaceToObjectMarking): Boolean
     override fun cleanString(): String
+    fun dumpTokens() : Map<PetriAtomId, List<ObjectTokenId>> {
+        return buildMap {
+            for (place in places) {
+                get(place)?.let {
+                    put(place, it)
+                }
+            }
+        }
+    }
 }
 
 fun PlaceToObjectMarking(placesToObjectTokens: MutableMap<PetriAtomId, SortedSet<ObjectTokenId>> = mutableMapOf()): PlaceToObjectMarking {

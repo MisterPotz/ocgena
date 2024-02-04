@@ -5,10 +5,12 @@ import com.charleskorn.kaml.SequenceStyle
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
 import dagger.Component
+import dagger.Component.Factory
 import dagger.Module
 import dagger.Provides
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.*
+import ru.misterpotz.DBLogger
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
@@ -46,7 +48,7 @@ class DomainModule {
                 contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
                 contextual(PeriodSerializer("period"))
                 polymorphic(OCNet::class) {
-                    subclass(OCNetStruct::class,  OCNetStruct.serializer())
+                    subclass(OCNetStruct::class, OCNetStruct.serializer())
                     defaultDeserializer {
                         OCNetStruct.serializer()
                     }
@@ -116,16 +118,24 @@ class DomainModule {
     }
 }
 
-@DomainScope
-@Component(modules = [DomainModule::class])
-interface DomainComponent : SimulationComponentDependencies {
+interface DomainComponentDependencies {
+    fun dbLogger(): DBLogger
+}
 
-    fun json() : Json
-    fun yaml() : Yaml
+@DomainScope
+@Component(modules = [DomainModule::class], dependencies = [DomainComponentDependencies::class])
+interface DomainComponent : SimulationComponentDependencies {
+    fun json(): Json
+    fun yaml(): Yaml
+
+    @Component.Factory
+    interface Factory {
+        fun create(domainComponentDependencies: DomainComponentDependencies) : DomainComponent
+    }
 
     companion object {
-        fun create(): DomainComponent {
-            return DaggerDomainComponent.create()
+        fun create(domainComponentDependencies: DomainComponentDependencies): DomainComponent {
+            return DaggerDomainComponent.factory().create(domainComponentDependencies)
         }
     }
 }

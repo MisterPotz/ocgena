@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.di.DomainComponent
+import ru.misterpotz.ocgena.di.DomainComponentDependencies
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
@@ -131,7 +132,10 @@ fun defaultSimConfigTimePN(
 
 
 fun domainComponent(): DomainComponent {
-    return DomainComponent.create()
+    val domainComponentDependenciesMockk = mockk<DomainComponentDependencies> {
+        every { dbLogger() } returns mockk(relaxed = true, relaxUnitFun = true)
+    }
+    return DomainComponent.create(domainComponentDependenciesMockk)
 }
 
 fun simComponent(
@@ -147,6 +151,9 @@ fun simComponent(
     )
 }
 
+fun SimulationComponent.beforeNewStep() {
+    simulationStateProvider().onNewStep()
+}
 
 fun simComponentOld(
     simulationConfig: SimulationConfig,

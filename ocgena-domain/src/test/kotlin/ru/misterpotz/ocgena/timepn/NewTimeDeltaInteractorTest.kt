@@ -44,7 +44,8 @@ class NewTimeDeltaInteractorTest {
             },
             timePNTransitionMarking = timePNTransitionMarking,
             simulationStateProvider = simuStateProvider,
-            transitionDisabledByMarkingChecker = transitionDisabledByMarkingChecker
+            transitionDisabledByMarkingChecker = transitionDisabledByMarkingChecker,
+            simulationStepLogger = mockk(relaxed = true)
         )
 
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
@@ -79,7 +80,8 @@ class NewTimeDeltaInteractorTest {
             },
             timePNTransitionMarking = timePNTransitionMarking,
             simulationStateProvider = simuStateProvider,
-            transitionDisabledByMarkingChecker
+            transitionDisabledByMarkingChecker,
+            mockk(relaxed = true)
         )
 
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
@@ -115,7 +117,8 @@ class NewTimeDeltaInteractorTest {
             },
             timePNTransitionMarking = timePNTransitionMarking,
             simulationStateProvider = simuStateProvider,
-            transitionDisabledByMarkingChecker
+            transitionDisabledByMarkingChecker,
+            mockk(relaxed = true)
         )
 
         newTimeDeltaInteractor.generateAndShiftTimeDelta()

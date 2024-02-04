@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation
 
+import ru.misterpotz.DBLogger
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
-import ru.misterpotz.ocgena.registries.original.TransitionToInstancesRegistryOriginal
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.continuation.ExecutionContinuation
@@ -23,7 +23,6 @@ class SimulationTaskPreparatorOriginal(
     private val objectTokenRealAmountRegistry: ObjectTokenRealAmountRegistry,
     private val activityAllowedTimeSelector: TransitionNextInstanceAllowedTimeGeneratorOriginal,
     private val newTokenTimeBasedGenerator: NewTokenTimeBasedGenerator,
-    private val transitionToInstancesRegistry: TransitionToInstancesRegistryOriginal,
     private val currentSimulationStateOriginal: CurrentSimulationStateOriginal
 ) : SimulationTaskPreparator {
     override fun prepare() {
@@ -47,7 +46,8 @@ class SimulationTask @Inject constructor(
     private val currentStateDelegate: CurrentSimulationDelegate,
     private val stepExecutor: SimulationTaskStepExecutor,
     private val developmentDebugConfig: DevelopmentDebugConfig,
-    private val executionContinuation: ExecutionContinuation
+    private val executionContinuation: ExecutionContinuation,
+    private val dbLogger: DBLogger,
 ) : CurrentSimulationDelegate by currentStateDelegate {
     private var finishRequested = false;
 
@@ -82,7 +82,7 @@ class SimulationTask @Inject constructor(
             debugStepGranularityLog()
 
             simulationStepState.currentStep = simulationStepState.stepIndex
-            simulationStepState.onNewStep()
+            simulationStateProvider.onNewStep()
 
             logger.onExecutionNewStepStart()
 
@@ -90,6 +90,7 @@ class SimulationTask @Inject constructor(
 
             simulationStepState.incrementStep()
         }
+        dbLogger.simulationFinished()
     }
 
     fun prepareRun() {

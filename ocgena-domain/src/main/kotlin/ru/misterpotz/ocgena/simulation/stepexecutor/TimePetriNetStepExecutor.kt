@@ -3,15 +3,18 @@ package ru.misterpotz.ocgena.simulation.stepexecutor
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import ru.misterpotz.DBLogger
+import ru.misterpotz.ObjectTokenMeta
+import ru.misterpotz.SimulationStepLog
+import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
-import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.registries.PrePlaceRegistry
-import ru.misterpotz.ocgena.registries.TransitionsRegistry
+import ru.misterpotz.ocgena.registries.*
+import ru.misterpotz.ocgena.simulation.ObjectTokenId
+import ru.misterpotz.ocgena.simulation.SimulationStateProvider
 import ru.misterpotz.ocgena.simulation.SimulationTaskPreparator
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
@@ -27,7 +30,64 @@ import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteracto
 import ru.misterpotz.ocgena.utils.TimePNRef
 import simulation.random.RandomSource
 import javax.inject.Inject
+import javax.inject.Provider
+import kotlin.properties.Delegates
 
+interface SimulationStepLogger {
+    fun logClockIncrement(increment: Long)
+    fun logCurrentStep()
+    fun logCurrentMarking()
+    fun logTransitionInTokens(tokenbunch: SparseTokenBunch)
+    fun logTransitionOutTokens(tokenBunch: SparseTokenBunch)
+    fun appendInstantiatedTokens(tokens: List<ObjectTokenId>)
+    fun logTransitionToFire(petriAtomId: PetriAtomId)
+    suspend fun finishStepLog()
+}
+
+class SimulationStepLoggerImpl @Inject constructor(
+    @GlobalTokenBunch
+    private val sparseTokenBunch: SparseTokenBunch,
+    private val simulationStateProvider: SimulationStateProvider,
+    private val dbLogger: DBLogger,
+) :
+    SimulationStepLogger {
+    private val currentSimulationStepLogBuilder: SimulationStepLogBuilder
+        get() = simulationStateProvider.simulationLogBuilder()
+
+    override fun logClockIncrement(increment: Long) {
+        currentSimulationStepLogBuilder.clockIncrement = increment
+    }
+
+    override fun logCurrentStep() {
+        currentSimulationStepLogBuilder.stepNumber = simulationStateProvider.getSimulationStepState().currentStep
+    }
+
+    override fun logCurrentMarking() {
+        currentSimulationStepLogBuilder.starterMarkingAmounts = sparseTokenBunch.tokenAmountStorage().dump()
+    }
+
+    override fun logTransitionInTokens(tokenbunch: SparseTokenBunch) {
+        currentSimulationStepLogBuilder.firingInMarkingAmounts = tokenbunch.tokenAmountStorage().dump()
+        currentSimulationStepLogBuilder.firingInMarkingTokens = tokenbunch.objectMarking().dumpTokens()
+    }
+
+    override fun logTransitionOutTokens(tokenBunch: SparseTokenBunch) {
+        currentSimulationStepLogBuilder.firingOutMarkingAmounts = tokenBunch.tokenAmountStorage().dump()
+        currentSimulationStepLogBuilder.firingOutMarkingTokens = tokenBunch.objectMarking().dumpTokens()
+    }
+
+    override fun appendInstantiatedTokens(tokens: List<ObjectTokenId>) {
+        currentSimulationStepLogBuilder.appendInstantiatedTokens(tokens)
+    }
+
+    override fun logTransitionToFire(petriAtomId: PetriAtomId) {
+        currentSimulationStepLogBuilder.selectedFiredTransition = petriAtomId
+    }
+
+    override suspend fun finishStepLog() {
+        dbLogger.acceptStepLog(currentSimulationStepLogBuilder.build())
+    }
+}
 
 class TimePetriNetStepExecutor @Inject constructor(
     private val newTimeDeltaInteractor: NewTimeDeltaInteractor,
@@ -37,6 +97,7 @@ class TimePetriNetStepExecutor @Inject constructor(
     private val transitionFireExecutor: TransitionFiringRuleExecutor,
     private val prePlaceRegistry: PrePlaceRegistry,
     private val transitionDisabledByMarkingChecker: TransitionDisabledByMarkingChecker,
+    private val simulationStepLogger: SimulationStepLogger,
 ) : StepExecutor {
 
     private fun collectTransitionsThatCanBeSelected(): List<Transition> {
@@ -73,16 +134,19 @@ class TimePetriNetStepExecutor @Inject constructor(
     }
 
 
-
     override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
+        simulationStepLogger.logCurrentStep()
+        simulationStepLogger.logCurrentMarking()
         // generate next time based on place and transitions marking
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
+
 
         // find transitions that are enforced to fire now, and list their random order
         val transitionsThatCanBeSelectedForFiring = collectTransitionsThatCanBeSelected()
 
         // select the transition to fire
         val transitionToFire = transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return
+        simulationStepLogger.logTransitionToFire(transitionToFire.id)
 
         // fire transition using transition rule
         transitionFireExecutor.fireTransition(transitionToFire)
@@ -92,6 +156,8 @@ class TimePetriNetStepExecutor @Inject constructor(
 
         // clocks of transitions that became disabled by marking are now reset
         resetClocksOfTransitionsDisabledByMarking()
+
+        simulationStepLogger.finishStepLog()
     }
 }
 
@@ -135,6 +201,58 @@ class TimeShiftSelector @Inject constructor(private val randomSource: RandomSour
     }
 }
 
+
+class SimulationStepLogBuilder @Inject constructor(
+    private val objectTokenSet: ObjectTokenSet
+) {
+    var stepNumber: Long by Delegates.notNull()
+    var clockIncrement: Long by Delegates.notNull()
+    var selectedFiredTransition: PetriAtomId? = null
+    var starterMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
+    var firingInMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
+    var firingInMarkingTokens: Map<PetriAtomId, List<ObjectTokenId>> by Delegates.notNull()
+    var firingOutMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
+    var firingOutMarkingTokens: Map<PetriAtomId, List<ObjectTokenId>> by Delegates.notNull()
+    var tokensInitializedAtStep: List<ObjectTokenMeta> by Delegates.notNull()
+
+    private val instantiatedTokens = mutableListOf<ObjectTokenId>()
+    fun appendInstantiatedTokens(tokens: List<ObjectTokenId>) {
+        instantiatedTokens.addAll(tokens)
+    }
+
+
+    private var alreadyBuilt = false
+    fun build(): SimulationStepLog {
+        require(!alreadyBuilt)
+        val mappedToTokenMeta = instantiatedTokens.map {
+            ObjectTokenMeta(it, objectTokenSet[it]!!.objectTypeId)
+        }
+        tokensInitializedAtStep = mappedToTokenMeta
+
+
+        return SimulationStepLog(
+            stepNumber,
+            clockIncrement,
+            selectedFiredTransition,
+            starterMarkingAmounts,
+            firingInMarkingAmounts,
+            firingOutMarkingAmounts,
+            firingInMarkingTokens,
+            firingOutMarkingTokens,
+            tokensInitializedAtStep
+        ).also { alreadyBuilt = true }
+    }
+}
+
+class SimulationStepLogBuilderCreator @Inject constructor(
+    private val simulationStepLogBuilderProvider: Provider<SimulationStepLogBuilder>
+) {
+    fun create(): SimulationStepLogBuilder {
+        return simulationStepLogBuilderProvider.get()
+    }
+}
+
+
 class TransitionTokenSelector(
     private val transitionPrePlaceAccessor: PrePlaceRegistry.PrePlaceAccessor,
     val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
@@ -142,14 +260,16 @@ class TransitionTokenSelector(
 ) {
     val transition = transitionPrePlaceAccessor.transitionId
 
-    fun selectAndInstantiateFrom(tokenBunch: SparseTokenBunch): SparseTokenBunch {
+    fun selectAndInstantiateFrom(tokenBunch: SparseTokenBunch): Pair<SparseTokenBunch, List<ObjectTokenId>> {
         val grabRecorder = SparseTokenBunchImpl()
+        val instantiatedTokens = mutableListOf<ObjectTokenId>()
         for (preplace in transitionPrePlaceAccessor) {
             val selectTokensToGrab = selectTokensToGrab(preplace, tokenBunch)
             grabRecorder.objectMarking()[preplace] = selectTokensToGrab.selected
+            instantiatedTokens.addAll(selectTokensToGrab.generated)
         }
         grabRecorder.reindex()
-        return grabRecorder
+        return Pair(grabRecorder, instantiatedTokens)
     }
 
     private fun selectTokensToGrab(
@@ -180,6 +300,7 @@ class TransitionFiringRuleExecutor @Inject constructor(
     private val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     private val tokenGroupCreatorFactory: TokenGroupCreatorFactory,
     private val transitionsOutputTokensCreatorFactory: TransitionOutputTokensCreatorFactory,
+    private val simulationStepLogger: SimulationStepLogger
 ) {
     fun fireTransition(transition: Transition) {
         // grab tokens captured by this transition
@@ -190,7 +311,10 @@ class TransitionFiringRuleExecutor @Inject constructor(
             tokenSelectionInteractor
         )
         // deduct those tokens from marking
-        val selectedTokens = transitionTokenSelector.selectAndInstantiateFrom(globalTokenBunch)
+        val (selectedTokens, instantiatedTokens) = transitionTokenSelector.selectAndInstantiateFrom(globalTokenBunch)
+
+        simulationStepLogger.logTransitionInTokens(selectedTokens)
+        simulationStepLogger.appendInstantiatedTokens(instantiatedTokens)
 
         globalTokenBunch.minus(selectedTokens)
 
@@ -201,7 +325,10 @@ class TransitionFiringRuleExecutor @Inject constructor(
 
         // using the grouped tokens, get output tokens of this transition
         val transitionOutputTokensCreator = transitionsOutputTokensCreatorFactory.create(groupedTokenInfo, transition)
-        val outputTokenBunch = transitionOutputTokensCreator.createOutputTokens()
+        val (outputTokenBunch, outputInstantiatedTokens) = transitionOutputTokensCreator.createOutputTokens()
+
+        simulationStepLogger.logTransitionOutTokens(outputTokenBunch)
+        simulationStepLogger.appendInstantiatedTokens(outputInstantiatedTokens)
 
         // append those to marking
         globalTokenBunch.append(outputTokenBunch)
@@ -254,12 +381,12 @@ class TransitionOutputTokensCreator @AssistedInject constructor(
     private val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     private val repeatabilityInteractor: RepeatabilityInteractor
 ) {
-    fun createOutputTokens(): SparseTokenBunch {
+    fun createOutputTokens(): Pair<SparseTokenBunch, List<ObjectTokenId>> {
         val outputPlaces = transition.toPlaces
         val outputMarking = PlaceToObjectMarking()
 
         val outputPlacesCorrected = repeatabilityInteractor.sortPlaces(outputPlaces)
-
+        val newlyGeneratedTokens = mutableListOf<ObjectTokenId>()
         for (outputPlace in outputPlacesCorrected) {
             val outputArcId = transition.id.arcIdTo(outputPlace)
 
@@ -285,7 +412,7 @@ class TransitionOutputTokensCreator @AssistedInject constructor(
 
                 val generatedTokens =
                     transitionTokenSelectionInteractor.generateTokens(outputPlaceType, tokensLeftToGenerate)
-
+                newlyGeneratedTokens.addAll(generatedTokens)
                 outputMarking[outputPlace].addAll(generatedTokens)
             }
         }
@@ -295,7 +422,7 @@ class TransitionOutputTokensCreator @AssistedInject constructor(
             tokenAmountStorage = SimpleTokenAmountStorage()
         )
         tokenBunch.reindex()
-        return tokenBunch
+        return Pair(tokenBunch, newlyGeneratedTokens)
     }
 }
 

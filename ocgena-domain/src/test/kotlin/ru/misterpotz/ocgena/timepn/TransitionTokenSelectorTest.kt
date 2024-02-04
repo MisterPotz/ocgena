@@ -75,6 +75,7 @@ internal class TransitionTokenSelectorTest {
         Assertions.assertEquals(
             tokenMap.values.flatMap { it.selected }.toSet(),
             selectedAndInitialized
+                .first
                 .objectMarking()
                 .tokensIterator
                 .asSequence()
