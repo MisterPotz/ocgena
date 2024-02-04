@@ -8,6 +8,7 @@ import dagger.Component
 import dagger.Component.Factory
 import dagger.Module
 import dagger.Provides
+import dagger.Subcomponent
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.*
 import ru.misterpotz.DBLogger
@@ -30,6 +31,7 @@ import ru.misterpotz.ocgena.serialization.*
 import ru.misterpotz.ocgena.simulation.config.TransitionsSpec
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
+import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import javax.inject.Scope
 
@@ -130,7 +132,7 @@ interface DomainComponent : SimulationComponentDependencies {
 
     @Component.Factory
     interface Factory {
-        fun create(domainComponentDependencies: DomainComponentDependencies) : DomainComponent
+        fun create(domainComponentDependencies: DomainComponentDependencies): DomainComponent
     }
 
     companion object {

@@ -115,6 +115,7 @@ class SimulationLogRepositoryImpl @Inject constructor(
         newSuspendedTransaction {
             addLogger(StdOutSqlLogger)
             with(tablesProvider) {
+                objectTypeTable.exists()
                 SchemaUtils.create(
                     simulationStepsTable,
                     objectTypeTable,

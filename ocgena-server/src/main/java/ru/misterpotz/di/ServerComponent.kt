@@ -2,24 +2,18 @@ package ru.misterpotz.di
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import dagger.Binds
-import dagger.BindsInstance
-import dagger.Component
-import dagger.Module
-import dagger.Provides
+import dagger.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import ru.misterpotz.*
-import ru.misterpotz.TablesProviderImpl
 import ru.misterpotz.ocgena.di.DomainComponentDependencies
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import java.nio.file.Path
 import java.sql.Connection
 import javax.inject.Scope
 import kotlin.io.path.pathString
 
-@Module()
+@Module
 internal abstract class ServerSimulationModule {
 
     @Binds
@@ -66,19 +60,19 @@ internal abstract class ServerSimulationModule {
     }
 }
 
-
 data class ServerSimulationConfig(
     val dbPath: Path,
     val simulationConfig: SimulationConfig
 )
 
 @Component(
-    modules = [ServerSimulationModule::class]
+    modules = [ServerSimulationModule::class],
 )
 @ServerSimulationScope
-interface ServerSimulationComponent : DomainComponentDependencies {
+internal interface ServerSimulationComponent : DomainComponentDependencies {
 
     fun simulationLogRepository(): SimulationLogRepository
+    fun simulationConfig() : SimulationConfig
 
     @Component.Factory
     interface Factory {

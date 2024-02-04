@@ -11,8 +11,10 @@ import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import ru.misterpotz.di.ServerSimulationComponent
 import ru.misterpotz.di.ServerSimulationConfig
+import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.testing.buildConfig
 import ru.misterpotz.ocgena.testing.buildOCNet
@@ -47,13 +49,43 @@ fun main() {
                     buildingBlockTwoInTwoOutMiddle().installOnto(this)
                 }
                 semanticsType = SimulationSemanticsType.SIMPLE_TIME_PN
+            }.withInitialMarking {
+                put("p1", 10)
             }
         )
     )
+    val domainComponent = DomainComponent.create(serverSimulationComponent)
+    val simulationComponent =
+        SimulationComponent.defaultCreate(serverSimulationComponent.simulationConfig(), domainComponent)
+//    val repository = serverSimulationComponent.simulationLogRepository()
+
+
+    runBlocking {
+        simulationComponent.simulationTask().prepareAndRunAll()
+    }
+}
+
+
+fun main3() {
+    val serverSimulationComponent = ServerSimulationComponent.create(
+        ServerSimulationConfig(
+            Path("data", "data.db"),
+            simulationConfig = buildConfig {
+                ocNetType = OcNetType.LOMAZOVA
+                ocNetStruct = buildOCNet {
+                    buildingBlockTwoInTwoOutMiddle().installOnto(this)
+                }
+                semanticsType = SimulationSemanticsType.SIMPLE_TIME_PN
+            }
+        )
+    )
+    val domainComponent = DomainComponent.create(serverSimulationComponent)
+    val simulationComponent =
+        SimulationComponent.defaultCreate(serverSimulationComponent.simulationConfig(), domainComponent)
     val repository = serverSimulationComponent.simulationLogRepository()
+
     runBlocking {
         repository.pushInitialData()
-
     }
 }
 

@@ -39,10 +39,7 @@ import ru.misterpotz.ocgena.simulation.generator.original.TransitionInstanceDura
 import ru.misterpotz.ocgena.simulation.generator.original.TransitionNextInstanceAllowedTimeGeneratorOriginal
 import ru.misterpotz.ocgena.simulation.interactors.*
 import ru.misterpotz.ocgena.simulation.interactors.original.EnabledBindingResolverInteractorOriginalImpl
-import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.FullLoggerFactory
-import ru.misterpotz.ocgena.simulation.logging.LogConfiguration
-import ru.misterpotz.ocgena.simulation.logging.Logger
+import ru.misterpotz.ocgena.simulation.logging.*
 import ru.misterpotz.ocgena.simulation.logging.loggers.NoOpStepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.logging.loggers.StepAggregatingLogReceiver
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
@@ -494,8 +491,8 @@ interface SimulationComponent {
         fun defaultCreate(
             simulationConfig: SimulationConfig,
             componentDependencies: SimulationComponentDependencies,
-            developmentDebugConfig: DevelopmentDebugConfig,
-            randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random>,
+            developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
+            randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random> = mutableMapOf(),
             executionContinuation: ExecutionContinuation = NoOpExecutionContinuation(),
         ): SimulationComponent {
             return create(
