@@ -470,8 +470,6 @@ interface SimulationComponent {
 
     fun timePNTransitionMarking(): TimePNTransitionMarking
 
-    fun create(transition: Transition)
-
     @Component.Factory
     interface Factory {
         fun create(

@@ -8,7 +8,10 @@ import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
-import ru.misterpotz.ocgena.registries.*
+import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
+import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
+import ru.misterpotz.ocgena.registries.PrePlaceRegistry
+import ru.misterpotz.ocgena.registries.TransitionsRegistry
 import ru.misterpotz.ocgena.simulation.SimulationTaskPreparator
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupCreatorFactory
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
@@ -24,7 +27,6 @@ import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteracto
 import ru.misterpotz.ocgena.utils.TimePNRef
 import simulation.random.RandomSource
 import javax.inject.Inject
-import kotlin.random.Random
 
 
 class TimePetriNetStepExecutor @Inject constructor(
@@ -34,7 +36,6 @@ class TimePetriNetStepExecutor @Inject constructor(
     private val transitionToFireSelector: TransitionToFireSelector,
     private val transitionFireExecutor: TransitionFiringRuleExecutor,
     private val prePlaceRegistry: PrePlaceRegistry,
-    private val transitionsEnabledStepCache: TransitionsEnabledStepCache,
     private val transitionDisabledByMarkingChecker: TransitionDisabledByMarkingChecker,
 ) : StepExecutor {
 
@@ -167,21 +168,6 @@ class TransitionTokenSelector(
         )
 
         return selectedAndInitializedTokens
-    }
-}
-
-class Transition
-
-class TransitionsEnabledStepCache @Inject constructor() {
-    private val transitionToEnabled = mutableMapOf<PetriAtomId, Boolean>()
-    fun compareAndSetEnabledByMarking(transition: PetriAtomId, isEnabledByMarking: Boolean): Boolean {
-        val oldValue = transitionToEnabled[transition]
-        transitionToEnabled[transition] = isEnabledByMarking
-        return oldValue != isEnabledByMarking
-    }
-
-    fun getTransitionEnabledByMarking(transition: PetriAtomId): Boolean {
-        return transitionToEnabled[transition]!!
     }
 }
 
@@ -363,11 +349,11 @@ data class TimePnTransitionData(
 ) {
 
     fun timeUntilLFT(): Long {
-        return lft - counter
+        return (lft - counter).coerceAtLeast(0)
     }
 
     fun timeUntilEft(): Long {
-        return eft - counter
+        return (eft - counter).coerceAtLeast(0)
     }
 
     fun countup(units: Long) {
