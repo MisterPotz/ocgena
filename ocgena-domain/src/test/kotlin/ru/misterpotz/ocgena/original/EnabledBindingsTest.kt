@@ -3,10 +3,10 @@ package ru.misterpotz.ocgena.original
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.buildSimplestOCNetNoVar
-import ru.misterpotz.ocgena.simComponentOld
-import ru.misterpotz.ocgena.defaultSimConfigOriginal
-import ru.misterpotz.ocgena.simTask
+import ru.misterpotz.ocgena.testing.buildSimplestOCNetNoVar
+import ru.misterpotz.ocgena.testing.simComponentOld
+import ru.misterpotz.ocgena.testing.defaultSimConfigOriginal
+import ru.misterpotz.ocgena.testing.simTask
 import ru.misterpotz.ocgena.simulation.config.MarkingScheme
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 

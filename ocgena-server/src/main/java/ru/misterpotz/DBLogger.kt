@@ -1,5 +1,6 @@
 package ru.misterpotz
 
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import ru.misterpotz.di.ServerSimulationConfig
@@ -8,8 +9,8 @@ import javax.inject.Inject
 
 class DBLoggerImpl @Inject constructor(
     private val simulationLogRepository: SimulationLogRepository,
-    private val maxStoredBatchSize: Int = 10,
 ) : DBLogger {
+    private val maxStoredBatchSize: Int = 10
     private val batch: MutableList<SimulationStepLog> = mutableListOf()
     override suspend fun simulationPrepared() {
         simulationLogRepository.pushInitialData()
@@ -22,6 +23,7 @@ class DBLoggerImpl @Inject constructor(
 
     override suspend fun simulationFinished() {
         saveIfBatchMaxSize(forceSave = true)
+        simulationLogRepository.close()
     }
 
     private fun batchMaxSizeCondition(): Boolean {
@@ -97,10 +99,12 @@ internal class TablesProviderImpl @Inject constructor(
 interface SimulationLogRepository {
     suspend fun pushInitialData()
     suspend fun push(batch: List<SimulationStepLog>)
+    suspend fun close()
 }
 
 class SimulationLogRepositoryImpl @Inject constructor(
     private val db: Database,
+    private val hikariDataSource: HikariDataSource,
     private val tablesProvider: TablesProvider,
     private val simulationConfig: SimulationConfig,
     private val inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
@@ -109,6 +113,7 @@ class SimulationLogRepositoryImpl @Inject constructor(
     override suspend fun pushInitialData() {
 
         newSuspendedTransaction {
+            addLogger(StdOutSqlLogger)
             with(tablesProvider) {
                 SchemaUtils.create(
                     simulationStepsTable,
@@ -122,6 +127,7 @@ class SimulationLogRepositoryImpl @Inject constructor(
         }
 
         newSuspendedTransaction {
+            addLogger(StdOutSqlLogger)
             with(tablesProvider) {
                 simulationConfig.ocNet.objectTypeRegistry.types.forEach { objectType ->
                     objectTypeTable.insert {
@@ -142,6 +148,10 @@ class SimulationLogRepositoryImpl @Inject constructor(
             insertSteptoFiringTokens(batch)
             insertTokens(batch)
         }
+    }
+
+    override suspend fun close() {
+        hikariDataSource.close()
     }
 
     private fun insertSteps(batch: List<SimulationStepLog>) {

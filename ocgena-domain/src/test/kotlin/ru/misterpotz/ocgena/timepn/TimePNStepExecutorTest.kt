@@ -6,9 +6,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
-import ru.misterpotz.ocgena.*
+import ru.misterpotz.ocgena.createArgProvider
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.serialization.ModelYamlCreator
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNData
@@ -16,6 +15,7 @@ import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNTimes
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarkingImpl
+import ru.misterpotz.ocgena.testing.*
 import ru.misterpotz.ocgena.utils.buildMutableMap
 
 class TimePNStepExecutorTest {
@@ -253,7 +253,7 @@ class TimePNStepExecutorTest {
 
         private val defaultConfig: ConfigBuilderBlockScope = {
             this.ocNetStruct = buildOCNet {
-                ModelYamlCreator.buildingBlockTwoInTwoOutMiddle().installOnto(this)
+                buildingBlockTwoInTwoOutMiddle().installOnto(this)
             }
             this.semanticsType = SimulationSemanticsType.SIMPLE_TIME_PN
             this.ocNetType = OcNetType.LOMAZOVA

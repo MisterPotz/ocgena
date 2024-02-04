@@ -7,6 +7,9 @@ import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.config.original.withUntilNext
 import ru.misterpotz.ocgena.simulation.logging.fastFullDev
+import ru.misterpotz.ocgena.testing.FacadeSim
+import ru.misterpotz.ocgena.testing.facade
+import ru.misterpotz.ocgena.testing.simComponentOld
 
 annotation class TestFolder(val folderName: String)
 

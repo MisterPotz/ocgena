@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.createArgProvider
-import ru.misterpotz.ocgena.createPartiallyPredefinedRandSeq
+import ru.misterpotz.ocgena.testing.createPartiallyPredefinedRandSeq
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
 import ru.misterpotz.ocgena.simulation.ObjectToken

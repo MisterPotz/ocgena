@@ -11,7 +11,9 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import ru.misterpotz.*
 import ru.misterpotz.TablesProviderImpl
+import ru.misterpotz.ocgena.di.DomainComponentDependencies
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import java.nio.file.Path
 import java.sql.Connection
 import javax.inject.Scope
@@ -74,7 +76,9 @@ data class ServerSimulationConfig(
     modules = [ServerSimulationModule::class]
 )
 @ServerSimulationScope
-interface ServerSimulationComponent {
+interface ServerSimulationComponent : DomainComponentDependencies {
+
+    fun simulationLogRepository(): SimulationLogRepository
 
     @Component.Factory
     interface Factory {

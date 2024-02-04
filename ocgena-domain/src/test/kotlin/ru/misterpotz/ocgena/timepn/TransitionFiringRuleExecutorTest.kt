@@ -1,9 +1,6 @@
 package ru.misterpotz.ocgena.timepn
 
-import io.mockk.mockk
-import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -14,6 +11,7 @@ import ru.misterpotz.ocgena.serialization.ModelYamlCreator
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.testing.*
 
 class TransitionFiringRuleExecutorTest {
 
@@ -61,7 +59,7 @@ class TransitionFiringRuleExecutorTest {
                     }
                 }.buildTokenBunch(),
                 model = buildOCNet {
-                    ModelYamlCreator.buildingBlockTwoInTwoOutMiddle().installOnto(this)
+                    buildingBlockTwoInTwoOutMiddle().installOnto(this)
                 },
                 expectedEndLocalBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p2") {
@@ -89,7 +87,7 @@ class TransitionFiringRuleExecutorTest {
                     }
                 }.buildTokenBunch(),
                 model = buildOCNet {
-                    ModelYamlCreator.buildingBlockTwoInTwoOutMiddle().installOnto(this)
+                    buildingBlockTwoInTwoOutMiddle().installOnto(this)
 
                     "o1".arc("t3".t) { vari; mathExpr = "n" }
                         .arc("o2".p { objectTypeId = "2"; output }) { vari; mathExpr = "6*n" }

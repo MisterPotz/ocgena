@@ -2,13 +2,24 @@ package ru.misterpotz
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.transactions.transactionManager
 import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
+import ru.misterpotz.di.ServerSimulationComponent
+import ru.misterpotz.di.ServerSimulationConfig
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.testing.buildConfig
+import ru.misterpotz.ocgena.testing.buildOCNet
+import ru.misterpotz.ocgena.testing.buildingBlockTwoInTwoOutMiddle
+import ru.misterpotz.ocgena.testing.installOnto
 import java.sql.Connection
+import kotlin.io.path.Path
 
 
 object Users : Table() {
@@ -27,6 +38,26 @@ object Cities : Table() {
 }
 
 fun main() {
+    val serverSimulationComponent = ServerSimulationComponent.create(
+        ServerSimulationConfig(
+            Path("data", "data.db"),
+            simulationConfig = buildConfig {
+                ocNetType = OcNetType.LOMAZOVA
+                ocNetStruct = buildOCNet {
+                    buildingBlockTwoInTwoOutMiddle().installOnto(this)
+                }
+                semanticsType = SimulationSemanticsType.SIMPLE_TIME_PN
+            }
+        )
+    )
+    val repository = serverSimulationComponent.simulationLogRepository()
+    runBlocking {
+        repository.pushInitialData()
+
+    }
+}
+
+fun main2() {
 
 //    val sqliteDataSource = SQLiteDataSource(SQLiteConfig()).apply {
 //        url = "jdbc:sqlite:data/data.db"

@@ -26,6 +26,8 @@ dependencies {
     //kapt("com.google.dagger:dagger-compiler:2.48.1") // fallback to this if ksp goes crazy
     ksp("com.google.dagger:dagger-compiler:2.48")
 
+    implementation("io.mockk:mockk:1.13.8")
+
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")

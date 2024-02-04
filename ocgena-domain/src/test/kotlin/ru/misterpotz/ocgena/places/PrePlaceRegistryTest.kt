@@ -9,9 +9,9 @@ import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.DEFAULT_SETTINGS
 import ru.misterpotz.ocgena.ModelPath
-import ru.misterpotz.ocgena.addTokens
+import ru.misterpotz.ocgena.testing.addTokens
 import ru.misterpotz.ocgena.readAndBuildConfig
-import ru.misterpotz.ocgena.simComponentOld
+import ru.misterpotz.ocgena.testing.simComponentOld
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import java.util.stream.Stream
 

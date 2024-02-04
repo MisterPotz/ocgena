@@ -13,6 +13,7 @@ import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.testing.DOMAIN_COMPONENT
 import ru.misterpotz.ocgena.utils.findInstance
 import java.io.File
 import java.nio.file.Path
@@ -74,46 +75,6 @@ fun readAndBuildConfig(
     return SimulationConfig.fromNetAndSettings(
         model,
         defaultSettings
-    )
-}
-
-interface ConfigBuilderBlock {
-    var model: ModelPath?
-    var ocNetStruct : OCNetStruct?
-    var semanticsType: SimulationSemanticsType?
-    var ocNetType: OcNetType?
-    var timePnSpec : TransitionsTimePNSpec?
-}
-
-private class ConfigBuilderBlockImpl() : ConfigBuilderBlock {
-    override var model: ModelPath? = null
-    override var ocNetStruct: OCNetStruct? = null
-    override var semanticsType: SimulationSemanticsType? = null
-    override var ocNetType: OcNetType? = null
-    override var timePnSpec: TransitionsTimePNSpec? = null
-}
-
-typealias ConfigBuilderBlockScope = ConfigBuilderBlock.() -> Unit
-
-fun buildConfig(configBuilderBlock: ConfigBuilderBlockScope): SimulationConfig {
-    val receiver = ConfigBuilderBlockImpl()
-    receiver.configBuilderBlock()
-    return SimulationConfig(
-        ocNet = receiver.model?.load() ?: receiver.ocNetStruct!!,
-        transitionsSpec = when (receiver.semanticsType!!) {
-            SimulationSemanticsType.ORIGINAL -> {
-                TransitionsOriginalSpec()
-            }
-
-            SimulationSemanticsType.SIMPLE_TIME_PN -> {
-                receiver.timePnSpec ?: TransitionsTimePNSpec()
-            }
-        },
-        initialMarking = MarkingScheme.of { },
-        randomSeed = null,
-        tokenGeneration = null,
-        ocNetType = receiver.ocNetType!!,
-        simulationSemantics = SimulationSemantics(receiver.semanticsType!!)
     )
 }
 
