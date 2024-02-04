@@ -98,6 +98,7 @@ class TimePetriNetStepExecutor @Inject constructor(
     private val prePlaceRegistry: PrePlaceRegistry,
     private val transitionDisabledByMarkingChecker: TransitionDisabledByMarkingChecker,
     private val simulationStepLogger: SimulationStepLogger,
+    private val simulationStateProvider: SimulationStateProvider
 ) : StepExecutor {
 
     private fun collectTransitionsThatCanBeSelected(): List<Transition> {
@@ -145,7 +146,9 @@ class TimePetriNetStepExecutor @Inject constructor(
         val transitionsThatCanBeSelectedForFiring = collectTransitionsThatCanBeSelected()
 
         // select the transition to fire
-        val transitionToFire = transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return
+        val transitionToFire = transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return Unit.also {
+            simulationStateProvider.getSimulationStepState().setFinished()
+        }
         simulationStepLogger.logTransitionToFire(transitionToFire.id)
 
         // fire transition using transition rule

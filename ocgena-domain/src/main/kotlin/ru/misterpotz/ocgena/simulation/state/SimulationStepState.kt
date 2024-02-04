@@ -41,6 +41,12 @@ class SimulationStepState {
         current!!.noPlannedTokenGenerations = !hasPlannedTokensToGenerate
     }
 
+    fun setFinished() {
+        current!!.noPlannedTokenGenerations = true
+        current!!.noEnabledTransitions = true
+        current!!.noPlannedTransitions = true
+    }
+
     fun isFinished(): Boolean {
         require(current != null)
         return current!!.noPlannedTransitions
