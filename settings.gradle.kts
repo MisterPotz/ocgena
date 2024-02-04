@@ -4,3 +4,5 @@ plugins {
 rootProject.name = "ocgena"
 include("ocgena-math-parexper")
 include("ocgena-domain")
+include("db_api")
+include("ocgena-server")

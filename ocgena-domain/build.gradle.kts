@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.9.20"
+    id("java-library")
     //kotlin("kapt") // fallback to this if ksp goes crazy
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
     kotlin("plugin.serialization") version "1.9.20"
@@ -21,6 +22,7 @@ dependencies {
     implementation("com.charleskorn.kaml:kaml:0.55.0")
 
     implementation("com.google.dagger:dagger:2.48")
+    implementation(project(":db_api"))
     //kapt("com.google.dagger:dagger-compiler:2.48.1") // fallback to this if ksp goes crazy
     ksp("com.google.dagger:dagger-compiler:2.48")
 
@@ -33,9 +35,9 @@ dependencies {
 
 }
 
-kotlin {
-    jvmToolchain(11)
-}
+//kotlin {
+//    jvmToolchain(11)
+//}
 
 tasks.test {
     useJUnitPlatform()
