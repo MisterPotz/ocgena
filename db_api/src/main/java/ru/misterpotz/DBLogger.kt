@@ -1,6 +1,7 @@
 package ru.misterpotz
 
 interface DBLogger {
+    suspend fun simulationPrepared()
     suspend fun acceptStepLog(simulationStepLog: SimulationStepLog)
     suspend fun simulationFinished()
 }
@@ -10,6 +11,7 @@ data class ObjectTokenMeta(
     val objectTypeId: String
 )
 
+data class ObjectTypes(val listObjectTypes: List<String>)
 
 data class SimulationStepLog(
     val stepNumber: Long,

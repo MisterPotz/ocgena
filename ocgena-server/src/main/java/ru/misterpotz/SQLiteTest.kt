@@ -1,6 +1,7 @@
 package ru.misterpotz
 
-import org.jetbrains.exposed.dao.id.LongIdTable
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -9,14 +10,6 @@ import org.sqlite.SQLiteConfig
 import org.sqlite.SQLiteDataSource
 import java.sql.Connection
 
-
-
-abstract class StepToVariableColumnsBlob(private val columnNames: List<String>) :
-    LongIdTable(columnName = STEP_NUMBER) {
-    init {
-
-    }
-}
 
 object Users : Table() {
     val id: Column<String> = varchar("id", 10)
@@ -35,12 +28,17 @@ object Cities : Table() {
 
 fun main() {
 
-    val sqliteDataSource = SQLiteDataSource(SQLiteConfig()).apply {
-        url = "jdbc:sqlite:data/data.db"
+//    val sqliteDataSource = SQLiteDataSource(SQLiteConfig()).apply {
+//        url = "jdbc:sqlite:data/data.db"
+//    }
+    val hikariSqlConfig = HikariConfig().apply {
+        jdbcUrl = "jdbc:sqlite:data/data.db"
+        driverClassName = "org.sqlite.JDBC"
     }
+    val dataSource = HikariDataSource(hikariSqlConfig)
 
-    sqliteDataSource.connection.close()
-    val db = Database.connect(sqliteDataSource)
+//    sqliteDataSource.connection.close()
+    val db = Database.connect(dataSource)
     db.transactionManager.newTransaction().close()
 //    val db = Database.connect("jdbc:sqlite:data/data.db", "org.sqlite.JDBC")
     TransactionManager.manager.defaultIsolationLevel =
@@ -53,7 +51,6 @@ fun main() {
 
     transaction(db) {
         // print sql to std-out
-        addLogger(StdOutSqlLogger)
 
         SchemaUtils.create(Cities)
         SchemaUtils.create(SimulationStepsTable)
@@ -78,4 +75,5 @@ fun main() {
         // 'select *' SQL: SELECT Cities.id, Cities.name FROM Cities
         println("Cities: ${Cities.selectAll()}")
     }
+    dataSource.close()
 }

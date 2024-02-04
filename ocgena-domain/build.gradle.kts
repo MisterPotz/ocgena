@@ -20,9 +20,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation(project(":ocgena-math-parexper"))
     implementation("com.charleskorn.kaml:kaml:0.55.0")
+    implementation(project(":db_api"))
 
     implementation("com.google.dagger:dagger:2.48")
-    implementation(project(":db_api"))
     //kapt("com.google.dagger:dagger-compiler:2.48.1") // fallback to this if ksp goes crazy
     ksp("com.google.dagger:dagger-compiler:2.48")
 

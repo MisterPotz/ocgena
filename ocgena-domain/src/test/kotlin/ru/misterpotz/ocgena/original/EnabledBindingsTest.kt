@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.original
 
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.buildSimplestOCNetNoVar
@@ -11,7 +12,7 @@ import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 
 class EnabledBindingsTest {
     @Test
-    fun enabledBindingsAreFound() {
+    fun enabledBindingsAreFound() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
 
         val config = defaultSimConfigOriginal(ocNet).copy(

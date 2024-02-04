@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 
 class OCNetTest {
     @Test()
-    fun checkInitialMarkingIsApplied() {
+    fun checkInitialMarkingIsApplied() = runTest {
         val ocNet = buildSimplestOCNetNoVar()
         val settingsConfig = deserializeResourceByClassWithPath<SettingsSimulationConfig>(DEFAULT_SETTINGS)
         val simConfig = SimulationConfig.fromNetAndSettings(ocNet, settingsConfig)

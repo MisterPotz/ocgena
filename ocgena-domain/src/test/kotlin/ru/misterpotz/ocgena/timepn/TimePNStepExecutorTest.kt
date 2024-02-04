@@ -81,37 +81,38 @@ class TimePNStepExecutorTest {
 
     @ArgumentsSource(SimConfigTestProvider::class)
     @ParameterizedTest
-    fun `clocks changes affect only transitions that are enabled by marking`(simulationConfig: SimulationConfig) {
-        val starterTimePNSpec = TransitionsTimePNSpec(
-            default = (10..20).toTimePNTimes(),
-        )
-
-        val expectedMarking = TimePNTransitionMarkingImpl(buildMutableMap {
-            put("t1", (10..20L).toTimePNData(clock = 15))
-            put("t2", (10..20L).toTimePNData(clock = 15))
-            put("t3", (10..20L).toTimePNData(clock = 0))
-        })
-
-        val simComponent = simulationConfig
-            .asTimePNwithSpec(starterTimePNSpec)
-            .toSimComponent(
-                randomInstance = createPartiallyPredefinedRandSeq(
-                    seq = listOf(15)
-                )
+    fun `clocks changes affect only transitions that are enabled by marking`(simulationConfig: SimulationConfig) =
+        runTest {
+            val starterTimePNSpec = TransitionsTimePNSpec(
+                default = (10..20).toTimePNTimes(),
             )
-            .addTokens {
-                forPlace("p1", amount = 2)
-                forPlace("p2", 1)
-                forPlace("o1", 0)
-            }
 
-        val newTimeDeltaInteractor = simComponent.newTimeDeltaInteractor()
-        simComponent.simulationTask().prepareRun()
-        simComponent.beforeNewStep()
-        newTimeDeltaInteractor.generateAndShiftTimeDelta()
+            val expectedMarking = TimePNTransitionMarkingImpl(buildMutableMap {
+                put("t1", (10..20L).toTimePNData(clock = 15))
+                put("t2", (10..20L).toTimePNData(clock = 15))
+                put("t3", (10..20L).toTimePNData(clock = 0))
+            })
 
-        Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
-    }
+            val simComponent = simulationConfig
+                .asTimePNwithSpec(starterTimePNSpec)
+                .toSimComponent(
+                    randomInstance = createPartiallyPredefinedRandSeq(
+                        seq = listOf(15)
+                    )
+                )
+                .addTokens {
+                    forPlace("p1", amount = 2)
+                    forPlace("p2", 1)
+                    forPlace("o1", 0)
+                }
+
+            val newTimeDeltaInteractor = simComponent.newTimeDeltaInteractor()
+            simComponent.simulationTask().prepareRun()
+            simComponent.beforeNewStep()
+            newTimeDeltaInteractor.generateAndShiftTimeDelta()
+
+            Assertions.assertEquals(expectedMarking, simComponent.timePNTransitionMarking())
+        }
 
     @ParameterizedTest
     @ArgumentsSource(SimConfigTestProvider::class)

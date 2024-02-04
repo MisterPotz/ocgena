@@ -51,8 +51,9 @@ class SimulationTask @Inject constructor(
 ) : CurrentSimulationDelegate by currentStateDelegate {
     private var finishRequested = false;
 
-    private fun prepare() {
+    private suspend fun prepare() {
         simulationTaskPreparator.prepare()
+        dbLogger.simulationPrepared()
     }
 
 
@@ -93,7 +94,7 @@ class SimulationTask @Inject constructor(
         dbLogger.simulationFinished()
     }
 
-    fun prepareRun() {
+    suspend fun prepareRun() {
         logger.onStart()
         prepare()
         logger.afterInitialMarking()
