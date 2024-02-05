@@ -32,6 +32,8 @@ interface SimConfigToSimComponentFancyBlock {
     fun setTransitionSelectionSequence(transitions: List<String>)
     fun setTokenSelectionRandom(times: List<Int>)
     fun setDbLogger(dbLogger: DBLogger)
+    var dumpStepEndMarking : Boolean
+    var dumpTimePnMarking : Boolean
 }
 
 private class SimConfigTOSimComponentFancyBlockImpl : SimConfigToSimComponentFancyBlock {
@@ -57,6 +59,9 @@ private class SimConfigTOSimComponentFancyBlockImpl : SimConfigToSimComponentFan
     override fun setDbLogger(dbLogger: DBLogger) {
         _dbLogger = dbLogger
     }
+
+    override var dumpStepEndMarking: Boolean = false
+    override var dumpTimePnMarking: Boolean = false
 }
 
 fun SimulationConfig.toSimComponentFancy(
@@ -67,12 +72,15 @@ fun SimulationConfig.toSimComponentFancy(
     simConfigTOSimComponentFancyBlockImpl.block()
     return simComponent(
         this,
-        developmentDebugConfig,
+        developmentDebugConfig.copy(
+            dumpEndStateMarking = simConfigTOSimComponentFancyBlockImpl.dumpStepEndMarking,
+            dumpTimePNTransitionMarking = simConfigTOSimComponentFancyBlockImpl.dumpTimePnMarking
+        ),
         randomInstances = simConfigTOSimComponentFancyBlockImpl.mutableMap,
         determinedTransitionSequenceProvider = SimpleDeterminedTransitionSequenceProvider(
             simConfigTOSimComponentFancyBlockImpl.transitionSequence
         ),
-        dbLogger = simConfigTOSimComponentFancyBlockImpl._dbLogger
+        dbLogger = simConfigTOSimComponentFancyBlockImpl._dbLogger,
     )
 }
 

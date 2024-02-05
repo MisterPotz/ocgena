@@ -23,5 +23,6 @@ data class SimulationStepLog(
     val firingOutMarkingAmounts: Map<String, Int> = mutableMapOf(),
     val firingInMarkingTokens: Map<String, List<Long>> = mutableMapOf(),
     val firingOutMarkingTokens: Map<String, List<Long>> = mutableMapOf(),
-    val tokensInitializedAtStep: List<ObjectTokenMeta>
+    var timePNTransitionMarking : Map<String, Long>? = null,
+    val tokensInitializedAtStep: List<ObjectTokenMeta>,
 )

@@ -15,7 +15,6 @@ import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
 import ru.misterpotz.ocgena.testing.*
-import kotlin.math.exp
 
 class CompleteRunTest {
     @ParameterizedTest
@@ -42,6 +41,8 @@ class CompleteRunTest {
             setTransitionSelectionSequence(transitionSequence)
             setTimeSelectionRandom(timeSelectionSequence)
             setDbLogger(testingDBLogger)
+            dumpStepEndMarking = true
+            dumpTimePnMarking = true
         }
         simComp.simulationTask().prepareAndRunAll()
 
@@ -65,10 +66,15 @@ class CompleteRunTest {
             val tokenAmountStorage =
                 simulationComponent.emptyTokenBunchBuilder().apply(markingApplierBlock).buildTokenBunch()
                     .tokenAmountStorage.dump()
+            val timePNTransitionMarking =
+                simulationComponent
+                    .zeroClockedTransitionMarking()
+                    .applySettingsBlock(timeMarkingApplierBlock)
+                    .dump()
             return timeClockIncrement == simulationStepLog.clockIncrement &&
                     chosenTransition == simulationStepLog.selectedFiredTransition &&
-                    tokenAmountStorage == simulationStepLog.endStepMarkingAmounts
-
+                    tokenAmountStorage == simulationStepLog.endStepMarkingAmounts &&
+                    timePNTransitionMarking == simulationStepLog.timePNTransitionMarking
         }
     }
 
@@ -171,17 +177,6 @@ class CompleteRunTest {
                             "t3" to 0
                         }
                     ),
-//                    StepState(
-//                        10L,
-//                        "t2",
-//                        {
-//                            "p2" to 0
-//                            "p3" to 4
-//                            "o1" to 0
-//                            "o2" to 4
-//                        },
-//                        {}
-//                    )
                 )
             )
         )

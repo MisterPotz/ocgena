@@ -26,6 +26,7 @@ import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
 import ru.misterpotz.ocgena.simulation.interactors.RepeatabilityInteractor
 import ru.misterpotz.ocgena.simulation.interactors.SimpleTokenAmountStorage
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
+import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.utils.TimePNRef
 import ru.misterpotz.ocgena.utils.buildMutableMap
@@ -44,6 +45,7 @@ interface SimulationStepLogger {
     fun logTransitionToFire(petriAtomId: PetriAtomId)
     fun logStepEndMarking()
     suspend fun finishStepLog()
+    fun logStepEndTimePNMarking()
 }
 
 class SimulationStepLoggerImpl @Inject constructor(
@@ -51,6 +53,8 @@ class SimulationStepLoggerImpl @Inject constructor(
     private val sparseTokenBunch: SparseTokenBunch,
     private val simulationStateProvider: SimulationStateProvider,
     private val dbLogger: DBLogger,
+    private val timePNTransitionMarking: Provider<TimePNTransitionMarking>,
+    private val developmentDebugConfig: DevelopmentDebugConfig
 ) :
     SimulationStepLogger {
     private val currentSimulationStepLogBuilder: SimulationStepLogBuilder
@@ -67,7 +71,6 @@ class SimulationStepLoggerImpl @Inject constructor(
     override fun logCurrentMarking() {
         currentSimulationStepLogBuilder.starterMarkingAmounts = sparseTokenBunch.tokenAmountStorage().dump()
     }
-
     override fun logTransitionInTokens(tokenbunch: SparseTokenBunch) {
         currentSimulationStepLogBuilder.firingInMarkingAmounts = tokenbunch.tokenAmountStorage().dump()
         currentSimulationStepLogBuilder.firingInMarkingTokens = tokenbunch.objectMarking().dumpTokens()
@@ -87,8 +90,17 @@ class SimulationStepLoggerImpl @Inject constructor(
     }
 
     override fun logStepEndMarking() {
-        currentSimulationStepLogBuilder.stepEndMarking = sparseTokenBunch.tokenAmountStorage().dump()
+        if (developmentDebugConfig.dumpEndStateMarking) {
+            currentSimulationStepLogBuilder.stepEndMarking = sparseTokenBunch.tokenAmountStorage().dump()
+        }
     }
+
+    override fun logStepEndTimePNMarking() {
+        if (developmentDebugConfig.dumpTimePNTransitionMarking) {
+            currentSimulationStepLogBuilder.timePNTransitionMarking = timePNTransitionMarking.get().dump()
+        }
+    }
+
 
     override suspend fun finishStepLog() {
         dbLogger.acceptStepLog(currentSimulationStepLogBuilder.build())
@@ -166,6 +178,7 @@ class TimePetriNetStepExecutor @Inject constructor(
         resetClocksOfTransitionsDisabledByMarking()
 
         simulationStepLogger.logStepEndMarking()
+        simulationStepLogger.logStepEndTimePNMarking()
         simulationStepLogger.finishStepLog()
     }
 }
@@ -243,6 +256,7 @@ class SimulationStepLogBuilder @Inject constructor(
     var firingOutMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
     var firingOutMarkingTokens: Map<PetriAtomId, List<ObjectTokenId>> by Delegates.notNull()
     var tokensInitializedAtStep: List<ObjectTokenMeta> by Delegates.notNull()
+    var timePNTransitionMarking : Map<PetriAtomId, Long>? = null
 
     private val instantiatedTokens = mutableListOf<ObjectTokenId>()
     fun appendInstantiatedTokens(tokens: List<ObjectTokenId>) {
@@ -269,7 +283,8 @@ class SimulationStepLogBuilder @Inject constructor(
             firingOutMarkingAmounts,
             firingInMarkingTokens,
             firingOutMarkingTokens,
-            tokensInitializedAtStep
+            timePNTransitionMarking,
+            tokensInitializedAtStep,
         ).also { alreadyBuilt = true }
     }
 }
@@ -467,7 +482,8 @@ interface TimePNTransitionMarking {
     fun appendClockTime(transitionsToAppendTime: List<PetriAtomId>, delta: Long)
 
     fun copyZeroClock(): TimePNTransitionMarking
-    fun settingBlock(settingBlock: SettingBlock.() -> Unit)
+    fun applySettingsBlock(settingBlock: SettingBlock.() -> Unit) : TimePNTransitionMarking
+    fun dump() : Map<String, Long>
 
     interface SettingBlock {
         infix fun String.to(clock: Int)
@@ -502,6 +518,10 @@ data class TimePNTransitionMarkingImpl @Inject constructor(
         }
     }
 
+    override fun dump(): Map<String, Long> {
+        return mutableMap.mapValues { it.value.counter }
+    }
+
     override fun copyZeroClock(): TimePNTransitionMarking {
         return copy(
             mutableMap = buildMutableMap {
@@ -512,9 +532,10 @@ data class TimePNTransitionMarkingImpl @Inject constructor(
         )
     }
 
-    override fun settingBlock(settingBlock: TimePNTransitionMarking.SettingBlock.() -> Unit) {
+    override fun applySettingsBlock(settingBlock: TimePNTransitionMarking.SettingBlock.() -> Unit): TimePNTransitionMarking {
         val settingBlockImpl = SettingBlockImpl(this)
         settingBlockImpl.settingBlock()
+        return this
     }
 
     private class SettingBlockImpl(val marking: TimePNTransitionMarking) : TimePNTransitionMarking.SettingBlock {
