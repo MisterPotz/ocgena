@@ -1,28 +1,23 @@
 package ru.misterpotz.ocgena.timepn
 
 import kotlinx.coroutines.test.runTest
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
-import ru.misterpotz.SimulationStepLog
+import ru.misterpotz.ocgena.SimulationSequenceHelper
 import ru.misterpotz.ocgena.createArgProvider
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
 import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNTimes
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
 import ru.misterpotz.ocgena.testing.*
 
 class CompleteRunTest {
+
     @ParameterizedTest
     @ArgumentsSource(SimulationSequenceCaseProvider::class)
-    fun `complete run test`(expectedStates: List<StepState>) = runTest {
-        val transitionSequence = expectedStates.slice(1..expectedStates.lastIndex).map { it.chosenTransition!! }
-        val timeSelectionSequence =
-            expectedStates.slice(1..expectedStates.lastIndex).map { it.timeClockIncrement.toInt() }
+    fun `complete run test`(expectedStates: List<ExpectedStepState>) = runTest {
+        val simulationSequenceHelper = SimulationSequenceHelper().setExpectedStepStates(expectedStates)
 
         val config = buildConfig {
             this.ocNetStruct = buildOCNet {
@@ -35,55 +30,21 @@ class CompleteRunTest {
             put("p1", 3)
         }.asTimePNwithSpec(TransitionsTimePNSpec(default = (0..10).toTimePNTimes()))
 
-        val testingDBLogger = TestingDBLogger()
-
         val simComp = config.toSimComponentFancy {
-            setTransitionSelectionSequence(transitionSequence)
-            setTimeSelectionRandom(timeSelectionSequence)
-            setDbLogger(testingDBLogger)
-            dumpStepEndMarking = true
-            dumpTimePnMarking = true
+            simulationSequenceHelper.setup(this)
         }
         simComp.simulationTask().prepareAndRunAll()
 
-
-        Assertions.assertEquals(
-            expectedStates.slice(1..expectedStates.lastIndex).map { true },
-            expectedStates.slice(1..expectedStates.lastIndex)
-                .zip(testingDBLogger.stepLogs) { expected, realLog ->
-                    expected.compareToStepLog(realLog, simComp)
-                }
-        )
+        simulationSequenceHelper.assertTestingDBLogsToExpected(simComp)
     }
 
-    data class StepState(
-        val timeClockIncrement: Long,
-        val chosenTransition: String?,
-        val markingApplierBlock: SparseTokenBunchImpl.Builder.() -> Unit,
-        val timeMarkingApplierBlock: TimePNTransitionMarking.SettingBlock.() -> Unit
-    ) {
-        fun compareToStepLog(simulationStepLog: SimulationStepLog, simulationComponent: SimulationComponent): Boolean {
-            val tokenAmountStorage =
-                simulationComponent.emptyTokenBunchBuilder().apply(markingApplierBlock).buildTokenBunch()
-                    .tokenAmountStorage.dump()
-            val timePNTransitionMarking =
-                simulationComponent
-                    .zeroClockedTransitionMarking()
-                    .applySettingsBlock(timeMarkingApplierBlock)
-                    .dump()
-            return timeClockIncrement == simulationStepLog.clockIncrement &&
-                    chosenTransition == simulationStepLog.selectedFiredTransition &&
-                    tokenAmountStorage == simulationStepLog.endStepMarkingAmounts &&
-                    timePNTransitionMarking == simulationStepLog.timePNTransitionMarking
-        }
-    }
 
     companion object {
         class SimulationSequenceCaseProvider : ArgumentsProvider by createArgProvider(
             listOf(
                 listOf(
                     // initial state
-                    StepState(
+                    ExpectedStepState(
                         0,
                         null,
                         {
@@ -93,7 +54,7 @@ class CompleteRunTest {
                             "t1" to 0
                         }
                     ),
-                    StepState(
+                    ExpectedStepState(
                         5L,
                         "t1",
                         {
@@ -103,7 +64,7 @@ class CompleteRunTest {
                         },
                         {}
                     ),
-                    StepState(
+                    ExpectedStepState(
                         2L,
                         "t1",
                         {
@@ -117,7 +78,7 @@ class CompleteRunTest {
                             "t3" to 2
                         }
                     ),
-                    StepState(
+                    ExpectedStepState(
                         8L,
                         chosenTransition = "t2",
                         {
@@ -132,7 +93,7 @@ class CompleteRunTest {
                             "t3" to 0
                         }
                     ),
-                    StepState(
+                    ExpectedStepState(
                         2L,
                         "t3",
                         {
@@ -148,7 +109,7 @@ class CompleteRunTest {
                             "t3" to 0L
                         }
                     ),
-                    StepState(
+                    ExpectedStepState(
                         0L,
                         "t1",
                         {
@@ -162,7 +123,7 @@ class CompleteRunTest {
                             "t3" to 0
                         }
                     ),
-                    StepState(
+                    ExpectedStepState(
                         3L,
                         "t3",
                         {
