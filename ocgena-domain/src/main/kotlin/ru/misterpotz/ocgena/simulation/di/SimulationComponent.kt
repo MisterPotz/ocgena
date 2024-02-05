@@ -3,6 +3,7 @@ package ru.misterpotz.ocgena.simulation.di
 import com.charleskorn.kaml.Yaml
 import dagger.*
 import kotlinx.serialization.json.Json
+import net.bytebuddy.build.Plugin.Factory.Simple
 import ru.misterpotz.DBLogger
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
@@ -483,6 +484,8 @@ interface SimulationComponent {
             randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random>,
             @BindsInstance
             defaultTimePNProvider: DefaultTimePNProvider,
+            @BindsInstance
+            determinedTransitionSequenceProvider: DeterminedTransitionSequenceProvider,
             componentDependencies: SimulationComponentDependencies,
         ): SimulationComponent
     }
@@ -491,6 +494,9 @@ interface SimulationComponent {
         fun defaultCreate(
             simulationConfig: SimulationConfig,
             componentDependencies: SimulationComponentDependencies,
+            determinedTransitionSequenceProvider: DeterminedTransitionSequenceProvider = SimpleDeterminedTransitionSequenceProvider(
+                listOf()
+            ),
             developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
             randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random> = mutableMapOf(),
             executionContinuation: ExecutionContinuation = NoOpExecutionContinuation(),
@@ -503,7 +509,8 @@ interface SimulationComponent {
                 componentDependencies = componentDependencies,
                 executionContinuation = executionContinuation,
                 defaultTimePNProvider = DefaultTimePNProvider(),
-                randomInstances = randomInstances
+                randomInstances = randomInstances,
+                determinedTransitionSequenceProvider = determinedTransitionSequenceProvider
             )
         }
 
@@ -516,6 +523,7 @@ interface SimulationComponent {
             executionContinuation: ExecutionContinuation,
             defaultTimePNProvider: DefaultTimePNProvider,
             randomInstances: Map<@JvmSuppressWildcards RandomUseCase, @JvmSuppressWildcards Random>,
+            determinedTransitionSequenceProvider: DeterminedTransitionSequenceProvider,
         ): SimulationComponent {
             return DaggerSimulationComponent.factory()
                 .create(
@@ -526,6 +534,7 @@ interface SimulationComponent {
                     executionContinuation,
                     randomInstances,
                     defaultTimePNProvider,
+                    determinedTransitionSequenceProvider,
                     componentDependencies,
                 )
         }

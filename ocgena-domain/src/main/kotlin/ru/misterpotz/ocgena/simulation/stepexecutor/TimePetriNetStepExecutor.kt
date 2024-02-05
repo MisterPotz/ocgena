@@ -28,6 +28,7 @@ import ru.misterpotz.ocgena.simulation.interactors.SimpleTokenAmountStorage
 import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
 import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
 import ru.misterpotz.ocgena.utils.TimePNRef
+import ru.misterpotz.ocgena.utils.buildMutableMap
 import simulation.random.RandomSource
 import javax.inject.Inject
 import javax.inject.Provider
@@ -41,6 +42,7 @@ interface SimulationStepLogger {
     fun logTransitionOutTokens(tokenBunch: SparseTokenBunch)
     fun appendInstantiatedTokens(tokens: List<ObjectTokenId>)
     fun logTransitionToFire(petriAtomId: PetriAtomId)
+    fun logStepEndMarking()
     suspend fun finishStepLog()
 }
 
@@ -84,6 +86,10 @@ class SimulationStepLoggerImpl @Inject constructor(
         currentSimulationStepLogBuilder.selectedFiredTransition = petriAtomId
     }
 
+    override fun logStepEndMarking() {
+        currentSimulationStepLogBuilder.stepEndMarking = sparseTokenBunch.tokenAmountStorage().dump()
+    }
+
     override suspend fun finishStepLog() {
         dbLogger.acceptStepLog(currentSimulationStepLogBuilder.build())
     }
@@ -103,18 +109,16 @@ class TimePetriNetStepExecutor @Inject constructor(
 
     private fun collectTransitionsThatCanBeSelected(): List<Transition> {
         return buildList {
-            val transitionsThatMustFireNow = ocNet.transitionsRegistry.iterable.filter {
-                timePNTransitionMarking.forTransition(it.id).mustFireNow()
-            }
-            addAll(transitionsThatMustFireNow)
-
-            if (transitionsThatMustFireNow.isEmpty()) {
-                val transitionsThatCanFireNow = ocNet.transitionsRegistry.filter {
-                    timePNTransitionMarking.forTransition(it.id).canFireNow()
+            transitionDisabledByMarkingChecker.transitionsPartiallyEnabledByMarking().forEach {
+                if (timePNTransitionMarking.forTransition(it).mustFireNow() ||
+                    timePNTransitionMarking.forTransition(it).canFireNow()
+                ) {
+                    add(ocNet.transitionsRegistry[it])
                 }
-                addAll(transitionsThatCanFireNow)
             }
-        }.sortedBy { it.id }
+        }
+            .distinctBy { it.id }
+            .sortedBy { it.id }
     }
 
     private fun resetClocksOfTransitionsWithSharedPreplaces(transition: Transition) {
@@ -146,9 +150,10 @@ class TimePetriNetStepExecutor @Inject constructor(
         val transitionsThatCanBeSelectedForFiring = collectTransitionsThatCanBeSelected()
 
         // select the transition to fire
-        val transitionToFire = transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return Unit.also {
-            simulationStateProvider.getSimulationStepState().setFinished()
-        }
+        val transitionToFire =
+            transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return Unit.also {
+                simulationStateProvider.getSimulationStepState().setFinished()
+            }
         simulationStepLogger.logTransitionToFire(transitionToFire.id)
 
         // fire transition using transition rule
@@ -160,13 +165,33 @@ class TimePetriNetStepExecutor @Inject constructor(
         // clocks of transitions that became disabled by marking are now reset
         resetClocksOfTransitionsDisabledByMarking()
 
+        simulationStepLogger.logStepEndMarking()
         simulationStepLogger.finishStepLog()
     }
 }
 
-class TransitionToFireSelector @Inject constructor(private val randomSource: RandomSource) {
+interface DeterminedTransitionSequenceProvider {
+    fun getNextTransition(): PetriAtomId?
+}
+
+class SimpleDeterminedTransitionSequenceProvider(transitions: List<PetriAtomId> = listOf()) :
+    DeterminedTransitionSequenceProvider {
+    private val transitions = transitions.toMutableList()
+    override fun getNextTransition(): PetriAtomId? {
+        return transitions.removeFirstOrNull()
+    }
+}
+
+class TransitionToFireSelector @Inject constructor(
+    private val randomSource: RandomSource,
+    private val determinedSequence: DeterminedTransitionSequenceProvider
+) {
     fun select(transitions: List<Transition>): Transition? {
         if (transitions.isEmpty()) return null
+        val nextTransition = determinedSequence.getNextTransition()
+        if (nextTransition != null) {
+            return transitions.find { it.id == nextTransition }!!
+        }
         return transitions.random(randomSource.transitionSelection())
     }
 }
@@ -212,6 +237,7 @@ class SimulationStepLogBuilder @Inject constructor(
     var clockIncrement: Long by Delegates.notNull()
     var selectedFiredTransition: PetriAtomId? = null
     var starterMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
+    var stepEndMarking: Map<PetriAtomId, Int>? = null
     var firingInMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
     var firingInMarkingTokens: Map<PetriAtomId, List<ObjectTokenId>> by Delegates.notNull()
     var firingOutMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
@@ -238,6 +264,7 @@ class SimulationStepLogBuilder @Inject constructor(
             clockIncrement,
             selectedFiredTransition,
             starterMarkingAmounts,
+            stepEndMarking,
             firingInMarkingAmounts,
             firingOutMarkingAmounts,
             firingInMarkingTokens,
@@ -438,6 +465,13 @@ interface TimePNTransitionMarking {
     fun forTransition(petriAtomId: PetriAtomId): TimePnTransitionData
 
     fun appendClockTime(transitionsToAppendTime: List<PetriAtomId>, delta: Long)
+
+    fun copyZeroClock(): TimePNTransitionMarking
+    fun settingBlock(settingBlock: SettingBlock.() -> Unit)
+
+    interface SettingBlock {
+        infix fun String.to(clock: Int)
+    }
 }
 
 fun TimePNTransitionMarking(map: Map<PetriAtomId, TimePnTransitionData>): TimePNTransitionMarkingImpl {
@@ -465,6 +499,27 @@ data class TimePNTransitionMarkingImpl @Inject constructor(
     override fun appendClockTime(transitionsToAppendTime: List<PetriAtomId>, delta: Long) {
         for (transition in transitionsToAppendTime) {
             forTransition(transition).incrementCounter(delta)
+        }
+    }
+
+    override fun copyZeroClock(): TimePNTransitionMarking {
+        return copy(
+            mutableMap = buildMutableMap {
+                for ((key, value) in mutableMap) {
+                    put(key, value.copy(counter = 0))
+                }
+            }
+        )
+    }
+
+    override fun settingBlock(settingBlock: TimePNTransitionMarking.SettingBlock.() -> Unit) {
+        val settingBlockImpl = SettingBlockImpl(this)
+        settingBlockImpl.settingBlock()
+    }
+
+    private class SettingBlockImpl(val marking: TimePNTransitionMarking) : TimePNTransitionMarking.SettingBlock {
+        override fun String.to(clock: Int) {
+            marking.forTransition(this).counter = clock.toLong()
         }
     }
 }

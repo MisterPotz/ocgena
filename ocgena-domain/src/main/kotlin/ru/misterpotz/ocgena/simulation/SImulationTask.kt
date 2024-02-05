@@ -76,22 +76,16 @@ class SimulationTask @Inject constructor(
     }
 
     private suspend fun runStep() {
-        while (
-            !isFinished() &&
-            executionContinuation.shouldDoNextStep()
-        ) {
-            debugStepGranularityLog()
+        debugStepGranularityLog()
 
-            simulationStepState.currentStep = simulationStepState.stepIndex
-            simulationStateProvider.onNewStep()
+        simulationStepState.currentStep = simulationStepState.stepIndex
+        simulationStateProvider.onNewStep()
 
-            logger.onExecutionNewStepStart()
+        logger.onExecutionNewStepStart()
 
-            stepExecutor.executeStep(executionContinuation)
+        stepExecutor.executeStep(executionContinuation)
 
-            simulationStepState.incrementStep()
-        }
-        dbLogger.simulationFinished()
+        simulationStepState.incrementStep()
     }
 
     suspend fun prepareRun() {
@@ -107,6 +101,7 @@ class SimulationTask @Inject constructor(
             logger.afterFinalMarking()
             simulationStateProvider.markFinished()
             logger.onEnd()
+            dbLogger.simulationFinished()
             return true
         }
         return false

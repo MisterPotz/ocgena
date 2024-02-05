@@ -51,9 +51,11 @@ data class SparseTokenBunchImpl(
 
     interface Builder {
         fun forPlace(petriAtomId: PetriAtomId, block: PlaceAccessa.() -> Unit): Builder
+        fun setAtPlace(petriAtomId: PetriAtomId, realTokens : Int) : Builder
         fun buildTokenBunch(): SparseTokenBunchImpl
         fun buildWithTypeRegistry(): Pair<SparseTokenBunchImpl, PlaceToObjectTypeRegistry>
 
+        infix fun String.to(tokenAmount : Int)
     }
 
     private class BuilderImpl : Builder {
@@ -82,6 +84,13 @@ data class SparseTokenBunchImpl(
             return this
         }
 
+        override fun setAtPlace(petriAtomId: PetriAtomId, realTokens: Int): Builder {
+            forPlace(petriAtomId) {
+                this.realTokens = realTokens
+            }
+            return this
+        }
+
         override fun buildTokenBunch(): SparseTokenBunchImpl {
             val marking = forPlace.mapValues { (id, block) ->
                 block.initializedTokens.toSortedSet()
@@ -107,6 +116,10 @@ data class SparseTokenBunchImpl(
                 }.toMutableMap()
             )
             return Pair(sparseTokenBunch, placeToObjectTypeRegistry)
+        }
+
+        override fun String.to(tokenAmount: Int) {
+            setAtPlace(this, tokenAmount)
         }
     }
 

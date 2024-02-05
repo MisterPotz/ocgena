@@ -18,6 +18,7 @@ data class SimulationStepLog(
     val clockIncrement: Long,
     val selectedFiredTransition: String? = null,
     val starterMarkingAmounts: Map<String, Int> = mutableMapOf(),
+    val endStepMarkingAmounts : Map<String, Int>? = null,
     val firingInMarkingAmounts: Map<String, Int> = mutableMapOf(),
     val firingOutMarkingAmounts: Map<String, Int> = mutableMapOf(),
     val firingInMarkingTokens: Map<String, List<Long>> = mutableMapOf(),

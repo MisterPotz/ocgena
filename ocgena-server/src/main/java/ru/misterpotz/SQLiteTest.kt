@@ -60,11 +60,11 @@ fun main() {
 //    val repository = serverSimulationComponent.simulationLogRepository()
 
 
+
     runBlocking {
         simulationComponent.simulationTask().prepareAndRunAll()
     }
 }
-
 
 fun main3() {
     val serverSimulationComponent = ServerSimulationComponent.create(
