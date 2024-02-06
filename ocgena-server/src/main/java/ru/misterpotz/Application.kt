@@ -33,9 +33,19 @@ fun serverSimulationConfig() = ServerSimulationConfig(
     }
 )
 
-fun main() {
-    val domainComponent = DomainComponent.create()
-    val serverComponent = ServerComponent.create(domainComponent)
+object ServiceProvider {
+    val domainComponent by lazy {
+        DomainComponent.create()
+    }
+
+    val serverComponent by lazy {
+        ServerComponent.create(domainComponent)
+    }
+}
+
+suspend fun startSimulation() {
+    val serverComponent = ServiceProvider.serverComponent
+
     val serverSimulationComponent =
         ServerSimulationComponent.create(
             serverSimulationConfig(),
@@ -47,7 +57,10 @@ fun main() {
             serverSimulationComponent.simulationConfig(),
             serverSimulationComponent
         )
+    simulationComponent.simulationTask().prepareAndRunAll()
+}
 
+fun main() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
