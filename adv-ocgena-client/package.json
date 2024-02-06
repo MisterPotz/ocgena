@@ -10,7 +10,7 @@
     "webpack",
     "hot",
     "reload"
-  ],
+  ], 
   "homepage": "https://github.com/electron-react-boilerplate/electron-react-boilerplate#readme",
   "bugs": {
     "url": "https://github.com/electron-react-boilerplate/electron-react-boilerplate/issues"

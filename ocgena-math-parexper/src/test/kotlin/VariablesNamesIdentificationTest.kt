@@ -4,6 +4,23 @@ import ru.misterpotz.expression.facade.fullConvertM
 import ru.misterpotz.expression.facade.getVariablesNames
 
 class VariablesNamesIdentificationTest {
+
+    @Test
+    fun singleVariableNameIdentified() {
+        val expr = "n"
+        val mathNode = expr.fullConvertM
+
+        Assertions.assertEquals(1, mathNode.getVariablesNames().size)
+    }
+
+    @Test
+    fun singleVariableExprNameIdentified() {
+        val expr = "6*n"
+        val mathNode = expr.fullConvertM
+
+        Assertions.assertEquals(1, mathNode.getVariablesNames().size)
+    }
+
     @Test
     fun variablesNamesIdentified() {
         val expr = "kek * lol - arbidol + 5"
