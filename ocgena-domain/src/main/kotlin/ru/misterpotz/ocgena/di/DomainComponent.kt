@@ -120,24 +120,20 @@ class DomainModule {
     }
 }
 
-interface DomainComponentDependencies {
-    fun dbLogger(): DBLogger
-}
-
 @DomainScope
-@Component(modules = [DomainModule::class], dependencies = [DomainComponentDependencies::class])
-interface DomainComponent : SimulationComponentDependencies {
+@Component(modules = [DomainModule::class])
+interface DomainComponent {
     fun json(): Json
     fun yaml(): Yaml
 
     @Component.Factory
     interface Factory {
-        fun create(domainComponentDependencies: DomainComponentDependencies): DomainComponent
+        fun create(): DomainComponent
     }
 
     companion object {
-        fun create(domainComponentDependencies: DomainComponentDependencies): DomainComponent {
-            return DaggerDomainComponent.factory().create(domainComponentDependencies)
+        fun create(): DomainComponent {
+            return DaggerDomainComponent.factory().create()
         }
     }
 }

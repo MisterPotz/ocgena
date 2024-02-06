@@ -1,14 +1,15 @@
 package ru.misterpotz.ocgena.testing
 
+import com.charleskorn.kaml.Yaml
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import ru.misterpotz.DBLogger
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.di.DomainComponent
-import ru.misterpotz.ocgena.di.DomainComponentDependencies
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
@@ -28,6 +29,7 @@ import ru.misterpotz.ocgena.simulation.config.original.TimeUntilNextInstanceIsAl
 import ru.misterpotz.ocgena.simulation.config.original.TransitionInstanceTimes
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
 import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
@@ -127,12 +129,22 @@ fun defaultSimConfigTimePN(
     )
 }
 
+fun simulationComponentDependencies(
+    dbLogger: DBLogger? = null,
+    domainComponent: DomainComponent = domainComponent()
+): SimulationComponentDependencies {
+    return object : SimulationComponentDependencies {
+        val dbLogger: DBLogger = dbLogger ?: mockk(relaxed = true, relaxUnitFun = true)
+        override val json: Json = domainComponent.json()
+        override val yaml: Yaml = domainComponent.yaml()
 
-fun domainComponent(dbLogger: DBLogger? = null): DomainComponent {
-    val domainComponentDependenciesMockk = mockk<DomainComponentDependencies> {
-        every { dbLogger() } returns (dbLogger ?: mockk(relaxed = true, relaxUnitFun = true))
+        override fun dbLogger(): DBLogger = this.dbLogger
+
     }
-    return DomainComponent.create(domainComponentDependenciesMockk)
+}
+
+fun domainComponent(): DomainComponent {
+    return DomainComponent.create()
 }
 
 fun simComponent(
@@ -144,7 +156,7 @@ fun simComponent(
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
-        componentDependencies = domainComponent(dbLogger = dbLogger),
+        componentDependencies = simulationComponentDependencies(dbLogger),
         randomInstances = randomInstances,
         developmentDebugConfig = developmentDebugConfig,
         determinedTransitionSequenceProvider = determinedTransitionSequenceProvider
@@ -159,7 +171,7 @@ fun simComponentOld(
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,
-        componentDependencies = DOMAIN_COMPONENT,
+        componentDependencies = simulationComponentDependencies(),
         randomInstances = listOf(RandomUseCase.TIME_SELECTION to randomInstance).filter {
             it.second != null
         }.associateBy { it.first }

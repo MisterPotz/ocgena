@@ -94,34 +94,34 @@ fun String.writeConfig(path: Path) {
 inline fun <reified T> jsonConfig(name: String): T {
     val text = config(name).readText()
 
-    return DOMAIN_COMPONENT.json.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.json().decodeFromString<T>(text)
 }
 
 inline fun <reified T> yamlConfig(name: String): T {
     val text = config(name).readText()
 
-    return DOMAIN_COMPONENT.yaml.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.yaml().decodeFromString<T>(text)
 }
 
 inline fun <reified T> jsonConfig(path: Path): T {
 
     val text = config(path).readText()
 
-    return DOMAIN_COMPONENT.json.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.json().decodeFromString<T>(text)
 }
 
 inline fun <reified T> yamlConfig(path: Path): T {
     val text = config(path).readText()
 
-    return DOMAIN_COMPONENT.yaml.decodeFromString<T>(text)
+    return DOMAIN_COMPONENT.yaml().decodeFromString<T>(text)
 }
 
 inline fun <reified T> T.toYaml(): String {
-    return DOMAIN_COMPONENT.yaml.encodeToString(this)
+    return DOMAIN_COMPONENT.yaml().encodeToString(this)
 }
 
 inline fun <reified T> T.toJson(): String {
-    return DOMAIN_COMPONENT.json.encodeToString(this)
+    return DOMAIN_COMPONENT.json().encodeToString(this)
 }
 
 inline fun <reified T> deserializeResourceByClassWithPath(name: String): T {
