@@ -7,13 +7,10 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.transactions.transactionManager
-import org.sqlite.SQLiteConfig
-import org.sqlite.SQLiteDataSource
 import ru.misterpotz.di.ServerSimulationComponent
 import ru.misterpotz.di.ServerSimulationConfig
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
 import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.testing.buildConfig
@@ -57,9 +54,6 @@ fun main() {
     val domainComponent = DomainComponent.create(serverSimulationComponent)
     val simulationComponent =
         SimulationComponent.defaultCreate(serverSimulationComponent.simulationConfig(), domainComponent)
-//    val repository = serverSimulationComponent.simulationLogRepository()
-
-
 
     runBlocking {
         simulationComponent.simulationTask().prepareAndRunAll()

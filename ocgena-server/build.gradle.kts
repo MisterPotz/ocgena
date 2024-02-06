@@ -3,6 +3,8 @@ plugins {
     id("java-library")
     id("com.google.devtools.ksp") version "1.9.20-1.0.14"
     kotlin("plugin.serialization") version "1.9.20"
+
+    id("io.ktor.plugin") version "2.3.8"
 }
 
 group = "ru.misterpotz"
@@ -12,7 +14,17 @@ repositories {
     mavenCentral()
 }
 
+application {
+    mainClass.set("ru.misterpotz.ApplicationKt")
+
+    val isDevelopment: Boolean = project.ext.has("development")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
+}
+
 val exposedVersion: String by project
+val ktorVersion: String by project
+val kotlin_version: String by project
+val logback_version: String by project
 
 dependencies {
     api(project(":db_api"))
@@ -35,6 +47,19 @@ dependencies {
     implementation("com.google.dagger:dagger:2.48")
     //kapt("com.google.dagger:dagger-compiler:2.48.1") // fallback to this if ksp goes crazy
     ksp("com.google.dagger:dagger-compiler:2.48")
+
+//    implementation("io.ktor:ktor-server-netty:$ktorVersion")
+
+    implementation("io.ktor:ktor-server-core-jvm")
+    implementation("io.ktor:ktor-server-websockets-jvm")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")
+    implementation("io.ktor:ktor-server-call-logging-jvm")
+    implementation("io.ktor:ktor-server-netty-jvm")
+    implementation("ch.qos.logback:logback-classic:$logback_version")
+    testImplementation("io.ktor:ktor-server-tests-jvm")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
