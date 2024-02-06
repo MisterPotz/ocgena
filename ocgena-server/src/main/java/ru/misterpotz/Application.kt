@@ -39,7 +39,7 @@ fun main() {
     val serverSimulationComponent =
         ServerSimulationComponent.create(
             serverSimulationConfig(),
-            serverComponent.serverSubcomponent()
+            serverComponent
         )
 
     val simulationComponent =
