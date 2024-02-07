@@ -1,13 +1,14 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./CanvasEditor.css";
 
 interface ICoord {
   x: number;
   y: number;
+}
 
-  plusCopy(offset: { x?: number; y?: number }): ICoord;
-  minusCopy(coord: Coord): ICoord;
-  set(offset: Coord): any;
+interface IArea {
+  topLeft : ICoord,
+  bottomRight : ICoord
 }
 
 class Coord implements ICoord {
@@ -19,7 +20,7 @@ class Coord implements ICoord {
     this.y = df?.y ?? 0;
   }
 
-  set(offset: Coord) {
+  set(offset: ICoord) {
     this.x = offset.x;
     this.y = offset.y;
   }
@@ -31,7 +32,7 @@ class Coord implements ICoord {
     });
   }
 
-  minusCopy(coord: Coord): Coord {
+  minusCopy(coord: ICoord): Coord {
     return new Coord({ x: this.x - coord.x, y: this.y - coord.y });
   }
 }
@@ -41,7 +42,7 @@ interface Rect {
   width: number;
 }
 
-class ChildElement {
+class Element {
   shape: Shape;
   localCoord: ICoord;
   zCoord: number;
@@ -60,7 +61,7 @@ abstract class Shape {
 
 class CanvasProxy {
   canvas: CanvasRenderingContext2D;
-  currentOffset: ICoord = new Coord();
+  currentOffset: Coord = new Coord();
 
   constructor(canvas: CanvasRenderingContext2D) {
     this.canvas = canvas;
@@ -87,8 +88,8 @@ class Rectangle extends Shape {
   draw(canvas: CanvasProxy) {
     canvas.drawRect(this.rect);
   }
-  isMineCoord(coordRelativeTopLeft: Coord): Boolean {
-    throw new Error("Method not implemented.");
+  isMineCoord(localCoord: Coord): Boolean {
+    return this.rect.height >= localCoord.y && this.rect.width >= localCoord.x
   }
 }
 
@@ -99,7 +100,7 @@ class ArrangementPainter {
     this.canvasProxy = canvasProxy;
   }
 
-  paint(localArrangementStore: LocalArrangementStore) {
+  paint(localArrangementStore: Arrangement) {
     localArrangementStore.childsWithMetadata.forEach((element) => {
       this.canvasProxy.currentOffset.set(element.localCoord);
       element.shape.draw(this.canvasProxy);
@@ -107,19 +108,37 @@ class ArrangementPainter {
   }
 }
 
-class LocalArrangementStore {
-  childsWithMetadata: ChildElement[] = [];
+class CanvasWrapper {
+  canvas: HTMLCanvasElement;
 
-  getClickedChild(localCoord: Coord): ChildElement | null {
-    let foundChild = this.childsWithMetadata.find((child) => {
-      let offset = localCoord.minusCopy(child.localCoord);
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+  }
 
-      child.shape.isMineCoord(offset);
+  resolveCanvasCoord(): Coord {
+    return new Coord({
+      x: this.canvas.offsetLeft + this.canvas.clientLeft,
+      y: this.canvas.offsetTop + this.canvas.clientTop,
     });
+  }
+}
+
+class Arrangement {
+  childsWithMetadata: Element[] = [];
+
+  getClickedChild(localCoord: Coord): Element | null {
+    let foundChild = this.childsWithMetadata.reduceRight(
+      (prevValue: Element | null, current: Element) => {
+        if (prevValue) return prevValue;
+        let offset = localCoord.minusCopy(current.localCoord);
+        return current.shape.isMineCoord(offset) ? current : null;
+      },
+      null
+    );
     return foundChild ?? null;
   }
 
-  addChild(childWithMetadata: ChildElement) {
+  addChild(childWithMetadata: Element) {
     let insertionIndex = this.childsWithMetadata.findIndex((value) => {
       value.zCoord - childWithMetadata.zCoord;
     });
@@ -136,38 +155,50 @@ class LocalArrangementStore {
 function CanvasEditor() {
   //   let myPoint = new Coord({x: 3});
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
+  const eventListenerAdded = useRef(false);
   useEffect(() => {
     if (canvasRef.current) {
       console.log(`in current `, canvasRef.current);
+      const canvasWrapper = new CanvasWrapper(canvasRef.current);
       const child = new Rectangle({ height: 100, width: 1000 });
-      const localArrangementStore = new LocalArrangementStore();
+      const localArrangementStore = new Arrangement();
+
+      if (!eventListenerAdded.current) {
+        canvasRef.current.addEventListener(
+          "click",
+          (ev: MouseEvent) => {
+            let clientX = ev.clientX;
+            let clientY = ev.clientY;
+            let clientCoord = new Coord({ x: clientX, y: clientY });
+            let htmlCoord = canvasWrapper.resolveCanvasCoord();
+
+            console.log("html coord", htmlCoord);
+            let localHtmlCoord = clientCoord.minusCopy(htmlCoord);
+            console.log("local html coord", localHtmlCoord);
+            let clickedChild =
+              localArrangementStore.getClickedChild(localHtmlCoord);
+            console.log("clicked child", clickedChild);
+          },
+          false
+        );
+        eventListenerAdded.current = true;
+      }
       localArrangementStore.addChild(
-        new ChildElement({
+        new Element({
           shape: child,
           localCoord: new Coord({ x: 100, y: 10 }),
         })
       );
       var ctx = canvasRef.current.getContext("2d")!;
-
       const arrangementPainter = new ArrangementPainter(new CanvasProxy(ctx));
       arrangementPainter.paint(localArrangementStore);
-      canvasRef.current.addEventListener(
-        "click",
-        (ev) => {
-          let clientX = ev.clientX;
-          let clientY = ev.clientY;
-          console.log(new Coord({ x: clientX, y: clientY }));
-        },
-        false
-      );
     }
   }, []);
   return (
     <>
       <div>
         <p>Hallo Guten Tag</p>
-        <canvas ref={canvasRef}></canvas>
+        <canvas style={{ margin: 100 }} ref={canvasRef}></canvas>
       </div>
     </>
   );
