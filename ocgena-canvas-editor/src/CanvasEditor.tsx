@@ -7,8 +7,8 @@ interface ICoord {
 }
 
 interface IArea {
-  topLeft : ICoord,
-  bottomRight : ICoord
+  topLeft: ICoord;
+  bottomRight: ICoord;
 }
 
 class Coord implements ICoord {
@@ -37,9 +37,13 @@ class Coord implements ICoord {
   }
 }
 
-interface Rect {
+interface IRect {
   height: number;
   width: number;
+}
+
+interface ICircle {
+  radius: number;
 }
 
 class Element {
@@ -59,6 +63,10 @@ abstract class Shape {
   abstract draw(canvas: CanvasProxy): any;
 }
 
+interface CanvasProxyDrawBlock {
+  (canvas: CanvasRenderingContext2D, relative: Coord): any;
+}
+
 class CanvasProxy {
   canvas: CanvasRenderingContext2D;
   currentOffset: Coord = new Coord();
@@ -67,30 +75,79 @@ class CanvasProxy {
     this.canvas = canvas;
   }
 
-  drawRect(rect: Rect) {
-    this.canvas.fillRect(
-      this.currentOffset.x,
-      this.currentOffset.y,
-      rect.width,
-      rect.height
-    );
+  drawWithOffset(canvasProxyDrawBlock: CanvasProxyDrawBlock) {
+    canvasProxyDrawBlock(this.canvas, this.currentOffset);
   }
 }
 
 class Rectangle extends Shape {
-  rect: Rect;
+  rect: IRect;
 
-  constructor(rect: Rect = { height: 100, width: 100 }) {
+  constructor(rect: IRect = { height: 100, width: 100 }) {
     super();
     this.rect = rect;
   }
 
   draw(canvas: CanvasProxy) {
-    canvas.drawRect(this.rect);
+    canvas.drawWithOffset((canvas, coord) => {
+      canvas.fillRect(coord.x, coord.y, this.rect.width, this.rect.height);
+    });
   }
   isMineCoord(localCoord: Coord): Boolean {
-    return this.rect.height >= localCoord.y && this.rect.width >= localCoord.x
+    return coordFallsIn(
+      localCoord,
+      { x: 0, y: 0 },
+      { x: this.rect.width, y: this.rect.height }
+    );
   }
+}
+
+class Circle extends Shape {
+  circle: ICircle;
+
+  constructor(circle: ICircle) {
+    super();
+    this.circle = circle;
+  }
+
+  draw(canvas: CanvasProxy) {
+    canvas.drawWithOffset((canvas, offset) => {
+      canvas.beginPath();
+      canvas.ellipse(
+        offset.x + this.circle.radius,
+        offset.y + this.circle.radius,
+        this.circle.radius,
+        this.circle.radius,
+        0,
+        0,
+        Math.PI * 2
+      );
+      canvas.stroke();
+      canvas.closePath();
+    });
+  }
+
+  isMineCoord(coordRelativeTopLeft: ICoord): Boolean {
+    let center = { x: this.circle.radius, y: this.circle.radius };
+    return distance(center, coordRelativeTopLeft) <= this.circle.radius;
+  }
+}
+
+function distance(coord2: ICoord, coord1: ICoord): number {
+  return Math.sqrt((coord2.x - coord1.x) ** 2 + (coord2.y - coord1.y) ** 2);
+}
+
+function coordFallsIn(
+  coord: ICoord,
+  areaTopLeft: ICoord,
+  areaBottomRight: ICoord
+): Boolean {
+  return (
+    areaTopLeft.x <= coord.x &&
+    areaTopLeft.y <= coord.y &&
+    coord.x <= areaBottomRight.x &&
+    coord.y <= areaBottomRight.y
+  );
 }
 
 class ArrangementPainter {
@@ -160,10 +217,21 @@ function CanvasEditor() {
     if (canvasRef.current) {
       console.log(`in current `, canvasRef.current);
       const canvasWrapper = new CanvasWrapper(canvasRef.current);
-      const child = new Rectangle({ height: 100, width: 1000 });
       const localArrangementStore = new Arrangement();
+      var ctx = canvasRef.current.getContext("2d")!;
 
       if (!eventListenerAdded.current) {
+        if (window.devicePixelRatio > 1) {
+          let canvas = canvasRef.current;
+          var canvasWidth = 500;
+          var canvasHeight = 500;
+          canvas.width = canvasWidth * window.devicePixelRatio;
+          canvas.height = canvasHeight * window.devicePixelRatio;
+          canvas.style.width = canvasWidth + "px";
+          canvas.style.height = canvasHeight + "px";
+          ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
         canvasRef.current.addEventListener(
           "click",
           (ev: MouseEvent) => {
@@ -185,21 +253,26 @@ function CanvasEditor() {
       }
       localArrangementStore.addChild(
         new Element({
-          shape: child,
-          localCoord: new Coord({ x: 100, y: 10 }),
+          shape: new Rectangle({ height: 50, width: 50 }),
+          localCoord: { x: 100, y: 0 },
         })
       );
-      var ctx = canvasRef.current.getContext("2d")!;
+      localArrangementStore.addChild(
+        new Element({
+          shape: new Circle({ radius: 50 }),
+          localCoord: { x: 0, y: 0 },
+        })
+      );
       const arrangementPainter = new ArrangementPainter(new CanvasProxy(ctx));
       arrangementPainter.paint(localArrangementStore);
     }
   }, []);
   return (
     <>
-      <div>
+      {/* <div>
         <p>Hallo Guten Tag</p>
-        <canvas style={{ margin: 100 }} ref={canvasRef}></canvas>
-      </div>
+      </div> */}
+      <canvas style={{ width: 500, height: 500 }} ref={canvasRef}></canvas>
     </>
   );
 }
