@@ -64,19 +64,19 @@ abstract class Shape {
 }
 
 interface CanvasProxyDrawBlock {
-  (canvas: CanvasRenderingContext2D, relative: Coord): any;
+  (canvas: CanvasRenderingContext2D): any;
 }
 
 class CanvasProxy {
   canvas: CanvasRenderingContext2D;
-  currentOffset: Coord = new Coord();
+  // currentOffset: Coord = new Coord();
 
   constructor(canvas: CanvasRenderingContext2D) {
     this.canvas = canvas;
   }
 
   drawWithOffset(canvasProxyDrawBlock: CanvasProxyDrawBlock) {
-    canvasProxyDrawBlock(this.canvas, this.currentOffset);
+    canvasProxyDrawBlock(this.canvas);
   }
 }
 
@@ -89,8 +89,9 @@ class Rectangle extends Shape {
   }
 
   draw(canvas: CanvasProxy) {
-    canvas.drawWithOffset((canvas, coord) => {
-      canvas.fillRect(coord.x, coord.y, this.rect.width, this.rect.height);
+    canvas.drawWithOffset((canvas) => {
+      console.log("canvas fillRect", this.rect.width, this.rect.height);
+      canvas.fillRect(0, 0, this.rect.width, this.rect.height);
     });
   }
   isMineCoord(localCoord: Coord): Boolean {
@@ -111,11 +112,11 @@ class Circle extends Shape {
   }
 
   draw(canvas: CanvasProxy) {
-    canvas.drawWithOffset((canvas, offset) => {
+    canvas.drawWithOffset((canvas) => {
       canvas.beginPath();
       canvas.ellipse(
-        offset.x + this.circle.radius,
-        offset.y + this.circle.radius,
+        this.circle.radius,
+        this.circle.radius,
         this.circle.radius,
         this.circle.radius,
         0,
@@ -158,9 +159,17 @@ class ArrangementPainter {
   }
 
   paint(localArrangementStore: Arrangement) {
+    // this.canvasProxy.canvas.scale(1, 1);
     localArrangementStore.childsWithMetadata.forEach((element) => {
-      this.canvasProxy.currentOffset.set(element.localCoord);
+      // this.canvasProxy.currentOffset.set(element.localCoord);
+      this.canvasProxy.canvas.save();
+      console.log("element local coord", element.localCoord);
+      this.canvasProxy.canvas.translate(
+        element.localCoord.x,
+        element.localCoord.y
+      );
       element.shape.draw(this.canvasProxy);
+      this.canvasProxy.canvas.restore();
     });
   }
 }
@@ -177,6 +186,20 @@ class CanvasWrapper {
       x: this.canvas.offsetLeft + this.canvas.clientLeft,
       y: this.canvas.offsetTop + this.canvas.clientTop,
     });
+  }
+}
+
+// implement zoom
+// implement zoom with mouse tracking
+// implement panning
+
+class ViewOptions {
+  panOffset: Coord;
+  zoom: number;
+
+  constructor() {
+    this.panOffset = new Coord();
+    this.zoom = 1;
   }
 }
 
@@ -219,18 +242,54 @@ function CanvasEditor() {
       const canvasWrapper = new CanvasWrapper(canvasRef.current);
       const localArrangementStore = new Arrangement();
       var ctx = canvasRef.current.getContext("2d")!;
+      let canvas = canvasRef.current;
 
       if (!eventListenerAdded.current) {
-        if (window.devicePixelRatio > 1) {
-          let canvas = canvasRef.current;
-          var canvasWidth = 500;
-          var canvasHeight = 500;
-          canvas.width = canvasWidth * window.devicePixelRatio;
-          canvas.height = canvasHeight * window.devicePixelRatio;
-          canvas.style.width = canvasWidth + "px";
-          canvas.style.height = canvasHeight + "px";
-          ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        }
+        var canvasWidth = 500;
+        var canvasHeight = 500;
+
+        // if (window.devicePixelRatio > 1) {
+        //   canvas.width = canvasWidth * window.devicePixelRatio;
+        //   canvas.height = canvasHeight * window.devicePixelRatio;
+        //   console.log(
+        //     "setting canvas width and height",
+        //     "pixel ratio",
+        //     window.devicePixelRatio,
+        //     "resulting width and height",
+        //     canvas.width,
+        //     canvas.height
+        //   );
+        //   canvas.style.width = canvasWidth + "px";
+        //   canvas.style.height = canvasHeight + "px";
+        //   // ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        // } else {
+        //   canvas.style.width = canvasWidth + "px";
+        //   canvas.style.height = canvasHeight + "px";
+        //   // ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        // }
+
+        // Get the device pixel ratio, falling back to 1.
+        var dpr = window.devicePixelRatio || 1;
+
+        // Get the size of the canvas in CSS pixels.
+        var rect = canvas.getBoundingClientRect();
+        let rect2 = { width: 500, height: 500 }
+        // Give the canvas pixel dimensions of their CSS
+        // size * the device pixel ratio.
+        canvas.width = rect2.width * dpr;
+        canvas.height = rect2.height * dpr;
+
+        canvas.style.width = rect2.width + "px";
+        canvas.style.height = rect2.height + "px";
+
+        // Scale all drawing operations by the dpr, so you
+        // don't have to manually scale each draw operation.
+        ctx.scale(dpr, dpr);
+        console.log("device pixel ratio", dpr, window.devicePixelRatio, "bounding rect", rect)
+
+        canvasRef.current.addEventListener("drag", (ev: DragEvent) => {
+          console.log("drag event", ev);
+        });
 
         canvasRef.current.addEventListener(
           "click",
@@ -251,20 +310,30 @@ function CanvasEditor() {
         );
         eventListenerAdded.current = true;
       }
+      // localArrangementStore.addChild(
+      //   new Element({
+      //     shape: new Rectangle({ height: 50, width: 50 }),
+      //     localCoord: { x: 100, y: 0 },
+      //   })
+      // );
+      // localArrangementStore.addChild(
+      //   new Element({
+      //     shape: new Circle({ radius: 50 }),
+      //     localCoord: { x: 0, y: 0 },
+      //   })
+      // );
       localArrangementStore.addChild(
         new Element({
-          shape: new Rectangle({ height: 50, width: 50 }),
-          localCoord: { x: 100, y: 0 },
-        })
-      );
-      localArrangementStore.addChild(
-        new Element({
-          shape: new Circle({ radius: 50 }),
+          shape: new Rectangle({ width: 10, height: 10 }),
           localCoord: { x: 0, y: 0 },
         })
       );
       const arrangementPainter = new ArrangementPainter(new CanvasProxy(ctx));
-      arrangementPainter.paint(localArrangementStore);
+      // arrangementPainter.paint(localArrangementStore);
+
+      canvas.style.scale = "1 1";
+      ctx.scale(1, 1);
+      ctx.fillRect(10, 10, 10, 10);
     }
   }, []);
   return (
@@ -272,7 +341,7 @@ function CanvasEditor() {
       {/* <div>
         <p>Hallo Guten Tag</p>
       </div> */}
-      <canvas style={{ width: 500, height: 500 }} ref={canvasRef}></canvas>
+      <canvas ref={canvasRef}></canvas>
     </>
   );
 }
