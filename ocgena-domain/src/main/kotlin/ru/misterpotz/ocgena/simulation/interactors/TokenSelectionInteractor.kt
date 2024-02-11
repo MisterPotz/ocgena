@@ -58,7 +58,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
 
         val sortedSet = sortedSetOf<ObjectTokenId>()
         val randomizer = createRandomizerOrNoOp()
-        val objectTypeId = placeToObjectTypeRegistry[petriAtomId]
+        val objectTypeId = placeToObjectTypeRegistry[petriAtomId]!!
         val randomIterator = RandomIterator(
             size = amount,
             randomizer = randomizer,

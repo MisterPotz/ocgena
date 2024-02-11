@@ -181,7 +181,7 @@ fun SimulationComponent.emptyTokenBunchBuilder(): SparseTokenBunchImpl.Builder {
     return SparseTokenBunchImpl.makeBuilder {
         for (i in places) {
             forPlace(i.id) {
-                type = ocNet().placeToObjectTypeRegistry[i.id]
+                type = ocNet().placeToObjectTypeRegistry[i.id]!!
             }
         }
     }

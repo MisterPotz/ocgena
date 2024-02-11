@@ -63,7 +63,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
         require(arc is NormalArc)
 
         val place = arc.arrowNodeId!!
-        val objectType = placeToObjectTypeRegistry[place]
+        val objectType = placeToObjectTypeRegistry[place]!!
 
         val tokenBuffer = tokenGroupedInfo.getTokenSetBy(objectType, outputArcMeta = arc.arcMeta)
 
@@ -84,7 +84,7 @@ class ArcToMultiplicityNormalDelegateTypeA @Inject constructor(
 
                 override fun getTokenSourceForThisArc(tokenGroupedInfo: TokenGroupedInfo): TokenSet? {
                     val place = arc.arrowNodeId!!
-                    val objectType = placeToObjectTypeRegistry[place]
+                    val objectType = placeToObjectTypeRegistry[place]!!
 
                     return tokenGroupedInfo.getTokenSetBy(objectType, outputArcMeta = arc.arcMeta)
                 }

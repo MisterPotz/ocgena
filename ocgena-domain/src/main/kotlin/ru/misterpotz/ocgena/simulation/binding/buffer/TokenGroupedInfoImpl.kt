@@ -46,7 +46,7 @@ class TokenGroupedInfoImpl @AssistedInject constructor(
         val arcMeta = arcsRegistry[arcId].arcMeta
 
         tokenBatchList.addTokens(
-            objectTypeId = objectType,
+            objectTypeId = objectType!!,
             arcMeta = arcMeta,
             sortedSet = tokens
         )

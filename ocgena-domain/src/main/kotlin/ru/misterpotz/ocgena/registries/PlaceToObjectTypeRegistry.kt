@@ -10,17 +10,17 @@ import ru.misterpotz.ocgena.ocnet.utils.defaultObjTypeId
 @Serializable
 data class PlaceToObjectTypeRegistry(
     @SerialName("default")
-    private val defaultObjectTypeId: ObjectTypeId,
+    private val defaultObjectTypeId: ObjectTypeId? = null,
     @SerialName("per_place")
     private val placeIdToObjectType: MutableMap<PetriAtomId, ObjectTypeId>
 ) {
 
-    operator fun get(place: PetriAtomId): ObjectTypeId {
+    operator fun get(place: PetriAtomId): ObjectTypeId? {
         return placeIdToObjectType[place] ?: defaultObjectTypeId
     }
 
 
-    operator fun get(place: Place): ObjectTypeId {
+    operator fun get(place: Place): ObjectTypeId? {
         return placeIdToObjectType[place.id] ?: defaultObjectTypeId
     }
 

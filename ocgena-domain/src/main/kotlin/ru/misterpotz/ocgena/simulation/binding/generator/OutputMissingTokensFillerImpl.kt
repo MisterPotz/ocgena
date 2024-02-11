@@ -37,7 +37,7 @@ class OutputMissingTokensFillerImpl(
             if (needToGenerateAdditionalTokens) {
                 val tokensToGenerate = arcMultiplicity.requiredTokenAmount() - existingTokens.size
 
-                val outputPlaceType = ocNet.placeToObjectTypeRegistry[outputPlace]
+                val outputPlaceType = ocNet.placeToObjectTypeRegistry[outputPlace]!!
 
                 val consumedTokens =
                     transitionTokenSelectionInteractor.generateTokens(outputPlaceType, tokensToGenerate)

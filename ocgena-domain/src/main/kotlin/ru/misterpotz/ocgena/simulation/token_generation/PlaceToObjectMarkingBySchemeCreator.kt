@@ -34,7 +34,7 @@ class PlaceToObjectMarkingBySchemeCreator @Inject constructor(
                     put(place, buildSet {
                         val tokens = plainMarking[place]
                         repeat(tokens) {
-                            val objectTypeID = placeToObjectTypeRegistry[place]
+                            val objectTypeID = placeToObjectTypeRegistry[place]!!
                             add(newTokenGenerationFacade.generateRealToken(objectTypeID).id)
                         }
                     }.toSortedSet())

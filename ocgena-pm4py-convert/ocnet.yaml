@@ -1,0 +1,380 @@
+object_types:
+  per_object_type_id:
+    items:
+      label: items
+    orders:
+      label: orders
+    packages:
+      label: packages
+petri_atoms:
+  confirm order:
+    from_places:
+    - p-3
+    - p-5
+    id: confirm order
+    label: confirm order
+    to_places:
+    - p-4
+    - p-6
+    type: transition
+  confirm order_p-4:
+    id: confirm order_p-4
+    type: arc
+  confirm order_p-6:
+    id: confirm order_p-6
+    type: arc
+  create package:
+    from_places:
+    - packages-source
+    - p-5
+    id: create package
+    label: create package
+    to_places:
+    - p-3
+    - p-6
+    type: transition
+  create package_p-3:
+    id: create package_p-3
+    type: arc
+  create package_p-6:
+    id: create package_p-6
+    type: arc
+  failed delivery:
+    from_places:
+    - p-4
+    - p-5
+    id: failed delivery
+    label: failed delivery
+    to_places:
+    - p-5
+    - p-6
+    type: transition
+  failed delivery_p-5:
+    id: failed delivery_p-5
+    type: arc
+  failed delivery_p-6:
+    id: failed delivery_p-6
+    type: arc
+  item out of stock:
+    from_places:
+    - p-5
+    id: item out of stock
+    label: item out of stock
+    to_places:
+    - p-6
+    type: transition
+  item out of stock_p-6:
+    id: item out of stock_p-6
+    type: arc
+  items-sink:
+    from_transtns:
+    - skip-5
+    id: items-sink
+    label: items-sink
+    to_transtns: []
+    type: place
+  items-source:
+    from_transtns: []
+    id: items-source
+    label: items-source
+    to_transtns:
+    - place order
+    type: place
+  items-source_place order:
+    id: items-source_place order
+    type: arc
+  orders-sink:
+    from_transtns:
+    - pay order
+    id: orders-sink
+    label: orders-sink
+    to_transtns: []
+    type: place
+  orders-source:
+    from_transtns: []
+    id: orders-source
+    label: orders-source
+    to_transtns:
+    - place order
+    type: place
+  orders-source_place order:
+    id: orders-source_place order
+    type: arc
+  p-3:
+    from_transtns:
+    - create package
+    id: p-3
+    label: p-3
+    to_transtns:
+    - send package
+    type: place
+  p-3_confirm order:
+    id: p-3_confirm order
+    type: arc
+  p-3_send package:
+    id: p-3_send package
+    type: arc
+  p-4:
+    from_transtns:
+    - send package
+    id: p-4
+    label: p-4
+    to_transtns:
+    - skip-1
+    - failed delivery
+    type: place
+  p-4_failed delivery:
+    id: p-4_failed delivery
+    type: arc
+  p-4_payment reminder:
+    id: p-4_payment reminder
+    type: arc
+  p-4_skip-1:
+    id: p-4_skip-1
+    type: arc
+  p-5:
+    from_transtns:
+    - place order
+    - skip-4
+    id: p-5
+    label: p-5
+    to_transtns:
+    - confirm order
+    - pay order
+    - item out of stock
+    - reorder item
+    - package delivered
+    - failed delivery
+    - payment reminder
+    - create package
+    - pick item
+    - send package
+    type: place
+  p-5_confirm order:
+    id: p-5_confirm order
+    type: arc
+  p-5_create package:
+    id: p-5_create package
+    type: arc
+  p-5_failed delivery:
+    id: p-5_failed delivery
+    type: arc
+  p-5_item out of stock:
+    id: p-5_item out of stock
+    type: arc
+  p-5_package delivered:
+    id: p-5_package delivered
+    type: arc
+  p-5_pay order:
+    id: p-5_pay order
+    type: arc
+  p-5_payment reminder:
+    id: p-5_payment reminder
+    type: arc
+  p-5_pick item:
+    id: p-5_pick item
+    type: arc
+  p-5_reorder item:
+    id: p-5_reorder item
+    type: arc
+  p-5_send package:
+    id: p-5_send package
+    type: arc
+  p-6:
+    from_transtns:
+    - confirm order
+    - package delivered
+    - payment reminder
+    - pay order
+    - send package
+    - item out of stock
+    - reorder item
+    - failed delivery
+    - create package
+    - pick item
+    id: p-6
+    label: p-6
+    to_transtns:
+    - skip-4
+    - skip-5
+    type: place
+  p-6_skip-4:
+    id: p-6_skip-4
+    type: arc
+  p-6_skip-5:
+    id: p-6_skip-5
+    type: arc
+  package delivered:
+    from_places:
+    - p-5
+    - p-5
+    id: package delivered
+    label: package delivered
+    to_places:
+    - packages-sink
+    - p-6
+    type: transition
+  package delivered_p-6:
+    id: package delivered_p-6
+    type: arc
+  package delivered_packages-sink:
+    id: package delivered_packages-sink
+    type: arc
+  packages-sink:
+    from_transtns:
+    - package delivered
+    id: packages-sink
+    label: packages-sink
+    to_transtns: []
+    type: place
+  packages-source:
+    from_transtns: []
+    id: packages-source
+    label: packages-source
+    to_transtns:
+    - create package
+    type: place
+  packages-source_create package:
+    id: packages-source_create package
+    type: arc
+  pay order:
+    from_places:
+    - p-5
+    - p-5
+    id: pay order
+    label: pay order
+    to_places:
+    - orders-sink
+    - p-6
+    type: transition
+  pay order_orders-sink:
+    id: pay order_orders-sink
+    type: arc
+  pay order_p-6:
+    id: pay order_p-6
+    type: arc
+  payment reminder:
+    from_places:
+    - p-4
+    - p-5
+    id: payment reminder
+    label: payment reminder
+    to_places:
+    - p-5
+    - p-6
+    type: transition
+  payment reminder_p-5:
+    id: payment reminder_p-5
+    type: arc
+  payment reminder_p-6:
+    id: payment reminder_p-6
+    type: arc
+  pick item:
+    from_places:
+    - p-5
+    id: pick item
+    label: pick item
+    to_places:
+    - p-6
+    type: transition
+  pick item_p-6:
+    id: pick item_p-6
+    type: arc
+  place order:
+    from_places:
+    - orders-source
+    - items-source
+    id: place order
+    label: place order
+    to_places:
+    - p-3
+    - p-5
+    type: transition
+  place order_p-3:
+    id: place order_p-3
+    type: arc
+  place order_p-5:
+    id: place order_p-5
+    type: arc
+  reorder item:
+    from_places:
+    - p-5
+    id: reorder item
+    label: reorder item
+    to_places:
+    - p-6
+    type: transition
+  reorder item_p-6:
+    id: reorder item_p-6
+    type: arc
+  send package:
+    from_places:
+    - p-3
+    - p-5
+    id: send package
+    label: send package
+    to_places:
+    - p-4
+    - p-6
+    type: transition
+  send package_p-4:
+    id: send package_p-4
+    type: arc
+  send package_p-6:
+    id: send package_p-6
+    type: arc
+  skip-1:
+    from_places:
+    - p-4
+    - p-4
+    id: skip-1
+    label: skip-1
+    to_places:
+    - p-5
+    - p-5
+    type: transition
+  skip-1_p-5:
+    id: skip-1_p-5
+    type: arc
+  skip-4:
+    from_places:
+    - p-6
+    id: skip-4
+    label: skip-4
+    to_places:
+    - p-5
+    type: transition
+  skip-4_p-5:
+    id: skip-4_p-5
+    type: arc
+  skip-5:
+    from_places:
+    - p-6
+    id: skip-5
+    label: skip-5
+    to_places:
+    - items-sink
+    type: transition
+  skip-5_items-sink:
+    id: skip-5_items-sink
+    type: arc
+place_object_types:
+  per_place:
+    items-sink: items
+    items-source: items
+    orders-sink: orders
+    orders-source: orders
+    p-3: packages
+    p-4: packages
+    p-5: items
+    p-6: items
+    packages-sink: packages
+    packages-source: packages
+place_types:
+  per_place:
+    items-sink: OUTPUT
+    items-source: INPUT
+    orders-sink: OUTPUT
+    orders-source: INPUT
+    packages-sink: OUTPUT
+    packages-source: INPUT

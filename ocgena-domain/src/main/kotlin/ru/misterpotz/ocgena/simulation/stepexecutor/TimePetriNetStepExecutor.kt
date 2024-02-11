@@ -453,7 +453,7 @@ class TransitionOutputTokensCreator @AssistedInject constructor(
 
             // generating missing tokens to fulfill output arcs numbers
             if (tokensLeftToGenerate > 0) {
-                val outputPlaceType = placeToObjectTypeRegistry[outputPlace]
+                val outputPlaceType = placeToObjectTypeRegistry[outputPlace]!!
 
                 val generatedTokens =
                     transitionTokenSelectionInteractor.generateTokens(outputPlaceType, tokensLeftToGenerate)

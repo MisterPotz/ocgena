@@ -66,7 +66,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
         require(arc is VariableArc)
 
         val targetPlace = arc.arrowNodeId!!
-        val objectTypeId = placeToObjectTypeRegistry[targetPlace]
+        val objectTypeId = placeToObjectTypeRegistry[targetPlace]!!
 
         val variableName = arc.variableName
             ?: return arcToMultiplicityVariableDelegateTypeA
@@ -129,7 +129,7 @@ class ArcToMultiplicityVariableDelegateTypeL @Inject constructor(
 
                 override fun getTokenSourceForThisArc(tokenGroupedInfo: TokenGroupedInfo): TokenSet? {
                     val targetPlace = arc.arrowNodeId!!
-                    val objectTypeId = placeToObjectTypeRegistry[targetPlace]
+                    val objectTypeId = placeToObjectTypeRegistry[targetPlace]!!
 
                     return tokenGroupedInfo.getTokenSetBy(
                         toPlaceObjectTypeId = objectTypeId,
