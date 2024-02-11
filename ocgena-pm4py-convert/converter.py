@@ -28,7 +28,7 @@ def make_place_name(type: str, place_name: str):
     elif place_name == "source":
         name = source_name(type)
     else:
-        name = place_name
+        name = "{}-{}".format(type, place_name)
     return name.replace("_", "-")
 
 
@@ -239,10 +239,10 @@ def main():
     debugging = True
 
     # Get a visualization of the OC-PN (Returns a Graphviz digraph)
-    # gph = pm4py.visualization.ocel.ocpn.visualizer.apply(ocpn)
+    gph = pm4py.visualization.ocel.ocpn.visualizer.apply(ocpn)
 
     # View the diagram using matplotlib
-    # pm4py.visualization.ocel.ocpn.visualizer.matplotlib_view(gph)
+    pm4py.visualization.ocel.ocpn.visualizer.matplotlib_view(gph)
 
 
 main()
