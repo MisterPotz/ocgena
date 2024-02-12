@@ -1,5 +1,6 @@
 package ru.misterpotz.di
 
+import dagger.Binds
 import dagger.Component
 import dagger.Module
 import ru.misterpotz.ocgena.di.DomainComponent
@@ -7,6 +8,8 @@ import javax.inject.Scope
 
 @Module
 abstract class ServerModule {
+    @Binds
+    abstract fun bindDBConnectionSetupper(dbConnectionSetupperImpl: DBConnectionSetupperImpl): DBConnectionSetupper
 }
 
 

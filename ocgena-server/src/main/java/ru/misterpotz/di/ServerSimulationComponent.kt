@@ -1,19 +1,16 @@
 package ru.misterpotz.di
 
 import com.charleskorn.kaml.Yaml
-import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import dagger.*
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.transactions.TransactionManager
 import ru.misterpotz.*
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import java.nio.file.Path
-import java.sql.Connection
 import javax.inject.Scope
-import kotlin.io.path.pathString
+
 
 @Module
 internal abstract class ServerSimulationModule {
@@ -38,23 +35,23 @@ internal abstract class ServerSimulationModule {
 
         @Provides
         @ServerSimulationScope
-        fun provideHikariDataSource(serverSimulationConfig: ServerSimulationConfig): HikariDataSource {
-            val path = serverSimulationConfig.dbPath
-            val hikariSqlConfig = HikariConfig().apply {
-                jdbcUrl = "jdbc:sqlite:${path.pathString}"
-                driverClassName = "org.sqlite.JDBC"
-            }
-            return HikariDataSource(hikariSqlConfig)
+        fun provideConnection(
+            serverSimulationConfig: ServerSimulationConfig,
+            dbConnectionSetupper: DBConnectionSetupper
+        ): DBConnectionSetupper.Connection {
+            return dbConnectionSetupper.createConnection(serverSimulationConfig.dbPath)
         }
 
         @Provides
         @ServerSimulationScope
-        fun provideDB(hikariDataSource: HikariDataSource): Database {
-            val connect = Database.connect(hikariDataSource)
-            TransactionManager.manager.defaultIsolationLevel =
-                Connection.TRANSACTION_SERIALIZABLE
+        fun provideHikariDataSource(connection: DBConnectionSetupper.Connection) : HikariDataSource {
+            return connection.hikariDataSource
+        }
 
-            return connect
+        @Provides
+        @ServerSimulationScope
+        fun provideDB(connection: DBConnectionSetupper.Connection): Database {
+            return connection.database
         }
 
         @Provides
@@ -71,6 +68,8 @@ data class ServerSimulationConfig(
 interface ServerSimulationComponentDependencies {
     val json: Json
     val yaml: Yaml
+
+    fun dbConnectionSetupper(): DBConnectionSetupper
 }
 
 @Component(

@@ -110,6 +110,9 @@ class SimulationStepLoggerImpl @Inject constructor(
 class TimePetriNetStepExecutor @Inject constructor(
     private val newTimeDeltaInteractor: NewTimeDeltaInteractor,
     val ocNet: OCNet,
+    @GlobalTokenBunch
+    private val sparseTokenBunch: SparseTokenBunch,
+    private val objectTokenSet: ObjectTokenSet,
     private val timePNTransitionMarking: TimePNTransitionMarking,
     private val transitionToFireSelector: TransitionToFireSelector,
     private val transitionFireExecutor: TransitionFiringRuleExecutor,
@@ -150,6 +153,16 @@ class TimePetriNetStepExecutor @Inject constructor(
         }
     }
 
+    private fun cleanTokensAtFinish() {
+        for (outputPlace in ocNet.outputPlaces.iterable) {
+            val tokensAtFinishPlace = sparseTokenBunch.objectMarking()[outputPlace]
+            sparseTokenBunch.objectMarking().removeAllPlaceTokens(outputPlace)
+            if (tokensAtFinishPlace.isNotEmpty()) {
+                objectTokenSet.removeAll(tokensAtFinishPlace)
+            }
+        }
+    }
+
 
     override suspend fun executeStep(executionContinuation: ExecutionContinuation) {
         simulationStepLogger.logCurrentStep()
@@ -179,6 +192,9 @@ class TimePetriNetStepExecutor @Inject constructor(
 
         simulationStepLogger.logStepEndMarking()
         simulationStepLogger.logStepEndTimePNMarking()
+
+        cleanTokensAtFinish()
+
         simulationStepLogger.finishStepLog()
     }
 }

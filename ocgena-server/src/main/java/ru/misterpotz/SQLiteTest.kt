@@ -1,24 +1,7 @@
 package ru.misterpotz
 
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.TransactionManager
-import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.transactionManager
-import ru.misterpotz.di.ServerSimulationComponent
-import ru.misterpotz.di.ServerSimulationConfig
-import ru.misterpotz.ocgena.di.DomainComponent
-import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.testing.buildConfig
-import ru.misterpotz.ocgena.testing.buildOCNet
-import ru.misterpotz.ocgena.testing.buildingBlockTwoInTwoOutMiddle
-import ru.misterpotz.ocgena.testing.installOnto
-import java.sql.Connection
-import kotlin.io.path.Path
+import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.Table
 
 
 object Users : Table() {
@@ -35,4 +18,3 @@ object Cities : Table() {
 
     override val primaryKey = PrimaryKey(id, name = "PK_Cities_ID")
 }
-
