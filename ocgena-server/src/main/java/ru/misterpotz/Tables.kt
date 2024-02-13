@@ -25,6 +25,7 @@ object ObjectTypeTable : Table() {
 object SimulationStepsTable : LongIdTable(columnName = "stepNumber") {
     val clockIncrement = long("clockIncrement")
     val chosenTransition = varchar("chosenTransition", 10).nullable().default(null)
+    val transitionDuration = long("transitionDuration")
 }
 
 abstract class StepToVariableColumnsIntTable(private val columnNames: List<String>) : Table() {

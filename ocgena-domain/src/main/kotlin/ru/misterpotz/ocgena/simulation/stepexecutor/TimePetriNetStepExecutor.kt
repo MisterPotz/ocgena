@@ -42,7 +42,7 @@ interface SimulationStepLogger {
     fun logTransitionInTokens(tokenbunch: SparseTokenBunch)
     fun logTransitionOutTokens(tokenBunch: SparseTokenBunch)
     fun appendInstantiatedTokens(tokens: List<ObjectTokenId>)
-    fun logTransitionToFire(petriAtomId: PetriAtomId)
+    fun logTransitionToFire(petriAtomId: PetriAtomId, transitionDuration: Long)
     fun logStepEndMarking()
     suspend fun finishStepLog()
     fun logStepEndTimePNMarking()
@@ -71,6 +71,7 @@ class SimulationStepLoggerImpl @Inject constructor(
     override fun logCurrentMarking() {
         currentSimulationStepLogBuilder.starterMarkingAmounts = sparseTokenBunch.tokenAmountStorage().dump()
     }
+
     override fun logTransitionInTokens(tokenbunch: SparseTokenBunch) {
         currentSimulationStepLogBuilder.firingInMarkingAmounts = tokenbunch.tokenAmountStorage().dump()
         currentSimulationStepLogBuilder.firingInMarkingTokens = tokenbunch.objectMarking().dumpTokens()
@@ -85,8 +86,9 @@ class SimulationStepLoggerImpl @Inject constructor(
         currentSimulationStepLogBuilder.appendInstantiatedTokens(tokens)
     }
 
-    override fun logTransitionToFire(petriAtomId: PetriAtomId) {
+    override fun logTransitionToFire(petriAtomId: PetriAtomId, transitionDuration: Long) {
         currentSimulationStepLogBuilder.selectedFiredTransition = petriAtomId
+        currentSimulationStepLogBuilder.transitionDuration = transitionDuration
     }
 
     override fun logStepEndMarking() {
@@ -170,7 +172,6 @@ class TimePetriNetStepExecutor @Inject constructor(
         // generate next time based on place and transitions marking
         newTimeDeltaInteractor.generateAndShiftTimeDelta()
 
-
         // find transitions that are enforced to fire now, and list their random order
         val transitionsThatCanBeSelectedForFiring = collectTransitionsThatCanBeSelected()
 
@@ -179,7 +180,9 @@ class TimePetriNetStepExecutor @Inject constructor(
             transitionToFireSelector.select(transitionsThatCanBeSelectedForFiring) ?: return Unit.also {
                 simulationStateProvider.getSimulationStepState().setFinished()
             }
-        simulationStepLogger.logTransitionToFire(transitionToFire.id)
+
+        val duration = timePNTransitionMarking.forTransition(transitionToFire.id).counter
+        simulationStepLogger.logTransitionToFire(transitionToFire.id, transitionDuration = duration)
 
         // fire transition using transition rule
         transitionFireExecutor.fireTransition(transitionToFire)
@@ -265,6 +268,7 @@ class SimulationStepLogBuilder @Inject constructor(
     var stepNumber: Long by Delegates.notNull()
     var clockIncrement: Long by Delegates.notNull()
     var selectedFiredTransition: PetriAtomId? = null
+    var transitionDuration: Long by Delegates.notNull()
     var starterMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
     var stepEndMarking: Map<PetriAtomId, Int>? = null
     var firingInMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
@@ -272,7 +276,7 @@ class SimulationStepLogBuilder @Inject constructor(
     var firingOutMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
     var firingOutMarkingTokens: Map<PetriAtomId, List<ObjectTokenId>> by Delegates.notNull()
     var tokensInitializedAtStep: List<ObjectTokenMeta> by Delegates.notNull()
-    var timePNTransitionMarking : Map<PetriAtomId, Long>? = null
+    var timePNTransitionMarking: Map<PetriAtomId, Long>? = null
 
     private val instantiatedTokens = mutableListOf<ObjectTokenId>()
     fun appendInstantiatedTokens(tokens: List<ObjectTokenId>) {
@@ -290,17 +294,18 @@ class SimulationStepLogBuilder @Inject constructor(
 
 
         return SimulationStepLog(
-            stepNumber,
-            clockIncrement,
-            selectedFiredTransition,
-            starterMarkingAmounts,
-            stepEndMarking,
-            firingInMarkingAmounts,
-            firingOutMarkingAmounts,
-            firingInMarkingTokens,
-            firingOutMarkingTokens,
-            timePNTransitionMarking,
-            tokensInitializedAtStep,
+            stepNumber = stepNumber,
+            clockIncrement = clockIncrement,
+            selectedFiredTransition = selectedFiredTransition,
+            firedTransitionDuration = transitionDuration,
+            starterMarkingAmounts = starterMarkingAmounts,
+            endStepMarkingAmounts = stepEndMarking,
+            firingInMarkingAmounts = firingInMarkingAmounts,
+            firingOutMarkingAmounts = firingOutMarkingAmounts,
+            firingInMarkingTokens = firingInMarkingTokens,
+            firingOutMarkingTokens = firingOutMarkingTokens,
+            timePNTransitionMarking = timePNTransitionMarking,
+            tokensInitializedAtStep = tokensInitializedAtStep,
         ).also { alreadyBuilt = true }
     }
 }
@@ -498,8 +503,8 @@ interface TimePNTransitionMarking {
     fun appendClockTime(transitionsToAppendTime: List<PetriAtomId>, delta: Long)
 
     fun copyZeroClock(): TimePNTransitionMarking
-    fun applySettingsBlock(settingBlock: SettingBlock.() -> Unit) : TimePNTransitionMarking
-    fun dump() : Map<String, Long>
+    fun applySettingsBlock(settingBlock: SettingBlock.() -> Unit): TimePNTransitionMarking
+    fun dump(): Map<String, Long>
 
     interface SettingBlock {
         infix fun String.to(clock: Int)

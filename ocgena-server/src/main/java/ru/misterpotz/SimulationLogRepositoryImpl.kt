@@ -65,6 +65,7 @@ class SimulationLogRepositoryImpl @Inject constructor(
                 this[simulationStepsTable.id] = simulationStepLog.stepNumber
                 this[SimulationStepsTable.clockIncrement] = simulationStepLog.clockIncrement
                 this[SimulationStepsTable.chosenTransition] = simulationStepLog.selectedFiredTransition
+                this[SimulationStepsTable.transitionDuration] = simulationStepLog.firedTransitionDuration
             }
         }
     }
