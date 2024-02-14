@@ -3,6 +3,8 @@ package ru.misterpotz.di
 import dagger.Binds
 import dagger.Component
 import dagger.Module
+import ru.misterpotz.db.DBConnectionSetupper
+import ru.misterpotz.db.DBConnectionSetupperImpl
 import ru.misterpotz.ocgena.di.DomainComponent
 import javax.inject.Scope
 

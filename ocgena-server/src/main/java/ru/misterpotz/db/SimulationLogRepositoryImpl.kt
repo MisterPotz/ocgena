@@ -1,14 +1,13 @@
-package ru.misterpotz
+package ru.misterpotz.db
 
-import com.zaxxer.hikari.HikariDataSource
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import ru.misterpotz.*
+import ru.misterpotz.models.SimulationDBStepLog
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import javax.inject.Inject
 
-class SimulationLogRepositoryImpl @Inject constructor(
+class SimulationLogRepositoryImpl(
     private val db: Database,
-    private val hikariDataSource: HikariDataSource,
     private val tablesProvider: TablesProvider,
     private val simulationConfig: SimulationConfig,
     private val inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
@@ -17,7 +16,7 @@ class SimulationLogRepositoryImpl @Inject constructor(
     private var checkedIfCreated = false
     private suspend fun initializeTables() {
         if (checkedIfCreated) return
-        newSuspendedTransaction {
+        newSuspendedTransaction(db = db) {
             addLogger(StdOutSqlLogger)
             with(tablesProvider) {
                 if (!objectTypeTable.exists()) {
@@ -55,8 +54,27 @@ class SimulationLogRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun getStep(stepIndex: Int): SimulationStepLog {
-        with(tablesProvider) {
+    private fun getStep(resultRow: ResultRow): SimulationDBStepLog {
+        return with(tablesProvider) {
+            val stepToFiringAmountsMap = resultRow.getIntMap(stepToFiringAmountsTable)!!
+            val stepToFiringTokens = resultRow.getStringMap(stepToFiringTokensTable)!!
+
+            SimulationDBStepLog(
+                stepNumber = resultRow[simulationStepsTable.id].value,
+                clockIncrement = resultRow[SimulationStepsTable.clockIncrement],
+                selectedFiredTransition = resultRow[SimulationStepsTable.chosenTransition],
+                firedTransitionDuration = resultRow[SimulationStepsTable.transitionDuration],
+                starterMarkingAmounts = resultRow.getIntMap(stepToMarkingAmountsTable)!!,
+                firingInMarkingAmounts = deTransformInPlaces(stepToFiringAmountsMap),
+                firingOutMarkingAmounts = deTransformInPlaces(stepToFiringAmountsMap),
+                firingInMarkingTokens = detransformInPlacesString(stepToFiringTokens),
+                firingOutMarkingTokens = deTransformOutPlacesString(stepToFiringTokens),
+            )
+        }
+    }
+
+    private fun getSteps(stepIndeces: List<Long>): List<SimulationDBStepLog> {
+        return with(tablesProvider) {
 
             (simulationStepsTable innerJoin
                     stepToMarkingAmountsTable innerJoin
@@ -71,21 +89,62 @@ class SimulationLogRepositoryImpl @Inject constructor(
                         objectTypeTable.columns
                     ).flatten()
                 ).where {
-                    this[simulationStepsTable.id] == stepIndex
+                    simulationStepsTable.id.inList(stepIndeces)
+                }.map {
+                    getStep(it)
                 }
-
-            this[simulationStepsTable.id]
         }
     }
 
-    override suspend fun readBatch(steps: IntRange): List<SimulationStepLog> {
-        val simulanewSuspendedTransaction = {
+    private fun deTransformInPlaces(
+        inMap: Map<String, Int>,
+    ): Map<String, Int> {
+        return inMap.mapKeys { inAndOutPlacesColumnProducer.inNameDetransformer(it.key) }
+    }
 
+    private fun deTransformOutPlaces(
+        inMap: Map<String, Int>,
+    ): Map<String, Int> {
+        return inMap.mapKeys { inAndOutPlacesColumnProducer.outNameDetransformer(it.key) }
+    }
+
+    private fun detransformInPlacesString(
+        inMap: Map<String, String?>,
+    ): Map<String, List<Long>> {
+        return inMap.mapKeys { inAndOutPlacesColumnProducer.inNameDetransformer(it.key) }
+            .mapValues {
+                tokenSerializer.deserializeTokens(it.value ?: return@mapValues listOf())
+            }
+    }
+
+    private fun deTransformOutPlacesString(
+        inMap: Map<String, String?>,
+    ): Map<String, List<Long>> {
+        return inMap.mapKeys { inAndOutPlacesColumnProducer.outNameDetransformer(it.key) }
+            .mapValues {
+                tokenSerializer.deserializeTokens(it.value ?: return@mapValues listOf())
+            }
+    }
+
+
+    override suspend fun readBatch(steps: LongRange): List<SimulationDBStepLog> {
+        return newSuspendedTransaction(db = db) {
+            getSteps(steps.toList())
         }
     }
 
-    override suspend fun close() {
-        hikariDataSource.close()
+    override suspend fun getAllTokens(): List<ObjectTokenMeta> {
+        return newSuspendedTransaction {
+            with(tablesProvider) {
+                tokensTable.select(tokensTable.columns)
+                    .map {
+                        ObjectTokenMeta(
+                            id = it[tokensTable.id].value,
+                            objectTypeId = it[TokensTable.objectTypeId]
+                        )
+                    }
+            }
+        }
     }
 
     private fun insertSteps(batch: List<SimulationStepLog>) {

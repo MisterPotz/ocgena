@@ -2,7 +2,9 @@ package ru.misterpotz
 
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Column
+import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.exists
 import org.jetbrains.exposed.sql.statements.BatchInsertStatement
 
 
@@ -32,15 +34,43 @@ abstract class StepToVariableColumnsIntTable(private val columnNames: List<Strin
     val stepNumber = reference(STEP_NUMBER, SimulationStepsTable)
     override val primaryKey = PrimaryKey(stepNumber)
 
+    val integerColumns = mutableListOf<Column<Int>>()
+
     init {
         for (i in columnNames) {
-            integer(i).default(0)
+            val column = integer(i).default(0)
+            integerColumns.add(column)
         }
     }
 
     @Suppress("UNCHECKED_CAST")
     fun column(placeName: String): Column<Int> {
-        return columns.find { it.name == placeName }!! as Column<Int>
+        return integerColumns.find { it.name == placeName }!!
+    }
+}
+
+fun ResultRow.getIntMap(stepToVariableColumnsIntTable: StepToVariableColumnsIntTable): Map<String, Int>? {
+    return if (stepToVariableColumnsIntTable.exists()) {
+        buildMap {
+            for (column in stepToVariableColumnsIntTable.integerColumns) {
+                put(column.name, this@getIntMap[column])
+            }
+        }
+    } else {
+        null
+    }
+}
+
+
+fun ResultRow.getStringMap(stepToVariableColumnsTextTable: StepToVariableColumnsTextTable): Map<String, String?>? {
+    return if (stepToVariableColumnsTextTable.exists()) {
+        buildMap {
+            for (column in stepToVariableColumnsTextTable.textColumns) {
+                put(column.name, this@getStringMap[column])
+            }
+        }
+    } else {
+        null
     }
 }
 
@@ -59,7 +89,7 @@ fun BatchInsertStatement.insertBatchMapTransform(
     table: StepToVariableColumnsTextTable,
     map: Map<String, List<Long>>,
     keyNameTransformer: ((String) -> String),
-    valueTransformer : (List<Long>) -> String
+    valueTransformer: (List<Long>) -> String
 ) {
     for ((key, value) in map) {
         this[table.column(keyNameTransformer(key))] = valueTransformer(value)
@@ -70,14 +100,16 @@ abstract class StepToVariableColumnsTextTable(private val columnNames: List<Stri
     val stepNumber = reference(STEP_NUMBER, SimulationStepsTable)
     override val primaryKey = PrimaryKey(stepNumber)
 
+    val textColumns = mutableListOf<Column<String?>>()
+
     init {
         for (i in columnNames) {
-            text(i).nullable().default(defaultValue = null)
+            textColumns.add(text(i).nullable().default(defaultValue = null))
         }
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun column(placeName: String): Column<String> {
-        return columns.find { it.name == placeName }!! as Column<String>
+    fun column(placeName: String): Column<String?> {
+        return textColumns.find { it.name == placeName }!!
     }
 }

@@ -1,9 +1,28 @@
 package ru.misterpotz
 
+import com.zaxxer.hikari.HikariDataSource
+import ru.misterpotz.db.DBConnectionSetupper
+import ru.misterpotz.db.SimulationLogRepository
 import javax.inject.Inject
+
+
+interface SimulationFinishedNotifier {
+    fun simulationFinished()
+}
+
+class SimulationFinishedNotifierImpl(
+    private val openedConnections: @JvmSuppressWildcards Map<@JvmSuppressWildcards String, @JvmSuppressWildcards DBConnectionSetupper.Connection>
+) : SimulationFinishedNotifier {
+    override fun simulationFinished() {
+        for (i in openedConnections) {
+            i.value.hikariDataSource.close()
+        }
+    }
+}
 
 class DBLoggerImpl @Inject constructor(
     private val simulationLogRepository: SimulationLogRepository,
+    private val simulationFinishedNotifier: SimulationFinishedNotifier
 ) : DBLogger {
     private val maxStoredBatchSize: Int = 10
     private val batch: MutableList<SimulationStepLog> = mutableListOf()
@@ -17,7 +36,7 @@ class DBLoggerImpl @Inject constructor(
 
     override suspend fun simulationFinished() {
         saveIfBatchMaxSize(forceSave = true)
-        simulationLogRepository.close()
+        simulationFinishedNotifier.simulationFinished()
     }
 
     private fun batchMaxSizeCondition(): Boolean {

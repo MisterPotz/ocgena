@@ -3,9 +3,14 @@ package ru.misterpotz.di
 import com.charleskorn.kaml.Yaml
 import com.zaxxer.hikari.HikariDataSource
 import dagger.*
+import dagger.multibindings.IntoMap
+import dagger.multibindings.StringKey
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import ru.misterpotz.*
+import ru.misterpotz.db.DBConnectionSetupper
+import ru.misterpotz.db.SimulationLogRepository
+import ru.misterpotz.db.SimulationLogRepositoryImpl
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
 import java.nio.file.Path
@@ -32,9 +37,12 @@ internal abstract class ServerSimulationModule {
 
 
     companion object {
+        const val SIMULATION_LOG_DB = "simulationLogDB"
 
         @Provides
         @ServerSimulationScope
+        @IntoMap
+        @StringKey(SIMULATION_LOG_DB)
         fun provideConnection(
             serverSimulationConfig: ServerSimulationConfig,
             dbConnectionSetupper: DBConnectionSetupper
@@ -44,7 +52,26 @@ internal abstract class ServerSimulationModule {
 
         @Provides
         @ServerSimulationScope
-        fun provideHikariDataSource(connection: DBConnectionSetupper.Connection) : HikariDataSource {
+        fun provideSimulationLogRepository(
+            dbConnections: Map<@JvmSuppressWildcards String, @JvmSuppressWildcards DBConnectionSetupper.Connection>,
+            tablesProvider: TablesProvider,
+            simulationConfig: SimulationConfig,
+            inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
+            tokenSerializer: TokenSerializer
+        ): SimulationLogRepository {
+            val connection = dbConnections[SIMULATION_LOG_DB]!!
+            return SimulationLogRepositoryImpl(
+                db = connection.database,
+                tablesProvider = tablesProvider,
+                simulationConfig = simulationConfig,
+                inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer,
+                tokenSerializer = tokenSerializer
+            )
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun provideHikariDataSource(connection: DBConnectionSetupper.Connection): HikariDataSource {
             return connection.hikariDataSource
         }
 

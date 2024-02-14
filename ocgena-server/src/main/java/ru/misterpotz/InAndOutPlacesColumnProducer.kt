@@ -22,7 +22,15 @@ class InAndOutPlacesColumnProducer @Inject constructor(private val serverSimulat
         return "$IN_PREFIX$inPlace"
     }
 
+    fun inNameDetransformer(inPlace: String) : String {
+        return inPlace.removePrefix(IN_PREFIX)
+    }
+
     fun outNameTransformer(outPlace: String): String {
         return "$OUT_PREFIX$outPlace"
+    }
+
+    fun outNameDetransformer(outPlace: String) : String {
+        return outPlace.removePrefix(OUT_PREFIX)
     }
 }

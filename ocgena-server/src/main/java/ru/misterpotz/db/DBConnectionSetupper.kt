@@ -1,4 +1,4 @@
-package ru.misterpotz.di
+package ru.misterpotz.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
