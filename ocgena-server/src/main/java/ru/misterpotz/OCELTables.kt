@@ -53,7 +53,7 @@ class ObjectTypeMapTable : Table("object_map_type") {
 
 class ConcreteObjectTable(tableName: String) : Table(name = tableName) {
     val ocelObjectId = text("ocel_id")
-    val ocelTime = text("ocel_time")
+    val ocelTime = text("ocel_time") // unix timestamp 1970-01-01 00:00:00 ISO 8601
     val ocelChangedField = text("ocel_changed_field").nullable()
     // can be more attributes here
 }

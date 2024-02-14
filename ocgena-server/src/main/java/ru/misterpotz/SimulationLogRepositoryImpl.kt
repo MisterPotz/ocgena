@@ -14,36 +14,36 @@ class SimulationLogRepositoryImpl @Inject constructor(
     private val inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
     private val tokenSerializer: TokenSerializer
 ) : SimulationLogRepository {
-    override suspend fun pushInitialData() {
-
+    private var checkedIfCreated = false
+    private suspend fun initializeTables() {
+        if (checkedIfCreated) return
         newSuspendedTransaction {
             addLogger(StdOutSqlLogger)
             with(tablesProvider) {
-                objectTypeTable.exists()
-                SchemaUtils.create(
-                    simulationStepsTable,
-                    objectTypeTable,
-                    tokensTable,
-                    stepToMarkingAmountsTable,
-                    stepToFiringAmountsTable,
-                    stepToFiringTokensTable
-                )
-            }
-        }
-
-        newSuspendedTransaction {
-            addLogger(StdOutSqlLogger)
-            with(tablesProvider) {
-                simulationConfig.ocNet.objectTypeRegistry.types.forEach { objectType ->
-                    objectTypeTable.insert {
-                        it[ObjectTypeTable.objectTypeId] = objectType.id
+                if (!objectTypeTable.exists()) {
+                    SchemaUtils.create(
+                        simulationStepsTable,
+                        objectTypeTable,
+                        tokensTable,
+                        stepToMarkingAmountsTable,
+                        stepToFiringAmountsTable,
+                        stepToFiringTokensTable
+                    )
+                    with(tablesProvider) {
+                        simulationConfig.ocNet.objectTypeRegistry.types.forEach { objectType ->
+                            objectTypeTable.insert {
+                                it[objectTypeId] = objectType.id
+                            }
+                        }
                     }
                 }
+                checkedIfCreated = true
             }
         }
     }
 
     override suspend fun push(batch: List<SimulationStepLog>) {
+        initializeTables()
         newSuspendedTransaction(db = db) {
             addLogger(StdOutSqlLogger)
 
@@ -52,6 +52,35 @@ class SimulationLogRepositoryImpl @Inject constructor(
             insertStepToFiringAmounts(batch)
             insertSteptoFiringTokens(batch)
             insertTokens(batch)
+        }
+    }
+
+    private suspend fun getStep(stepIndex: Int): SimulationStepLog {
+        with(tablesProvider) {
+
+            (simulationStepsTable innerJoin
+                    stepToMarkingAmountsTable innerJoin
+                    stepToFiringAmountsTable innerJoin
+                    stepToFiringTokensTable)
+                .select(
+                    listOf(
+                        simulationStepsTable.columns,
+                        stepToMarkingAmountsTable.columns,
+                        stepToFiringAmountsTable.columns,
+                        stepToFiringTokensTable.columns,
+                        objectTypeTable.columns
+                    ).flatten()
+                ).where {
+                    this[simulationStepsTable.id] == stepIndex
+                }
+
+            this[simulationStepsTable.id]
+        }
+    }
+
+    override suspend fun readBatch(steps: IntRange): List<SimulationStepLog> {
+        val simulanewSuspendedTransaction = {
+
         }
     }
 

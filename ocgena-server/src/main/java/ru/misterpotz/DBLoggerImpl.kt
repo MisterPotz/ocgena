@@ -8,7 +8,6 @@ class DBLoggerImpl @Inject constructor(
     private val maxStoredBatchSize: Int = 10
     private val batch: MutableList<SimulationStepLog> = mutableListOf()
     override suspend fun simulationPrepared() {
-        simulationLogRepository.pushInitialData()
     }
 
     override suspend fun acceptStepLog(simulationStepLog: SimulationStepLog) {

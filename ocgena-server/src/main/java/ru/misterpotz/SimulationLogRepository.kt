@@ -1,7 +1,7 @@
 package ru.misterpotz
 
 interface SimulationLogRepository {
-    suspend fun pushInitialData()
     suspend fun push(batch: List<SimulationStepLog>)
+    suspend fun readBatch(steps : IntRange) : List<SimulationStepLog>
     suspend fun close()
 }
