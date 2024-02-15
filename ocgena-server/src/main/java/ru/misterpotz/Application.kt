@@ -7,9 +7,8 @@ import ru.misterpotz.plugins.configureSockets
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import ru.misterpotz.di.ServerComponent
+import ru.misterpotz.di.*
 import ru.misterpotz.di.ServerSimulationComponent
-import ru.misterpotz.di.ServerSimulationConfig
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
@@ -43,6 +42,19 @@ object ServiceProvider {
     }
 }
 
+suspend fun convertToOcel() {
+    val simulationToLogConversionParams = SimulationToLogConversionParams(
+        simulationLogDBPath = Path("data", "data.db"),
+        ocelDBPath = Path("ocel", "convert.db")
+    )
+    val simulationToLogConversion = SimulationToLogConversionComponent.create(
+        simulationToLogConversionParams
+    )
+
+    val converter = simulationToLogConversion.converter()
+    converter.convert()
+}
+
 suspend fun startSimulation() {
     val serverComponent = ServiceProvider.serverComponent
 
@@ -61,7 +73,7 @@ suspend fun startSimulation() {
 }
 
 fun main() {
-    embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
+    embeddedServer(Netty, port = 8080, host = "localhost", module = Application::module)
         .start(wait = true)
 }
 

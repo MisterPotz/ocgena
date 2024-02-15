@@ -30,19 +30,16 @@ internal abstract class ServerSimulationModule {
 
     @Binds
     @ServerSimulationScope
-    abstract fun bindSimulationLogRepository(
-        simulationLogRepositoryImpl: SimulationLogRepositoryImpl
-    ):
-            SimulationLogRepository
-
+    abstract fun bindSimulationFinishNotifier(
+        simulationFinishedNotifierImpl: SimulationFinishedNotifierImpl
+    ): SimulationFinishedNotifier
 
     companion object {
-        const val SIMULATION_LOG_DB = "simulationLogDB"
 
         @Provides
         @ServerSimulationScope
         @IntoMap
-        @StringKey(SIMULATION_LOG_DB)
+        @StringKey(SIM_DB)
         fun provideConnection(
             serverSimulationConfig: ServerSimulationConfig,
             dbConnectionSetupper: DBConnectionSetupper
@@ -59,7 +56,7 @@ internal abstract class ServerSimulationModule {
             inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
             tokenSerializer: TokenSerializer
         ): SimulationLogRepository {
-            val connection = dbConnections[SIMULATION_LOG_DB]!!
+            val connection = dbConnections.getSimDB()
             return SimulationLogRepositoryImpl(
                 db = connection.database,
                 tablesProvider = tablesProvider,
@@ -67,18 +64,6 @@ internal abstract class ServerSimulationModule {
                 inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer,
                 tokenSerializer = tokenSerializer
             )
-        }
-
-        @Provides
-        @ServerSimulationScope
-        fun provideHikariDataSource(connection: DBConnectionSetupper.Connection): HikariDataSource {
-            return connection.hikariDataSource
-        }
-
-        @Provides
-        @ServerSimulationScope
-        fun provideDB(connection: DBConnectionSetupper.Connection): Database {
-            return connection.database
         }
 
         @Provides

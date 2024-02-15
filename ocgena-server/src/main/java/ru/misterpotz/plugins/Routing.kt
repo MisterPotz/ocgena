@@ -2,34 +2,34 @@ package ru.misterpotz.plugins
 
 import io.ktor.http.cio.*
 import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import ru.misterpotz.convertToOcel
 import ru.misterpotz.startSimulation
+import kotlin.io.path.Path
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.notExists
 
 fun Application.configureRouting() {
     routing {
         get("/") {
             call.respondText("Hello World!")
         }
-        get("/start") {
+        get("/clean") {
+            val path = Path("data","data.db")
+            path.deleteIfExists()
+        }
+        get("/simulate") {
             startSimulation()
         }
-
-        get("/ocel/{name?}") {
-            val fixed = if (call.parameters["name"].isNullOrEmpty().not()) {
-                val path = call.parameters["name"]!!
-                val fixed = if (path.endsWith(".db")) {
-                    "$path.db"
-                } else {
-                    path
-                }
-                fixed
-            } else {
-                "data.db"
+        get("/ocel") {
+            val path =  Path("data", "data.db")
+            if (path.notExists()) {
+                call.respond("simulation log does not exist")
             }
 
-            println("getting at $fixed")
-
+            convertToOcel()
             call.respond("getting at $fixed")
         }
     }

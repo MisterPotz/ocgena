@@ -1,6 +1,7 @@
 package ru.misterpotz.db
 
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.firstValue
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import ru.misterpotz.*
 import ru.misterpotz.models.SimulationDBStepLog
@@ -132,6 +133,19 @@ class SimulationLogRepositoryImpl(
             getSteps(steps.toList())
         }
     }
+
+    override suspend fun totalSteps(): Long {
+        return newSuspendedTransaction(db = db) {
+            with(tablesProvider) {
+                (simulationStepsTable).select(simulationStepsTable.id.count())
+                    .first()
+                    .let {
+                        it[simulationStepsTable.id.count()]
+                    }
+            }
+        }
+    }
+
 
     override suspend fun getAllTokens(): List<ObjectTokenMeta> {
         return newSuspendedTransaction {

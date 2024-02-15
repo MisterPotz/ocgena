@@ -14,7 +14,6 @@ abstract class ServerModule {
     abstract fun bindDBConnectionSetupper(dbConnectionSetupperImpl: DBConnectionSetupperImpl): DBConnectionSetupper
 }
 
-
 @ServerScope
 @Component(
     modules = [ServerModule::class],

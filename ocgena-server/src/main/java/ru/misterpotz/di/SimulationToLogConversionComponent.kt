@@ -3,7 +3,9 @@ package ru.misterpotz.di
 import com.zaxxer.hikari.HikariDataSource
 import dagger.*
 import dagger.multibindings.IntoMap
+import dagger.multibindings.StringKey
 import org.jetbrains.exposed.sql.Database
+import ru.misterpotz.OCNetToOCELConverter
 import ru.misterpotz.db.DBConnectionSetupper
 import ru.misterpotz.db.SimulationLogRepository
 import ru.misterpotz.db.SimulationLogRepositoryImpl
@@ -24,7 +26,8 @@ abstract class SimulationToLogConversionModule {
 
         @Provides
         @SimulationToLogConversionScope
-        @SimulationLogDB
+        @IntoMap
+        @StringKey(SIM_DB)
         fun provideSimulationLogDBConnection(
             simulationToLogConversionParams: SimulationToLogConversionParams,
             dbConnectionSetupper: DBConnectionSetupper
@@ -34,26 +37,13 @@ abstract class SimulationToLogConversionModule {
 
         @Provides
         @SimulationToLogConversionScope
-        @OcelDB
         @IntoMap
-
+        @StringKey(OCEL_DB)
         fun provideOcelDBConnection(
             simulationToLogConversionParams: SimulationToLogConversionParams,
             dbConnectionSetupper: DBConnectionSetupper
-        ) : DBConnectionSetupper.Connection {
+        ): DBConnectionSetupper.Connection {
             return dbConnectionSetupper.createConnection(simulationToLogConversionParams.ocelDBPath)
-        }
-
-        @Provides
-        @ServerSimulationScope
-        fun provideHikariDataSource(connection: DBConnectionSetupper.Connection): HikariDataSource {
-            return connection.hikariDataSource
-        }
-
-        @Provides
-        @ServerSimulationScope
-        fun provideDB(connection: DBConnectionSetupper.Connection): Database {
-            return connection.database
         }
 
         @Provides
@@ -70,19 +60,24 @@ data class SimulationToLogConversionParams(
 @SimulationToLogConversionScope
 @Component(modules = [SimulationToLogConversionModule::class])
 interface SimulationToLogConversionComponent {
+    fun converter() : OCNetToOCELConverter
+
     @Component.Factory
     interface Factory {
         fun create(
             @BindsInstance simulationToLogConversionParams: SimulationToLogConversionParams
         ): SimulationToLogConversionComponent
     }
+
+    companion object {
+        fun create(
+            simulationToLogConversionParams: SimulationToLogConversionParams
+        ): SimulationToLogConversionComponent {
+            return DaggerSimulationToLogConversionComponent.factory()
+                .create(simulationToLogConversionParams)
+        }
+    }
 }
-
-@Qualifier
-annotation class SimulationLogDB
-
-@Qualifier
-annotation class OcelDB
 
 @Scope
 annotation class SimulationToLogConversionScope

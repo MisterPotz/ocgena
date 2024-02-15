@@ -10,7 +10,7 @@ interface SimulationFinishedNotifier {
     fun simulationFinished()
 }
 
-class SimulationFinishedNotifierImpl(
+class SimulationFinishedNotifierImpl @Inject constructor(
     private val openedConnections: @JvmSuppressWildcards Map<@JvmSuppressWildcards String, @JvmSuppressWildcards DBConnectionSetupper.Connection>
 ) : SimulationFinishedNotifier {
     override fun simulationFinished() {
