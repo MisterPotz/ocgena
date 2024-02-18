@@ -116,6 +116,19 @@ class SimulationStepLoggerImpl @Inject constructor(
     }
 }
 
+interface TokenSynchronizationToggle {
+    fun isEnabled(): Boolean
+}
+
+class TokenSynchronizationToggleImpl @Inject constructor(
+    private val simulationConfig: SimulationConfig
+) :
+    TokenSynchronizationToggle {
+    override fun isEnabled(): Boolean {
+        return true
+    }
+}
+
 class TimePetriNetStepExecutor @Inject constructor(
     private val newTimeDeltaInteractor: NewTimeDeltaInteractor,
     val ocNet: OCNet,
@@ -133,10 +146,9 @@ class TimePetriNetStepExecutor @Inject constructor(
 
     private fun collectTransitionsThatCanBeSelected(): List<Transition> {
         return buildList {
+            // TODO: take into consideration synchronization of tokens
             transitionDisabledByMarkingChecker.transitionsPartiallyEnabledByMarking().forEach {
-                if (timePNTransitionMarking.forTransition(it).mustFireNow() ||
-                    timePNTransitionMarking.forTransition(it).canFireNow()
-                ) {
+                if (timePNTransitionMarking.forTransition(it).canFireNow()) {
                     add(ocNet.transitionsRegistry[it])
                 }
             }

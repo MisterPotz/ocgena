@@ -11,6 +11,7 @@ class MaxTimeDeltaFinder @Inject constructor(
     private val transitionDisabledByMarkingChecker: TransitionDisabledByMarkingChecker,
 ) {
     fun findPossibleFiringTimeRange(): LongRange? {
+        // TODO: take into consideration synchroinization of tokens
         val partiallyEnabledTransitions = transitionDisabledByMarkingChecker.transitionsPartiallyEnabledByMarking()
         if (partiallyEnabledTransitions.isEmpty())
             return null

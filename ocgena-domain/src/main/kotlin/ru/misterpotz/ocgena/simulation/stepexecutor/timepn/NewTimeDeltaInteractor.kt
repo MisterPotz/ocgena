@@ -22,6 +22,7 @@ class NewTimeDeltaInteractor @Inject constructor(
 
             val timeDelta = timeShiftSelector.selectTimeDelta(possibleTimeShiftRange)
 
+            // TODO: also take into consideration synchronization of tokens - only transitions that have all necessary synchronized tokens can fire
             val transitionsPartiallyEnabledByMarking = transitionDisabledByMarkingChecker.transitionsPartiallyEnabledByMarking()
 
             timePNTransitionMarking.appendClockTime(
