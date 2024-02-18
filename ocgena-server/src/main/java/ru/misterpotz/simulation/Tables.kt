@@ -1,4 +1,4 @@
-package ru.misterpotz
+package ru.misterpotz.simulation
 
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Column
@@ -15,19 +15,29 @@ class StepToFiringAmountsTable(columnNames: List<String>) : StepToVariableColumn
 
 //class StepToMarkingTokensTable(columnNames: List<String>) : StepToVariableColumnsTextTable(columnNames)
 class StepToFiringTokensTable(columnNames: List<String>) : StepToVariableColumnsTextTable(columnNames)
-object TokensTable : LongIdTable() {
+object TokensTable : Table() {
+    val tokenId = long("id")
     val objectTypeId = reference("objectTypeId", ObjectTypeTable.objectTypeId)
+    override val primaryKey = PrimaryKey(tokenId)
 }
 
 object ObjectTypeTable : Table() {
     val objectTypeId = varchar("objectTypeId", length = 10)
+    val objectTypeLabel = text("label")
     override val primaryKey = PrimaryKey(objectTypeId)
 }
 
 object SimulationStepsTable : LongIdTable(columnName = "stepNumber") {
     val clockIncrement = long("clockIncrement")
     val chosenTransition = varchar("chosenTransition", 10).nullable().default(null)
-    val transitionDuration = long("transitionDuration")
+    val transitionDuration = long("transitionDuration").nullable()
+}
+
+object TransitionToLabelTable : Table() {
+    val transitionId = varchar("transitionId", 10)
+    val transitionLabel = text("label")
+
+    override val primaryKey = PrimaryKey(transitionId)
 }
 
 abstract class StepToVariableColumnsIntTable(private val columnNames: List<String>) : Table() {

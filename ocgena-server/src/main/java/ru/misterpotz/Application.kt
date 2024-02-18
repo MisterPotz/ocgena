@@ -45,7 +45,8 @@ object ServiceProvider {
 suspend fun convertToOcel() {
     val simulationToLogConversionParams = SimulationToLogConversionParams(
         simulationLogDBPath = Path("data", "data.db"),
-        ocelDBPath = Path("ocel", "convert.db")
+        ocelDBPath = Path("ocel", "convert.db"),
+        ocNetStruct = TODO("need to provide ocnetstruct at least to infer db structure of the log")
     )
     val simulationToLogConversion = SimulationToLogConversionComponent.create(
         simulationToLogConversionParams

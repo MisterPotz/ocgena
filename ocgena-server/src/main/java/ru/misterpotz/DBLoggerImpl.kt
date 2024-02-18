@@ -1,8 +1,7 @@
 package ru.misterpotz
 
-import com.zaxxer.hikari.HikariDataSource
 import ru.misterpotz.db.DBConnectionSetupper
-import ru.misterpotz.db.SimulationLogRepository
+import ru.misterpotz.simulation.SimulationLogRepository
 import javax.inject.Inject
 
 

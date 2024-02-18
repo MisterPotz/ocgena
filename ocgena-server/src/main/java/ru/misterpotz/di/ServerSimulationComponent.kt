@@ -1,18 +1,19 @@
 package ru.misterpotz.di
 
 import com.charleskorn.kaml.Yaml
-import com.zaxxer.hikari.HikariDataSource
 import dagger.*
 import dagger.multibindings.IntoMap
 import dagger.multibindings.StringKey
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.Database
 import ru.misterpotz.*
 import ru.misterpotz.db.DBConnectionSetupper
-import ru.misterpotz.db.SimulationLogRepository
-import ru.misterpotz.db.SimulationLogRepositoryImpl
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
+import ru.misterpotz.simulation.SimulationLogRepository
+import ru.misterpotz.simulation.SimulationLogSinkRepositoryImpl
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
+import ru.misterpotz.simulation.TablesProvider
+import ru.misterpotz.simulation.TablesProviderImpl
 import java.nio.file.Path
 import javax.inject.Scope
 
@@ -38,6 +39,12 @@ internal abstract class ServerSimulationModule {
 
         @Provides
         @ServerSimulationScope
+        fun provideOCNetStruct(serverSimulationConfig: ServerSimulationConfig): OCNetStruct {
+            return serverSimulationConfig.simulationConfig.ocNet
+        }
+
+        @Provides
+        @ServerSimulationScope
         @IntoMap
         @StringKey(SIM_DB)
         fun provideConnection(
@@ -57,7 +64,7 @@ internal abstract class ServerSimulationModule {
             tokenSerializer: TokenSerializer
         ): SimulationLogRepository {
             val connection = dbConnections.getSimDB()
-            return SimulationLogRepositoryImpl(
+            return SimulationLogSinkRepositoryImpl(
                 db = connection.database,
                 tablesProvider = tablesProvider,
                 simulationConfig = simulationConfig,

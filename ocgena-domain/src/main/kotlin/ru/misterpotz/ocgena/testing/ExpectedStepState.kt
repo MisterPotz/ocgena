@@ -24,7 +24,7 @@ data class ExpectedStepState(
                 .applySettingsBlock(timeMarkingApplierBlock)
                 .dump()
         return timeClockIncrement == simulationStepLog.clockIncrement &&
-                chosenTransition == simulationStepLog.selectedFiredTransition &&
+                chosenTransition == simulationStepLog.selectedFiredTransition?.transitionId &&
                 tokenAmountStorage == simulationStepLog.endStepMarkingAmounts &&
                 timePNTransitionMarking == simulationStepLog.timePNTransitionMarking
     }

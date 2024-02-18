@@ -5,6 +5,7 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import ru.misterpotz.DBLogger
 import ru.misterpotz.ObjectTokenMeta
+import ru.misterpotz.SimulationLogTransition
 import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.ocgena.collections.ObjectTokenSet
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
@@ -54,7 +55,8 @@ class SimulationStepLoggerImpl @Inject constructor(
     private val simulationStateProvider: SimulationStateProvider,
     private val dbLogger: DBLogger,
     private val timePNTransitionMarking: Provider<TimePNTransitionMarking>,
-    private val developmentDebugConfig: DevelopmentDebugConfig
+    private val developmentDebugConfig: DevelopmentDebugConfig,
+    private val nodeToLabelRegistry: NodeToLabelRegistry
 ) :
     SimulationStepLogger {
     private val currentSimulationStepLogBuilder: SimulationStepLogBuilder
@@ -86,9 +88,14 @@ class SimulationStepLoggerImpl @Inject constructor(
         currentSimulationStepLogBuilder.appendInstantiatedTokens(tokens)
     }
 
-    override fun logTransitionToFire(petriAtomId: PetriAtomId, transitionDuration: Long) {
-        currentSimulationStepLogBuilder.selectedFiredTransition = petriAtomId
-        currentSimulationStepLogBuilder.transitionDuration = transitionDuration
+    override fun logTransitionToFire(
+        petriAtomId: PetriAtomId,
+        transitionDuration: Long
+    ) {
+        currentSimulationStepLogBuilder.selectedFiredTransition = SimulationLogTransition(
+            transitionId = petriAtomId,
+            transitionDuration = transitionDuration,
+        )
     }
 
     override fun logStepEndMarking() {
@@ -267,8 +274,7 @@ class SimulationStepLogBuilder @Inject constructor(
 ) {
     var stepNumber: Long by Delegates.notNull()
     var clockIncrement: Long by Delegates.notNull()
-    var selectedFiredTransition: PetriAtomId? = null
-    var transitionDuration: Long by Delegates.notNull()
+    var selectedFiredTransition: SimulationLogTransition? = null
     var starterMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
     var stepEndMarking: Map<PetriAtomId, Int>? = null
     var firingInMarkingAmounts: Map<PetriAtomId, Int> by Delegates.notNull()
@@ -297,7 +303,6 @@ class SimulationStepLogBuilder @Inject constructor(
             stepNumber = stepNumber,
             clockIncrement = clockIncrement,
             selectedFiredTransition = selectedFiredTransition,
-            firedTransitionDuration = transitionDuration,
             starterMarkingAmounts = starterMarkingAmounts,
             endStepMarkingAmounts = stepEndMarking,
             firingInMarkingAmounts = firingInMarkingAmounts,

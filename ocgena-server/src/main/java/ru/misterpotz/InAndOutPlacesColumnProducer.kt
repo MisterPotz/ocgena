@@ -1,16 +1,18 @@
 package ru.misterpotz
 
-import ru.misterpotz.di.ServerSimulationConfig
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import javax.inject.Inject
 
-class InAndOutPlacesColumnProducer @Inject constructor(private val serverSimulationConfig: ServerSimulationConfig) {
+class InAndOutPlacesColumnProducer @Inject constructor(
+    ocNetStruct: OCNetStruct
+) {
     val IN_PREFIX = "in_"
     val OUT_PREFIX = "out_"
 
-    val inPlaces = serverSimulationConfig.simulationConfig.ocNet.placeRegistry.places.map {
+    val inPlaces = ocNetStruct.placeRegistry.places.map {
         "$IN_PREFIX${it.id}"
     }
-    val outPlaces = serverSimulationConfig.simulationConfig.ocNet.placeRegistry.places.map {
+    val outPlaces = ocNetStruct.placeRegistry.places.map {
         "$OUT_PREFIX${it.id}"
     }
 

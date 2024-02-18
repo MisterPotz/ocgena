@@ -1,4 +1,4 @@
-package ru.misterpotz
+package ru.misterpotz.simulation
 
 interface TablesProvider {
     val simulationStepsTable: SimulationStepsTable
@@ -7,4 +7,5 @@ interface TablesProvider {
     val stepToFiringTokensTable: StepToFiringTokensTable
     val tokensTable: TokensTable
     val objectTypeTable: ObjectTypeTable
+    val transitionToLabel: TransitionToLabelTable
 }

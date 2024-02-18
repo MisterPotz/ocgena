@@ -1,13 +1,14 @@
-package ru.misterpotz.db
+package ru.misterpotz.simulation
 
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.firstValue
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import ru.misterpotz.*
-import ru.misterpotz.models.SimulationDBStepLog
+import ru.misterpotz.InAndOutPlacesColumnProducer
+import ru.misterpotz.ObjectTokenMeta
+import ru.misterpotz.SimulationStepLog
+import ru.misterpotz.TokenSerializer
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 
-class SimulationLogRepositoryImpl(
+class SimulationLogSinkRepositoryImpl(
     private val db: Database,
     private val tablesProvider: TablesProvider,
     private val simulationConfig: SimulationConfig,
@@ -27,12 +28,21 @@ class SimulationLogRepositoryImpl(
                         tokensTable,
                         stepToMarkingAmountsTable,
                         stepToFiringAmountsTable,
-                        stepToFiringTokensTable
+                        stepToFiringTokensTable,
+                        transitionToLabel,
                     )
                     with(tablesProvider) {
                         simulationConfig.ocNet.objectTypeRegistry.types.forEach { objectType ->
                             objectTypeTable.insert {
                                 it[objectTypeId] = objectType.id
+                                it[objectTypeLabel] =
+                                    simulationConfig.nodeToLabelRegistry.getObjectTypeLabel(objectType.id)
+                            }
+                        }
+                        simulationConfig.nodeToLabelRegistry.transitionsToActivity.forEach { (t, u) ->
+                            transitionToLabel.insert {
+                                it[transitionId] = t
+                                it[transitionLabel] = u
                             }
                         }
                     }
@@ -55,97 +65,6 @@ class SimulationLogRepositoryImpl(
         }
     }
 
-    private fun getStep(resultRow: ResultRow): SimulationDBStepLog {
-        return with(tablesProvider) {
-            val stepToFiringAmountsMap = resultRow.getIntMap(stepToFiringAmountsTable)!!
-            val stepToFiringTokens = resultRow.getStringMap(stepToFiringTokensTable)!!
-
-            SimulationDBStepLog(
-                stepNumber = resultRow[simulationStepsTable.id].value,
-                clockIncrement = resultRow[SimulationStepsTable.clockIncrement],
-                selectedFiredTransition = resultRow[SimulationStepsTable.chosenTransition],
-                firedTransitionDuration = resultRow[SimulationStepsTable.transitionDuration],
-                starterMarkingAmounts = resultRow.getIntMap(stepToMarkingAmountsTable)!!,
-                firingInMarkingAmounts = deTransformInPlaces(stepToFiringAmountsMap),
-                firingOutMarkingAmounts = deTransformInPlaces(stepToFiringAmountsMap),
-                firingInMarkingTokens = detransformInPlacesString(stepToFiringTokens),
-                firingOutMarkingTokens = deTransformOutPlacesString(stepToFiringTokens),
-            )
-        }
-    }
-
-    private fun getSteps(stepIndeces: List<Long>): List<SimulationDBStepLog> {
-        return with(tablesProvider) {
-
-            (simulationStepsTable innerJoin
-                    stepToMarkingAmountsTable innerJoin
-                    stepToFiringAmountsTable innerJoin
-                    stepToFiringTokensTable)
-                .select(
-                    listOf(
-                        simulationStepsTable.columns,
-                        stepToMarkingAmountsTable.columns,
-                        stepToFiringAmountsTable.columns,
-                        stepToFiringTokensTable.columns,
-                        objectTypeTable.columns
-                    ).flatten()
-                ).where {
-                    simulationStepsTable.id.inList(stepIndeces)
-                }.map {
-                    getStep(it)
-                }
-        }
-    }
-
-    private fun deTransformInPlaces(
-        inMap: Map<String, Int>,
-    ): Map<String, Int> {
-        return inMap.mapKeys { inAndOutPlacesColumnProducer.inNameDetransformer(it.key) }
-    }
-
-    private fun deTransformOutPlaces(
-        inMap: Map<String, Int>,
-    ): Map<String, Int> {
-        return inMap.mapKeys { inAndOutPlacesColumnProducer.outNameDetransformer(it.key) }
-    }
-
-    private fun detransformInPlacesString(
-        inMap: Map<String, String?>,
-    ): Map<String, List<Long>> {
-        return inMap.mapKeys { inAndOutPlacesColumnProducer.inNameDetransformer(it.key) }
-            .mapValues {
-                tokenSerializer.deserializeTokens(it.value ?: return@mapValues listOf())
-            }
-    }
-
-    private fun deTransformOutPlacesString(
-        inMap: Map<String, String?>,
-    ): Map<String, List<Long>> {
-        return inMap.mapKeys { inAndOutPlacesColumnProducer.outNameDetransformer(it.key) }
-            .mapValues {
-                tokenSerializer.deserializeTokens(it.value ?: return@mapValues listOf())
-            }
-    }
-
-
-    override suspend fun readBatch(steps: LongRange): List<SimulationDBStepLog> {
-        return newSuspendedTransaction(db = db) {
-            getSteps(steps.toList())
-        }
-    }
-
-    override suspend fun totalSteps(): Long {
-        return newSuspendedTransaction(db = db) {
-            with(tablesProvider) {
-                (simulationStepsTable).select(simulationStepsTable.id.count())
-                    .first()
-                    .let {
-                        it[simulationStepsTable.id.count()]
-                    }
-            }
-        }
-    }
-
 
     override suspend fun getAllTokens(): List<ObjectTokenMeta> {
         return newSuspendedTransaction {
@@ -153,7 +72,7 @@ class SimulationLogRepositoryImpl(
                 tokensTable.select(tokensTable.columns)
                     .map {
                         ObjectTokenMeta(
-                            id = it[tokensTable.id].value,
+                            id = it[tokensTable.tokenId],
                             objectTypeId = it[TokensTable.objectTypeId]
                         )
                     }
@@ -166,8 +85,11 @@ class SimulationLogRepositoryImpl(
             simulationStepsTable.batchInsert(batch) { simulationStepLog ->
                 this[simulationStepsTable.id] = simulationStepLog.stepNumber
                 this[SimulationStepsTable.clockIncrement] = simulationStepLog.clockIncrement
-                this[SimulationStepsTable.chosenTransition] = simulationStepLog.selectedFiredTransition
-                this[SimulationStepsTable.transitionDuration] = simulationStepLog.firedTransitionDuration
+                val selectedFiredTranstion = simulationStepLog.selectedFiredTransition
+                if (selectedFiredTranstion != null) {
+                    this[SimulationStepsTable.chosenTransition] = selectedFiredTranstion.transitionId
+                    this[SimulationStepsTable.transitionDuration] = selectedFiredTranstion.transitionDuration
+                }
             }
         }
     }
@@ -224,9 +146,10 @@ class SimulationLogRepositoryImpl(
         with(tablesProvider) {
             val tokens = batch.flatMap { it.tokensInitializedAtStep }
             tokensTable.batchInsert(tokens) { token ->
-                this[tokensTable.id] = token.id
+                this[tokensTable.tokenId] = token.id
                 this[TokensTable.objectTypeId] = token.objectTypeId
             }
         }
     }
 }
+

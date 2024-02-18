@@ -30,7 +30,7 @@ fun Application.configureRouting() {
             }
 
             convertToOcel()
-            call.respond("getting at $fixed")
+            call.respond("getting at $")
         }
     }
 }
