@@ -3,6 +3,7 @@ package ru.misterpotz.ocgena.simulation.logging
 import com.charleskorn.kaml.Yaml
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.loggers.*
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.utils.ExecutedBindingDebugPrinter
 import ru.misterpotz.ocgena.utils.TransitionInstanceDebugPrinter
 import simulation.client.loggers.CompoundLogger

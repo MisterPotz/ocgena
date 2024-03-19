@@ -1,13 +1,12 @@
 package ru.misterpotz.ocgena.simulation.structure
 
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
-import ru.misterpotz.ocgena.registries.TransitionToInstancesRegistry
-import ru.misterpotz.ocgena.registries.TransitionToTimeUntilInstanceAllowedRegistry
+import ru.misterpotz.ocgena.registries.original.TransitionToInstancesRegistryOriginal
+import ru.misterpotz.ocgena.registries.original.TransitionToTimeUntilInstanceAllowedRegistryOriginal
 import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.*
-import ru.misterpotz.ocgena.simulation.config.TransitionInstancesTimesSpec
 
 interface SimulatableOcNetInstance : OCNet {
     val ocNet: OCNet
@@ -36,9 +35,9 @@ interface SimulatableOcNetInstance : OCNet {
 }
 
 interface State {
-    val tMarking: TransitionToInstancesRegistry
+//    val tMarking: TransitionToInstancesRegistryOriginal
     val pMarking: PlaceToObjectMarking
-    val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry
+//    val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistryOriginal
     val arcsMultiplicityRegistry : ArcsMultiplicityRegistry
     val transitionToPlacesByObjectTypeIndexRegistry : TransitionToPlacesByObjectTypeIndexRegistry
 }

@@ -1,0 +1,10 @@
+init_marking: {}
+transitions:
+  type: "original"
+seed: 42
+token_gen:
+  default: [25, 25]
+  places_targets: {}
+oc_net_type: "aalst"
+semantics:
+  type: "original"

@@ -7,6 +7,7 @@ import ru.misterpotz.ocgena.simulation.Time
 import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
 import ru.misterpotz.ocgena.simulation.config.SimulationConfig
 import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation.state.CurrentSimulationDelegate
 import ru.misterpotz.ocgena.utils.*
 import javax.inject.Inject
 

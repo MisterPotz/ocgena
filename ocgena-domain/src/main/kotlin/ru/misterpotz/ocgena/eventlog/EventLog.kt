@@ -13,14 +13,6 @@ class EventLog() {
     val objects: MutableSet<ObjectToken> = mutableSetOf()
 
     val objectTypes: ObjectTypes = mutableListOf()
-    fun recordObjects(objects: Collection<ObjectToken>) {
-        for (i in objects) {
-            val type = i.type
-            objectTypes.add(type)
-        }
-
-        this.objects += objects
-    }
 
     fun recordObjectTypes(objectTypes: Collection<ObjectType>) {
         this.objectTypes += objectTypes

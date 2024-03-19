@@ -46,8 +46,6 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         setSubgraphIndexTo(atom)
     }
 
-
-
     override fun doForArcBeforeDFS(arc: Arc): Boolean {
         logItem(arc)
         recordIfArcConsistencyErrors(arc)

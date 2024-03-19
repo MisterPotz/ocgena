@@ -8,7 +8,7 @@ import ru.misterpotz.ocgena.simulation.structure.State
 import javax.inject.Inject
 
 @SimulationScope
-class PMarkingProvider @Inject constructor(private val ocNet: OCNet) {
+class PMarkingProvider @Inject constructor() {
     init {
         println("pmarking provider created")
     }
@@ -21,6 +21,10 @@ class PMarkingProvider @Inject constructor(private val ocNet: OCNet) {
     fun get(): PlaceToObjectMarking {
         return placeToObjectMarking
     }
+
+    override fun toString(): String {
+        return "PMarkingProvider(placeToObjectMarking=$placeToObjectMarking)"
+    }
 }
 
 @SimulationScope
@@ -29,10 +33,10 @@ class StateImpl @Inject constructor(
     override val arcsMultiplicityRegistry: ArcsMultiplicityRegistry,
     val pMarkingProvider: PMarkingProvider,
 ) : State {
-    override val tMarking: TransitionToInstancesRegistry = TransitionToInstancesRegistry()
+//    override val tMarking: TransitionToInstancesRegistryOriginal = TransitionToInstancesRegistryOriginal()
     override val pMarking: PlaceToObjectMarking = pMarkingProvider.get()
-    override val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistry =
-        TransitionToTimeUntilInstanceAllowedMarking()
+//    override val tTimesMarking: TransitionToTimeUntilInstanceAllowedRegistryOriginal =
+//        TransitionToTimeUntilInstanceAllowedMarking()
     override val transitionToPlacesByObjectTypeIndexRegistry: TransitionToPlacesByObjectTypeIndexRegistry =
         TransitionToPlacesByObjectTypeIndexRegistry(
             transitionsRegistry = ocNet.transitionsRegistry,

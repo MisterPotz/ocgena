@@ -2,10 +2,12 @@ package ru.misterpotz.ocgena.simulation.binding
 
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingDelta
 import ru.misterpotz.ocgena.collections.TransitionInstance
 import ru.misterpotz.ocgena.simulation.interactors.TIOutputPlacesResolverInteractor
 import ru.misterpotz.ocgena.simulation.logging.Logger
 import ru.misterpotz.ocgena.simulation.SimulationStateProvider
+import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
 import javax.inject.Inject
 
 interface TIFinisher {
@@ -31,7 +33,8 @@ class TIFinisherImpl @Inject constructor(
             val tokenSize = markingForOutputPlaces[petriAtomId].size
             objectTokenRealAmountRegistry.incrementRealAmountAt(petriAtomId, tokenSize)
         }
-        pMarking.plus(markingForOutputPlaces)
+
+        pMarking.plus(markingForOutputPlaces as PlaceToObjectMarkingDelta)
 
         val executedBinding = ExecutedBinding(
             activeFiringTransition,

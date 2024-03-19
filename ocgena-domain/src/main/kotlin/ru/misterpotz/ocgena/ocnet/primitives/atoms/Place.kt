@@ -11,7 +11,9 @@ import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 data class Place(
     override val id: PetriAtomId,
     override val label: String,
+    @SerialName("from_transtns")
     val fromTransitions: MutableList<PetriAtomId> = mutableListOf(),
+    @SerialName("to_transtns")
     val toTransitions: MutableList<PetriAtomId> = mutableListOf(),
 ) : PetriNode, LabelHolder {
     fun addFromTransition(transition: PetriAtomId) {

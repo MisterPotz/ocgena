@@ -8,7 +8,21 @@ import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 
 enum class ArcType {
     NORMAL,
-    VARIABLE
+    VARIABLE,
+}
+
+interface ArcMeta {
+    fun shortString() : String
+}
+
+object NormalArcMeta : ArcMeta {
+    override fun toString(): String {
+        return "norm."
+    }
+
+    override fun shortString() : String {
+        return "n  "
+    }
 }
 
 abstract class Arc : PetriAtom {
@@ -18,8 +32,8 @@ abstract class Arc : PetriAtom {
     val tailNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {
         id.arcTailId()
     }
+    abstract val arcMeta : ArcMeta
     abstract val arcType : ArcType
-
     override fun acceptVisitor(visitor: PetriAtomVisitorDFS) {
         visitor.visitArc(this)
     }

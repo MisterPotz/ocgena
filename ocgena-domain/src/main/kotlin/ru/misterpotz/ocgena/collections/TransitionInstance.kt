@@ -8,7 +8,6 @@ import ru.misterpotz.ocgena.utils.ANSI_YELLOW
 
 typealias TI = TransitionInstance
 
-@Serializable
 data class TransitionInstance(
     val transition: TransitionId,
     val relativeTimePassedSinceLock: Time,

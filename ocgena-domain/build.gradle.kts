@@ -1,7 +1,8 @@
 plugins {
-    id("kotlin")
+    kotlin("jvm") version "1.9.20"
+    id("java-library")
     //kotlin("kapt") // fallback to this if ksp goes crazy
-    id("com.google.devtools.ksp") version "1.9.0-1.0.12"
+    id("com.google.devtools.ksp") version "1.9.20-1.0.14"
     kotlin("plugin.serialization") version "1.9.20"
 }
 
@@ -19,20 +20,35 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
     implementation(project(":ocgena-math-parexper"))
     implementation("com.charleskorn.kaml:kaml:0.55.0")
+    implementation(project(":db_api"))
 
     implementation("com.google.dagger:dagger:2.48")
     //kapt("com.google.dagger:dagger-compiler:2.48.1") // fallback to this if ksp goes crazy
     ksp("com.google.dagger:dagger-compiler:2.48")
 
+    implementation("io.mockk:mockk:1.13.8")
+
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.1")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation(kotlin("reflect"))
+    testImplementation("io.mockk:mockk:1.13.8")
+
 }
 
-kotlin {
-    jvmToolchain(8)
-}
+//kotlin {
+//    jvmToolchain(11)
+//}
 
 tasks.test {
     useJUnitPlatform()
 }
+//
+//compileKotlin {
+//    kotlinOptions.jvmTarget = '11'
+//}
+//
+//compileTestKotlin {
+//    kotlinOptions.jvmTarget = '11'
+//}

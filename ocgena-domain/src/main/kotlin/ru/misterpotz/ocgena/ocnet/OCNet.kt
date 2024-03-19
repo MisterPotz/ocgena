@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.ocnet
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.registries.*
 
@@ -18,9 +19,13 @@ interface OCNet {
 
 @Serializable
 data class OCNetStruct(
+    @SerialName("object_types")
     override val objectTypeRegistry: ObjectTypeRegistryMap,
+    @SerialName("place_types")
     override val placeTypeRegistry: PlaceTypeRegistry,
+    @SerialName("place_object_types")
     override val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
+    @SerialName("petri_atoms")
     override val petriAtomRegistry: PetriAtomRegistryStruct
 ) : OCNet {
     override val placeRegistry: PlaceRegistry by lazy(LazyThreadSafetyMode.NONE) {

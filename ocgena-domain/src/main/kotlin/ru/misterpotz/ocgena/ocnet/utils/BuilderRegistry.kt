@@ -13,7 +13,7 @@ import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.simulation.ObjectType
 import java.lang.IllegalArgumentException
 
-internal class BuilderRegistry() {
+internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean) {
     private val atomBuilders: MutableMap<PetriAtomId, OCNetBuilder.AtomBlock> = mutableMapOf()
 
     fun getPlace(petriAtomId: PetriAtomId): OCNetBuilder.PlaceBlock {
@@ -38,10 +38,10 @@ internal class BuilderRegistry() {
         atomBuilders.values
             .asSequence()
             .filterIsInstance<OCNetBuilder.PlaceBlock>()
-            .map { it.objectTypeId }
+            .map { if (useSpecialSymbolsInNaming) it.objectTypeId.makeObjTypeId() else it.objectTypeId }
             .toSet()
             .map {
-                ObjectType(it, id = it)
+                ObjectType(id = it, label = it)
             }
             .associateBy {
                 it.id
@@ -73,7 +73,11 @@ internal class BuilderRegistry() {
                     it.id
                 },
                 valueTransform = {
-                    it.objectTypeId
+                    if (useSpecialSymbolsInNaming) {
+                        it.objectTypeId.makeObjTypeId()
+                    } else {
+                        it.objectTypeId
+                    }
                 }
             ).let {
                 PlaceToObjectTypeRegistry(defaultObjTypeId, it.toMutableMap())
@@ -88,11 +92,11 @@ internal class BuilderRegistry() {
         return filter { it.startsWith(petriAtomId) && it.length != petriAtomId.length }
     }
 
-    private fun Collection<PetriAtomId>.mapArcsTail() : List<PetriAtomId> {
+    private fun Collection<PetriAtomId>.mapArcsTail(): List<PetriAtomId> {
         return map { it.arcTailId() }
     }
 
-    private fun Collection<PetriAtomId>.mapArcsHead() : List<PetriAtomId> {
+    private fun Collection<PetriAtomId>.mapArcsHead(): List<PetriAtomId> {
         return map { it.arcArrowId() }
     }
 
@@ -133,10 +137,10 @@ internal class BuilderRegistry() {
                     )
                 }
 
-                is OCNetBuilder.ArcBlock -> {
+                is OCNetBuilder.ArcBlockImpl -> {
                     when (it.type) {
-                        VAR -> VariableArc(id = it.id)
-                        NORMAL -> NormalArc(id = it.id)
+                        VAR -> VariableArc(id = it.id, mathExpression = it.innerMathExpr)
+                        NORMAL -> NormalArc(id = it.id, multiplicity = it.multiplicity)
                     }
                 }
 

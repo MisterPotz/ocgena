@@ -8,18 +8,18 @@ import java.lang.IllegalStateException
  * uses simple search fallback if can't find non-duplicate answer
  */
 class RandomIterator(
-    private val amount: Int,
+    private val size : Int,
+    private val rangeToSelectFrom : IntRange,
     private val randomizer: Randomizer,
 ) : Iterator<Int> {
-    val set = sortedSetOf<Int>()
-    val range = 0..<amount
+    val attemptsSet = sortedSetOf<Int>()
     override fun hasNext(): Boolean {
-        return set.size < amount
+        return attemptsSet.size < size
     }
 
     private fun checkValueAndReturn(i : Int) : Boolean {
-        if (i !in set) {
-            set.add(i)
+        if (i !in attemptsSet) {
+            attemptsSet.add(i)
             return true
         }
         return false
@@ -32,28 +32,27 @@ class RandomIterator(
 
 
         // try generate truly randomly
-        while (guardCounter < TokenSelectionInteractorImpl.GUARD_MULTIPLIER * amount) {
-            attempt = randomizer.nextRandom(range)
-            if (attempt !in set) {
-                set.add(attempt)
+        while (guardCounter < TokenSelectionInteractorImpl.GUARD_MULTIPLIER * size) {
+            attempt = randomizer.nextRandom(rangeToSelectFrom)
+            if (attempt !in attemptsSet) {
+                attemptsSet.add(attempt)
                 return attempt
             } else {
                 guardCounter++
             }
         }
         // try generate with heuristics
-        attempt = randomizer.nextRandom(range)
+        attempt = randomizer.nextRandom(rangeToSelectFrom)
 
         val checkingRangeLeft = attempt.downTo(0)
         for (i in checkingRangeLeft) {
             if (checkValueAndReturn(i)) return i
         }
-        val checkingRangeRight = (attempt + 1)..<amount
+        val checkingRangeRight = (attempt + 1)..<size
         for (i in checkingRangeRight) {
             if (checkValueAndReturn(i)) return i
         }
 
         throw IllegalStateException("hi, random iterator doesn't feel well")
     }
-
 }
