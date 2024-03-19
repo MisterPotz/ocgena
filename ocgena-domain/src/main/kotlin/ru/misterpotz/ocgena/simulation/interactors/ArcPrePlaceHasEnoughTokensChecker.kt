@@ -99,7 +99,7 @@ data class SimpleTokenAmountStorage(
         }
     }
 
-    fun reindexFrom(placeToObjectMarking: PlaceToObjectMarking) {
+    fun reindexTokenAmountsFrom(placeToObjectMarking: PlaceToObjectMarking) {
         placeToTokens.clear()
 
         for (place in placeToObjectMarking.places) {

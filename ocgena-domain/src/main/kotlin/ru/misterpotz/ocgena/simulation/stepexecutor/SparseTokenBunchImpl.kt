@@ -45,8 +45,8 @@ data class SparseTokenBunchImpl(
         }
     }
 
-    fun reindex() {
-        tokenAmountStorage.reindexFrom(marking)
+    fun reindexTokenAmounts() {
+        tokenAmountStorage.reindexTokenAmountsFrom(marking)
     }
 
     interface Builder {

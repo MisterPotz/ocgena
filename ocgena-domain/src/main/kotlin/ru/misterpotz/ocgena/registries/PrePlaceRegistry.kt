@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.registries
 
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.interactors.ArcPrePlaceHasEnoughTokensChecker
@@ -14,6 +13,11 @@ interface PrePlaceRegistry {
     @DefinitionRef("t^-")
     fun transitionPrePlaces(transition: PetriAtomId): PrePlaceAccessor
 
+
+    interface PrePlaceAssociatedAccessor : Iterable<PetriAtomId> {
+        val transitionId: PetriAtomId
+
+    }
 
     interface PrePlaceAccessor : Iterable<PetriAtomId> {
         val transitionId: PetriAtomId
@@ -34,10 +38,8 @@ class PrePlaceRegistryImpl(
         return preplaceMap[transition]!!
     }
 
-//    override fun getPostPlaces(transition: PetriAtomId): Set<PetriAtomId> {
-//        return postplaceMap[transition]!!
-//    }
 
+    // в каком режиме работает preplaceaccessor? надо чтобы он мог сразу находить синхронизированные токены среди преплейсесов
     override fun transitionPrePlaces(transition: PetriAtomId): PrePlaceRegistry.PrePlaceAccessor {
         return preplaceAccessorCache.getOrPut(transition) {
             PrePlaceAccessorImpl(
@@ -73,14 +75,14 @@ class PrePlaceRegistryImpl(
         }
 
         override fun compareTo(objectTokenRealAmountRegistry: TokenAmountStorage): Int {
-            val allHasRequiredTokens = places.all {
+            val allHaveRequiredTokens = places.all {
                 arcPrePlaceHasEnoughTokensChecker.arcInputPlaceHasEnoughTokens(
                     it,
                     transitionId,
                     objectTokenRealAmountRegistry
                 )
             }
-            return if (allHasRequiredTokens) {
+            return if (allHaveRequiredTokens) {
                 0
             } else {
                 1

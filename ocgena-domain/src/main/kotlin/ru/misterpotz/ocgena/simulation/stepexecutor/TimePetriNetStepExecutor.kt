@@ -351,7 +351,7 @@ class TransitionTokenSelector(
             grabRecorder.objectMarking()[preplace] = selectTokensToGrab.selected
             instantiatedTokens.addAll(selectTokensToGrab.generated)
         }
-        grabRecorder.reindex()
+        grabRecorder.reindexTokenAmounts()
         return Pair(grabRecorder, instantiatedTokens)
     }
 
@@ -504,7 +504,7 @@ class TransitionOutputTokensCreator @AssistedInject constructor(
             marking = outputMarking,
             tokenAmountStorage = SimpleTokenAmountStorage()
         )
-        tokenBunch.reindex()
+        tokenBunch.reindexTokenAmounts()
         return Pair(tokenBunch, newlyGeneratedTokens)
     }
 }
