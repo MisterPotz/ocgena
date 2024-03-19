@@ -147,11 +147,13 @@ class TimePetriNetStepExecutor @Inject constructor(
     private fun collectTransitionsThatCanBeSelected(): List<Transition> {
         return buildList {
             // TODO: take into consideration synchronization of tokens
-            transitionDisabledByMarkingChecker.transitionsPartiallyEnabledByMarking().forEach {
-                if (timePNTransitionMarking.forTransition(it).canFireNow()) {
-                    add(ocNet.transitionsRegistry[it])
+            transitionDisabledByMarkingChecker
+                .transitionsPartiallyEnabledByMarking()
+                .forEach {
+                    if (timePNTransitionMarking.forTransition(it).canFireNow()) {
+                        add(ocNet.transitionsRegistry[it])
+                    }
                 }
-            }
         }
             .distinctBy { it.id }
             .sortedBy { it.id }
@@ -255,6 +257,7 @@ class TransitionDisabledByMarkingChecker @Inject constructor(
     private val transitionsRegistry: TransitionsRegistry
 ) {
     fun transitionIsDisabledByMarking(transition: PetriAtomId): Boolean {
+        // TODO допустим здесь будет учитываться синхронизация
         return prePlaceRegistry.transitionPrePlaces(transition) > globalTokenBunch.tokenAmountStorage()
     }
 
@@ -364,6 +367,7 @@ class TransitionTokenSelector(
 
         val requiredTokensAmount = arcMultiplicity.requiredTokenAmount(tokenBunch.tokenAmountStorage())
 
+        // TODO: и здесь тоже нужно учитывать то что токены надо брать не абы какие а по режиму синхронизации
         val selectedAndInitializedTokens = tokenSelectionInteractor.selectAndInitializeTokensFromPlace(
             petriAtomId = place,
             amount = requiredTokensAmount,

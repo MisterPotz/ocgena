@@ -4,20 +4,32 @@ import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.interactors.ArcPrePlaceHasEnoughTokensChecker
 import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
+import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.utils.DefinitionRef
+
+interface PrePlaceSynchronizedRegistry {
+    fun getPrePlaces(transition: PetriAtomId): Set<PetriAtomId>
+
+    @DefinitionRef("(t^-) with token synchronization consideration")
+    fun transitionPrePlacesSynchronized(transition: PetriAtomId): PrePlaceRegistry.PrePlaceAccessor
+
+    interface PrePlaceSynchronizedAccessor : Iterable<PetriAtomId> {
+        val transitionId: PetriAtomId
+        fun getTransitionsWithSharedPreplaces(): List<PetriAtomId>
+
+        operator fun compareTo(objectTokens: SparseTokenBunch): Int
+    }
+}
+
+class PrePlaceSynchronizedRegistryImpl() {
+
+}
 
 interface PrePlaceRegistry {
     fun getPrePlaces(transition: PetriAtomId): Set<PetriAtomId>
 
-    //    fun getPostPlaces(transition: PetriAtomId): Set<PetriAtomId>
     @DefinitionRef("t^-")
     fun transitionPrePlaces(transition: PetriAtomId): PrePlaceAccessor
-
-
-    interface PrePlaceAssociatedAccessor : Iterable<PetriAtomId> {
-        val transitionId: PetriAtomId
-
-    }
 
     interface PrePlaceAccessor : Iterable<PetriAtomId> {
         val transitionId: PetriAtomId

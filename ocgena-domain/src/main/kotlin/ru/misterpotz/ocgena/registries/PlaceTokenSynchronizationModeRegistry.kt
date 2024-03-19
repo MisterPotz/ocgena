@@ -14,6 +14,10 @@ class InPlacesTransitionTokenSynchronization(
     val inPlacesToSynchronizationTargets: Map<PetriAtomId, SynchronizationTarget>
 )
 
+class OutPlacesTransitionTokenAssociation(
+    val outPlacesToAssociationTargets: Map<PetriAtomId, SynchronizationTarget>
+)
+
 data class SynchronizationTarget(
     val petriAtomId: PetriAtomId,
     val mode: TokenSynchronizationMode
