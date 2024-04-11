@@ -1,9 +1,7 @@
-import type { Action, Middleware, ThunkAction } from "@reduxjs/toolkit"
+import type { Action, ThunkAction } from "@reduxjs/toolkit"
 import {
-  applyMiddleware,
   combineSlices,
   configureStore,
-  isAction,
 } from "@reduxjs/toolkit"
 import { setupListeners } from "@reduxjs/toolkit/query"
 import { counterSlice } from "../features/counter/counterSlice"
@@ -14,13 +12,7 @@ import {
   editorSlice,
 } from "../features/editor/editorSlice"
 import { combineEpics, createEpicMiddleware } from "redux-observable"
-import { createDynamicMiddleware } from "@reduxjs/toolkit/react"
 import { createFilteringMiddleware } from "../utils/redux_utils"
-// const alwaysReturnHelloMiddleware = (storeAPI: any) => (next: (arg0: any) => any) => (action: any) => {
-//   // Ignore the original result, return something else
-//   console.log('Hello!')
-//   return next(action)
-// }
 
 const rootEpic = combineEpics(editorHandleDragEpic)
 const epicMiddleware = createEpicMiddleware<Action, Action, void, any>()

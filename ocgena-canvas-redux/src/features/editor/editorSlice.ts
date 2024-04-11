@@ -49,7 +49,9 @@ export type Element<Shape extends SpecificShape = SpecificShape> = {
   selected?: boolean
 }
 
-type ShapeType = "rect" | "circle"
+export type ShapeType = "rect" | "circle"
+
+export type AnyElement = Element<SpecificShape>
 
 interface ElementShape {
   type: ShapeType
