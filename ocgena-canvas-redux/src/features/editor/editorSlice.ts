@@ -189,7 +189,3 @@ export const editorActionFilter = createActionFilter(
   elementDragEpicTrigger,
   elementDragEndEpicTrigger,
 )
-
-function findElementIndex(elements: Elements, id: string): Option<number> {
-  return findIndex<Element>(el => el.id == id)(elements)
-}
