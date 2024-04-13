@@ -1,5 +1,5 @@
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
-import { useEffect, useRef, useState } from "react"
+import { MutableRefObject, useEffect, useRef, useState } from "react"
 import { Circle, Layer, Rect, Stage } from "react-konva"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import {
@@ -38,9 +38,7 @@ type SelectorOrNull = SelectorData | null
 
 export function Editor() {
   const dispatch = useAppDispatch()
-  //   const elementIds = useAppSelector(elementIdSelector)
   const elements = useAppSelector(elementSelector)
-  //   const selectedIds = useAppSelector(selectedIdsSelector)
   const stageRef = useRef<Konva.Stage | null>(null)
   const [selector, setSelector] = useState<SelectorOrNull>(null)
   const selectorDataRef = useRef<SelectorOrNull>(null)
@@ -50,67 +48,29 @@ export function Editor() {
   const [tool, setTool] = useState<Tool | null>(null) // Current selected tool
 
   useEffect(() => {
-    const windowMouseMoveCallback = (ev: MouseEvent) => {
-      const selectorShape = selectorShapeRef.current
-      const stage = stageRef.current!
-      const selector = selectorDataRef.current
-      if (!selector || !selectorShape) return
-      // console.log("mouse move event", ev, "pointer position", pointerPosition)
-      // Translate window coordinates to stage coordinates
-      const pointerPosition = stage.getRelativePointerPosition()
-      if (!pointerPosition) return
-      const mouseX = ev.x
-      const mouseY = ev.y
-
-      const stageBoundingClientRect = stage.container().getBoundingClientRect()
-      const stageClientRectX = stageBoundingClientRect.x + window.scrollX
-      const stageCientRectY = stageBoundingClientRect.y + window.scrollY
-      // const relativeMouseX =
-
-      const x = pointerPosition.x
-      const y = pointerPosition.y
-
-      const startX = selector.x
-      const startY = selector.y
-      console.log(
-        "mouse move event mous",
-        { mouseX, mouseY },
-        "pointer",
-        { x, y },
-        "start",
-        { startX, startY },
-      )
-      selectorShape.setAttrs({
-        x: Math.min(x, startX),
-        y: Math.min(y, startY),
-        width: Math.abs(x - startX),
-        height: Math.abs(y - startY),
-      })
-
-      selectionLayer.current!.batchDraw()
+    const documentRightClickCallback = (ev: KeyboardEvent) => {
+      console.log("key pressed", ev.key)
     }
-    const windowMouseUpCallback = (ev: MouseEvent) => {
-      const selectorShape = selectorShapeRef.current
-      const selector = selectorDataRef.current
-      if (!selector || !selectorShape) return
-      console.log("mouse up event", ev)
-      setSelector(null)
-      const selectionBox = selectorShape.getClientRect()
-      // const selectedNodes = layer.getChildren(node => {
-      //   const nodeBox = node.getClientRect()
-      //   return Konva.Util.haveIntersection(selectionBox, nodeBox)
-      // })
-
-      // console.log("Selected nodes:", selectedNodes)
-      // selectionRectangle.curr.destroy()
-      selectionLayer.current!.draw()
-    }
-
+    document.body.addEventListener("keypress", documentRightClickCallback)
+    const windowMouseMoveCallback = windowMouseMoveCallbackCreator(
+      selectorShapeRef,
+      stageRef,
+      selectorDataRef,
+      selectionLayer,
+    )
+    const windowMouseUpCallback = windowMouseUpCallbackCreator(
+      selectorShapeRef,
+      setSelector,
+      stageRef,
+      selectorDataRef,
+      selectionLayer,
+    )
     window.addEventListener("mousemove", windowMouseMoveCallback)
     window.addEventListener("mouseup", windowMouseUpCallback)
     return () => {
       window.removeEventListener("mousemove", windowMouseMoveCallback)
       window.removeEventListener("mouseup", windowMouseUpCallback)
+      document.body.removeEventListener("keypress", documentRightClickCallback)
     }
   }, [])
 
@@ -155,6 +115,9 @@ export function Editor() {
               dispatch(elementSelected(clickedId))
             }
           }}
+          // onMouseUp={(e: Konva.KonvaEventObject<MouseEvent>) => {
+          //   console.log("onMouseUp ", e.)
+          // }}
         >
           {elements.map((el, index) => {
             return <TextShape key={el.id} {...el} />
@@ -180,6 +143,67 @@ export function Editor() {
     </>
   )
 }
+
+const windowMouseMoveCallbackCreator =
+  (
+    selectorShapeRef: React.MutableRefObject<Konva.Node | null>,
+    stageRef: React.MutableRefObject<Konva.Stage | null>,
+    selectorDataRef: React.MutableRefObject<SelectorOrNull | null>,
+    selectionLayerRef: React.MutableRefObject<Konva.Layer | null>,
+  ) =>
+  (ev: MouseEvent) => {
+    const selectorShape = selectorShapeRef.current
+    const stage = stageRef.current!
+    const selector = selectorDataRef.current
+    if (!selector || !selectorShape) return
+    // Translate window coordinates to stage coordinates
+    const pointerPosition = stage.getRelativePointerPosition()
+    if (!pointerPosition) return
+    const mouseX = ev.x
+    const mouseY = ev.y
+
+    const stageBoundingClientRect = stage.container().getBoundingClientRect()
+    const stageClientRectX = stageBoundingClientRect.x + window.scrollX
+    const stageCientRectY = stageBoundingClientRect.y + window.scrollY
+
+    const x = pointerPosition.x
+    const y = pointerPosition.y
+
+    const startX = selector.x
+    const startY = selector.y
+    console.log(
+      "mouse move event mous",
+      { mouseX, mouseY },
+      "pointer",
+      { x, y },
+      "start",
+      { startX, startY },
+    )
+    selectorShape.setAttrs({
+      x: Math.min(x, startX),
+      y: Math.min(y, startY),
+      width: Math.abs(x - startX),
+      height: Math.abs(y - startY),
+    })
+    selectionLayerRef.current!.batchDraw()
+  }
+const windowMouseUpCallbackCreator =
+  (
+    selectorShapeRef: React.MutableRefObject<Konva.Node | null>,
+    setSelector: (selectorData: SelectorOrNull) => void,
+    stageRef: React.MutableRefObject<Konva.Stage | null>,
+    selectorDataRef: React.MutableRefObject<SelectorOrNull | null>,
+    selectionLayerRef: React.MutableRefObject<Konva.Layer | null>,
+  ) =>
+  (ev: MouseEvent) => {
+    const selectorShape = selectorShapeRef.current
+    const selector = selectorDataRef.current
+    if (!selector || !selectorShape) return
+    console.log("mouse up event", ev)
+    setSelector(null)
+    const selectionBox = selectorShape.getClientRect()
+    selectionLayerRef.current!.draw()
+  }
 
 export type Tool = "transition" | "place" | "var arc" | "normal arc"
 
