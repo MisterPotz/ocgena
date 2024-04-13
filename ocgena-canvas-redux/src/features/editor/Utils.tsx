@@ -7,8 +7,6 @@ export function elementToNodeConfig(
   ): CircleConfig | RectConfig {
     let baseConfig = {
       id: element.id,
-      x: element.x,
-      y: element.y,
       stroke: element.stroke,
       fill: element.fill,
       draggable: true,

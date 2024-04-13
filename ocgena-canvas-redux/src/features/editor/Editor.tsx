@@ -11,11 +11,13 @@ import {
   elementDragEndEpicTrigger,
   RectangleShape,
   CircleShape,
+  elementSelectionCancelled,
 } from "./editorSlice"
 import { CircleConfig } from "konva/lib/shapes/Circle"
 import { RectConfig } from "konva/lib/shapes/Rect"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
+import { click } from "@testing-library/user-event/dist/cjs/convenience/click.js"
 
 function dragEventToPayload(
   e: KonvaEventObject<DragEvent>,
@@ -41,25 +43,43 @@ export function Editor() {
   //   const selectedIds = useAppSelector(selectedIdsSelector)
   const stageRef = useRef<Konva.Stage | null>(null)
   const [selector, setSelector] = useState<SelectorOrNull>(null)
-  const selectorRef = useRef<Konva.Rect | null>(null)
+  const selectorDataRef = useRef<SelectorOrNull>(null)
+  const selectorShapeRef = useRef<Konva.Rect | null>(null)
   const selectionLayer = useRef<Konva.Layer | null>(null)
   // State for storing elements
   const [tool, setTool] = useState<Tool | null>(null) // Current selected tool
 
   useEffect(() => {
     const windowMouseMoveCallback = (ev: MouseEvent) => {
-      const selectorShape = selectorRef.current
+      const selectorShape = selectorShapeRef.current
       const stage = stageRef.current!
+      const selector = selectorDataRef.current
       if (!selector || !selectorShape) return
-      console.log("mouse move event", ev)
+      // console.log("mouse move event", ev, "pointer position", pointerPosition)
       // Translate window coordinates to stage coordinates
       const pointerPosition = stage.getRelativePointerPosition()
       if (!pointerPosition) return
+      const mouseX = ev.x
+      const mouseY = ev.y
+
+      const stageBoundingClientRect = stage.container().getBoundingClientRect()
+      const stageClientRectX = stageBoundingClientRect.x + window.scrollX
+      const stageCientRectY = stageBoundingClientRect.y + window.scrollY
+      // const relativeMouseX =
+
       const x = pointerPosition.x
       const y = pointerPosition.y
+
       const startX = selector.x
       const startY = selector.y
-
+      console.log(
+        "mouse move event mous",
+        { mouseX, mouseY },
+        "pointer",
+        { x, y },
+        "start",
+        { startX, startY },
+      )
       selectorShape.setAttrs({
         x: Math.min(x, startX),
         y: Math.min(y, startY),
@@ -70,7 +90,8 @@ export function Editor() {
       selectionLayer.current!.batchDraw()
     }
     const windowMouseUpCallback = (ev: MouseEvent) => {
-      const selectorShape = selectorRef.current
+      const selectorShape = selectorShapeRef.current
+      const selector = selectorDataRef.current
       if (!selector || !selectorShape) return
       console.log("mouse up event", ev)
       setSelector(null)
@@ -92,24 +113,11 @@ export function Editor() {
       window.removeEventListener("mouseup", windowMouseUpCallback)
     }
   }, [])
-  const handleElementDrag = (e: KonvaEventObject<DragEvent>) => {
-    dispatch(elementDragEpicTrigger(dragEventToPayload(e)))
-  }
+
   const handleElementDragEnd = (e: KonvaEventObject<DragEvent>) => {
     dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
   }
-  let testRectProps: Element<RectangleShape> = {
-    id: "test_rect",
-    shape: {
-      height: 200,
-      width: 400,
-      type: "rect",
-    },
-    x: 300,
-    y: 200,
-    selected: false,
-    fill: "orange",
-  }
+
   return (
     <>
       <ToolPane onSelectTool={setTool} />
@@ -117,29 +125,6 @@ export function Editor() {
         ref={stageRef}
         width={window.innerWidth}
         height={window.innerHeight}
-        // onMouseMove={(e: Konva.KonvaEventObject<MouseEvent>) => {
-        //   const selectorShape = selectorRef.current
-        //   const selectorData = selector
-
-        //   const stage = stageRef.current!
-        //   if (!selectorShape || !selectorData) return;
-
-        //   const pointerPosition = stage.getPointerPosition();
-        //   if (!pointerPosition) return;
-        //   const x = pointerPosition.x;
-        //   const y = pointerPosition.y;
-        //   const startX = selectorData.x
-        //   const startY = selectorData.y
-
-        //   selectorShape.setAttrs({
-        //     x: Math.min(x, startX),
-        //     y: Math.min(y, startY),
-        //     width: Math.abs(x - startX),
-        //     height: Math.abs(y - startY),
-        //   })
-        //   selectionLayer.current!.batchDraw();
-        // }}
-        // onMouseUp={ () => setSelector(null)}
         onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => {
           console.log("stage mouse down target", e.target)
           const stage = stageRef.current!
@@ -147,38 +132,45 @@ export function Editor() {
           if (e.target !== stageRef.current) {
             return
           }
+          dispatch(elementSelectionCancelled())
           const startX = stage.getRelativePointerPosition()?.x
-          const startY = stage.getPointerPosition()?.y
+          const startY = stage.getRelativePointerPosition()?.y
 
-          if (startX && startY) { 
-            console.log("setting selector")
-            setSelector({ x: startX, y: startY })
+          if (startX && startY) {
+            console.log("setting selector at", startX, startY)
+            const selectorData = { x: startX, y: startY }
+            selectorDataRef.current = selectorData
+            setSelector(selectorData)
           }
         }}
       >
         <Layer
-          onDragEnd={handleElementDragEnd}
-          onDragMove={handleElementDrag}
-          // onClick={(ev: Konva.KonvaEventObject<MouseEvent>) => {
-          //   console.log(ev)
-          // }}
+          onDragEnd={e => {
+            dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
+          }}
+          onClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
+            const clickedId = e.target?.id()
+            console.log("clicked ", clickedId)
+            if (clickedId) {
+              dispatch(elementSelected(clickedId))
+            }
+          }}
         >
-          <TextShape {...testRectProps} />
           {elements.map((el, index) => {
-            let render = renderFunction(el)
-            console.log(render)
-            return render
+            return <TextShape key={el.id} {...el} />
           })}
         </Layer>
         <Layer ref={selectionLayer}>
           {selector && (
             <Rect
-              ref={selectorRef}
+              ref={selectorShapeRef}
               x={selector.x}
               y={selector.y}
+              width={10}
+              height={10}
               draggable={false}
               fill={"#22B8EB"}
-              opacity={0.83}
+              opacity={0.3}
               strokeWidth={1}
               stroke={"#239EF4"}
             />

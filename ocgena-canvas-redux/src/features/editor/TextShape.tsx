@@ -1,15 +1,22 @@
 import Konva from "konva"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { RectangleShape, Element, AnyElement, ShapeType } from "./editorSlice"
+import { RectangleShape, Element, AnyElement, ShapeType, SpecificShape, SpecificShapeType, CircleShape } from "./editorSlice"
 import React from "react"
 import { Circle, Group, Rect, Text, Transformer } from "react-konva"
 import { elementToNodeConfig } from "./Utils"
 import { NodeConfig } from "konva/lib/Node"
+import { extend } from "fp-ts/lib/pipeable"
+import { useAppDispatch } from "../../app/hooks"
 
 const MIN_WIDTH = 50
 const MIN_HEIGHT = 50
 
-interface ShapeDelegate {
+interface Coord {
+  x: number
+  y: number
+}
+
+interface ShapeDelegate<T extends SpecificShape = SpecificShape, ShapeType extends SpecificShapeType = T['type']> {
   type: ShapeType
   convertElement(element: AnyElement): NodeConfig
   createShape(
@@ -17,6 +24,7 @@ interface ShapeDelegate {
     text: React.MutableRefObject<Konva.Node | null>,
   ): JSX.Element
   synchronizeTextAndShapePosition(text: Konva.Node): void
+  getStartCoord(element: Element<T>): Coord
 }
 
 function createShapeDelegate(
@@ -25,14 +33,14 @@ function createShapeDelegate(
 ): ShapeDelegate {
   switch (shapeType) {
     case "rect": {
-      const synchronizeTextAndShape = (text: Konva.Node) => {
+      const synchronizeTextAndShape = (text: Konva.Node) =>
         synchronizeRectAndTextPosition(shapeRef.current!, text)
-      }
       return {
         type: shapeType,
         synchronizeTextAndShapePosition: synchronizeTextAndShape,
-        convertElement: (element: AnyElement) => {
-          return elementToNodeConfig(element)
+        convertElement: elementToNodeConfig,
+        getStartCoord: (el: Element<RectangleShape>) => {
+          return { x: el.x, y: el.y }
         },
         createShape: (
           config: NodeConfig,
@@ -52,7 +60,7 @@ function createShapeDelegate(
             />
           )
         },
-      }
+      } as ShapeDelegate<RectangleShape>
     }
     case "circle": {
       const synchronizeTextAndShape = (text: Konva.Node) => {
@@ -61,8 +69,9 @@ function createShapeDelegate(
       return {
         type: shapeType,
         synchronizeTextAndShapePosition: synchronizeTextAndShape,
-        convertElement: (element: AnyElement) => {
-          return elementToNodeConfig(element)
+        convertElement: elementToNodeConfig,
+        getStartCoord: (el: Element<CircleShape>) => {
+          return { x: el.x - el.shape.radius, y: el.y - el.shape.radius }
         },
         createShape: (
           config: NodeConfig,
@@ -82,7 +91,7 @@ function createShapeDelegate(
             />
           )
         },
-      }
+      } as ShapeDelegate<CircleShape>
     }
   }
 }
@@ -93,7 +102,10 @@ function createShapeDelegate(
  * The whole shape is rezisable.
  */
 export function TextShape(element: AnyElement) {
-  const [selected, setSelected] = useState(false)
+  const dispatch = useAppDispatch()
+
+  const selected = element.selected || false
+  // const [selected, setSelected] = useState(false)
 
   const trRef = useRef<Konva.Transformer | null>(null)
   const groupRef = useRef<Konva.Group | null>(null)
@@ -104,6 +116,7 @@ export function TextShape(element: AnyElement) {
   useEffect(() => {
     synchronizeRectAndTextPosition(shapeRef.current!, textRef.current!)
     setupRemovableTextArea(
+      groupRef.current!,
       textRef.current!,
       shapeRef.current!,
       editableTextAreaRef,
@@ -117,6 +130,10 @@ export function TextShape(element: AnyElement) {
   const nodeConfig = useMemo<NodeConfig>(() => {
     return shapeDelegate.convertElement(element)
   }, [element])
+
+  const coord = useMemo<Coord>(() => {
+    return shapeDelegate.getStartCoord(element)
+  }, [element.x, element.y])
 
   React.useEffect(() => {
     if (selected) {
@@ -133,19 +150,22 @@ export function TextShape(element: AnyElement) {
       <Group
         id={element.id}
         key={element.id}
-        onDragMove={() => {
-          if (editableTextAreaRef.current) {
-            synchronizeTextAreaPosition(
-              textRef.current!,
-              editableTextAreaRef.current!,
-            )
-          }
-        }}
+        // onDragMove={() => {
+        //   if (editableTextAreaRef.current) {
+        //     synchronizeTextAreaPosition(
+        //       textRef.current!,
+        //       editableTextAreaRef.current!,
+        //     )
+        //   }
+        // }}
         ref={groupRef}
         draggable={true}
+        x={coord.x}
+        y={coord.y}
       >
         {shapeDelegate.createShape(nodeConfig, textRef)}
         <Text
+          id={"text"}
           ref={textRef}
           fontSize={24}
           ellipsis
@@ -154,10 +174,12 @@ export function TextShape(element: AnyElement) {
           wrap="word"
           text="kek lol arbidol"
           draggable={false}
+          listening={false}
         />
       </Group>
       {selected && (
         <Transformer
+          id="transformer"
           padding={5}
           ref={trRef}
           rotateEnabled={false}
@@ -179,11 +201,12 @@ export function TextShape(element: AnyElement) {
 }
 
 const setupRemovableTextArea = (
+  groupNode: Konva.Node,
   textNode: Konva.Text,
   rectRef: Konva.Node,
   textAreaRef: React.MutableRefObject<HTMLTextAreaElement | null>,
 ) => {
-  textNode.on("dblclick dbltap", () => {
+  groupNode.on("dblclick dbltap", () => {
     if (textAreaRef.current) return
     // create textarea and style it
     const textarea = document.createElement("textarea")

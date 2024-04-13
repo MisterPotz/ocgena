@@ -47,6 +47,7 @@ export type Element<Shape extends SpecificShape = SpecificShape> = {
   stroke?: string
   id: string
   selected?: boolean
+  text?: string
 }
 
 export type ShapeType = "rect" | "circle"
@@ -68,6 +69,8 @@ export interface CircleShape extends ElementShape {
 
 export type SpecificShape = RectangleShape | CircleShape
 
+export type SpecificShapeType = SpecificShape["type"]
+
 export type Elements = Element<SpecificShape>[]
 
 export interface EditorSliceState {
@@ -77,6 +80,19 @@ export interface EditorSliceState {
 
 const initialState: EditorSliceState = {
   elements: [
+    {
+      id: "test_rect",
+      shape: {
+        height: 200,
+        width: 400,
+        type: "rect",
+      },
+      x: 300,
+      y: 200,
+      selected: false,
+      fill: "orange",
+      text: "kek lol arbidol",
+    },
     {
       id: "s1",
       x: 50,
@@ -102,9 +118,9 @@ export type PositionUpdatePayload = {
 }
 
 export type SizeUpdatePayload = {
-  id : string
-  x : number
-  y : number
+  id: string
+  x: number
+  y: number
   width: number
   height: number
 }
@@ -132,7 +148,26 @@ export const editorSlice = createAppSlice({
   initialState,
   reducers: create => ({
     elementSelected: create.reducer((state, action: PayloadAction<string>) => {
+      state.elements = pipe(
+        state.elements,
+        map(el =>
+          el.id === action.payload
+            ? {
+                ...el,
+                selected: true,
+              }
+            : el.selected
+              ? { ...el, selected: false }
+              : el,
+        ),
+      )
       state.selected = [action.payload]
+    }),
+    elementSelectionCancelled: create.reducer(state => {
+      state.elements = pipe(
+        state.elements,
+        map(el => (el.selected ? { ...el, selected: false } : el)),
+      )
     }),
     elementPositionUpdate: create.reducer(
       (state, action: PayloadAction<PositionUpdatePayload>) => {
@@ -178,6 +213,7 @@ export const editorSlice = createAppSlice({
 
 export const {
   elementSelected,
+  elementSelectionCancelled,
   elementPositionUpdate,
   elementDragEpicTrigger,
   elementDragEndEpicTrigger,
