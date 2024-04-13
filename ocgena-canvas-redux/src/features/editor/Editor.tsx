@@ -181,37 +181,6 @@ export function Editor() {
   )
 }
 
-function renderFunction(element: Element) {
-  let nodeConfig: NodeConfig = {
-    id: element.id,
-    x: element.x,
-    y: element.y,
-    stroke: element.stroke,
-    fill: element.fill,
-    draggable: true,
-    key: element.id,
-    // onDragStart={} <--- want to create a common object to not define a callback to each rendered shape
-  }
-  switch (element.shape.type) {
-    case "circle":
-      let circleConfig: CircleConfig = {
-        ...nodeConfig,
-        radius: element.shape.radius,
-      }
-      return <Circle {...circleConfig} />
-    case "rect":
-      let rectConfig: RectConfig = {
-        ...nodeConfig,
-        width: element.shape.width,
-        height: element.shape.height,
-      }
-      return <Rect {...rectConfig} />
-      break
-    default:
-      break
-  }
-}
-
 export type Tool = "transition" | "place" | "var arc" | "normal arc"
 
 export function ToolPane(props: { onSelectTool: (param: Tool) => void }) {

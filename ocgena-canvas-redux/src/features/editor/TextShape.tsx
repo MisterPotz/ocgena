@@ -1,6 +1,14 @@
 import Konva from "konva"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { RectangleShape, Element, AnyElement, ShapeType, SpecificShape, SpecificShapeType, CircleShape } from "./editorSlice"
+import {
+  RectangleShape,
+  Element,
+  AnyElement,
+  ShapeType,
+  SpecificShape,
+  SpecificShapeType,
+  CircleShape,
+} from "./editorSlice"
 import React from "react"
 import { Circle, Group, Rect, Text, Transformer } from "react-konva"
 import { elementToNodeConfig } from "./Utils"
@@ -16,7 +24,10 @@ interface Coord {
   y: number
 }
 
-interface ShapeDelegate<T extends SpecificShape = SpecificShape, ShapeType extends SpecificShapeType = T['type']> {
+interface ShapeDelegate<
+  T extends SpecificShape = SpecificShape,
+  ShapeType extends SpecificShapeType = T["type"],
+> {
   type: ShapeType
   convertElement(element: AnyElement): NodeConfig
   createShape(
@@ -24,6 +35,7 @@ interface ShapeDelegate<T extends SpecificShape = SpecificShape, ShapeType exten
     text: React.MutableRefObject<Konva.Node | null>,
   ): JSX.Element
   synchronizeTextAndShapePosition(text: Konva.Node): void
+  synchronizeTextAreaPosition(textArea: HTMLTextAreaElement) : void
   getStartCoord(element: Element<T>): Coord
 }
 
@@ -42,6 +54,14 @@ function createShapeDelegate(
         getStartCoord: (el: Element<RectangleShape>) => {
           return { x: el.x, y: el.y }
         },
+        synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => {
+          const rectangle = (shapeRef.current! as Konva.Rect)
+          const xOffset = 0
+          const yOffset = 0
+          const width = rectangle.width()
+          const height = rectangle.height()
+          synchronizeTextAreaPosition(xOffset, yOffset, width, height, rectangle, textArea)
+        },
         createShape: (
           config: NodeConfig,
           textRef: React.MutableRefObject<Konva.Node | null>,
@@ -56,11 +76,12 @@ function createShapeDelegate(
               }}
               onTransformEnd={() => {
                 consumeScaleToDimens(shapeRef.current!, MIN_WIDTH, MIN_HEIGHT)
+                synchronizeTextAndShape(textRef.current!)
               }}
             />
           )
         },
-      } as ShapeDelegate<RectangleShape>
+      }
     }
     case "circle": {
       const synchronizeTextAndShape = (text: Konva.Node) => {
@@ -71,7 +92,18 @@ function createShapeDelegate(
         synchronizeTextAndShapePosition: synchronizeTextAndShape,
         convertElement: elementToNodeConfig,
         getStartCoord: (el: Element<CircleShape>) => {
-          return { x: el.x - el.shape.radius, y: el.y - el.shape.radius }
+          return { x: el.x, y: el.y }
+        },
+        synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => {
+          const circleShape = shapeRef.current! as Konva.Circle
+          const srcWidth = circleShape.scaleX() * circleShape.width()
+
+          const innerRectSize = 2 * Math.cos(45 * Math.PI / 180) * (srcWidth / 2)
+          const xOffset = -innerRectSize / 2 
+          const yOffset = -innerRectSize/2
+          const width = innerRectSize
+          const height = innerRectSize
+          synchronizeTextAreaPosition(xOffset, yOffset, width, height, circleShape, textArea)
         },
         createShape: (
           config: NodeConfig,
@@ -87,11 +119,12 @@ function createShapeDelegate(
               }}
               onTransformEnd={() => {
                 consumeScaleToDimens(shapeRef.current!, MIN_WIDTH, MIN_HEIGHT)
+                synchronizeTextAndShape(textRef.current!)
               }}
             />
           )
         },
-      } as ShapeDelegate<CircleShape>
+      }
     }
   }
 }
@@ -113,20 +146,20 @@ export function TextShape(element: AnyElement) {
   const shapeRef = useRef<Konva.Shape | null>(null)
   const editableTextAreaRef = useRef<HTMLTextAreaElement | null>(null)
 
+  const shapeDelegate = useMemo<ShapeDelegate>(() => {
+    return createShapeDelegate(element.shape.type, shapeRef)
+  }, [element.shape.type])
+  
   useEffect(() => {
-    synchronizeRectAndTextPosition(shapeRef.current!, textRef.current!)
+    shapeDelegate.synchronizeTextAndShapePosition(textRef.current!)
     setupRemovableTextArea(
       groupRef.current!,
       textRef.current!,
       shapeRef.current!,
       editableTextAreaRef,
+      shapeDelegate.synchronizeTextAreaPosition
     )
   }, [])
-
-  const shapeDelegate = useMemo<ShapeDelegate>(() => {
-    return createShapeDelegate(element.shape.type, shapeRef)
-  }, [element.shape.type])
-
   const nodeConfig = useMemo<NodeConfig>(() => {
     return shapeDelegate.convertElement(element)
   }, [element])
@@ -205,6 +238,7 @@ const setupRemovableTextArea = (
   textNode: Konva.Text,
   rectRef: Konva.Node,
   textAreaRef: React.MutableRefObject<HTMLTextAreaElement | null>,
+  synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => void
 ) => {
   groupNode.on("dblclick dbltap", () => {
     if (textAreaRef.current) return
@@ -239,7 +273,7 @@ const setupRemovableTextArea = (
     textarea.style.fontSize = 22 + "px"
     textarea.value = textNode.text()
 
-    synchronizeTextAreaPosition(rectRef, textarea)
+    synchronizeTextAreaPosition(textarea)
     textarea.focus()
   })
 }
@@ -256,20 +290,26 @@ const synchronizeRectAndTextPosition = (
   })
 }
 
-// TODO: 2024-04-11 redefine this function for circle shapes to look better with text
 const synchronizeCircleAndTextPosition = (
-  srcNode: Konva.Node,
+  srcNode: Konva.Circle,
   targetNode: Konva.Node,
 ) => {
+  const srcWidth = srcNode.scaleX() * srcNode.width()
+  const srcHeight = srcNode.scaleY() * srcNode.height()
+  const innerRectSize = 2 * Math.cos(45 * Math.PI / 180) * (srcWidth / 2)
   targetNode.setAttrs({
-    width: srcNode.scaleX() * srcNode.width(),
-    height: srcNode.scaleY() * srcNode.height(),
-    x: srcNode.x(),
-    y: srcNode.y(),
+    width: innerRectSize,
+    height: innerRectSize,
+    x: srcNode.x() - innerRectSize / 2,
+    y: srcNode.y() - innerRectSize / 2,
   })
 }
 
 const synchronizeTextAreaPosition = (
+  xOffset: number,
+  yOffset: number,
+  width: number,
+  height: number,
   srcNode: Konva.Node,
   targetElement: HTMLElement,
 ) => {
@@ -277,17 +317,32 @@ const synchronizeTextAreaPosition = (
   const stage = srcNode.getLayer()?.getStage()
   // then lets find position of stage container on the page:
   var stageBox = stage!.container().getBoundingClientRect()
-  // so position of textarea will be the sum of positions above:
-  var areaPosition = {
-    x: stageBox.left + window.scrollX + textPosition.x,
-    y: stageBox.top + window.scrollY + textPosition.y,
-  }
   targetElement.style.position = "absolute"
-  targetElement.style.top = areaPosition.y + "px"
-  targetElement.style.left = areaPosition.x + "px"
-  targetElement.style.width = srcNode.width() - 5 + "px"
-  targetElement.style.height = srcNode.height() - 5 + "px"
+  targetElement.style.top = yOffset + stageBox.top + window.scrollY + textPosition.y + "px"
+  targetElement.style.left = xOffset + stageBox.left + window.scrollX + textPosition.x + "px"
+  targetElement.style.width = width - 5 + "px"
+  targetElement.style.height = height - 5 + "px"
 }
+
+// const synchronizeTextAreaPosition = (
+//   srcNode: Konva.Node,
+//   targetElement: HTMLElement,
+// ) => {
+//   const textPosition = srcNode.getAbsolutePosition()
+//   const stage = srcNode.getLayer()?.getStage()
+//   // then lets find position of stage container on the page:
+//   var stageBox = stage!.container().getBoundingClientRect()
+//   // so position of textarea will be the sum of positions above:
+//   var areaPosition = {
+//     x: stageBox.left + window.scrollX + textPosition.x,
+//     y: stageBox.top + window.scrollY + textPosition.y,
+//   }
+//   targetElement.style.position = "absolute"
+//   targetElement.style.top = areaPosition.y + "px"
+//   targetElement.style.left = areaPosition.x + "px"
+//   targetElement.style.width = srcNode.width() - 5 + "px"
+//   targetElement.style.height = srcNode.height() - 5 + "px"
+// }
 
 function createEscapeListener(onEscapeCallback: () => void) {
   // Return the actual event handler function from this closure
