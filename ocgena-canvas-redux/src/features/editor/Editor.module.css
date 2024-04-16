@@ -1,10 +1,11 @@
 .customContextMenu {
-  width: 220px;
+  width: auto;
   background: #f9f9f9;
   border-radius: 6px;
   padding: 8px 0;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
+  font-size: small;
 }
 
 .customContextMenu ul {
@@ -13,12 +14,18 @@
   padding: 0;
 }
 
-.customContextMenu ul li {
+.customContextMenu ul li.menuItem {
   padding: 4px 20px;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.customContextMenu ul li.sectionTitle {
+  font-weight: bold;
+  text-align: start;
+  padding: 4px 20px;
 }
 
 .customContextMenu ul li a {
@@ -30,7 +37,11 @@
   width: 100%;
 }
 
-.customContextMenu ul li:hover {
+.customContextMenu ul li .menuText {
+  margin-right: 16px; /* Adjust the right margin as needed */
+}
+
+.customContextMenu ul li.menuItem:hover {
   background-color: #eaeaea;
 }
 

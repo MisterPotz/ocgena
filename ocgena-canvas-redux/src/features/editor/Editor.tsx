@@ -8,6 +8,8 @@ import {
   PositionUpdatePayload,
   elementDragEndEpicTrigger,
   elementSelectionCancelled,
+  elementContextOpened,
+  contextMenuAddTransition,
 } from "./editorSlice"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
@@ -45,29 +47,24 @@ export function Editor() {
   const [showMenu, setShowMenu] = useState(false)
 
   const handleRightClick = (event: Konva.KonvaEventObject<PointerEvent>) => {
-    // event.preventDefault()
-    event.target.preventDefault()
-    event.evt.preventDefault()
-    const targetShapeId = event.target.id()
-    if (targetShapeId) {
-      console.log("event target", event.target.id())
-      setShowMenu(true)
-      setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
-      dispatch(elementSelected(targetShapeId))
-    }
+    handleClick(event.evt, {
+      rightClick: () => {
+        console.log("onContextMenu")
+        // event.target.preventDefault()
+        event.evt.preventDefault()
+        const targetShapeId = event.target.id()
+        if (targetShapeId) {
+          console.log("event target", event.target.id())
+          setShowMenu(true)
+          setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
+          dispatch(elementSelected(targetShapeId))
+          dispatch(elementContextOpened(targetShapeId))
+        }
+      },
+    })
   }
 
   useEffect(() => {
-    const documentRightClickCallback = (ev: KeyboardEvent) => {
-      console.log("key pressed", ev.key)
-    }
-    document.body.addEventListener("keypress", documentRightClickCallback)
-    
-    // document.addEventListener('click', function(event) {
-    //   const contextMenu = document.querySelector('.custom-context-menu');
-    //   contextMenu.style.display = 'none';
-    // });
-
     const windowMouseMoveCallback = windowMouseMoveCallbackCreator(
       selectorShapeRef,
       stageRef,
@@ -86,7 +83,6 @@ export function Editor() {
     return () => {
       window.removeEventListener("mousemove", windowMouseMoveCallback)
       window.removeEventListener("mouseup", windowMouseUpCallback)
-      document.body.removeEventListener("keypress", documentRightClickCallback)
     }
   }, [])
 
@@ -103,56 +99,72 @@ export function Editor() {
         width={window.innerWidth}
         height={window.innerHeight}
         onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => {
-          console.log(
-            "stage mouse down target",
-            e.target,
-            "left click",
-            e.evt.button,
-          )
+          // console.log(
+          //   "stage mouse down target",
+          //   e.target,
+          //   "left click",
+          //   e.evt.button,
+          // )
           const stage = stageRef.current!
-          switch (e.evt.button) {
-            case 0:
+          handleClick(e.evt, {
+            leftClick: () => {
+              console.log("onMouseDown")
               setShowMenu(false)
 
               if (e.target !== stageRef.current) {
-                return
-              }
-              dispatch(elementSelectionCancelled())
-              const startX = stage.getRelativePointerPosition()?.x
-              const startY = stage.getRelativePointerPosition()?.y
+                const selectionId = e.target.id()
+                if (selectionId) {
+                  dispatch(elementSelected(e.target.id()))
+                }
+              } else {
+                dispatch(elementSelectionCancelled())
+                const startX = stage.getRelativePointerPosition()?.x
+                const startY = stage.getRelativePointerPosition()?.y
 
-              if (startX && startY) {
-                console.log("setting selector at", startX, startY)
-                const selectorData = { x: startX, y: startY }
-                selectorDataRef.current = selectorData
-                setSelector(selectorData)
+                if (startX && startY) {
+                  console.log("setting selector at", startX, startY)
+                  const selectorData = { x: startX, y: startY }
+                  selectorDataRef.current = selectorData
+                  setSelector(selectorData)
+                }
               }
-              break
-            case 2: // right click
-              break;
-            default:
-              break;
-          }
+            },
+          })
         }}
+        onMouseMove={(evt: KonvaEventObject<MouseEvent>) => {}}
       >
         <Layer
           ref={elementsLayerRef}
           onDragStart={e => {
-            const targetShapeID = e.target.id()
-            if (targetShapeID) {
-              dispatch(elementSelected(targetShapeID))
-            }
+            handleClick(e.evt, {
+              leftClick: () => {
+                console.log("onDragStart")
+                const targetShapeID = e.target.id()
+                if (targetShapeID) {
+                  dispatch(elementSelected(targetShapeID))
+                }
+              },
+            })
           }}
           onDragEnd={e => {
-            dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
+            handleClick(e.evt, {
+              leftClick: () => {
+                console.log("onDragEnd")
+                dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
+              },
+            })
           }}
           onClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
-            const clickedId = e.target?.id()
-            console.log("clicked ", clickedId)
-            setShowMenu(false)
-            if (clickedId) {
-              dispatch(elementSelected(clickedId))
-            }
+            handleClick(e.evt, {
+              leftClick: () => {
+                const clickedId = e.target?.id()
+                console.log("onClick ", clickedId)
+                setShowMenu(false)
+                if (clickedId) {
+                  dispatch(elementSelected(clickedId))
+                }
+              },
+            })
           }}
         >
           {elements.map((el, index) => {
@@ -177,8 +189,48 @@ export function Editor() {
         </Layer>
       </Stage>
       {showMenu && (
-        <div className=".customContextMenu">
+        <div
+          className={styles.customContextMenu} /* "customContextMenu" */
+          style={{
+            position: "absolute",
+            top: `${menuPosition.y}px`,
+            left: `${menuPosition.x}px`,
+            backgroundColor: "white",
+            // border: '1px solid black',
+            // padding: '10px'
+          }}
+        >
           Custom Context Menu
+          <ul>
+            <li className={styles.sectionTitle}>Create new shape</li>
+            <li
+              onClick={() => {
+                dispatch(contextMenuAddTransition())
+              }}
+              className={styles.menuItem}
+            >
+              <span className={styles.menuText}>Transition</span>
+              <span className={styles.shortcut}>Cmd+V</span>
+            </li>
+            <li className={styles.menuItem}>
+              <span className={styles.menuText}>Copy to clipboard as PNG</span>
+              <span className={styles.shortcut}>Shift+Option+C</span>
+              {/* <a href="#"></a> */}
+            </li>
+            {/* <li>
+              <a href="#">
+                <span className={styles.menuText}>
+                  Copy to clipboard as SVG
+                </span>
+                <span className={styles.shortcut}>Cmd+C</span>
+              </a>
+            </li> */}
+            <li className={styles.separator}></li>
+            <li className={styles.menuItem}>
+              <span className={styles.menuText}>Select all</span>
+              <span className={styles.shortcut}>Cmd+A</span>
+            </li>
+          </ul>
           <button
             onClick={() => {
               setShowMenu(false)
@@ -205,35 +257,48 @@ const windowMouseMoveCallbackCreator =
     const selector = selectorDataRef.current
     if (!selector || !selectorShape) return
     // Translate window coordinates to stage coordinates
-    const pointerPosition = stage.getRelativePointerPosition()
-    if (!pointerPosition) return
-    const mouseX = ev.x
-    const mouseY = ev.y
+    handleClick(ev, {
+      leftClick: () => {
+        console.log("onMouseMove")
+        const mouseX = ev.clientX
+        const mouseY = ev.clientY
 
-    const stageBoundingClientRect = stage.container().getBoundingClientRect()
-    const stageClientRectX = stageBoundingClientRect.x + window.scrollX
-    const stageCientRectY = stageBoundingClientRect.y + window.scrollY
+        const stageBoundingClientRect = stage
+          .container()
+          .getBoundingClientRect()
+        const stageClientRectX = stageBoundingClientRect.left //+ window.scrollX
+        const stageClientRectY = stageBoundingClientRect.top //+ window.scrollY
+        const stageClientRightX = stageBoundingClientRect.right
+        const stageClientBottomY = stageBoundingClientRect.bottom
 
-    const x = pointerPosition.x
-    const y = pointerPosition.y
+        const clientStartX = selector.x + stageClientRectX
+        const clientStartY = selector.y + stageClientRectY
+        // console.log("mouseX, mouseY", mouseX, mouseY)
+        // console.log(
+        //   "canvas left top right bottom",
+        //   stageClientRectX,
+        //   stageClientRectY,
+        //   stageClientRightX,
+        //   stageClientBottomY,
+        // )
+        const fixedMouseX = Math.min(
+          Math.max(mouseX, stageClientRectX),
+          stageClientRightX,
+        )
+        const fixedMouseY = Math.min(
+          Math.max(mouseY, stageClientRectY),
+          stageClientBottomY,
+        )
+        selectorShape.setAttrs({
+          x: Math.min(selector.x, fixedMouseX - stageClientRectX),
+          y: Math.min(selector.y, fixedMouseY - stageClientRectY),
+          width: Math.abs(fixedMouseX - clientStartX),
+          height: Math.abs(fixedMouseY - clientStartY),
+        })
 
-    const startX = selector.x
-    const startY = selector.y
-    console.log(
-      "mouse move event mous",
-      { mouseX, mouseY },
-      "pointer",
-      { x, y },
-      "start",
-      { startX, startY },
-    )
-    selectorShape.setAttrs({
-      x: Math.min(x, startX),
-      y: Math.min(y, startY),
-      width: Math.abs(x - startX),
-      height: Math.abs(y - startY),
+        selectionLayerRef.current!.batchDraw()
+      },
     })
-    selectionLayerRef.current!.batchDraw()
   }
 const windowMouseUpCallbackCreator =
   (
@@ -247,10 +312,13 @@ const windowMouseUpCallbackCreator =
     const selectorShape = selectorShapeRef.current
     const selector = selectorDataRef.current
     if (!selector || !selectorShape) return
-    console.log("mouse up event", ev)
-    setSelector(null)
-    const selectionBox = selectorShape.getClientRect()
-    selectionLayerRef.current!.draw()
+    handleClick(ev, {
+      leftClick: () => {
+        console.log("onMouseUp")
+        setSelector(null)
+        selectionLayerRef.current!.draw()
+      },
+    })
   }
 
 export type Tool = "transition" | "place" | "var arc" | "normal arc"
@@ -267,4 +335,31 @@ export function ToolPane(props: { onSelectTool: (param: Tool) => void }) {
       {}
     </div>
   )
+}
+
+function handleClick(
+  evt: MouseEvent,
+  clicks: {
+    leftClick?: () => void
+    rightClick?: () => void
+  },
+) {
+  switch (evt.button) {
+    case 0:
+      if (clicks.leftClick) {
+        console.log("handling left click", evt)
+        clicks.leftClick()
+      }
+      break
+    case 1:
+      break
+    case 2:
+      if (clicks.rightClick) {
+        console.log("handling right click ", evt)
+        clicks.rightClick()
+      }
+      break
+    default:
+      break
+  }
 }

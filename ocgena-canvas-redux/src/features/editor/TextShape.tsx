@@ -12,7 +12,7 @@ import {
 import React from "react"
 import { Circle, Group, Rect, Text, Transformer } from "react-konva"
 import { elementToNodeConfig } from "./Utils"
-import { NodeConfig } from "konva/lib/Node"
+import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
 import { extend } from "fp-ts/lib/pipeable"
 import { useAppDispatch } from "../../app/hooks"
 
@@ -240,8 +240,9 @@ const setupRemovableTextArea = (
   textAreaRef: React.MutableRefObject<HTMLTextAreaElement | null>,
   synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => void
 ) => {
-  groupNode.on("dblclick dbltap", () => {
+  groupNode.on("dblclick dbltap",  (e: KonvaEventObject<MouseEvent>) => {
     if (textAreaRef.current) return
+    if (e.evt.button !== 0) return
     // create textarea and style it
     const textarea = document.createElement("textarea")
     textAreaRef.current = textarea
