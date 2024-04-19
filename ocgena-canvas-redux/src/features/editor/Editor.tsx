@@ -101,8 +101,8 @@ export function Editor() {
       <ToolPane onSelectTool={setTool} />
       <Stage
         onContextMenu={(event: Konva.KonvaEventObject<PointerEvent>) => {
-          handleClick(event.evt, {
-            rightClick: () => {
+          handleMouseKey(event.evt, {
+            rightKey: () => {
               console.log("onContextMenu")
               // event.target.preventDefault()
               event.evt.preventDefault()
@@ -134,8 +134,8 @@ export function Editor() {
           //   e.evt.button,
           // )
           const stage = stageRef.current!
-          handleClick(e.evt, {
-            leftClick: () => {
+          handleMouseKey(e.evt, {
+            leftKey: () => {
               console.log("onMouseDown")
               if (e.target !== stageRef.current) {
                 const selectionId = e.target.id()
@@ -165,8 +165,8 @@ export function Editor() {
         <Layer
           ref={elementsLayerRef}
           onDragStart={e => {
-            handleClick(e.evt, {
-              leftClick: () => {
+            handleMouseKey(e.evt, {
+              leftKey: () => {
                 console.log("onDragStart")
                 const targetShapeID = e.target.id()
                 if (targetShapeID) {
@@ -176,16 +176,16 @@ export function Editor() {
             })
           }}
           onDragEnd={e => {
-            handleClick(e.evt, {
-              leftClick: () => {
+            handleMouseKey(e.evt, {
+              leftKey: () => {
                 console.log("onDragEnd")
                 dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
               },
             })
           }}
           onClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
-            handleClick(e.evt, {
-              leftClick: () => {
+            handleMouseKey(e.evt, {
+              leftKey: () => {
                 const clickedId = e.target?.id()
                 console.log("onClick ", clickedId)
                 if (clickedId) {
@@ -300,8 +300,8 @@ const windowMouseMoveCallbackCreator =
     const selector = selectorDataRef.current
     if (!selector || !selectorShape) return
     // Translate window coordinates to stage coordinates
-    handleClick(ev, {
-      leftClick: () => {
+    handleMouseKey(ev, {
+      leftKey: () => {
         console.log("onMouseMove")
         const mouseX = ev.clientX
         const mouseY = ev.clientY
@@ -355,8 +355,8 @@ const windowMouseUpCallbackCreator =
     const selectorShape = selectorShapeRef.current
     const selector = selectorDataRef.current
     if (!selector || !selectorShape) return
-    handleClick(ev, {
-      leftClick: () => {
+    handleMouseKey(ev, {
+      leftKey: () => {
         console.log("onMouseUp")
         setSelector(null)
         selectionLayerRef.current!.draw()
@@ -380,26 +380,26 @@ export function ToolPane(props: { onSelectTool: (param: Tool) => void }) {
   )
 }
 
-function handleClick(
+function handleMouseKey(
   evt: MouseEvent,
   clicks: {
-    leftClick?: () => void
-    rightClick?: () => void
+    leftKey?: () => void
+    rightKey?: () => void
   },
 ) {
   switch (evt.button) {
     case 0:
-      if (clicks.leftClick) {
-        console.log("handling left click", evt)
-        clicks.leftClick()
+      if (clicks.leftKey) {
+        console.log("handling left key", evt)
+        clicks.leftKey()
       }
       break
     case 1:
       break
     case 2:
-      if (clicks.rightClick) {
-        console.log("handling right click ", evt)
-        clicks.rightClick()
+      if (clicks.rightKey) {
+        console.log("handling right key ", evt)
+        clicks.rightKey()
       }
       break
     default:

@@ -13,7 +13,6 @@ import React from "react"
 import { Circle, Group, Rect, Text, Transformer } from "react-konva"
 import { elementToNodeConfig } from "./Utils"
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
-import { extend } from "fp-ts/lib/pipeable"
 import { useAppDispatch } from "../../app/hooks"
 
 const MIN_WIDTH = 50
@@ -35,7 +34,7 @@ interface ShapeDelegate<
     text: React.MutableRefObject<Konva.Node | null>,
   ): JSX.Element
   synchronizeTextAndShapePosition(text: Konva.Node): void
-  synchronizeTextAreaPosition(textArea: HTMLTextAreaElement) : void
+  synchronizeTextAreaPosition(textArea: HTMLTextAreaElement): void
   getStartCoord(element: Element<T>): Coord
 }
 
@@ -54,13 +53,20 @@ function createShapeDelegate(
         getStartCoord: (el: Element<RectangleShape>) => {
           return { x: el.x, y: el.y }
         },
-        synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => {
-          const rectangle = (shapeRef.current! as Konva.Rect)
+        synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => {
+          const rectangle = shapeRef.current! as Konva.Rect
           const xOffset = 0
           const yOffset = 0
           const width = rectangle.width()
           const height = rectangle.height()
-          synchronizeTextAreaPosition(xOffset, yOffset, width, height, rectangle, textArea)
+          synchronizeTextAreaPosition(
+            xOffset,
+            yOffset,
+            width,
+            height,
+            rectangle,
+            textArea,
+          )
         },
         createShape: (
           config: NodeConfig,
@@ -94,16 +100,24 @@ function createShapeDelegate(
         getStartCoord: (el: Element<CircleShape>) => {
           return { x: el.x, y: el.y }
         },
-        synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => {
+        synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => {
           const circleShape = shapeRef.current! as Konva.Circle
           const srcWidth = circleShape.scaleX() * circleShape.width()
 
-          const innerRectSize = 2 * Math.cos(45 * Math.PI / 180) * (srcWidth / 2)
-          const xOffset = -innerRectSize / 2 
-          const yOffset = -innerRectSize/2
+          const innerRectSize =
+            2 * Math.cos((45 * Math.PI) / 180) * (srcWidth / 2)
+          const xOffset = -innerRectSize / 2
+          const yOffset = -innerRectSize / 2
           const width = innerRectSize
           const height = innerRectSize
-          synchronizeTextAreaPosition(xOffset, yOffset, width, height, circleShape, textArea)
+          synchronizeTextAreaPosition(
+            xOffset,
+            yOffset,
+            width,
+            height,
+            circleShape,
+            textArea,
+          )
         },
         createShape: (
           config: NodeConfig,
@@ -149,7 +163,7 @@ export function TextShape(element: AnyElement) {
   const shapeDelegate = useMemo<ShapeDelegate>(() => {
     return createShapeDelegate(element.shape.type, shapeRef)
   }, [element.shape.type])
-  
+
   useEffect(() => {
     shapeDelegate.synchronizeTextAndShapePosition(textRef.current!)
     setupRemovableTextArea(
@@ -157,7 +171,7 @@ export function TextShape(element: AnyElement) {
       textRef.current!,
       shapeRef.current!,
       editableTextAreaRef,
-      shapeDelegate.synchronizeTextAreaPosition
+      shapeDelegate.synchronizeTextAreaPosition,
     )
   }, [])
   const nodeConfig = useMemo<NodeConfig>(() => {
@@ -225,6 +239,31 @@ export function TextShape(element: AnyElement) {
             ) {
               return oldBox
             }
+            const newX = newBox.x.closestDotX()
+            const newY = newBox.y.closestDotY()
+            const newWidth = newBox.width.closestSize()
+            const newHeight = newBox.height.closestSize()
+
+            console.log("new box raw", newBox, "snapped new box", {
+              newX,
+              newY,
+              newWidth,
+              newHeight,
+            })
+            if (
+              newX != newBox.x ||
+              newY != newBox.y ||
+              newWidth != newBox.width ||
+              newHeight != newBox.height
+            ) {
+              return {
+                x: newX,
+                y: newY,
+                width: newWidth,
+                height: newHeight,
+                rotation: newBox.rotation,
+              }
+            }
             return newBox
           }}
         />
@@ -238,9 +277,9 @@ const setupRemovableTextArea = (
   textNode: Konva.Text,
   rectRef: Konva.Node,
   textAreaRef: React.MutableRefObject<HTMLTextAreaElement | null>,
-  synchronizeTextAreaPosition: (textArea : HTMLTextAreaElement) => void
+  synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => void,
 ) => {
-  groupNode.on("dblclick dbltap",  (e: KonvaEventObject<MouseEvent>) => {
+  groupNode.on("dblclick dbltap", (e: KonvaEventObject<MouseEvent>) => {
     if (textAreaRef.current) return
     if (e.evt.button !== 0) return
     // create textarea and style it
@@ -297,7 +336,7 @@ const synchronizeCircleAndTextPosition = (
 ) => {
   const srcWidth = srcNode.scaleX() * srcNode.width()
   const srcHeight = srcNode.scaleY() * srcNode.height()
-  const innerRectSize = 2 * Math.cos(45 * Math.PI / 180) * (srcWidth / 2)
+  const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * (srcWidth / 2)
   targetNode.setAttrs({
     width: innerRectSize,
     height: innerRectSize,
@@ -319,8 +358,10 @@ const synchronizeTextAreaPosition = (
   // then lets find position of stage container on the page:
   var stageBox = stage!.container().getBoundingClientRect()
   targetElement.style.position = "absolute"
-  targetElement.style.top = yOffset + stageBox.top + window.scrollY + textPosition.y + "px"
-  targetElement.style.left = xOffset + stageBox.left + window.scrollX + textPosition.x + "px"
+  targetElement.style.top =
+    yOffset + stageBox.top + window.scrollY + textPosition.y + "px"
+  targetElement.style.left =
+    xOffset + stageBox.left + window.scrollX + textPosition.x + "px"
   targetElement.style.width = width - 5 + "px"
   targetElement.style.height = height - 5 + "px"
 }
@@ -370,8 +411,8 @@ const consumeScaleToDimens = (
   const height = node.height()
   const scaleX = node.scaleX()
   const scaleY = node.scaleY()
-  const newWidth = Math.max(scaleX * width, minWidth)
-  const newHeight = Math.max(scaleY * height, minHeight)
+  const newWidth = Math.max(scaleX * width, minWidth).closestSize()
+  const newHeight = Math.max(scaleY * height, minHeight).closestSize()
   // we will reset it back
   node.scaleX(1)
   node.scaleY(1)

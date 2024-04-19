@@ -1,26 +1,12 @@
 import {
-  Action,
-  ActionCreatorWithPayload,
   PayloadAction,
-  ReducerCreators,
-  Tuple,
-  createAction,
-  createReducer,
-  createSelector,
 } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
-import { combineEpics, ofType } from "redux-observable"
+import { combineEpics } from "redux-observable"
 import {
-  Observable,
-  OperatorFunction,
-  filter,
   interval,
-  mergeMap,
   map as rxMap,
   sample,
-  switchMap,
-  takeUntil,
-  throttleTime,
 } from "rxjs"
 import {
   createActionFilter,
@@ -29,29 +15,16 @@ import {
   ofTypeAndMap,
 } from "../../utils/redux_utils"
 import "fp-ts/lib/Array"
-import { findIndex, map, modifyAt, reduce, replicate } from "fp-ts/lib/Array"
-import {
-  Option,
-  elem,
-  fold,
-  getOrElse,
-  isSome,
-  none,
-  some,
-} from "fp-ts/lib/Option"
-import { replace } from "fp-ts/lib/string"
+import { map } from "fp-ts/lib/Array"
 import { pipe } from "fp-ts/lib/function"
-import { ap } from "fp-ts/lib/Apply"
-import { modify } from "fp-ts/lib/FromState"
-import { mapLeft } from "fp-ts/lib/EitherT"
-import { eq, nonEmptyArray, option } from "fp-ts"
-import { max } from "fp-ts/lib/NonEmptyArray"
-import { Context } from "vitest"
+import "./CoordinatesExt"
 
 export interface Element<Shape extends SpecificShape = SpecificShape> {
   //   type: Tool
   x: number
   y: number
+  rawX: number
+  rawY: number
   shape: Shape
   fill?: string
   stroke?: string
@@ -146,23 +119,29 @@ const initialState: EditorSliceState = {
         width: 400,
         type: "rect",
       },
-      x: 300,
-      y: 200,
+      rawX: 300,
+      rawY: 200,
+      x: (300).closestDotX(),
+      y: (200).closestDotY(),
       selected: false,
       fill: "orange",
       text: "kek lol arbidol",
     },
     {
       id: idFactory.next(),
-      x: 50,
-      y: 50,
+      rawX: 50,
+      rawY: 50,
+      x: (50).closestDotX(),
+      y: (50).closestDotY(),
       shape: { type: "rect", width: 100, height: 100 },
       fill: "black",
     },
     {
       id: idFactory.next(),
-      x: 200,
-      y: 200,
+      rawX: 200,
+      rawY: 200,
+      x: (200).closestDotX(),
+      y: (200).closestDotY(),
       shape: { type: "circle", radius: 50 },
       stroke: "black",
     },
@@ -225,11 +204,13 @@ function defaultRect(x: number, y: number): Element<RectangleShape> {
     id: idFactory.next(),
     shape: {
       type: "rect",
-      height: 75,
-      width: 120,
+      height: (75).closestSize(),
+      width: (120).closestSize(),
     },
-    x,
-    y,
+    x: x.closestDotX(),
+    y: y.closestDotY(),
+    rawX: x,
+    rawY: y,
     text: "transition",
     stroke: "black",
     fill: "white",
@@ -241,10 +222,12 @@ function defaultCircle(x: number, y: number): Element<CircleShape> {
     id: idFactory.next(),
     shape: {
       type: "circle",
-      radius: 75
+      radius: (75).closestSize(),
     },
-    x: x + 75,
-    y,
+    x: (x + 75).closestDotX(),
+    y: y.closestDotY(),
+    rawX: x,
+    rawY: y,
     text: "transition",
     stroke: "black",
     fill: "white",
@@ -371,7 +354,7 @@ export const {
   elementContextOpened,
   elementContextMenuClosed,
   contextMenuAddTransition,
-  contextMenuAddPlace
+  contextMenuAddPlace,
 } = editorSlice.actions
 
 export const { elementSelector, selectedIdsSelector, contextMenuSelector } =

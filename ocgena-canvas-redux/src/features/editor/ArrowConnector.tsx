@@ -3,7 +3,7 @@ import { KonvaEventObject } from "konva/lib/Node"
 import React, { useRef, useEffect, useState } from "react"
 import { Stage, Layer, Rect, Arrow } from "react-konva"
 
-function getTwoShapesConnection() {}
+
 
 // can help in building infinite canvas
 export const PatternImage = () => {
