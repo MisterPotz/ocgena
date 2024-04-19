@@ -1,5 +1,6 @@
 import "./App.css"
 import { Counter } from "./features/counter/Counter"
+import ArrowConnector, { ArrowConnectorFollowMouse, PatternImage } from "./features/editor/ArrowConnector"
 import { Editor } from "./features/editor/Editor"
 import { Quotes } from "./features/quotes/Quotes"
 import logo from "./logo.svg"
@@ -10,6 +11,9 @@ const App = () => {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <Editor />
+        {/* <ArrowConnector />
+        <ArrowConnectorFollowMouse /> */}
+        <PatternImage />
         <Counter />
         <p>
           Edit <code>src/App.tsx</code> and save to reload.

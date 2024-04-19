@@ -10,6 +10,9 @@ import {
   elementSelectionCancelled,
   elementContextOpened,
   contextMenuAddTransition,
+  contextMenuSelector,
+  elementContextMenuClosed,
+  contextMenuAddPlace,
 } from "./editorSlice"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
@@ -35,6 +38,8 @@ type SelectorOrNull = SelectorData | null
 export function Editor() {
   const dispatch = useAppDispatch()
   const elements = useAppSelector(elementSelector)
+  const contextMenu = useAppSelector(contextMenuSelector)
+  const contextMenuRef = useRef<HTMLDivElement | null>(null) // Add this line to create a ref for the context menu
   const stageRef = useRef<Konva.Stage | null>(null)
   const [selector, setSelector] = useState<SelectorOrNull>(null)
   const elementsLayerRef = useRef<Konva.Layer | null>(null)
@@ -43,26 +48,27 @@ export function Editor() {
   const selectionLayer = useRef<Konva.Layer | null>(null)
   // State for storing elements
   const [tool, setTool] = useState<Tool | null>(null) // Current selected tool
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 })
-  const [showMenu, setShowMenu] = useState(false)
 
-  const handleRightClick = (event: Konva.KonvaEventObject<PointerEvent>) => {
-    handleClick(event.evt, {
-      rightClick: () => {
-        console.log("onContextMenu")
-        // event.target.preventDefault()
-        event.evt.preventDefault()
-        const targetShapeId = event.target.id()
-        if (targetShapeId) {
-          console.log("event target", event.target.id())
-          setShowMenu(true)
-          setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
-          dispatch(elementSelected(targetShapeId))
-          dispatch(elementContextOpened(targetShapeId))
-        }
-      },
-    })
-  }
+  useEffect(() => {
+    // Handler to call on document click
+    const handleDocumentClick = (event: MouseEvent) => {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(event.target as Node)
+      ) {
+        // Clicked outside the context menu, close it
+        dispatch(elementContextMenuClosed())
+      }
+    }
+
+    if (contextMenu) {
+      document.addEventListener("click", handleDocumentClick)
+      return () => document.removeEventListener("click", handleDocumentClick)
+    }
+
+    // Clean up the listener when the component unmounts or the menu closes
+    return () => {}
+  }, [contextMenu]) // Only re-run if contextMenu changes
 
   useEffect(() => {
     const windowMouseMoveCallback = windowMouseMoveCallbackCreator(
@@ -94,7 +100,29 @@ export function Editor() {
     <>
       <ToolPane onSelectTool={setTool} />
       <Stage
-        onContextMenu={handleRightClick}
+        onContextMenu={(event: Konva.KonvaEventObject<PointerEvent>) => {
+          handleClick(event.evt, {
+            rightClick: () => {
+              console.log("onContextMenu")
+              // event.target.preventDefault()
+              event.evt.preventDefault()
+              const targetShapeId = event.target.id()
+              if (targetShapeId) {
+                console.log("event target", event.target.id())
+                // setShowMenu(true)
+                // setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
+                dispatch(elementSelected(targetShapeId))
+                dispatch(
+                  elementContextOpened({
+                    targetElement: targetShapeId,
+                    x: event.evt.pageX,
+                    y: event.evt.pageY,
+                  }),
+                )
+              }
+            },
+          })
+        }}
         ref={stageRef}
         width={window.innerWidth}
         height={window.innerHeight}
@@ -109,8 +137,6 @@ export function Editor() {
           handleClick(e.evt, {
             leftClick: () => {
               console.log("onMouseDown")
-              setShowMenu(false)
-
               if (e.target !== stageRef.current) {
                 const selectionId = e.target.id()
                 if (selectionId) {
@@ -133,6 +159,9 @@ export function Editor() {
         }}
         onMouseMove={(evt: KonvaEventObject<MouseEvent>) => {}}
       >
+        <Layer>
+          
+        </Layer>
         <Layer
           ref={elementsLayerRef}
           onDragStart={e => {
@@ -159,7 +188,6 @@ export function Editor() {
               leftClick: () => {
                 const clickedId = e.target?.id()
                 console.log("onClick ", clickedId)
-                setShowMenu(false)
                 if (clickedId) {
                   dispatch(elementSelected(clickedId))
                 }
@@ -188,16 +216,21 @@ export function Editor() {
           )}
         </Layer>
       </Stage>
-      {showMenu && (
+      {contextMenu && (
         <div
+          ref={contextMenuRef}
           className={styles.customContextMenu} /* "customContextMenu" */
           style={{
             position: "absolute",
-            top: `${menuPosition.y}px`,
-            left: `${menuPosition.x}px`,
+            top: `${contextMenu.y}px`,
+            left: `${contextMenu.x}px`,
             backgroundColor: "white",
             // border: '1px solid black',
             // padding: '10px'
+          }}
+          onBlur={() => {
+            console.log("blur event")
+            dispatch(elementContextMenuClosed())
           }}
         >
           Custom Context Menu
@@ -212,6 +245,16 @@ export function Editor() {
               <span className={styles.menuText}>Transition</span>
               <span className={styles.shortcut}>Cmd+V</span>
             </li>
+            <li
+              onClick={() => {
+                dispatch(contextMenuAddPlace())
+              }}
+              className={styles.menuItem}
+            >
+              <span className={styles.menuText}>Place</span>
+              <span className={styles.shortcut}>Cmd+V</span>
+            </li>
+
             <li className={styles.menuItem}>
               <span className={styles.menuText}>Copy to clipboard as PNG</span>
               <span className={styles.shortcut}>Shift+Option+C</span>
@@ -233,7 +276,7 @@ export function Editor() {
           </ul>
           <button
             onClick={() => {
-              setShowMenu(false)
+              dispatch(elementContextMenuClosed())
             }}
           >
             Close Menu

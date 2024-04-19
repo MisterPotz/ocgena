@@ -30,7 +30,15 @@ import {
 } from "../../utils/redux_utils"
 import "fp-ts/lib/Array"
 import { findIndex, map, modifyAt, reduce, replicate } from "fp-ts/lib/Array"
-import { Option, fold, getOrElse, isSome, none, some } from "fp-ts/lib/Option"
+import {
+  Option,
+  elem,
+  fold,
+  getOrElse,
+  isSome,
+  none,
+  some,
+} from "fp-ts/lib/Option"
 import { replace } from "fp-ts/lib/string"
 import { pipe } from "fp-ts/lib/function"
 import { ap } from "fp-ts/lib/Apply"
@@ -38,8 +46,9 @@ import { modify } from "fp-ts/lib/FromState"
 import { mapLeft } from "fp-ts/lib/EitherT"
 import { eq, nonEmptyArray, option } from "fp-ts"
 import { max } from "fp-ts/lib/NonEmptyArray"
+import { Context } from "vitest"
 
-export type Element<Shape extends SpecificShape = SpecificShape> = {
+export interface Element<Shape extends SpecificShape = SpecificShape> {
   //   type: Tool
   x: number
   y: number
@@ -58,7 +67,7 @@ export type AnyElement = Element<SpecificShape>
 interface ElementShape {
   type: ShapeType
 }
-export type RectangleShape = {
+export interface RectangleShape extends ElementShape {
   type: "rect"
   width: number
   height: number
@@ -74,10 +83,17 @@ export type SpecificShapeType = SpecificShape["type"]
 
 export type Elements = Element<SpecificShape>[]
 
+export interface ContextMenu {
+  x: number
+  y: number
+  targetElement: string
+}
+
 export interface EditorSliceState {
   elements: Elements
   selected: string[]
-  contextMenuElement: string | null
+  contextMenu?: ContextMenu | null
+  // contextMenuElement: string | null
 }
 
 class Counter {
@@ -152,7 +168,16 @@ const initialState: EditorSliceState = {
     },
   ],
   selected: [],
-  contextMenuElement: null,
+  // contextMenuElement: null,
+}
+
+function heightFromStart(element: Element): number {
+  switch (element.shape.type) {
+    case "circle":
+      return element.shape.radius
+    case "rect":
+      return element.shape.height
+  }
 }
 
 export type PositionUpdatePayload = {
@@ -206,6 +231,23 @@ function defaultRect(x: number, y: number): Element<RectangleShape> {
     x,
     y,
     text: "transition",
+    stroke: "black",
+    fill: "white",
+  }
+}
+
+function defaultCircle(x: number, y: number): Element<CircleShape> {
+  return {
+    id: idFactory.next(),
+    shape: {
+      type: "circle",
+      radius: 75
+    },
+    x: x + 75,
+    y,
+    text: "transition",
+    stroke: "black",
+    fill: "white",
   }
 }
 
@@ -215,6 +257,7 @@ function deselectElements(elements: Elements): Elements {
     map(el => (el.selected ? { ...el, selected: false } : el)),
   )
 }
+const PADDING = 20
 
 export const editorSlice = createAppSlice({
   name: "editor",
@@ -267,23 +310,43 @@ export const editorSlice = createAppSlice({
       createEmptyPayloadReducer<PositionUpdatePayload>(create),
     elementDragEndEpicTrigger:
       createEmptyPayloadReducer<PositionUpdatePayload>(create),
-    elementContextOpened: (state, action: PayloadAction<string>) => {
-      state.contextMenuElement = action.payload
-    },
+    elementContextOpened: create.reducer(
+      (state, action: PayloadAction<ContextMenu>) => {
+        state.contextMenu = action.payload
+      },
+    ),
+    elementContextMenuClosed: create.reducer(state => {
+      state.contextMenu = null
+    }),
     contextMenuAddTransition: create.reducer(state => {
-      if (state.contextMenuElement) {
-        const contextMenuElement = state.contextMenuElement
+      if (state.contextMenu) {
+        const contextMenuElement = state.contextMenu.targetElement
         const el = state.elements.find(el => el.id === contextMenuElement)
 
         if (el) {
-          const x = el.x // need to find proper start position for new rect
-          const y = el.y
+          const x = el.x + PADDING // need to find proper start position for new rect
+          const y = el.y + heightFromStart(el) + PADDING
           const newRect: AnyElement = { ...defaultRect(x, y), selected: true }
           state.elements = deselectElements(state.elements).concat(newRect)
-          state.contextMenuElement = null
+          state.contextMenu = null
         }
       }
     }),
+    contextMenuAddPlace: create.reducer(state => {
+      if (state.contextMenu) {
+        const contextMenuElement = state.contextMenu.targetElement
+        const el = state.elements.find(el => el.id === contextMenuElement)
+
+        if (el) {
+          const x = el.x + PADDING // need to find proper start position for new rect
+          const y = el.y + heightFromStart(el) + PADDING
+          const newRect: AnyElement = { ...defaultCircle(x, y), selected: true }
+          state.elements = deselectElements(state.elements).concat(newRect)
+          state.contextMenu = null
+        }
+      }
+    }),
+
     // elementMoved: create.asyncThunk({
 
     // })
@@ -295,6 +358,7 @@ export const editorSlice = createAppSlice({
     //   (state: EditorSliceState) => state.elements,
     //   (elements: Elements) => elements.map(el => el.id),
     // ),
+    contextMenuSelector: state => state.contextMenu,
   },
 })
 
@@ -305,10 +369,13 @@ export const {
   elementDragEpicTrigger,
   elementDragEndEpicTrigger,
   elementContextOpened,
+  elementContextMenuClosed,
   contextMenuAddTransition,
+  contextMenuAddPlace
 } = editorSlice.actions
 
-export const { elementSelector, selectedIdsSelector } = editorSlice.selectors
+export const { elementSelector, selectedIdsSelector, contextMenuSelector } =
+  editorSlice.selectors
 
 export const editorActionFilter = createActionFilter(
   elementDragEpicTrigger,
