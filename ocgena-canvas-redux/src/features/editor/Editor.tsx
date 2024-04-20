@@ -19,6 +19,8 @@ import {
 import { TextShape } from "./TextShape"
 import Konva from "konva"
 import styles from "./Editor.module.css"
+import { ELEMENT_CHILD_PREFIX, ELEMENT_PREFIX, TRANSFORMER_PREFIX } from "./Keywords"
+import { tryGetElementId } from "./Utils"
 
 function dragEventToPayload(
   e: KonvaEventObject<DragEvent>,
@@ -183,20 +185,37 @@ export function Editor() {
       .addCallbackPack("mousedown", {
         stage(ev: Konva.KonvaEventObject<MouseEvent>) {
           const stage = stageRef.current!
+          const downItem = ev.target
+          const parent = downItem.getParent()
+
+          console.log("down item", downItem)
           handleMouseKey(ev.evt, {
             leftKey: () => {
-              if (ev.target !== stageRef.current) {
-                const selectionId = ev.target.id()
-                if (selectionId) {
-                  dispatch(elementSelected(ev.target.id()))
-                }
+              if (
+                downItem !== stage &&
+                downItem.id().startsWith(ELEMENT_PREFIX)
+              ) {
+                let clickedCompound = downItem as Konva.Group
+                dispatch(elementSelected(clickedCompound.id()))
               } else if (
-                ev.target === stageRef.current &&
+                downItem !== stage &&
+                downItem.id().startsWith(ELEMENT_CHILD_PREFIX)
+              ) {
+                let clickedCompound = parent as Konva.Group
+                dispatch(elementSelected(clickedCompound.id()))
+              } else if (
+                downItem !== stage &&
+                downItem.id().startsWith(TRANSFORMER_PREFIX)
+              ) {
+                console.log("is transformer")
+                return
+              } else if (
+                ev.target === stage &&
                 spacePressedRef.current
               ) {
                 isDraggingRef.current = true
                 setLastPosition(stage.getPointerPosition()!)
-              } else {
+              } else if (ev.target === stage) {
                 dispatch(elementSelectionCancelled())
 
                 const startX = stage.getRelativePointerPosition()?.x
@@ -239,26 +258,6 @@ export function Editor() {
             dispatch(elementContextMenuClosed())
           }
         },
-        elementsLayer(ev: Konva.KonvaEventObject<MouseEvent>) {
-          handleMouseKey(ev.evt, {
-            leftKey: () => {
-              const clickedItem = ev.target
-
-              if (clickedItem != stageRef.current && clickedItem) {
-                if (clickedItem.getParent() instanceof Konva.Group) {
-                  let clickedCompound = clickedItem.getParent() as Konva.Group
-                  console.log(
-                    clickedCompound.id(),
-                    clickedCompound.getAbsolutePosition().x,
-                    clickedCompound.getAbsolutePosition().y,
-                    clickedCompound.position(),
-                  )
-                  dispatch(elementSelected(clickedCompound.id()))
-                }
-              }
-            },
-          })
-        },
       })
       .addCallbackPack("contextmenu", {
         stage: (event: Konva.KonvaEventObject<PointerEvent>) => {
@@ -267,30 +266,21 @@ export function Editor() {
               console.log("onContextMenu")
               // event.target.preventDefault()
               event.evt.preventDefault()
-              const targetShapeId = event.target.id()
-              if (targetShapeId) {
-                // setShowMenu(true)
-                // setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
-                dispatch(elementSelected(targetShapeId))
-                dispatch(
-                  elementContextOpened({
-                    targetElement: targetShapeId,
-                    x: event.evt.pageX,
-                    y: event.evt.pageY,
-                  }),
-                )
-              }
-            },
-          })
-        },
-      })
-      .addCallbackPack("dragstart", {
-        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
-          handleMouseKey(ev.evt, {
-            leftKey: () => {
-              const targetShapeID = ev.target.id()
-              if (targetShapeID) {
-                dispatch(elementSelected(targetShapeID))
+              const target = event.target
+              if (target && stageRef.current! !== target) {
+                const targetShapeId = tryGetElementId(event.target!)
+                if (targetShapeId) {
+                  // setShowMenu(true)
+                  // setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
+                  dispatch(elementSelected(targetShapeId))
+                  dispatch(
+                    elementContextOpened({
+                      targetElement: targetShapeId,
+                      x: event.evt.pageX,
+                      y: event.evt.pageY,
+                    }),
+                  )
+                }            
               }
             },
           })

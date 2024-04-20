@@ -22,6 +22,7 @@ import {
 // import { map } from "fp-ts/lib/Array"
 // import { pipe } from "fp-ts/lib/function"
 import "./CoordinatesExt"
+import { ELEMENT_PREFIX } from "./Keywords"
 
 export interface Element<Shape extends SpecificShape = SpecificShape> {
   //   type: Tool
@@ -85,7 +86,7 @@ class Counter {
   }
 }
 
-const keyWord: string = "el_"
+const keyWord: string = ELEMENT_PREFIX
 
 class IdFactory {
   counter: Counter
@@ -117,7 +118,7 @@ const idFactory = new IdFactory()
 const initialState: EditorSliceState = {
   elements: [
     {
-      id: "test_gr",
+      id: idFactory.next(),
       shape: {
         height: (50).closestSize(),
         width: (50).closestSize(),

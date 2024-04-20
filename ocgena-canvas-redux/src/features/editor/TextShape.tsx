@@ -14,6 +14,7 @@ import {
 import { elementToNodeConfig } from "./Utils"
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
 import { ShapeDelegateNew, selectShapeDelegate } from "./shapeDelegates"
+import { ELEMENT_CHILD_PREFIX, TRANSFORMER_PREFIX } from "./Keywords"
 
 const MIN_WIDTH = 50
 const MIN_HEIGHT = 50
@@ -100,7 +101,7 @@ export function TextShape(
           updatePosition,
         )}
         <Text
-          id={"text"}
+          id={ELEMENT_CHILD_PREFIX + "text_" + element.id}
           ref={textRef}
           fontSize={24}
           ellipsis
@@ -114,7 +115,7 @@ export function TextShape(
       </Group>
       {selected && (
         <Transformer
-          id="transformer"
+          id={TRANSFORMER_PREFIX + element.id}
           padding={5}
           ref={trRef}
           rotateEnabled={false}

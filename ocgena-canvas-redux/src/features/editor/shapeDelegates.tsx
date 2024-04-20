@@ -4,6 +4,7 @@ import { MutableRefObject, useEffect } from "react"
 import Konva from "konva"
 import { PositionUpdatePayload, Element, CircleShape } from "./editorSlice"
 import { Circle, KonvaNodeEvents, Rect } from "react-konva"
+import { ELEMENT_CHILD_PREFIX } from "./Keywords"
 
 class ShapeDelegateCommon {
   private static _instance: ShapeDelegateCommon
@@ -31,6 +32,7 @@ class ShapeDelegateCommon {
   ): Konva.NodeConfig & KonvaNodeEvents {
     return {
       ...nodeConfig,
+      id: ELEMENT_CHILD_PREFIX + "shape_" + nodeConfig.id,
       x: localCoord.x,
       y: localCoord.y,
       draggable: false,
@@ -150,11 +152,11 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     const realRadius = (shape.width() * shape.scaleX()) / 2
     const closestSize = (shape.getWidth() * shape.scaleX()).closestSize()
     const closestRadius = closestSize / 2
-    
+
     shape.setAttrs({
-        x: closestRadius,
-        y: closestRadius,
-        radius: closestRadius
+      x: closestRadius,
+      y: closestRadius,
+      radius: closestRadius,
     })
   }
 
@@ -162,12 +164,18 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     const group = shape.getParent() as Konva.Group
     const text = textSelector()
     const realRadius = (shape.width() * shape.scaleX()) / 2
+    const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * (realRadius)
+    const xOffset = -innerRectSize / 2
+    const yOffset = -innerRectSize / 2
+    const width = innerRectSize
+    const height = innerRectSize
+
 
     text.setAttrs({
-      width: shape.scaleX() * shape.radius() * 2,
-      height: shape.scaleY() * shape.radius() * 2,
-      x: 0,
-      y: 0,
+      width: width,
+      height: height,
+      x: realRadius + xOffset,
+      y: realRadius + yOffset,
     })
     console.log("shape absolute position", shape.getAbsolutePosition())
     const absoluteCirclePosition = shape.getAbsolutePosition()
@@ -229,6 +237,7 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     )
     useEffect(() => {
       this.synchronizeSizeAndLocalCoord(shapeRef!.current!)
+      this.syncPositions(shapeRef!.current!, text)
     }, [nodeConfig])
 
     useEffect(() => {
