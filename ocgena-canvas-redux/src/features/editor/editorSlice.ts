@@ -117,7 +117,7 @@ const idFactory = new IdFactory()
 const initialState: EditorSliceState = {
   elements: [
     {
-      id: "test_rect",
+      id: "test_gr",
       shape: {
         height: (50).closestSize(),
         width: (50).closestSize(),
@@ -125,8 +125,8 @@ const initialState: EditorSliceState = {
       },
       rawX: 0,
       rawY: 0,
-      x: (0).closestDotX(),
-      y: (0).closestDotY(),
+      x: (30),
+      y: (30),
       selected: false,
       fill: "orange",
       text: "kek lol arbidol",

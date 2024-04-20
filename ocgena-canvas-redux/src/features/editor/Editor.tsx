@@ -22,10 +22,12 @@ import styles from "./Editor.module.css"
 function dragEventToPayload(
   e: KonvaEventObject<DragEvent>,
 ): PositionUpdatePayload {
+  const absolutePosition = e.target.absolutePosition()
+  console.log("drag event ", e.target.id(), absolutePosition)
   return {
     id: e.target.id(),
-    x: e.target.x(),
-    y: e.target.y(),
+    x: absolutePosition.x,
+    y: absolutePosition.y,
   }
 }
 
@@ -242,7 +244,7 @@ export function Editor() {
             leftKey: () => {
               const clickedId = ev.target?.id()
               if (clickedId) {
-                console.log(ev.target.id(), ev.target.x(), ev.target.y())
+                console.log(ev.target.id(), ev.target.getAbsolutePosition().x, ev.target.getAbsolutePosition().y, ev.target.position())
                 dispatch(elementSelected(clickedId))
               }
             },
@@ -273,18 +275,18 @@ export function Editor() {
           })
         },
       })
-      .addCallbackPack("dragstart", {
-        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
-          handleMouseKey(ev.evt, {
-            leftKey: () => {
-              const targetShapeID = ev.target.id()
-              if (targetShapeID) {
-                dispatch(elementSelected(targetShapeID))
-              }
-            },
-          })
-        },
-      })
+      // .addCallbackPack("dragstart", {
+      //   elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+      //     handleMouseKey(ev.evt, {
+      //       leftKey: () => {
+      //         const targetShapeID = ev.target.id()
+      //         if (targetShapeID) {
+      //           dispatch(elementSelected(targetShapeID))
+      //         }
+      //       },
+      //     })
+      //   },
+      // })
       .addCallbackPack("dragend", {
         elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
           handleMouseKey(ev.evt, {
@@ -378,10 +380,10 @@ export function Editor() {
             listening={false}
             x={0}
             y={0}
-            width={window.innerWidth * 2}
-            height={window.innerHeight * 2}
+            width={1200}
+            height={800}
             fillPatternImage={patternImage}
-            fillPatternOffset={{x: 10, y: 10}}
+            fillPatternOffset={{x: 0, y: 0}}
             fillPatternRepeat="repeat"
           />
         </Layer>

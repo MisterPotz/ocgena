@@ -35,7 +35,6 @@ interface ShapeDelegate<
   ): JSX.Element
   synchronizeTextAndShapePosition(text: Konva.Node): void
   synchronizeTextAreaPosition(textArea: HTMLTextAreaElement): void
-  getStartCoord(element: Element<T>): Coord
 }
 
 function createShapeDelegate(
@@ -46,13 +45,11 @@ function createShapeDelegate(
     case "rect": {
       const synchronizeTextAndShape = (text: Konva.Node) =>
         synchronizeRectAndTextPosition(shapeRef.current!, text)
+
       return {
         type: shapeType,
         synchronizeTextAndShapePosition: synchronizeTextAndShape,
         convertElement: elementToNodeConfig,
-        getStartCoord: (el: Element<RectangleShape>) => {
-          return { x: el.rawX, y: el.rawY }
-        },
         synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => {
           const rectangle = shapeRef.current! as Konva.Rect
           const xOffset = 0
@@ -72,10 +69,18 @@ function createShapeDelegate(
           config: NodeConfig,
           textRef: React.MutableRefObject<Konva.Node | null>,
         ) => {
+          const newConfig = {
+            ...config,
+            id: config.id! + "_rect",
+            x: undefined,
+            y: undefined,
+          }
           return (
             <Rect
               ref={shapeRef}
-              {...config}
+              {...newConfig}
+              x={0}
+              y={0}
               draggable={false}
               onTransform={() => {
                 synchronizeTextAndShape(textRef.current!)
@@ -97,9 +102,6 @@ function createShapeDelegate(
         type: shapeType,
         synchronizeTextAndShapePosition: synchronizeTextAndShape,
         convertElement: elementToNodeConfig,
-        getStartCoord: (el: Element<CircleShape>) => {
-          return { x: el.x, y: el.y }
-        },
         synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => {
           const circleShape = shapeRef.current! as Konva.Circle
           const srcWidth = circleShape.scaleX() * circleShape.width()
@@ -172,13 +174,17 @@ export function TextShape(element: AnyElement) {
       shapeDelegate.synchronizeTextAreaPosition,
     )
   }, [])
+
   const nodeConfig = useMemo<NodeConfig>(() => {
     return shapeDelegate.convertElement(element)
   }, [element])
+  useEffect(() => {
+    console.log("groupRef after nodeConfig change", nodeConfig.x!, nodeConfig.y! , groupRef.current!.absolutePosition())
+  }, [nodeConfig])
 
-  const coord = useMemo<Coord>(() => {
-    return shapeDelegate.getStartCoord(element)
-  }, [element.x, element.y])
+  // const coord = useMemo<Coord>(() => {
+  //   return shapeDelegate.getStartCoord(element)
+  // }, [element.x, element.y])
 
   React.useEffect(() => {
     if (selected) {
@@ -191,14 +197,15 @@ export function TextShape(element: AnyElement) {
   }, [selected])
 
   return (
-    <React.Fragment>
+    <React.Fragment key={element.id}>
       <Group
         id={element.id}
         key={element.id}
         ref={groupRef}
         draggable={true}
-        x={coord.x}
-        y={coord.y}
+        listening={true}
+        x={nodeConfig.x}
+        y={nodeConfig.y}
       >
         {shapeDelegate.createShape(nodeConfig, textRef)}
         <Text
@@ -214,7 +221,7 @@ export function TextShape(element: AnyElement) {
           listening={false}
         />
       </Group>
-      {selected && (
+      {/* {selected && (
         <Transformer
           id="transformer"
           padding={5}
@@ -257,7 +264,7 @@ export function TextShape(element: AnyElement) {
             return newBox
           }}
         />
-      )}
+      )} */}
     </React.Fragment>
   )
 }
@@ -312,11 +319,12 @@ const synchronizeRectAndTextPosition = (
   srcNode: Konva.Node,
   targetNode: Konva.Node,
 ) => {
+  console.log("synchronizeRectAndTextPosition")
   targetNode.setAttrs({
     width: srcNode.scaleX() * srcNode.width(),
     height: srcNode.scaleY() * srcNode.height(),
-    x: srcNode.x(),
-    y: srcNode.y(),
+    x: 0,
+    y: 0,
   })
 }
 
@@ -325,13 +333,13 @@ const synchronizeCircleAndTextPosition = (
   targetNode: Konva.Node,
 ) => {
   const srcWidth = srcNode.scaleX() * srcNode.width()
-  const srcHeight = srcNode.scaleY() * srcNode.height()
   const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * (srcWidth / 2)
   targetNode.setAttrs({
     width: innerRectSize,
     height: innerRectSize,
-    x: srcNode.x() - innerRectSize / 2,
-    y: srcNode.y() - innerRectSize / 2,
+    // relative to parent group start coordinates
+    x: srcNode.radius() - innerRectSize / 2,
+    y: srcNode.radius() - innerRectSize / 2,
   })
 }
 
@@ -343,15 +351,15 @@ const synchronizeTextAreaPosition = (
   srcNode: Konva.Node,
   targetElement: HTMLElement,
 ) => {
-  const textPosition = srcNode.getAbsolutePosition()
+  const srcAbsolutePosition = srcNode.getAbsolutePosition()
   const stage = srcNode.getLayer()?.getStage()
   // then lets find position of stage container on the page:
   var stageBox = stage!.container().getBoundingClientRect()
   targetElement.style.position = "absolute"
   targetElement.style.top =
-    yOffset + stageBox.top + window.scrollY + textPosition.y + "px"
+    yOffset + stageBox.top + window.scrollY + srcAbsolutePosition.y + "px"
   targetElement.style.left =
-    xOffset + stageBox.left + window.scrollX + textPosition.x + "px"
+    xOffset + stageBox.left + window.scrollX + srcAbsolutePosition.x + "px"
   targetElement.style.width = width - 5 + "px"
   targetElement.style.height = height - 5 + "px"
 }

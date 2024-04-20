@@ -2,6 +2,11 @@ import { RectConfig } from "konva/lib/shapes/Rect"
 import { SpecificShape, Element } from "./editorSlice"
 import { CircleConfig } from "konva/lib/shapes/Circle"
 
+export interface Coord {
+  x: number,
+  y: number,
+}
+
 export function elementToNodeConfig(
   element: Element<SpecificShape>,
 ): CircleConfig | RectConfig {
