@@ -245,7 +245,7 @@ function defaultCircle(x: number, y: number): Element<CircleShape> {
       type: "circle",
       radius: (75).closestSize(),
     },
-    x: (x + 75).closestDotX(),
+    x: (x).closestDotX(),
     y: y.closestDotY(),
     rawX: x,
     rawY: y,
@@ -286,8 +286,10 @@ export const editorSlice = createAppSlice({
           el.id === action.payload.id
             ? {
                 ...el,
-                x: action.payload.x,
-                y: action.payload.y,
+                x: action.payload.x.closestDotX(),
+                y: action.payload.y.closestDotY(),
+                rawX: action.payload.x,
+                rawY: action.payload.y
               }
             : el,
         )
@@ -334,9 +336,9 @@ export const editorSlice = createAppSlice({
         const el = state.elements.find(el => el.id === contextMenuElement)
 
         if (el) {
-          const x = el.x + PADDING // need to find proper start position for new rect
-          const y = el.y + heightFromStart(el) + PADDING
-          const newRect: AnyElement = { ...defaultCircle(x, y), selected: true }
+          // const x = el.x + PADDING // need to find proper start position for new rect
+          // const y = el.y + heightFromStart(el) + PADDING
+          const newRect: AnyElement = { ...defaultCircle(0, 0), selected: true }
           state.elements = deselectElements(state.elements).concat(newRect)
           state.contextMenu = null
         }

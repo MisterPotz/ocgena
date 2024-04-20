@@ -14,6 +14,7 @@ import {
   elementContextMenuClosed,
   contextMenuAddPlace,
   mouseMoveEpicTrigger,
+  elementPositionUpdate,
 } from "./editorSlice"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
@@ -76,7 +77,6 @@ function wrapCallback(key: any, callback: (this: any, ev: any) => void) {
   }
 }
 
-
 export function Editor() {
   const dispatch = useAppDispatch()
   const elements = useAppSelector(elementSelector)
@@ -119,8 +119,8 @@ export function Editor() {
             mouseMoveEpicTrigger({
               clientX: ev.clientX,
               clientY: ev.clientY,
-              stageX: pointerPosition?.x!,// ev.clientX - stageClientRectX,
-              stageY: pointerPosition?.y! // ev.clientY - stageClientRectY,
+              stageX: pointerPosition?.x!, // ev.clientX - stageClientRectX,
+              stageY: pointerPosition?.y!, // ev.clientY - stageClientRectY,
             }),
           )
 
@@ -242,10 +242,19 @@ export function Editor() {
         elementsLayer(ev: Konva.KonvaEventObject<MouseEvent>) {
           handleMouseKey(ev.evt, {
             leftKey: () => {
-              const clickedId = ev.target?.id()
-              if (clickedId) {
-                console.log(ev.target.id(), ev.target.getAbsolutePosition().x, ev.target.getAbsolutePosition().y, ev.target.position())
-                dispatch(elementSelected(clickedId))
+              const clickedItem = ev.target
+
+              if (clickedItem != stageRef.current && clickedItem) {
+                if (clickedItem.getParent() instanceof Konva.Group) {
+                  let clickedCompound = clickedItem.getParent() as Konva.Group
+                  console.log(
+                    clickedCompound.id(),
+                    clickedCompound.getAbsolutePosition().x,
+                    clickedCompound.getAbsolutePosition().y,
+                    clickedCompound.position(),
+                  )
+                  dispatch(elementSelected(clickedCompound.id()))
+                }
               }
             },
           })
@@ -275,18 +284,18 @@ export function Editor() {
           })
         },
       })
-      // .addCallbackPack("dragstart", {
-      //   elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
-      //     handleMouseKey(ev.evt, {
-      //       leftKey: () => {
-      //         const targetShapeID = ev.target.id()
-      //         if (targetShapeID) {
-      //           dispatch(elementSelected(targetShapeID))
-      //         }
-      //       },
-      //     })
-      //   },
-      // })
+      .addCallbackPack("dragstart", {
+        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+          handleMouseKey(ev.evt, {
+            leftKey: () => {
+              const targetShapeID = ev.target.id()
+              if (targetShapeID) {
+                dispatch(elementSelected(targetShapeID))
+              }
+            },
+          })
+        },
+      })
       .addCallbackPack("dragend", {
         elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
           handleMouseKey(ev.evt, {
@@ -383,13 +392,21 @@ export function Editor() {
             width={1200}
             height={800}
             fillPatternImage={patternImage}
-            fillPatternOffset={{x: 0, y: 0}}
+            fillPatternOffset={{ x: 0, y: 0 }}
             fillPatternRepeat="repeat"
           />
         </Layer>
         <Layer ref={elementsLayerRef}>
           {elements.map((el, index) => {
-            return <TextShape key={el.id} {...el} />
+            return (
+              <TextShape
+                key={el.id}
+                element={el}
+                updatePosition={payload => {
+                  dispatch(elementPositionUpdate(payload))
+                }}
+              />
+            )
           })}
         </Layer>
         <Layer ref={selectionLayer}>
@@ -589,7 +606,6 @@ class CallbackRegistrar {
     })
   }
 }
-
 
 export type Tool = "transition" | "place" | "var arc" | "normal arc"
 
