@@ -1,12 +1,16 @@
-import {
-  PayloadAction,
-} from "@reduxjs/toolkit"
+import { Action, PayloadAction } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
 import { combineEpics } from "redux-observable"
 import {
+  EMPTY,
+  Observable,
+  empty,
   interval,
+  mergeMap,
   map as rxMap,
   sample,
+  sampleTime,
+  switchMap,
 } from "rxjs"
 import {
   createActionFilter,
@@ -14,9 +18,9 @@ import {
   createEpic,
   ofTypeAndMap,
 } from "../../utils/redux_utils"
-import "fp-ts/lib/Array"
-import { map } from "fp-ts/lib/Array"
-import { pipe } from "fp-ts/lib/function"
+// import "fp-ts/lib/Array"
+// import { map } from "fp-ts/lib/Array"
+// import { pipe } from "fp-ts/lib/function"
 import "./CoordinatesExt"
 
 export interface Element<Shape extends SpecificShape = SpecificShape> {
@@ -64,7 +68,7 @@ export interface ContextMenu {
 
 export interface EditorSliceState {
   elements: Elements
-  selected: string[]
+  // selected: string[]
   contextMenu?: ContextMenu | null
   // contextMenuElement: string | null
 }
@@ -115,38 +119,38 @@ const initialState: EditorSliceState = {
     {
       id: "test_rect",
       shape: {
-        height: 200,
-        width: 400,
+        height: (50).closestSize(),
+        width: (50).closestSize(),
         type: "rect",
       },
-      rawX: 300,
-      rawY: 200,
-      x: (300).closestDotX(),
-      y: (200).closestDotY(),
+      rawX: 0,
+      rawY: 0,
+      x: (0).closestDotX(),
+      y: (0).closestDotY(),
       selected: false,
       fill: "orange",
       text: "kek lol arbidol",
     },
-    {
-      id: idFactory.next(),
-      rawX: 50,
-      rawY: 50,
-      x: (50).closestDotX(),
-      y: (50).closestDotY(),
-      shape: { type: "rect", width: 100, height: 100 },
-      fill: "black",
-    },
-    {
-      id: idFactory.next(),
-      rawX: 200,
-      rawY: 200,
-      x: (200).closestDotX(),
-      y: (200).closestDotY(),
-      shape: { type: "circle", radius: 50 },
-      stroke: "black",
-    },
+    // {
+    //   id: idFactory.next(),
+    //   rawX: 50,
+    //   rawY: 50,
+    //   x: (50).closestDotX(),
+    //   y: (50).closestDotY(),
+    //   shape: { type: "rect", width: 100, height: 100 },
+    //   fill: "black",
+    // },
+    // {
+    //   id: idFactory.next(),
+    //   rawX: 200,
+    //   rawY: 200,
+    //   x: (200).closestDotX(),
+    //   y: (200).closestDotY(),
+    //   shape: { type: "circle", radius: 50 },
+    //   stroke: "black",
+    // },
   ],
-  selected: [],
+  // selected: [],
   // contextMenuElement: null,
 }
 
@@ -163,6 +167,13 @@ export type PositionUpdatePayload = {
   id: string
   x: number
   y: number
+}
+
+export type MouseMovePayload = {
+  clientX: number
+  clientY: number
+  stageX: number
+  stageY: number
 }
 
 export type SizeUpdatePayload = {
@@ -186,6 +197,16 @@ export const editorHandleDragEpic = combineEpics(
       ofTypeAndMap(elementDragEndEpicTrigger),
       rxMap(action => {
         return elementPositionUpdate(action.payload)
+      }),
+    ),
+  ),
+  createEpic(action$ =>
+    action$.pipe(
+      ofTypeAndMap(mouseMoveEpicTrigger),
+      sampleTime(1000),
+      switchMap(action => {
+        console.log("mousemove", action.payload)
+        return EMPTY
       }),
     ),
   ),
@@ -235,10 +256,7 @@ function defaultCircle(x: number, y: number): Element<CircleShape> {
 }
 
 function deselectElements(elements: Elements): Elements {
-  return pipe(
-    elements,
-    map(el => (el.selected ? { ...el, selected: false } : el)),
-  )
+  return elements.map(el => (el.selected ? { ...el, selected: false } : el))
 }
 const PADDING = 20
 
@@ -247,37 +265,31 @@ export const editorSlice = createAppSlice({
   initialState,
   reducers: create => ({
     elementSelected: create.reducer((state, action: PayloadAction<string>) => {
-      state.elements = pipe(
-        state.elements,
-        map(el =>
-          el.id === action.payload
-            ? {
-                ...el,
-                selected: true,
-              }
-            : el.selected
-              ? { ...el, selected: false }
-              : el,
-        ),
+      state.elements = state.elements.map(el =>
+        el.id === action.payload
+          ? {
+              ...el,
+              selected: true,
+            }
+          : el.selected
+            ? { ...el, selected: false }
+            : el,
       )
-      state.selected = [action.payload]
+      // state.selected = [action.payload]
     }),
     elementSelectionCancelled: create.reducer(state => {
       state.elements = deselectElements(state.elements)
     }),
     elementPositionUpdate: create.reducer(
       (state, action: PayloadAction<PositionUpdatePayload>) => {
-        state.elements = pipe(
-          state.elements,
-          map(el =>
-            el.id === action.payload.id
-              ? {
-                  ...el,
-                  x: action.payload.x,
-                  y: action.payload.y,
-                }
-              : el,
-          ),
+        state.elements = state.elements.map(el =>
+          el.id === action.payload.id
+            ? {
+                ...el,
+                x: action.payload.x,
+                y: action.payload.y,
+              }
+            : el,
         )
       },
     ),
@@ -293,6 +305,7 @@ export const editorSlice = createAppSlice({
       createEmptyPayloadReducer<PositionUpdatePayload>(create),
     elementDragEndEpicTrigger:
       createEmptyPayloadReducer<PositionUpdatePayload>(create),
+    mouseMoveEpicTrigger: createEmptyPayloadReducer<MouseMovePayload>(create),
     elementContextOpened: create.reducer(
       (state, action: PayloadAction<ContextMenu>) => {
         state.contextMenu = action.payload
@@ -336,7 +349,7 @@ export const editorSlice = createAppSlice({
   }),
   selectors: {
     elementSelector: state => state.elements,
-    selectedIdsSelector: state => state.selected,
+    // selectedIdsSelector: state => state.selected,
     // elementIdSelector: createSelector(
     //   (state: EditorSliceState) => state.elements,
     //   (elements: Elements) => elements.map(el => el.id),
@@ -353,14 +366,16 @@ export const {
   elementDragEndEpicTrigger,
   elementContextOpened,
   elementContextMenuClosed,
+  mouseMoveEpicTrigger,
   contextMenuAddTransition,
   contextMenuAddPlace,
 } = editorSlice.actions
 
-export const { elementSelector, selectedIdsSelector, contextMenuSelector } =
+export const { elementSelector, /* selectedIdsSelector,*/ contextMenuSelector } =
   editorSlice.selectors
 
 export const editorActionFilter = createActionFilter(
   elementDragEpicTrigger,
   elementDragEndEpicTrigger,
+  mouseMoveEpicTrigger,
 )

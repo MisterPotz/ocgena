@@ -51,7 +51,7 @@ function createShapeDelegate(
         synchronizeTextAndShapePosition: synchronizeTextAndShape,
         convertElement: elementToNodeConfig,
         getStartCoord: (el: Element<RectangleShape>) => {
-          return { x: el.x, y: el.y }
+          return { x: el.rawX, y: el.rawY }
         },
         synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => {
           const rectangle = shapeRef.current! as Konva.Rect
@@ -152,8 +152,6 @@ export function TextShape(element: AnyElement) {
   const dispatch = useAppDispatch()
 
   const selected = element.selected || false
-  // const [selected, setSelected] = useState(false)
-
   const trRef = useRef<Konva.Transformer | null>(null)
   const groupRef = useRef<Konva.Group | null>(null)
   const textRef = useRef<Konva.Text | null>(null)
@@ -197,14 +195,6 @@ export function TextShape(element: AnyElement) {
       <Group
         id={element.id}
         key={element.id}
-        // onDragMove={() => {
-        //   if (editableTextAreaRef.current) {
-        //     synchronizeTextAreaPosition(
-        //       textRef.current!,
-        //       editableTextAreaRef.current!,
-        //     )
-        //   }
-        // }}
         ref={groupRef}
         draggable={true}
         x={coord.x}
@@ -365,26 +355,6 @@ const synchronizeTextAreaPosition = (
   targetElement.style.width = width - 5 + "px"
   targetElement.style.height = height - 5 + "px"
 }
-
-// const synchronizeTextAreaPosition = (
-//   srcNode: Konva.Node,
-//   targetElement: HTMLElement,
-// ) => {
-//   const textPosition = srcNode.getAbsolutePosition()
-//   const stage = srcNode.getLayer()?.getStage()
-//   // then lets find position of stage container on the page:
-//   var stageBox = stage!.container().getBoundingClientRect()
-//   // so position of textarea will be the sum of positions above:
-//   var areaPosition = {
-//     x: stageBox.left + window.scrollX + textPosition.x,
-//     y: stageBox.top + window.scrollY + textPosition.y,
-//   }
-//   targetElement.style.position = "absolute"
-//   targetElement.style.top = areaPosition.y + "px"
-//   targetElement.style.left = areaPosition.x + "px"
-//   targetElement.style.width = srcNode.width() - 5 + "px"
-//   targetElement.style.height = srcNode.height() - 5 + "px"
-// }
 
 function createEscapeListener(onEscapeCallback: () => void) {
   // Return the actual event handler function from this closure

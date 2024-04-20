@@ -14,11 +14,11 @@ const App = () => {
         {/* <ArrowConnector />
         <ArrowConnectorFollowMouse /> */}
         <PatternImage />
-        <Counter />
+        {/* <Counter /> */}
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
-        <Quotes />
+        {/* <Quotes /> */}
         <span>
           <span>Learn </span>
           <a

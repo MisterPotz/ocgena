@@ -11,9 +11,8 @@ export function elementToNodeConfig(
     fill: element.fill,
     draggable: true,
     key: element.id,
-    x: element.x.closestDotX(),
-    y: element.y.closestDotY(),
-    // onDragStart={} <--- want to create a common object to not define a callback to each rendered shape
+    x: element.x,
+    y: element.y,
   }
   switch (element.shape.type) {
     case "rect":

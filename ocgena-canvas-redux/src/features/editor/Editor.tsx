@@ -13,6 +13,7 @@ import {
   contextMenuSelector,
   elementContextMenuClosed,
   contextMenuAddPlace,
+  mouseMoveEpicTrigger,
 } from "./editorSlice"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
@@ -35,6 +36,45 @@ interface SelectorData {
 
 type SelectorOrNull = SelectorData | null
 
+type DelegateType = "window" | "document" | "stage" | "layer"
+
+type InclusiveEventMap = GlobalEventHandlersEventMap & {
+  [index: string]: any
+}
+
+interface CallbackPack<
+  Key extends keyof InclusiveEventMap = keyof InclusiveEventMap,
+> {
+  key?: Key
+  window?: (this: Window, ev: InclusiveEventMap[Key]) => any
+  document?: (this: Document, ev: InclusiveEventMap[Key]) => any
+  contextMenu?: (this: HTMLDivElement, ev: InclusiveEventMap[Key]) => any
+  stage?: (
+    this: Konva.Stage,
+    ev: Konva.KonvaEventObject<InclusiveEventMap[Key] | any>,
+  ) => any
+  elementsLayer?: (
+    this: Konva.Layer,
+    ev: Konva.KonvaEventObject<InclusiveEventMap[Key] | any>,
+  ) => any
+  selectionLayer?: (
+    this: Konva.Layer,
+    ev: Konva.KonvaEventObject<InclusiveEventMap[Key] | any>,
+  ) => any
+}
+
+function wrapCallback(key: any, callback: (this: any, ev: any) => void) {
+  return function wrappedCallback(this: any, event: any) {
+    // Assuming you want to log or do something before and after the callback
+    if (key != "mousemove") {
+      console.log(`${key}`)
+    }
+
+    callback.call(this, event)
+  }
+}
+
+
 export function Editor() {
   const dispatch = useAppDispatch()
   const elements = useAppSelector(elementSelector)
@@ -48,59 +88,169 @@ export function Editor() {
   const selectionLayer = useRef<Konva.Layer | null>(null)
   // State for storing elements
   const [tool, setTool] = useState<Tool | null>(null) // Current selected tool
+  const [patternImage, setPatternImage] = useState(new window.Image())
+  const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 })
+  const isDraggingRef = useRef(false)
+  const [lastPosition, setLastPosition] = useState({ x: 0, y: 0 })
+  const spacePressedRef = useRef(false)
 
-  useEffect(() => {
-    // Handler to call on document click
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (
-        contextMenuRef.current &&
-        !contextMenuRef.current.contains(event.target as Node)
-      ) {
-        // Clicked outside the context menu, close it
-        dispatch(elementContextMenuClosed())
-      }
-    }
+  const [callbackRegistrar, _] = useState(() => {
+    const callbackRegistrar = new CallbackRegistrar()
+    callbackRegistrar
+      .addCallbackPack("mousemove", {
+        window: (ev: MouseEvent) => {
+          const selectorShape = selectorShapeRef.current
+          const stage = stageRef.current!
+          const selector = selectorDataRef.current
 
-    if (contextMenu) {
-      document.addEventListener("click", handleDocumentClick)
-      return () => document.removeEventListener("click", handleDocumentClick)
-    }
+          const stageBoundingClientRect = stage
+            .container()
+            .getBoundingClientRect()
+          const stageClientRectX = stageBoundingClientRect.left //+ window.scrollX
+          const stageClientRectY = stageBoundingClientRect.top //+ window.scrollY
+          const stageClientRightX = stageBoundingClientRect.right
+          const stageClientBottomY = stageBoundingClientRect.bottom
 
-    // Clean up the listener when the component unmounts or the menu closes
-    return () => {}
-  }, [contextMenu]) // Only re-run if contextMenu changes
+          const pointerPosition = stage.getPointerPosition()
 
-  useEffect(() => {
-    const windowMouseMoveCallback = windowMouseMoveCallbackCreator(
-      selectorShapeRef,
-      stageRef,
-      selectorDataRef,
-      selectionLayer,
-    )
-    const windowMouseUpCallback = windowMouseUpCallbackCreator(
-      selectorShapeRef,
-      setSelector,
-      stageRef,
-      selectorDataRef,
-      selectionLayer,
-    )
-    window.addEventListener("mousemove", windowMouseMoveCallback)
-    window.addEventListener("mouseup", windowMouseUpCallback)
-    return () => {
-      window.removeEventListener("mousemove", windowMouseMoveCallback)
-      window.removeEventListener("mouseup", windowMouseUpCallback)
-    }
-  }, [])
+          dispatch(
+            mouseMoveEpicTrigger({
+              clientX: ev.clientX,
+              clientY: ev.clientY,
+              stageX: pointerPosition?.x!,// ev.clientX - stageClientRectX,
+              stageY: pointerPosition?.y! // ev.clientY - stageClientRectY,
+            }),
+          )
 
-  const handleElementDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
-  }
+          if (selector && selectorShape) {
+            // Translate window coordinates to stage coordinates
+            handleMouseKey(ev, {
+              leftKey: () => {
+                const mouseX = ev.clientX
+                const mouseY = ev.clientY
 
-  return (
-    <>
-      <ToolPane onSelectTool={setTool} />
-      <Stage
-        onContextMenu={(event: Konva.KonvaEventObject<PointerEvent>) => {
+                const clientStartX = selector.x + stageClientRectX
+                const clientStartY = selector.y + stageClientRectY
+
+                const fixedMouseX = Math.min(
+                  Math.max(mouseX, stageClientRectX),
+                  stageClientRightX,
+                )
+                const fixedMouseY = Math.min(
+                  Math.max(mouseY, stageClientRectY),
+                  stageClientBottomY,
+                )
+                selectorShape.setAttrs({
+                  x: Math.min(selector.x, fixedMouseX - stageClientRectX),
+                  y: Math.min(selector.y, fixedMouseY - stageClientRectY),
+                  width: Math.abs(fixedMouseX - clientStartX),
+                  height: Math.abs(fixedMouseY - clientStartY),
+                })
+
+                selectionLayer.current!.batchDraw()
+              },
+            })
+          }
+        },
+        stage(ev: Konva.KonvaEventObject<MouseEvent>) {
+          const stage = stageRef.current
+          if (stage && isDraggingRef.current) {
+            const newPosition = stage.getPointerPosition()!
+            setStagePosition({
+              x: stagePosition.x + (newPosition.x - lastPosition.x),
+              y: stagePosition.y + (newPosition.y - lastPosition.y),
+            })
+            setLastPosition(newPosition)
+          }
+        },
+      })
+      .addCallbackPack("mouseup", {
+        window: (ev: MouseEvent) => {
+          const selectorShape = selectorShapeRef.current
+          const selector = selectorDataRef.current
+          if (!selector || !selectorShape) return
+          handleMouseKey(ev, {
+            leftKey: () => {
+              setSelector(null)
+              isDraggingRef.current = false
+              selectionLayer.current!.draw()
+            },
+          })
+        },
+      })
+      .addCallbackPack("mousedown", {
+        stage(ev: Konva.KonvaEventObject<MouseEvent>) {
+          const stage = stageRef.current!
+          handleMouseKey(ev.evt, {
+            leftKey: () => {
+              if (ev.target !== stageRef.current) {
+                const selectionId = ev.target.id()
+                if (selectionId) {
+                  dispatch(elementSelected(ev.target.id()))
+                }
+              } else if (
+                ev.target === stageRef.current &&
+                spacePressedRef.current
+              ) {
+                isDraggingRef.current = true
+                setLastPosition(stage.getPointerPosition()!)
+              } else {
+                dispatch(elementSelectionCancelled())
+
+                const startX = stage.getRelativePointerPosition()?.x
+                const startY = stage.getRelativePointerPosition()?.y
+
+                if (startX && startY) {
+                  console.log("setting selector at", startX, startY)
+                  const selectorData = { x: startX, y: startY }
+                  selectorDataRef.current = selectorData
+                  setSelector(selectorData)
+                }
+              }
+            },
+          })
+        },
+      })
+      .addCallbackPack("keydown", {
+        window: (ev: KeyboardEvent) => {
+          if (ev.key === " ") {
+            ev.preventDefault()
+            spacePressedRef.current = true
+          }
+        },
+      })
+      .addCallbackPack("keyup", {
+        window: (ev: KeyboardEvent) => {
+          if (ev.key === " ") {
+            ev.preventDefault()
+            spacePressedRef.current = false
+          }
+        },
+      })
+      .addCallbackPack("click", {
+        document: (event: MouseEvent) => {
+          if (
+            contextMenuRef.current &&
+            !contextMenuRef.current.contains(event.target as Node)
+          ) {
+            // Clicked outside the context menu, close it
+            dispatch(elementContextMenuClosed())
+          }
+        },
+        elementsLayer(ev: Konva.KonvaEventObject<MouseEvent>) {
+          handleMouseKey(ev.evt, {
+            leftKey: () => {
+              const clickedId = ev.target?.id()
+              if (clickedId) {
+                console.log(ev.target.id(), ev.target.x(), ev.target.y())
+                dispatch(elementSelected(clickedId))
+              }
+            },
+          })
+        },
+      })
+      .addCallbackPack("contextmenu", {
+        stage: (event: Konva.KonvaEventObject<PointerEvent>) => {
           handleMouseKey(event.evt, {
             rightKey: () => {
               console.log("onContextMenu")
@@ -108,7 +258,6 @@ export function Editor() {
               event.evt.preventDefault()
               const targetShapeId = event.target.id()
               if (targetShapeId) {
-                console.log("event target", event.target.id())
                 // setShowMenu(true)
                 // setMenuPosition({ x: event.evt.pageX, y: event.evt.pageY })
                 dispatch(elementSelected(targetShapeId))
@@ -122,79 +271,121 @@ export function Editor() {
               }
             },
           })
-        }}
-        ref={stageRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => {
-          // console.log(
-          //   "stage mouse down target",
-          //   e.target,
-          //   "left click",
-          //   e.evt.button,
-          // )
-          const stage = stageRef.current!
-          handleMouseKey(e.evt, {
+        },
+      })
+      .addCallbackPack("dragstart", {
+        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+          handleMouseKey(ev.evt, {
             leftKey: () => {
-              console.log("onMouseDown")
-              if (e.target !== stageRef.current) {
-                const selectionId = e.target.id()
-                if (selectionId) {
-                  dispatch(elementSelected(e.target.id()))
-                }
-              } else {
-                dispatch(elementSelectionCancelled())
-                const startX = stage.getRelativePointerPosition()?.x
-                const startY = stage.getRelativePointerPosition()?.y
-
-                if (startX && startY) {
-                  console.log("setting selector at", startX, startY)
-                  const selectorData = { x: startX, y: startY }
-                  selectorDataRef.current = selectorData
-                  setSelector(selectorData)
-                }
+              const targetShapeID = ev.target.id()
+              if (targetShapeID) {
+                dispatch(elementSelected(targetShapeID))
               }
             },
           })
+        },
+      })
+      .addCallbackPack("dragend", {
+        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+          handleMouseKey(ev.evt, {
+            leftKey: () => {
+              dispatch(elementDragEndEpicTrigger(dragEventToPayload(ev)))
+            },
+          })
+        },
+      })
+      .addCallbackPack("blur", {
+        contextMenu(ev: FocusEvent) {
+          dispatch(elementContextMenuClosed())
+        },
+      })
+    return callbackRegistrar
+  })
+
+  useEffect(() => {
+    const contextMenu = contextMenuRef.current
+    if (contextMenu) {
+      callbackRegistrar.applyContextMenuCallbacks(contextMenu)
+    }
+
+    return () => {
+      if (contextMenu) {
+        callbackRegistrar.removeContextMenuCallbacks(contextMenu)
+      }
+    }
+  }, [contextMenuRef.current])
+
+  useEffect(() => {
+    callbackRegistrar.applyCallbacks(
+      document,
+      window,
+      stageRef.current!,
+      selectionLayer.current!,
+      elementsLayerRef.current!,
+    )
+
+    return () => {
+      callbackRegistrar.removeCallbacks(
+        document,
+        window,
+        stageRef.current,
+        selectionLayer.current,
+        elementsLayerRef.current,
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    const dotPatternCanvas = document.createElement("canvas")
+    const context = dotPatternCanvas.getContext("2d")!
+
+    const spacing = 20 // Spacing between dots
+    const dotRadius = 2 // Radius of the dots
+
+    // Set the canvas size to the size of the pattern
+    dotPatternCanvas.width = spacing
+    dotPatternCanvas.height = spacing
+
+    // Draw the dot pattern once
+    context.beginPath()
+    context.arc(spacing / 2, spacing / 2, dotRadius, 0, 2 * Math.PI)
+    context.fillStyle = "black"
+    context.fill()
+    // Convert canvas to an image
+    const pattern = new Image()
+    pattern.src = dotPatternCanvas.toDataURL()
+    pattern.onload = () => {
+      setPatternImage(pattern)
+    }
+  }, [])
+
+  return (
+    <>
+      <ToolPane onSelectTool={setTool} />
+      <Stage
+        style={{
+          border: "solid",
+          borderWidth: "1px",
+          // padding: "0px 12px"
         }}
-        onMouseMove={(evt: KonvaEventObject<MouseEvent>) => {}}
+        ref={stageRef}
+        width={1200}
+        height={800}
       >
         <Layer>
-          
+          <Rect
+            draggable={false}
+            listening={false}
+            x={0}
+            y={0}
+            width={window.innerWidth * 2}
+            height={window.innerHeight * 2}
+            fillPatternImage={patternImage}
+            fillPatternOffset={{x: 10, y: 10}}
+            fillPatternRepeat="repeat"
+          />
         </Layer>
-        <Layer
-          ref={elementsLayerRef}
-          onDragStart={e => {
-            handleMouseKey(e.evt, {
-              leftKey: () => {
-                console.log("onDragStart")
-                const targetShapeID = e.target.id()
-                if (targetShapeID) {
-                  dispatch(elementSelected(targetShapeID))
-                }
-              },
-            })
-          }}
-          onDragEnd={e => {
-            handleMouseKey(e.evt, {
-              leftKey: () => {
-                console.log("onDragEnd")
-                dispatch(elementDragEndEpicTrigger(dragEventToPayload(e)))
-              },
-            })
-          }}
-          onClick={(e: Konva.KonvaEventObject<MouseEvent>) => {
-            handleMouseKey(e.evt, {
-              leftKey: () => {
-                const clickedId = e.target?.id()
-                console.log("onClick ", clickedId)
-                if (clickedId) {
-                  dispatch(elementSelected(clickedId))
-                }
-              },
-            })
-          }}
-        >
+        <Layer ref={elementsLayerRef}>
           {elements.map((el, index) => {
             return <TextShape key={el.id} {...el} />
           })}
@@ -227,10 +418,6 @@ export function Editor() {
             backgroundColor: "white",
             // border: '1px solid black',
             // padding: '10px'
-          }}
-          onBlur={() => {
-            console.log("blur event")
-            dispatch(elementContextMenuClosed())
           }}
         >
           Custom Context Menu
@@ -287,82 +474,120 @@ export function Editor() {
   )
 }
 
-const windowMouseMoveCallbackCreator =
-  (
-    selectorShapeRef: React.MutableRefObject<Konva.Node | null>,
-    stageRef: React.MutableRefObject<Konva.Stage | null>,
-    selectorDataRef: React.MutableRefObject<SelectorOrNull | null>,
-    selectionLayerRef: React.MutableRefObject<Konva.Layer | null>,
-  ) =>
-  (ev: MouseEvent) => {
-    const selectorShape = selectorShapeRef.current
-    const stage = stageRef.current!
-    const selector = selectorDataRef.current
-    if (!selector || !selectorShape) return
-    // Translate window coordinates to stage coordinates
-    handleMouseKey(ev, {
-      leftKey: () => {
-        console.log("onMouseMove")
-        const mouseX = ev.clientX
-        const mouseY = ev.clientY
+class CallbackRegistrar {
+  private callbackPacks: CallbackPack[] = []
 
-        const stageBoundingClientRect = stage
-          .container()
-          .getBoundingClientRect()
-        const stageClientRectX = stageBoundingClientRect.left //+ window.scrollX
-        const stageClientRectY = stageBoundingClientRect.top //+ window.scrollY
-        const stageClientRightX = stageBoundingClientRect.right
-        const stageClientBottomY = stageBoundingClientRect.bottom
+  addCallbackPack<Key extends keyof InclusiveEventMap>(
+    type: Key,
+    callbackPack: CallbackPack<Key>,
+  ): CallbackRegistrar {
+    this.callbackPacks.push({
+      window: callbackPack.window
+        ? wrapCallback(type, callbackPack.window)
+        : undefined,
+      document: callbackPack.document
+        ? wrapCallback(type, callbackPack.document)
+        : undefined,
+      stage: callbackPack.stage
+        ? wrapCallback(type, callbackPack.stage)
+        : undefined,
+      selectionLayer: callbackPack.selectionLayer
+        ? wrapCallback(type, callbackPack.selectionLayer)
+        : undefined,
+      elementsLayer: callbackPack.elementsLayer
+        ? wrapCallback(type, callbackPack.elementsLayer)
+        : undefined,
+      contextMenu: callbackPack.contextMenu
+        ? wrapCallback(type, callbackPack.contextMenu)
+        : undefined,
+      key: type,
+    })
+    return this
+  }
 
-        const clientStartX = selector.x + stageClientRectX
-        const clientStartY = selector.y + stageClientRectY
-        // console.log("mouseX, mouseY", mouseX, mouseY)
-        // console.log(
-        //   "canvas left top right bottom",
-        //   stageClientRectX,
-        //   stageClientRectY,
-        //   stageClientRightX,
-        //   stageClientBottomY,
-        // )
-        const fixedMouseX = Math.min(
-          Math.max(mouseX, stageClientRectX),
-          stageClientRightX,
-        )
-        const fixedMouseY = Math.min(
-          Math.max(mouseY, stageClientRectY),
-          stageClientBottomY,
-        )
-        selectorShape.setAttrs({
-          x: Math.min(selector.x, fixedMouseX - stageClientRectX),
-          y: Math.min(selector.y, fixedMouseY - stageClientRectY),
-          width: Math.abs(fixedMouseX - clientStartX),
-          height: Math.abs(fixedMouseY - clientStartY),
-        })
-
-        selectionLayerRef.current!.batchDraw()
-      },
+  applyCallbacks(
+    document: Document,
+    window: Window,
+    stage: Konva.Stage,
+    selectionLayer: Konva.Layer,
+    elementsLayer: Konva.Layer,
+  ) {
+    this.callbackPacks.forEach(pack => {
+      const convertedKey = pack.key as keyof GlobalEventHandlersEventMap
+      if (pack.window) {
+        window.addEventListener(convertedKey, pack.window)
+      }
+      if (pack.document) {
+        document.addEventListener(convertedKey, pack.document)
+      }
+      if (pack.stage) {
+        stage.on(convertedKey, pack.stage)
+      }
+      if (pack.selectionLayer) {
+        selectionLayer.on(convertedKey, pack.selectionLayer)
+      }
+      if (pack.elementsLayer) {
+        elementsLayer.on(convertedKey, pack.elementsLayer)
+      }
     })
   }
-const windowMouseUpCallbackCreator =
-  (
-    selectorShapeRef: React.MutableRefObject<Konva.Node | null>,
-    setSelector: (selectorData: SelectorOrNull) => void,
-    stageRef: React.MutableRefObject<Konva.Stage | null>,
-    selectorDataRef: React.MutableRefObject<SelectorOrNull | null>,
-    selectionLayerRef: React.MutableRefObject<Konva.Layer | null>,
-  ) =>
-  (ev: MouseEvent) => {
-    const selectorShape = selectorShapeRef.current
-    const selector = selectorDataRef.current
-    if (!selector || !selectorShape) return
-    handleMouseKey(ev, {
-      leftKey: () => {
-        console.log("onMouseUp")
-        setSelector(null)
-        selectionLayerRef.current!.draw()
-      },
+
+  private convertKey(
+    key: keyof InclusiveEventMap,
+  ): keyof GlobalEventHandlersEventMap {
+    return key as keyof GlobalEventHandlersEventMap
+  }
+
+  applyContextMenuCallbacks(contextMenu: HTMLDivElement) {
+    this.callbackPacks.forEach(pack => {
+      if (pack.contextMenu) {
+        contextMenu.addEventListener(
+          this.convertKey(pack.key!),
+          pack.contextMenu,
+        )
+      }
     })
   }
+
+  removeContextMenuCallbacks(contextMenu: HTMLDivElement) {
+    this.callbackPacks.forEach(pack => {
+      if (pack.contextMenu) {
+        contextMenu.removeEventListener(
+          this.convertKey(pack.key!),
+          pack.contextMenu,
+        )
+      }
+    })
+  }
+
+  removeCallbacks(
+    document: Document,
+    window: Window,
+    stage?: Konva.Stage | null,
+    selectionLayer?: Konva.Layer | null,
+    elementsLayer?: Konva.Layer | null,
+  ) {
+    this.callbackPacks.forEach(pack => {
+      const convertedKey = pack.key as keyof GlobalEventHandlersEventMap
+      if (pack.window) {
+        window.removeEventListener(convertedKey, pack.window)
+      }
+      if (pack.document) {
+        document.removeEventListener(convertedKey, pack.document)
+      }
+      if (pack.stage && stage) {
+        stage.off(convertedKey, pack.stage)
+      }
+      if (pack.selectionLayer && selectionLayer) {
+        selectionLayer.off(convertedKey, pack.selectionLayer)
+      }
+      if (pack.elementsLayer && elementsLayer) {
+        elementsLayer.off(convertedKey, pack.elementsLayer)
+      }
+    })
+  }
+}
+
 
 export type Tool = "transition" | "place" | "var arc" | "normal arc"
 
@@ -390,7 +615,6 @@ function handleMouseKey(
   switch (evt.button) {
     case 0:
       if (clicks.leftKey) {
-        console.log("handling left key", evt)
         clicks.leftKey()
       }
       break
@@ -398,7 +622,6 @@ function handleMouseKey(
       break
     case 2:
       if (clicks.rightKey) {
-        console.log("handling right key ", evt)
         clicks.rightKey()
       }
       break

@@ -20,7 +20,7 @@ const filteringMiddleware = createFilteringMiddleware(editorActionFilter)
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
-const rootReducer = combineSlices(counterSlice, quotesApiSlice, editorSlice)
+const rootReducer = combineSlices(/* counterSlice, quotesApiSlice,  */editorSlice)
 // Infer the `RootState` type from the root reducer
 export type RootState = ReturnType<typeof rootReducer>
 
@@ -35,7 +35,7 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
       return getDefaultMiddleware()
         .concat(epicMiddleware)
         .concat(filteringMiddleware)
-        .concat(quotesApiSlice.middleware)
+        // .concat(quotesApiSlice.middleware)
     },
     preloadedState,
   })

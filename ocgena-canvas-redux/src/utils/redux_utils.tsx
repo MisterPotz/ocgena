@@ -55,14 +55,14 @@ export interface ActionFilter {
   shouldFilterAction(action: Action): boolean
 }
 
-export function createActionFilter<P, T extends string = string>(
-  ...actionCreators: ActionCreatorWithPayload<P, T>[]
+export function createActionFilter(
+  ...actionCreators: ActionCreatorWithPayload<any, any>[]
 ): ActionFilter {
   const filteredValues = actionCreators.map(actionCreator => actionCreator.type)
 
   return {
-    shouldFilterAction: (action: Action<T>) => {
-      return exists<T>(e => e == action.type)(filteredValues)
+    shouldFilterAction: (action: Action) => {
+      return exists(e => e == action.type)(filteredValues)
     },
   }
 }
