@@ -83,6 +83,18 @@ export interface ShapeDelegateNew<Type extends PossibleShapes = Konva.Shape> {
 class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
   private static _instance: RectShapeDelegate
 
+  private synchronizeSizeAndLocalCoord(shape: Konva.Rect) {
+    const width = (shape.width() * shape.scaleX()).closestSize()
+    const height = (shape.height() * shape.scaleY()).closestSize()
+
+    shape.setAttrs({
+      x: 0,
+      y: 0,
+      width: width,
+      height: height,
+    })
+  }
+
   private syncPositions(shape: Konva.Rect, textSelector: () => Konva.Text) {
     const group = shape.getParent() as Konva.Group
     const text = textSelector()
@@ -132,6 +144,10 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
       updatePosition,
     )
     useEffect(() => {
+      this.synchronizeSizeAndLocalCoord(shapeRef.current!)
+    }, [nodeConfig])
+
+    useEffect(() => {
       this.syncPositions(shapeRef.current!, text)
     }, [])
     return <Rect ref={shapeRef} {...props} />
@@ -164,12 +180,11 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     const group = shape.getParent() as Konva.Group
     const text = textSelector()
     const realRadius = (shape.width() * shape.scaleX()) / 2
-    const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * (realRadius)
+    const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * realRadius
     const xOffset = -innerRectSize / 2
     const yOffset = -innerRectSize / 2
     const width = innerRectSize
     const height = innerRectSize
-
 
     text.setAttrs({
       width: width,
