@@ -7,6 +7,7 @@ import { ELEMENT_CHILD_SHAPE_PREFIX } from "./Keywords"
 import { CircleShape, Element, PositionUpdatePayload } from "./Models"
 import { Text } from "konva/lib/shapes/Text"
 import { Vector2d } from "konva/lib/types"
+import { getRealHeight, getRealWidth } from "./primitiveShapeUtils"
 
 class ShapeDelegateCommon {
   private static _instance: ShapeDelegateCommon
@@ -17,6 +18,7 @@ class ShapeDelegateCommon {
   ): Konva.NodeConfig & KonvaNodeEvents {
     return {
       ...nodeConfig,
+      key: ELEMENT_CHILD_SHAPE_PREFIX + nodeConfig.id,
       id: ELEMENT_CHILD_SHAPE_PREFIX + nodeConfig.id,
       x: localCoord.x,
       y: localCoord.y,
@@ -48,8 +50,8 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
 
   synchronizeTextAndShape(shape: Konva.Rect, text: Text): void {
     text.setAttrs({
-      width: shape.width(),
-      height: shape.height(),
+      width: getRealWidth(shape),
+      height: getRealHeight(shape),
       x: 0,
       y: 0,
     })

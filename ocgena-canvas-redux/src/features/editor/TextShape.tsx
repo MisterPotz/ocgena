@@ -1,8 +1,8 @@
 import Konva from "konva"
-import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import React from "react"
-import { Circle, Group, Rect, Text, Transformer } from "react-konva"
-import { elementToNodeConfig, elementToSize, isGroup } from "./Utils"
+import { Group, Rect, Text, Transformer } from "react-konva"
+import { elementToNodeConfig, elementToSize } from "./Utils"
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
 import { ShapeDelegateNew, selectShapeDelegate } from "./shapeDelegates"
 import {
@@ -31,9 +31,7 @@ interface TextShapeProps {
  * Text is editable.
  * The whole shape is rezisable.
  */
-export function TextShape(
-  { element, updatePosition }: TextShapeProps,
-) {
+export function TextShape({ element, updatePosition }: TextShapeProps) {
   const selectedAtClick = element.selectedAtClick || false
   const selectedWithWindow = element.selectedWithWindow || false
   const trRef = useRef<Konva.Transformer | null>(null)
@@ -63,13 +61,6 @@ export function TextShape(
     return elementToNodeConfig(element)
   }, [element])
 
-  useEffect(() => {
-    groupRef.current!.setAbsolutePosition({
-      x: nodeConfig.x!,
-      y: nodeConfig.y!,
-    })
-  }, [nodeConfig])
-
   React.useEffect(() => {
     if (selectedAtClick) {
       if (trRef.current && groupRef.current) {
@@ -80,7 +71,24 @@ export function TextShape(
     }
   }, [selectedAtClick])
 
-  function synchronizeGroupWithShape() {
+  function synchronizeSelectionMark() {
+    const markSelection = markSelectionRef.current
+    const shape = shapeRef.current!
+    if (markSelection) {
+      markSelection.setAttrs({
+        x: -10,
+        y: -10,
+        width: shape.width() + 20,
+        height: shape.height() + 20,
+      })
+    }
+  }
+
+  function synchronizeTextWithShape() {
+    shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
+  }
+
+  function synchronizeGroup() {
     const group = groupRef.current!
     const scaleX = group.scaleX()
     const scaleY = group.scaleY()
@@ -96,42 +104,54 @@ export function TextShape(
       y: height,
     })
 
-    const markSelection = markSelectionRef.current
-    if (markSelection) {
-      markSelection.setAttrs({
-        x: -10,
-        y: -10,
-        // x: shape.x(),
-        // y: shape.y(),
-        width: width + 20,
-        height: height + 20,
-      })
-    }
-  }
-
-  function synchronizeTextWithShape() {
-    shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
-  }
-
-  function synchronizeSelectionMark() {
-    const markSelection = markSelectionRef.current
-    const shape = shapeRef.current!
-    if (markSelection) {
-      markSelection.setAttrs({
-        x: - 10,
-        y: -10,
-        // x: shape.x(),
-        // y: shape.y(),
-        width: shape.width() + 20,
-        height: shape.height() + 20,
-      })
-    }
+    synchronizeSelectionMark()
+    synchronizeTextWithShape()
   }
 
   useEffect(() => {
-    synchronizeTextWithShape()
-    synchronizeSelectionMark()
-  }, [])
+    groupRef.current!.setAbsolutePosition({
+      x: nodeConfig.x!,
+      y: nodeConfig.y!,
+    })
+    const shape = shapeRef.current
+    if (shape) {
+      shapeDelegate.updateShapeSize(shape, elementToSize(element))
+    }
+    synchronizeGroup()
+    if (trRef.current) {
+      trRef.current?.nodes([groupRef.current!])
+      trRef.current?.update()
+    }
+  }, [
+    element.x,
+    element.y,
+    element.rawX,
+    element.rawY,
+    element.shape,
+    element.rawHeight,
+    element.rawWidth,
+  ])
+
+  useEffect(() => {
+    console.log(
+      "element width",
+      width(element),
+      "transformer size",
+      trRef.current?.getSize?.(),
+      "group size",
+      groupRef.current!.size(),
+    )
+    console.log("shape size ", shapeRef.current!.size())
+    if (trRef.current) {
+      trRef.current.width(width(element))
+      trRef.current.height(height(element))
+      trRef.current.clearCache()
+      trRef.current.forceUpdate()
+      trRef.current._clearCaches()
+      trRef.current._clearCaches()
+      trRef.current.getLayer()!.batchDraw()
+    }
+  }, [width(element), height(element)])
 
   return (
     <React.Fragment key={element.id}>
@@ -142,26 +162,21 @@ export function TextShape(
         draggable={true}
         listening={true}
         onTransform={(evt: KonvaEventObject<Event>) => {
-          synchronizeGroupWithShape()
-          synchronizeTextWithShape()
-          synchronizeSelectionMark()
+          synchronizeGroup()
         }}
         onTransformEnd={(evt: KonvaEventObject<Event>) => {
-          synchronizeGroupWithShape()
-          synchronizeTextWithShape()
-          synchronizeSelectionMark()
+          synchronizeGroup()
           const group = groupRef.current!
 
           const shape = shapeRef.current!
           const groupAbsolutePosition = group.absolutePosition()
-          console.log("on group transform end", evt.target.id())
 
           updatePosition({
             id: element.id,
             x: groupAbsolutePosition.x,
             y: groupAbsolutePosition.y,
-            height: shape.height(),
-            width: shape.width(),
+            width: getRealWidth(shape),
+            height: getRealHeight(shape),
           })
         }}
         x={nodeConfig.x}
@@ -196,13 +211,15 @@ export function TextShape(
           />
         )}
       </Group>
-      {selectedAtClick && (!selectedWithWindow) && (
+      {selectedAtClick && !selectedWithWindow && (
         <Transformer
           id={TRANSFORMER_PREFIX + element.id}
-          padding={5}
           ref={trRef}
           rotateEnabled={false}
           flipEnabled={false}
+          draggable={true}
+          listening={true}
+          shouldOverdrawWholeArea={false}
           boundBoxFunc={(oldBox, newBox) => {
             // limit resize
             if (

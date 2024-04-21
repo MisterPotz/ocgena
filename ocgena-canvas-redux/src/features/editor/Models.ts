@@ -3,7 +3,9 @@ export interface Element<Shape extends SpecificShape = SpecificShape> {
   x: number
   y: number
   rawX: number
-  rawY: number
+  rawY: number,
+  rawHeight: number,
+  rawWidth: number,
   shape: Shape
   fill?: string
   stroke?: string

@@ -312,19 +312,19 @@ export function Editor() {
           })
         },
       })
-      // .addCallbackPack("dragend", {
-      //   elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
-      //     if (ev.target === stageRef.current!) return
-      //     handleMouseKey(ev.evt, {
-      //       leftKey: () => {
-      //         const payload = dragEventToPayload(ev)
-      //         if (payload) {
-      //           dispatch(elementDragEndEpicTrigger(payload))
-      //         }
-      //       },
-      //     })
-      //   },
-      // })
+      .addCallbackPack("dragend", {
+        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+          if (ev.target === stageRef.current!) return
+          handleMouseKey(ev.evt, {
+            leftKey: () => {
+              const payload = dragEventToPayload(ev)
+              if (payload) {
+                dispatch(elementDragEndEpicTrigger(payload))
+              }
+            },
+          })
+        },
+      })
       .addCallbackPack("blur", {
         contextMenu(ev: FocusEvent) {
           dispatch(elementContextMenuClosed())
