@@ -18,7 +18,7 @@ import {
   selectionWindowElementsSelector,
   selectedElementIdsSelector,
 } from "./editorSlice"
-import { TextShape } from "./TextShape"
+import { PrimitiveTextShape } from "./TextShape"
 import Konva from "konva"
 import styles from "./Editor.module.css"
 import {
@@ -36,6 +36,7 @@ import {
   width,
 } from "./primitiveShapeUtils"
 import { PositionUpdatePayload } from "./Models"
+import { AutoSizeTextShape } from "./AutoSizeTextShape"
 
 function dragEventToPayload(
   e: KonvaEventObject<DragEvent>,
@@ -429,7 +430,7 @@ export function Editor() {
         <Layer ref={elementsLayerRef}>
           {elements.map((el, index) => {
             return (
-              <TextShape
+              <PrimitiveTextShape
                 key={el.id}
                 element={el}
                 updatePosition={payload => {

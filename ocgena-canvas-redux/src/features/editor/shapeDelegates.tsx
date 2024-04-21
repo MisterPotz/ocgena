@@ -13,7 +13,6 @@ class ShapeDelegateCommon {
   private static _instance: ShapeDelegateCommon
   createCommonShapeProps(
     nodeConfig: NodeConfig,
-    shapeRef: MutableRefObject<Konva.Shape | null>,
     localCoord: Coord,
   ): Konva.NodeConfig & KonvaNodeEvents {
     return {
@@ -35,13 +34,13 @@ type PossibleShapes = Konva.Rect | Konva.Circle | Konva.Shape
 
 export interface ShapeDelegateNew<Type extends PossibleShapes = Konva.Shape> {
   createShape(
-    element: Element,
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Type | null>,
   ): JSX.Element
 
   synchronizeTextAreaPosition(shape: Type, textArea: HTMLTextAreaElement): void
   synchronizeTextAndShape(shape: Type, text: Konva.Text): void
+  updateShapeToMatchText(shape: Type, text: Konva.Text): void
   updateShapeSize(shape: Type, size: Vector2d): void
 }
 
@@ -58,6 +57,13 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
     shape.setAttrs({
       x: 0,
       y: 0,
+    })
+  }
+
+  updateShapeToMatchText(shape: Konva.Rect, text: Text): void {
+    shape.setAttrs({
+      height: text.height(),
+      width: text.width(),
     })
   }
 
@@ -88,13 +94,11 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
   }
 
   createShape(
-    element: Element,
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Konva.Rect | null>,
   ) {
     const props = ShapeDelegateCommon.Instance.createCommonShapeProps(
       nodeConfig,
-      shapeRef,
       { x: 0, y: 0 },
     )
     return <Rect ref={shapeRef} {...props} />
@@ -127,12 +131,22 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     })
   }
 
+  updateShapeToMatchText(shape: Konva.Circle, text: Text): void {
+    const shapeRadius = text.width() / ( 2 * Math.cos((45 * Math.PI) / 180))
+
+    shape.setAttrs({
+      radius: shapeRadius,
+      x: text.width() / 2,
+      y: text.height() / 2
+    })
+  }
+
   updateShapeSize(shape: Konva.Circle, size: Vector2d): void {
     const radius = size.x / 2
     shape.setAttrs({
       x: radius,
       y: radius,
-      radius: radius
+      radius: radius,
     })
   }
 
@@ -159,14 +173,12 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
   }
 
   createShape(
-    element: Element<CircleShape>,
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Konva.Circle | null>,
   ) {
     const props = ShapeDelegateCommon.Instance.createCommonShapeProps(
       nodeConfig,
-      shapeRef,
-      { x: element.shape.radius, y: element.shape.radius },
+      { x: nodeConfig.radius, y: nodeConfig.radius },
     )
     return <Circle ref={shapeRef} {...props} />
   }

@@ -1,19 +1,19 @@
 import Konva from "konva"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import React from "react"
 import { Group, Rect, Text, Transformer } from "react-konva"
-import { elementToNodeConfig, elementToSize } from "./Utils"
-import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
+import {
+  elementToNodeConfigWithSize,
+} from "./Utils"
+import { KonvaEventObject } from "konva/lib/Node"
 import { ShapeDelegateNew, selectShapeDelegate } from "./shapeDelegates"
 import {
   ELEMENT_CHILD_PREFIX,
   MARK_SELECTION_PREFIX,
   TRANSFORMER_PREFIX,
 } from "./Keywords"
-import { AnyElement, MIN_HEIGHT, MIN_WIDTH, PositionUpdatePayload, TextShapeProps } from "./Models"
+import { MIN_HEIGHT, MIN_WIDTH, TextShapeProps } from "./Models"
 import {
-  getRealHeight,
-  getRealWidth,
   height,
   width,
 } from "./primitiveShapeUtils"
@@ -24,7 +24,7 @@ import {
  * Text is editable.
  * The whole shape is rezisable.
  */
-export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) {
+export function AutoSizeTextShape({ element, updatePosition }: TextShapeProps) {
   const selectedAtClick = element.selectedAtClick || false
   const selectedWithWindow = element.selectedWithWindow || false
   const trRef = useRef<Konva.Transformer | null>(null)
@@ -36,6 +36,14 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
   const shapeDelegate = useMemo<ShapeDelegateNew>(() => {
     return selectShapeDelegate(element)
   }, [element.shape.type])
+  const [textState, setTextState] = useState(() => element.text)
+
+
+  // const [fontSize, setFontSize] = useState(30)
+  // const rectSize = useRef<{ width: number; height: number }>({
+  //   width: 100,
+  //   height: (100 / 5) * 3,
+  // })
 
   useEffect(() => {
     setupRemovableTextArea(
@@ -46,14 +54,13 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
       textArea => {
         shapeDelegate.synchronizeTextAreaPosition(shapeRef.current!, textArea)
       },
+      text => {
+        setTextState(text)
+      }
     )
   }, [])
 
-  const nodeConfig = useMemo<NodeConfig>(() => {
-    return elementToNodeConfig(element)
-  }, [element])
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (selectedAtClick) {
       if (trRef.current && groupRef.current) {
         let transformableNodes = [groupRef.current!]
@@ -63,21 +70,54 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
     }
   }, [selectedAtClick])
 
+  useEffect(() => {
+    const text = textRef.current!
+    if (text && shapeRef.current) {
+      let newWidth = text.width()
+      let newHeight = text.height()
+      let shouldUpdate = false
+            // let currentFontSize = fontSize
+      while (
+        text.getTextWidth() > newWidth ||
+        text.getTextHeight() > newHeight
+      ) {
+        // currentFontSize -= 1
+        // textRef.current!.fontSize(currentFontSize)
+        newWidth = textRef.current!.getTextWidth()
+        newHeight = (newWidth / 5) * 3
+        shouldUpdate = true
+      }
+      if (shouldUpdate) {
+        text.setAttrs({
+          width: newWidth,
+          height: newHeight
+        })
+        synchronizeGroup()
+        // setFontSize(currentFontSize)
+      }
+      text.getLayer()!.batchDraw()
+    }
+  }, [element.text, textState])
+
   function synchronizeSelectionMark() {
     const markSelection = markSelectionRef.current
+    const text = textRef.current!
     const shape = shapeRef.current!
+
     if (markSelection) {
       markSelection.setAttrs({
         x: -10,
         y: -10,
-        width: shape.width() + 20,
-        height: shape.height() + 20,
+        width: text.width() + 20,
+        height: text.height() + 20,
       })
     }
   }
 
   function synchronizeTextWithShape() {
-    shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
+    if (textRef.current && shapeRef.current) {
+      shapeDelegate.updateShapeToMatchText(shapeRef.current!, textRef.current!)
+    }
   }
 
   function synchronizeGroup() {
@@ -91,38 +131,21 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
     group.scaleX(1)
     group.scaleY(1)
 
-    shapeDelegate.updateShapeSize(shapeRef.current!, {
-      x: width,
-      y: height,
-    })
-
     synchronizeSelectionMark()
     synchronizeTextWithShape()
   }
 
   useEffect(() => {
     groupRef.current!.setAbsolutePosition({
-      x: nodeConfig.x!,
-      y: nodeConfig.y!,
+      x: element.x,
+      y: element.y,
     })
-    const shape = shapeRef.current
-    if (shape) {
-      shapeDelegate.updateShapeSize(shape, elementToSize(element))
-    }
     synchronizeGroup()
     if (trRef.current) {
       trRef.current?.nodes([groupRef.current!])
       trRef.current?.update()
     }
-  }, [
-    element.x,
-    element.y,
-    element.rawX,
-    element.rawY,
-    element.shape,
-    element.rawHeight,
-    element.rawWidth,
-  ])
+  }, [element.x, element.y, element.rawX, element.rawY, element.shape])
 
   useEffect(() => {
     console.log(
@@ -144,6 +167,14 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
       trRef.current.getLayer()!.batchDraw()
     }
   }, [width(element), height(element)])
+
+  const nodeConfig = useMemo(() => {
+    return {
+      ...elementToNodeConfigWithSize(element, 100, (100 / 5) * 3),
+      // draggable: false,
+      // listening: false,
+    }
+  }, [element])
 
   return (
     <React.Fragment key={element.id}>
@@ -167,25 +198,27 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
             id: element.id,
             x: groupAbsolutePosition.x,
             y: groupAbsolutePosition.y,
-            width: getRealWidth(shape),
-            height: getRealHeight(shape),
+            width: 100,
+            height: 100,
           })
         }}
-        x={nodeConfig.x}
-        y={nodeConfig.y}
+        x={element.x}
+        y={element.y}
       >
         {shapeDelegate.createShape(nodeConfig, shapeRef)}
         <Text
           id={ELEMENT_CHILD_PREFIX + "text_" + element.id}
           ref={textRef}
           fontSize={24}
-          ellipsis
+          // ellipsis
+          width={width(element)}
+          height={width(element) * 3 / 5}
           align="center"
           verticalAlign="middle"
           wrap="word"
-          text="kek lol arbidol"
+          text={textState}
           draggable={false}
-          listening={false}
+          listening={true}
         />
         {selectedWithWindow && (
           <Rect
@@ -252,6 +285,7 @@ const setupRemovableTextArea = (
   rectRef: Konva.Node,
   textAreaRef: React.MutableRefObject<HTMLTextAreaElement | null>,
   synchronizeTextAreaPosition: (textArea: HTMLTextAreaElement) => void,
+  setText: (text : string) => void
 ) => {
   groupNode.on("dblclick dbltap", (e: KonvaEventObject<MouseEvent>) => {
     if (textAreaRef.current) return
@@ -278,7 +312,8 @@ const setupRemovableTextArea = (
     textarea.addEventListener("keydown", function (e) {
       // hide on enter
       if (e.key === "Enter") {
-        textNode.text(textarea.value)
+        // textNode.text(textarea.value)
+        setText(textarea.value)
         fullRemoveTextArea()
       }
     })

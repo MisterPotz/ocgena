@@ -3,9 +3,9 @@ export interface Element<Shape extends SpecificShape = SpecificShape> {
   x: number
   y: number
   rawX: number
-  rawY: number,
-  rawHeight: number,
-  rawWidth: number,
+  rawY: number
+  rawHeight: number
+  rawWidth: number
   shape: Shape
   fill?: string
   stroke?: string
@@ -42,15 +42,15 @@ export interface SelectionWindowPayload {
   x: number
   y: number
   width: number
-  height: number,
+  height: number
 }
 
-export interface SelectionWindow extends SelectionWindowPayload{
+export interface SelectionWindow extends SelectionWindowPayload {
   x: number
   y: number
   width: number
-  height: number,
-  selectedElementIds : string[]
+  height: number
+  selectedElementIds: string[]
 }
 
 export type PositionUpdatePayload = {
@@ -60,3 +60,13 @@ export type PositionUpdatePayload = {
   width: number
   height: number
 }
+
+export const MIN_WIDTH = 50
+export const MIN_HEIGHT = 50
+
+export interface TextShapeProps {
+  element: AnyElement
+  updatePosition: (payload: PositionUpdatePayload) => void
+}
+
+export type TextMode = "autosizebox" | "wraptext"

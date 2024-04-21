@@ -42,6 +42,36 @@ export function elementToNodeConfig(
       return circleConfig
   }
 }
+export function elementToNodeConfigWithSize(
+  element: Element<SpecificShape>,
+  width: number,
+  height: number,
+): CircleConfig | RectConfig {
+  let baseConfig = {
+    id: element.id,
+    stroke: element.stroke,
+    fill: element.fill,
+    draggable: true,
+    key: element.id,
+    x: element.x,
+    y: element.y,
+  }
+  switch (element.shape.type) {
+    case "rect":
+      let rectConfig: RectConfig = {
+        ...baseConfig,
+        width: width,
+        height: height,
+      }
+      return rectConfig
+    case "circle":
+      let circleConfig: CircleConfig = {
+        ...baseConfig,
+        radius: width / 2,
+      }
+      return circleConfig
+  }
+}
 
 export function elementToSize(element: Element) {
   switch (element.shape.type) {
