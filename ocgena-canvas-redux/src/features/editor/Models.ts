@@ -36,11 +36,19 @@ export type SpecificShapeType = SpecificShape["type"]
 
 export type Elements = Element<SpecificShape>[]
 
-export interface SelectionWindow {
+export interface SelectionWindowPayload {
   x: number
   y: number
   width: number
-  height: number
+  height: number,
+}
+
+export interface SelectionWindow extends SelectionWindowPayload{
+  x: number
+  y: number
+  width: number
+  height: number,
+  selectedElementIds : string[]
 }
 
 export type PositionUpdatePayload = {

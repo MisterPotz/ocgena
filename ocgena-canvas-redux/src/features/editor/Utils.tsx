@@ -43,6 +43,21 @@ export function elementToNodeConfig(
   }
 }
 
+export function elementToSize(element: Element) {
+  switch (element.shape.type) {
+    case "rect":
+      return {
+        x: element.shape.width,
+        y: element.shape.height,
+      }
+    case "circle":
+      return {
+        x: element.shape.radius * 2,
+        y: element.shape.radius * 2,
+      }
+  }
+}
+
 export function tryGetElementId(
   shape: Konva.Shape | Konva.Stage,
 ): string | null {
@@ -71,6 +86,6 @@ export function tryGetShapeElementOfGroup(
   return result?.getType() == "Shape" ? (result as Konva.Shape) : null
 }
 
-export function isGroup(node : Konva.Node): node is Konva.Group {
+export function isGroup(node: Konva.Node): node is Konva.Group {
   return node.getType() == "Group"
 }

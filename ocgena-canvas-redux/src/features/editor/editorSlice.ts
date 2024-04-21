@@ -32,6 +32,7 @@ import {
   PositionUpdatePayload,
   RectangleShape,
   SelectionWindow,
+  SelectionWindowPayload,
 } from "./Models"
 import {
   bottomBound,
@@ -233,14 +234,6 @@ export const editorHandleDragEpic = combineEpics(
       }),
     ),
   ),
-  // createEpic(action$ =>
-  //   action$.pipe(
-  //     ofTypeAndMap(contextMenuAddTransition),
-  //     mergeMap(action => {
-
-  //     })
-  //   )
-  // )
 )
 
 function defaultRect(x: number, y: number): Element<RectangleShape> {
@@ -286,6 +279,41 @@ function deselectElements(elements: Elements): Elements {
   )
 }
 
+function recalculateSelectionWindow(state : EditorSliceState) {
+  if (state.elements.length == 0 || !state.elements.find((el => el.selectedWithWindow))) {
+    state.selectionWindow = null
+  } else {
+    const selLeftBound = state.elements.reduce((prev, curr) => {
+      return curr.selectedWithWindow ? Math.min(curr.x, prev) : prev
+    }, Number.MAX_VALUE)
+    const selTopBound = state.elements.reduce((prev, curr) => {
+      return curr.selectedWithWindow ? Math.min(curr.y, prev) : prev
+    }, Number.MAX_VALUE)
+    const selRightBound = state.elements.reduce((prev, curr) => {
+      return curr.selectedWithWindow
+        ? Math.max(rightBound(curr), prev)
+        : prev
+    }, Number.MIN_VALUE)
+    const selBottomBound = state.elements.reduce((prev, curr) => {
+      return curr.selectedWithWindow
+        ? Math.max(bottomBound(curr), prev)
+        : prev
+    }, Number.MIN_VALUE)
+
+    state.selectionWindow = {
+      x: Math.max(selLeftBound - SELECTION_WINDOW_PADDING, 0),
+      y: Math.max(0, selTopBound - SELECTION_WINDOW_PADDING),
+      height:
+        Math.max(0, selBottomBound - selTopBound) +
+        SELECTION_WINDOW_PADDING * 2,
+      width:
+        Math.max(0, selRightBound - selLeftBound) +
+        SELECTION_WINDOW_PADDING * 2,
+      selectedElementIds: state.elements.filter((el) => !!el.selectedWithWindow).map((el) => el.id)
+    }
+  }
+}
+
 const NEW_PLACEMENT_PADDING = 20
 
 const SELECTION_WINDOW_PADDING = 10
@@ -307,7 +335,7 @@ export const editorSlice = createAppSlice({
       )
     }),
     selectionUpdated: create.reducer(
-      (state, action: PayloadAction<SelectionWindow>) => {
+      (state, action: PayloadAction<SelectionWindowPayload>) => {
         state.elements = state.elements.map((el: Element) => {
           return elementInSelectionWindow(el, action.payload)
             ? { ...el, selectedWithWindow: true, selectedAtClick: false }
@@ -315,33 +343,7 @@ export const editorSlice = createAppSlice({
               ? { ...el, selectedAtClick: false, selectedWithWindow: false }
               : el
         })
-        const selLeftBound = state.elements.reduce((prev, curr) => {
-          return curr.selectedWithWindow ? Math.min(curr.x, prev) : prev
-        }, Number.MAX_VALUE)
-        const selTopBound = state.elements.reduce((prev, curr) => {
-          return curr.selectedWithWindow ? Math.min(curr.y, prev) : prev
-        }, Number.MAX_VALUE)
-        const selRightBound = state.elements.reduce((prev, curr) => {
-          return curr.selectedWithWindow
-            ? Math.max(rightBound(curr), prev)
-            : prev
-        }, Number.MIN_VALUE)
-        const selBottomBound = state.elements.reduce((prev, curr) => {
-          return curr.selectedWithWindow
-            ? Math.max(bottomBound(curr), prev)
-            : prev
-        }, Number.MIN_VALUE)
-
-        state.selectionWindow = {
-          x: Math.max(selLeftBound - SELECTION_WINDOW_PADDING, 0),
-          y: Math.max(0, selTopBound - SELECTION_WINDOW_PADDING),
-          height:
-            Math.max(0, selBottomBound - selTopBound) +
-            SELECTION_WINDOW_PADDING * 2,
-          width:
-            Math.max(0, selRightBound - selLeftBound) +
-            SELECTION_WINDOW_PADDING * 2,
-        }
+        recalculateSelectionWindow(state)
       },
     ),
     elementSelectionCancelled: create.reducer(state => {
@@ -362,6 +364,7 @@ export const editorSlice = createAppSlice({
               }
             : el,
         )
+        // recalculateSelectionWindow(state)
       },
     ),
     // elementSizeUpdate: create.reducer(
@@ -427,6 +430,12 @@ export const editorSlice = createAppSlice({
     //   (state: EditorSliceState) => state.elements,
     //   (elements: Elements) => elements.map(el => el.id),
     // ),
+    // smartSelectionWindowElementsSelector : createSelector(
+    //   (state: EditorSliceState) => {
+    //     state.elements
+    //   },
+    //   (elements: Elements) => {elements.filter()}
+    // ),
     selectionWindowElementsSelector: state => {
       if (!state.selectionWindow) return null
       
@@ -437,6 +446,10 @@ export const editorSlice = createAppSlice({
         window: state.selectionWindow,
       }
     },
+    selectedElementIdsSelector: createSelector(
+      (state : EditorSliceState) => state.selectionWindow?.selectedElementIds,
+      (elements: string[] | undefined) => !!elements ? elements : undefined
+    ),
     contextMenuSelector: state => state.contextMenu,
   },
 })
@@ -459,6 +472,7 @@ export const {
   elementSelector,
   selectionWindowElementsSelector,
   /* selectedIdsSelector,*/ contextMenuSelector,
+  selectedElementIdsSelector,
 } = editorSlice.selectors
 
 export const editorActionFilter = createActionFilter(

@@ -1,5 +1,5 @@
 import { KonvaEventObject } from "konva/lib/Node"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Layer, Rect, Stage, Transformer } from "react-konva"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import {
@@ -16,6 +16,7 @@ import {
   elementPositionUpdate,
   selectionUpdated,
   selectionWindowElementsSelector,
+  selectedElementIdsSelector,
 } from "./editorSlice"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
@@ -24,10 +25,16 @@ import {
   ELEMENT_CHILD_PREFIX,
   ELEMENT_PREFIX,
   SELECTION_WINDOW,
+  SELECTION_WINDOW_TRANSFORMER,
   TRANSFORMER_PREFIX,
 } from "./Keywords"
 import { isGroup, tryGetElementId, tryGetShapeElementOfGroup } from "./Utils"
-import { getRealHeight, getRealWidth } from "./primitiveShapeUtils"
+import {
+  getRealHeight,
+  getRealWidth,
+  height,
+  width,
+} from "./primitiveShapeUtils"
 import { PositionUpdatePayload } from "./Models"
 
 function dragEventToPayload(
@@ -37,13 +44,19 @@ function dragEventToPayload(
     const absolutePosition = e.target.absolutePosition()
     const shape = tryGetShapeElementOfGroup(e.target)
     if (shape) {
-      console.log("drag event ", e.target.id(), absolutePosition, "shape", shape)
+      console.log(
+        "drag event ",
+        e.target.id(),
+        absolutePosition,
+        "shape",
+        shape,
+      )
       return {
         id: e.target.id(),
         x: absolutePosition.x,
         y: absolutePosition.y,
         width: getRealWidth(shape),
-        height: getRealHeight(shape)
+        height: getRealHeight(shape),
       }
     }
   }
@@ -105,12 +118,12 @@ export function Editor() {
   const selectionWindowElements = useAppSelector(
     selectionWindowElementsSelector,
   )
+  const selectedIds = useAppSelector(selectedElementIdsSelector)
   const elementsLayerRef = useRef<Konva.Layer | null>(null)
   const selectorDataRef = useRef<SelectorOrNull>(null)
   const selectorShapeRef = useRef<Konva.Rect | null>(null)
   const selectionWindowShapeRef = useRef<Konva.Transformer | null>(null)
   const selectionLayer = useRef<Konva.Layer | null>(null)
-  // State for storing elements
   const [tool, setTool] = useState<Tool | null>(null) // Current selected tool
   const [patternImage, setPatternImage] = useState(new window.Image())
   const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 })
@@ -209,7 +222,7 @@ export function Editor() {
           const stage = stageRef.current!
           const downItem = ev.target
           const parent = downItem.getParent()
-
+          const selectionWindowShape = selectionWindowShapeRef.current
           console.log("down item", downItem)
           handleMouseKey(ev.evt, {
             leftKey: () => {
@@ -225,12 +238,6 @@ export function Editor() {
               ) {
                 let clickedCompound = parent as Konva.Group
                 dispatch(elementSelected(clickedCompound.id()))
-              } else if (
-                downItem !== stage &&
-                downItem.id().startsWith(TRANSFORMER_PREFIX)
-              ) {
-                console.log("is transformer")
-                return
               } else if (ev.target === stage && spacePressedRef.current) {
                 isDraggingRef.current = true
                 setLastPosition(stage.getPointerPosition()!)
@@ -305,19 +312,19 @@ export function Editor() {
           })
         },
       })
-      .addCallbackPack("dragend", {
-        elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
-          if (ev.target === stageRef.current!) return
-          handleMouseKey(ev.evt, {
-            leftKey: () => {
-              const payload = dragEventToPayload(ev)
-              if (payload) {
-                dispatch(elementDragEndEpicTrigger(payload))
-              }
-            },
-          })
-        },
-      })
+      // .addCallbackPack("dragend", {
+      //   elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+      //     if (ev.target === stageRef.current!) return
+      //     handleMouseKey(ev.evt, {
+      //       leftKey: () => {
+      //         const payload = dragEventToPayload(ev)
+      //         if (payload) {
+      //           dispatch(elementDragEndEpicTrigger(payload))
+      //         }
+      //       },
+      //     })
+      //   },
+      // })
       .addCallbackPack("blur", {
         contextMenu(ev: FocusEvent) {
           dispatch(elementContextMenuClosed())
@@ -384,16 +391,15 @@ export function Editor() {
   }, [])
 
   useEffect(() => {
-    if (!selectionWindowElements) return
-    const selectionTransformer = selectionWindowShapeRef.current!
+    if (!selectionWindowElements && !selectedIds) return
 
-    const elLayer = elementsLayerRef.current!
+    const selectedChildren = elementsLayerRef
+      .current!.getChildren()
+      .filter(child => selectedIds!.includes(child.id()))
 
-    const selectedIds = selectionWindowElements.selectedElements.map(el => el.id)
-    const selectedChildren = elLayer.getChildren().filter(child => selectedIds.includes(child.id()))
-    selectionTransformer.nodes(selectedChildren)
+    selectionWindowShapeRef.current!.nodes(selectedChildren)
     selectionLayer.current!.batchDraw()
-  }, [selectionWindowElements])
+  }, [selectedIds])
 
   return (
     <>
@@ -452,15 +458,16 @@ export function Editor() {
             <Transformer
               padding={5}
               ref={selectionWindowShapeRef}
-              id={SELECTION_WINDOW}
-              x={selectionWindowElements.window.x}
-              y={selectionWindowElements.window.y}
-              width={selectionWindowElements.window.width}
-              height={selectionWindowElements.window.height}
+              id={SELECTION_WINDOW_TRANSFORMER}
+              scaleX={1}
+              scaleY={1}
+              shouldOverdrawWholeArea={true}
               rotateEnabled={false}
               flipEnabled={false}
               opacity={1}
               strokeWidth={1}
+              draggable={true}
+              listening={true}
               stroke={"#239EF4"}
               boundBoxFunc={(oldBox, newBox) => {
                 // limit resize

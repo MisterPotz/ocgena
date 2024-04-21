@@ -5,6 +5,7 @@ import {
   PositionUpdatePayload,
   RectangleShape,
   SelectionWindow,
+  SelectionWindowPayload,
   SpecificShape,
 } from "./Models"
 
@@ -68,19 +69,19 @@ function getUpdatedShape(
 ): SpecificShape {
   switch (shape.type) {
     case "circle":
-      return { ...shape, radius: positionUpdatePayload.width / 2 }
+      return { ...shape, radius: (positionUpdatePayload.width / 2).closestSize() }
     case "rect":
       return {
         ...shape,
-        width: positionUpdatePayload.width,
-        height: positionUpdatePayload.height,
+        width: positionUpdatePayload.width.closestSize(),
+        height: positionUpdatePayload.height.closestSize(),
       }
   }
 }
 
 function elementInSelectionWindow(
   element: Element,
-  selectionWindow: SelectionWindow,
+  selectionWindow: SelectionWindowPayload,
 ): boolean {
   const { x: windowX, y: windowY, width, height } = selectionWindow
   const windowLeft = windowX

@@ -2,7 +2,7 @@ import Konva from "konva"
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react"
 import React from "react"
 import { Circle, Group, Rect, Text, Transformer } from "react-konva"
-import { elementToNodeConfig, isGroup } from "./Utils"
+import { elementToNodeConfig, elementToSize, isGroup } from "./Utils"
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
 import { ShapeDelegateNew, selectShapeDelegate } from "./shapeDelegates"
 import {
@@ -33,8 +33,6 @@ interface TextShapeProps {
  */
 export function TextShape(
   { element, updatePosition }: TextShapeProps,
-  // element: AnyElement,
-  // updatePosition: (payload: PositionUpdatePayload) => void,
 ) {
   const selectedAtClick = element.selectedAtClick || false
   const selectedWithWindow = element.selectedWithWindow || false
@@ -82,29 +80,6 @@ export function TextShape(
     }
   }, [selectedAtClick])
 
-  function consumeScaleToDimens(node: Konva.Node) {
-    const width = node.width()
-    const height = node.height()
-    const scaleX = node.scaleX()
-    const scaleY = node.scaleY()
-    const newWidth = scaleX * width
-    const newHeight = scaleY * height
-    // we will reset it back
-    node.scaleX(1)
-    node.scaleY(1)
-    node.width(newWidth)
-    node.height(newHeight)
-  }
-
-  // function returnTextToDefaults() {
-  //   const text = textRef.current!
-  //   text.fontSize(24)
-  // }
-
-  useEffect(() => {
-    shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
-  }, [])
-
   function synchronizeGroupWithShape() {
     const group = groupRef.current!
     const scaleX = group.scaleX()
@@ -115,16 +90,48 @@ export function TextShape(
 
     group.scaleX(1)
     group.scaleY(1)
-    
-    shapeDelegate.updateShapeSize(shapeRef.current!, { 
+
+    shapeDelegate.updateShapeSize(shapeRef.current!, {
       x: width,
       y: height,
-     })
+    })
+
+    const markSelection = markSelectionRef.current
+    if (markSelection) {
+      markSelection.setAttrs({
+        x: -10,
+        y: -10,
+        // x: shape.x(),
+        // y: shape.y(),
+        width: width + 20,
+        height: height + 20,
+      })
+    }
   }
 
   function synchronizeTextWithShape() {
     shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
   }
+
+  function synchronizeSelectionMark() {
+    const markSelection = markSelectionRef.current
+    const shape = shapeRef.current!
+    if (markSelection) {
+      markSelection.setAttrs({
+        x: - 10,
+        y: -10,
+        // x: shape.x(),
+        // y: shape.y(),
+        width: shape.width() + 20,
+        height: shape.height() + 20,
+      })
+    }
+  }
+
+  useEffect(() => {
+    synchronizeTextWithShape()
+    synchronizeSelectionMark()
+  }, [])
 
   return (
     <React.Fragment key={element.id}>
@@ -135,15 +142,14 @@ export function TextShape(
         draggable={true}
         listening={true}
         onTransform={(evt: KonvaEventObject<Event>) => {
-          console.log("on group transform", evt.target.id())
           synchronizeGroupWithShape()
           synchronizeTextWithShape()
-
+          synchronizeSelectionMark()
         }}
         onTransformEnd={(evt: KonvaEventObject<Event>) => {
           synchronizeGroupWithShape()
           synchronizeTextWithShape()
-
+          synchronizeSelectionMark()
           const group = groupRef.current!
 
           const shape = shapeRef.current!
@@ -161,11 +167,7 @@ export function TextShape(
         x={nodeConfig.x}
         y={nodeConfig.y}
       >
-        {shapeDelegate.createShape(
-          element,
-          nodeConfig,
-          shapeRef,
-        )}
+        {shapeDelegate.createShape(element, nodeConfig, shapeRef)}
         <Text
           id={ELEMENT_CHILD_PREFIX + "text_" + element.id}
           ref={textRef}
@@ -178,8 +180,23 @@ export function TextShape(
           draggable={false}
           listening={false}
         />
+        {selectedWithWindow && (
+          <Rect
+            ref={markSelectionRef}
+            id={MARK_SELECTION_PREFIX + element.id}
+            x={-10}
+            y={-10}
+            width={width(element) + 20}
+            height={height(element) + 20}
+            draggable={false}
+            listening={false}
+            opacity={1}
+            strokeWidth={1}
+            stroke={"#239EF4"}
+          />
+        )}
       </Group>
-      {selectedAtClick && (
+      {selectedAtClick && (!selectedWithWindow) && (
         <Transformer
           id={TRANSFORMER_PREFIX + element.id}
           padding={5}
@@ -212,49 +229,9 @@ export function TextShape(
               "oldbox",
               oldBox,
             )
-            // if (
-            //   newX != newBox.x ||
-            //   newY != newBox.y ||
-            //   newWidth != newBox.width ||
-            //   newHeight != newBox.height
-            // ) {
-            //   return {
-            //     x: newX,
-            //     y: newY,
-            //     width: newWidth,
-            //     height: newHeight,
-            //     rotation: newBox.rotation,
-            //   }
-            // }
             return newBox
           }}
         />
-      )}
-      {selectedWithWindow && (
-        <Rect
-          ref={markSelectionRef}
-          id={MARK_SELECTION_PREFIX + element.id}
-          x={nodeConfig.x! - 10}
-          y={nodeConfig.y! - 10}
-          width={width(element) + 20}
-          height={height(element) + 20}
-          draggable={true}
-          // fill={"#22B8EB"}
-          opacity={1}
-          strokeWidth={1}
-          stroke={"#239EF4"}
-        />
-
-        // <Transformer
-        //   id={MARK_SELECTION_PREFIX + element.id}
-        //   padding={5}
-        //   ref={markSelectionRef}
-        //   draggable={false}
-        //   listening={false}
-        //   rotateEnabled={false}
-        //   enabledAnchors={[]}
-        //   flipEnabled={false}
-        // />
       )}
     </React.Fragment>
   )

@@ -7,3 +7,4 @@ export const ELEMENT_CHILD_PREFIX = "child_"
 export const ELEMENT_CHILD_SHAPE_PREFIX = "child_shape_"
 
 export const SELECTION_WINDOW = "slctn_window"
+export const SELECTION_WINDOW_TRANSFORMER = "slctn_trnsfmr_"
