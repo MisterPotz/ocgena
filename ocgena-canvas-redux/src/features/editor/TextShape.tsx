@@ -1,25 +1,20 @@
 import Konva from "konva"
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react"
-import {
-  AnyElement,
-  PositionUpdatePayload,
-} from "./editorSlice"
 import React from "react"
-import {
-  Circle,
-  Group,
-  Text,
-  Transformer,
-} from "react-konva"
+import { Circle, Group, Rect, Text, Transformer } from "react-konva"
 import { elementToNodeConfig } from "./Utils"
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
 import { ShapeDelegateNew, selectShapeDelegate } from "./shapeDelegates"
-import { ELEMENT_CHILD_PREFIX, TRANSFORMER_PREFIX } from "./Keywords"
+import {
+  ELEMENT_CHILD_PREFIX,
+  MARK_SELECTION_PREFIX,
+  TRANSFORMER_PREFIX,
+} from "./Keywords"
+import { AnyElement, PositionUpdatePayload } from "./Models"
+import { height, width } from "./primitiveShapeUtils"
 
 const MIN_WIDTH = 50
 const MIN_HEIGHT = 50
-
-
 
 interface TextShapeProps {
   element: AnyElement
@@ -36,8 +31,10 @@ export function TextShape(
   // element: AnyElement,
   // updatePosition: (payload: PositionUpdatePayload) => void,
 ) {
-  const selected = element.selected || false
+  const selectedAtClick = element.selectedAtClick || false
+  const selectedWithWindow = element.selectedWithWindow || false
   const trRef = useRef<Konva.Transformer | null>(null)
+  const markSelectionRef = useRef<Konva.Rect | null>(null)
   const groupRef = useRef<Konva.Group | null>(null)
   const textRef = useRef<Konva.Text | null>(null)
   const shapeRef = useRef<Konva.Shape | null>(null)
@@ -71,14 +68,14 @@ export function TextShape(
   }, [nodeConfig])
 
   React.useEffect(() => {
-    if (selected) {
+    if (selectedAtClick) {
       if (trRef.current && groupRef.current) {
         let transformableNodes = [shapeRef.current!]
         trRef.current.nodes(transformableNodes)
         trRef.current.getLayer()?.batchDraw()
       }
     }
-  }, [selected])
+  }, [selectedAtClick])
 
   return (
     <React.Fragment key={element.id}>
@@ -88,6 +85,12 @@ export function TextShape(
         ref={groupRef}
         draggable={true}
         listening={true}
+        onTransform={() => {
+          console.log("on group transform")
+        }}
+        onTransformEnd={() => {
+          console.log("on group transform end")
+        }}
         x={nodeConfig.x}
         y={nodeConfig.y}
       >
@@ -113,7 +116,7 @@ export function TextShape(
           listening={false}
         />
       </Group>
-      {selected && (
+      {selectedAtClick && (
         <Transformer
           id={TRANSFORMER_PREFIX + element.id}
           padding={5}
@@ -164,6 +167,32 @@ export function TextShape(
           }}
         />
       )}
+      {selectedWithWindow && (
+        <Rect
+          ref={markSelectionRef}
+          id={MARK_SELECTION_PREFIX + element.id}
+          x={nodeConfig.x! - 10}
+          y={nodeConfig.y! - 10}
+          width={width(element) + 20}
+          height={height(element) + 20}
+          draggable={true}
+          // fill={"#22B8EB"}
+          opacity={1}
+          strokeWidth={1}
+          stroke={"#239EF4"}
+        />
+
+        // <Transformer
+        //   id={MARK_SELECTION_PREFIX + element.id}
+        //   padding={5}
+        //   ref={markSelectionRef}
+        //   draggable={false}
+        //   listening={false}
+        //   rotateEnabled={false}
+        //   enabledAnchors={[]}
+        //   flipEnabled={false}
+        // />
+      )}
     </React.Fragment>
   )
 }
@@ -213,8 +242,6 @@ const setupRemovableTextArea = (
     textarea.focus()
   })
 }
-
-
 
 function createEscapeListener(onEscapeCallback: () => void) {
   // Return the actual event handler function from this closure

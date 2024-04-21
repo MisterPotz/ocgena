@@ -1,8 +1,13 @@
 import { RectConfig } from "konva/lib/shapes/Rect"
-import { SpecificShape, Element } from "./editorSlice"
+import { Element } from "./Models"
 import { CircleConfig } from "konva/lib/shapes/Circle"
 import Konva from "konva"
-import { ELEMENT_PREFIX } from "./Keywords"
+import {
+  ELEMENT_CHILD_PREFIX,
+  ELEMENT_CHILD_SHAPE_PREFIX,
+  ELEMENT_PREFIX,
+} from "./Keywords"
+import { SpecificShape } from "./Models"
 
 export interface Coord {
   x: number
@@ -52,4 +57,20 @@ export function tryGetElementId(
     currentEl = currentEl.getParent()
   }
   return null
+}
+
+export function tryGetShapeElementOfGroup(
+  group: Konva.Group,
+): Konva.Shape | null {
+  const result = group.getChildren().find(el => {
+    if (el.id().startsWith(ELEMENT_CHILD_SHAPE_PREFIX)) {
+      return true
+    }
+    return false
+  })
+  return result?.getType() == "Shape" ? (result as Konva.Shape) : null
+}
+
+export function isGroup(node : Konva.Node): node is Konva.Group {
+  return node.getType() == "Group"
 }

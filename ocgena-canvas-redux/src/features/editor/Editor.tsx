@@ -1,11 +1,10 @@
 import { KonvaEventObject } from "konva/lib/Node"
 import { useEffect, useRef, useState } from "react"
-import { Layer, Rect, Stage } from "react-konva"
+import { Layer, Rect, Stage, Transformer } from "react-konva"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
 import {
   elementSelected,
   elementSelector,
-  PositionUpdatePayload,
   elementDragEndEpicTrigger,
   elementSelectionCancelled,
   elementContextOpened,
@@ -15,23 +14,40 @@ import {
   contextMenuAddPlace,
   mouseMoveEpicTrigger,
   elementPositionUpdate,
+  selectionUpdated,
+  selectionWindowElementsSelector,
 } from "./editorSlice"
 import { TextShape } from "./TextShape"
 import Konva from "konva"
 import styles from "./Editor.module.css"
-import { ELEMENT_CHILD_PREFIX, ELEMENT_PREFIX, TRANSFORMER_PREFIX } from "./Keywords"
-import { tryGetElementId } from "./Utils"
+import {
+  ELEMENT_CHILD_PREFIX,
+  ELEMENT_PREFIX,
+  SELECTION_WINDOW,
+  TRANSFORMER_PREFIX,
+} from "./Keywords"
+import { isGroup, tryGetElementId, tryGetShapeElementOfGroup } from "./Utils"
+import { getRealHeight, getRealWidth } from "./primitiveShapeUtils"
+import { PositionUpdatePayload } from "./Models"
 
 function dragEventToPayload(
   e: KonvaEventObject<DragEvent>,
-): PositionUpdatePayload {
-  const absolutePosition = e.target.absolutePosition()
-  console.log("drag event ", e.target.id(), absolutePosition)
-  return {
-    id: e.target.id(),
-    x: absolutePosition.x,
-    y: absolutePosition.y,
+): PositionUpdatePayload | null {
+  if (isGroup(e.target)) {
+    const absolutePosition = e.target.absolutePosition()
+    const shape = tryGetShapeElementOfGroup(e.target)
+    if (shape) {
+      console.log("drag event ", e.target.id(), absolutePosition, "shape", shape)
+      return {
+        id: e.target.id(),
+        x: absolutePosition.x,
+        y: absolutePosition.y,
+        width: getRealWidth(shape),
+        height: getRealHeight(shape)
+      }
+    }
   }
+  return null
 }
 
 interface SelectorData {
@@ -86,9 +102,13 @@ export function Editor() {
   const contextMenuRef = useRef<HTMLDivElement | null>(null) // Add this line to create a ref for the context menu
   const stageRef = useRef<Konva.Stage | null>(null)
   const [selector, setSelector] = useState<SelectorOrNull>(null)
+  const selectionWindowElements = useAppSelector(
+    selectionWindowElementsSelector,
+  )
   const elementsLayerRef = useRef<Konva.Layer | null>(null)
   const selectorDataRef = useRef<SelectorOrNull>(null)
   const selectorShapeRef = useRef<Konva.Rect | null>(null)
+  const selectionWindowShapeRef = useRef<Konva.Transformer | null>(null)
   const selectionLayer = useRef<Konva.Layer | null>(null)
   // State for storing elements
   const [tool, setTool] = useState<Tool | null>(null) // Current selected tool
@@ -111,7 +131,7 @@ export function Editor() {
             .container()
             .getBoundingClientRect()
           const stageClientRectX = stageBoundingClientRect.left //+ window.scrollX
-          const stageClientRectY = stageBoundingClientRect.top //+ window.scrollY
+          const stageClientRectY = stageBoundingClientRect.top //+ <window className="scrollY"></window>
           const stageClientRightX = stageBoundingClientRect.right
           const stageClientBottomY = stageBoundingClientRect.bottom
 
@@ -121,13 +141,12 @@ export function Editor() {
             mouseMoveEpicTrigger({
               clientX: ev.clientX,
               clientY: ev.clientY,
-              stageX: pointerPosition?.x!, // ev.clientX - stageClientRectX,
-              stageY: pointerPosition?.y!, // ev.clientY - stageClientRectY,
+              stageX: pointerPosition?.x!,
+              stageY: pointerPosition?.y!,
             }),
           )
 
           if (selector && selectorShape) {
-            // Translate window coordinates to stage coordinates
             handleMouseKey(ev, {
               leftKey: () => {
                 const mouseX = ev.clientX
@@ -144,12 +163,15 @@ export function Editor() {
                   Math.max(mouseY, stageClientRectY),
                   stageClientBottomY,
                 )
-                selectorShape.setAttrs({
+                const newAttrs = {
                   x: Math.min(selector.x, fixedMouseX - stageClientRectX),
                   y: Math.min(selector.y, fixedMouseY - stageClientRectY),
                   width: Math.abs(fixedMouseX - clientStartX),
                   height: Math.abs(fixedMouseY - clientStartY),
-                })
+                }
+                selectorShape.setAttrs(newAttrs)
+
+                dispatch(selectionUpdated(newAttrs))
 
                 selectionLayer.current!.batchDraw()
               },
@@ -209,10 +231,7 @@ export function Editor() {
               ) {
                 console.log("is transformer")
                 return
-              } else if (
-                ev.target === stage &&
-                spacePressedRef.current
-              ) {
+              } else if (ev.target === stage && spacePressedRef.current) {
                 isDraggingRef.current = true
                 setLastPosition(stage.getPointerPosition()!)
               } else if (ev.target === stage) {
@@ -280,7 +299,7 @@ export function Editor() {
                       y: event.evt.pageY,
                     }),
                   )
-                }            
+                }
               }
             },
           })
@@ -288,9 +307,13 @@ export function Editor() {
       })
       .addCallbackPack("dragend", {
         elementsLayer(ev: Konva.KonvaEventObject<DragEvent>) {
+          if (ev.target === stageRef.current!) return
           handleMouseKey(ev.evt, {
             leftKey: () => {
-              dispatch(elementDragEndEpicTrigger(dragEventToPayload(ev)))
+              const payload = dragEventToPayload(ev)
+              if (payload) {
+                dispatch(elementDragEndEpicTrigger(payload))
+              }
             },
           })
         },
@@ -360,6 +383,18 @@ export function Editor() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!selectionWindowElements) return
+    const selectionTransformer = selectionWindowShapeRef.current!
+
+    const elLayer = elementsLayerRef.current!
+
+    const selectedIds = selectionWindowElements.selectedElements.map(el => el.id)
+    const selectedChildren = elLayer.getChildren().filter(child => selectedIds.includes(child.id()))
+    selectionTransformer.nodes(selectedChildren)
+    selectionLayer.current!.batchDraw()
+  }, [selectionWindowElements])
+
   return (
     <>
       <ToolPane onSelectTool={setTool} />
@@ -367,7 +402,6 @@ export function Editor() {
         style={{
           border: "solid",
           borderWidth: "1px",
-          // padding: "0px 12px"
         }}
         ref={stageRef}
         width={1200}
@@ -412,6 +446,32 @@ export function Editor() {
               opacity={0.3}
               strokeWidth={1}
               stroke={"#239EF4"}
+            />
+          )}
+          {selectionWindowElements && (
+            <Transformer
+              padding={5}
+              ref={selectionWindowShapeRef}
+              id={SELECTION_WINDOW}
+              x={selectionWindowElements.window.x}
+              y={selectionWindowElements.window.y}
+              width={selectionWindowElements.window.width}
+              height={selectionWindowElements.window.height}
+              rotateEnabled={false}
+              flipEnabled={false}
+              opacity={1}
+              strokeWidth={1}
+              stroke={"#239EF4"}
+              boundBoxFunc={(oldBox, newBox) => {
+                // limit resize
+                if (
+                  Math.abs(newBox.width) < 20 ||
+                  Math.abs(newBox.height) < 20
+                ) {
+                  return oldBox
+                }
+                return newBox
+              }}
             />
           )}
         </Layer>

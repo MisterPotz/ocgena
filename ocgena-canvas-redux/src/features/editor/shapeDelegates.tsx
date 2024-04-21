@@ -2,9 +2,10 @@ import { NodeConfig } from "konva/lib/Node"
 import { Coord } from "./Coord"
 import { MutableRefObject, useEffect } from "react"
 import Konva from "konva"
-import { PositionUpdatePayload, Element, CircleShape } from "./editorSlice"
 import { Circle, KonvaNodeEvents, Rect } from "react-konva"
-import { ELEMENT_CHILD_PREFIX } from "./Keywords"
+import { ELEMENT_CHILD_PREFIX, ELEMENT_CHILD_SHAPE_PREFIX } from "./Keywords"
+import { CircleShape, Element, PositionUpdatePayload } from "./Models"
+import { getRealHeight, getRealWidth } from "./primitiveShapeUtils"
 
 class ShapeDelegateCommon {
   private static _instance: ShapeDelegateCommon
@@ -23,7 +24,7 @@ class ShapeDelegateCommon {
     node.height(newHeight)
   }
 
-  createCommonProps(
+  createCommonShapeProps(
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Konva.Shape | null>,
     localCoord: Coord,
@@ -32,30 +33,28 @@ class ShapeDelegateCommon {
   ): Konva.NodeConfig & KonvaNodeEvents {
     return {
       ...nodeConfig,
-      id: ELEMENT_CHILD_PREFIX + "shape_" + nodeConfig.id,
+      id: ELEMENT_CHILD_SHAPE_PREFIX + nodeConfig.id,
       x: localCoord.x,
       y: localCoord.y,
       draggable: false,
       onTransform(evt: Konva.KonvaEventObject<Event>) {
+        console.log("on transform", evt.target)
         syncPositions()
       },
+
       onTransformEnd: (evt: Konva.KonvaEventObject<Event>) => {
         this.consumeScaleToDimens(shapeRef.current!)
-        console.log(
-          "circle group pos before",
-          (shapeRef.current!.getParent() as Konva.Group).getAbsolutePosition(),
-        )
+        console.log("on transform end", evt.target)
         syncPositions()
         const groupAbsolutePosition = (
           shapeRef.current!.getParent() as Konva.Group
         ).getAbsolutePosition()
-
-        console.log("circle group pos after", groupAbsolutePosition)
-
         updatePosition({
           id: nodeConfig.id!,
           x: groupAbsolutePosition.x,
           y: groupAbsolutePosition.y,
+          width: getRealWidth(evt.target! as Konva.Shape),
+          height: getRealHeight(evt.target! as Konva.Shape),
         })
       },
     }
@@ -134,7 +133,7 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
     text: () => Konva.Text,
     updatePosition: (positionUpdatePayload: PositionUpdatePayload) => void,
   ) {
-    const props = ShapeDelegateCommon.Instance.createCommonProps(
+    const props = ShapeDelegateCommon.Instance.createCommonShapeProps(
       nodeConfig,
       shapeRef,
       { x: 0, y: 0 },
@@ -241,7 +240,7 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     text: () => Konva.Text,
     updatePosition: (positionUpdatePayload: PositionUpdatePayload) => void,
   ) {
-    const props = ShapeDelegateCommon.Instance.createCommonProps(
+    const props = ShapeDelegateCommon.Instance.createCommonShapeProps(
       nodeConfig,
       shapeRef,
       { x: element.shape.radius, y: element.shape.radius },

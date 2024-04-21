@@ -1,4 +1,4 @@
-import { Action, PayloadAction } from "@reduxjs/toolkit"
+import { Action, PayloadAction, createSelector } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
 import { combineEpics } from "redux-observable"
 import {
@@ -23,43 +23,23 @@ import {
 // import { pipe } from "fp-ts/lib/function"
 import "./CoordinatesExt"
 import { ELEMENT_PREFIX } from "./Keywords"
-
-export interface Element<Shape extends SpecificShape = SpecificShape> {
-  //   type: Tool
-  x: number
-  y: number
-  rawX: number
-  rawY: number
-  shape: Shape
-  fill?: string
-  stroke?: string
-  id: string
-  selected?: boolean
-  text?: string
-}
-
-export type ShapeType = "rect" | "circle"
-
-export type AnyElement = Element<SpecificShape>
-
-interface ElementShape {
-  type: ShapeType
-}
-export interface RectangleShape extends ElementShape {
-  type: "rect"
-  width: number
-  height: number
-}
-export interface CircleShape extends ElementShape {
-  type: "circle"
-  radius: number
-}
-
-export type SpecificShape = RectangleShape | CircleShape
-
-export type SpecificShapeType = SpecificShape["type"]
-
-export type Elements = Element<SpecificShape>[]
+import { elem } from "fp-ts/lib/Option"
+import {
+  AnyElement,
+  CircleShape,
+  Element,
+  Elements,
+  PositionUpdatePayload,
+  RectangleShape,
+  SelectionWindow,
+} from "./Models"
+import {
+  bottomBound,
+  elementInSelectionWindow,
+  getUpdatedShape,
+  rightBound,
+} from "./primitiveShapeUtils"
+import { dots } from "./DotField"
 
 export interface ContextMenu {
   x: number
@@ -71,6 +51,7 @@ export interface EditorSliceState {
   elements: Elements
   // selected: string[]
   contextMenu?: ContextMenu | null
+  selectionWindow?: SelectionWindow | null
   // contextMenuElement: string | null
 }
 
@@ -126,12 +107,59 @@ const initialState: EditorSliceState = {
       },
       rawX: 0,
       rawY: 0,
-      x: (30),
-      y: (30),
-      selected: false,
+      x: (0).closestDotX(),
+      y: (0).closestDotY(),
+      selectedAtClick: false,
       fill: "orange",
       text: "kek lol arbidol",
     },
+    {
+      id: idFactory.next(),
+      shape: {
+        height: (50).closestSize(),
+        width: (50).closestSize(),
+        type: "rect",
+      },
+      rawX: 0,
+      rawY: 0,
+      x: (80).closestDotX(),
+      y: dots.getClosestY(0),
+      selectedAtClick: false,
+      fill: "orange",
+      text: "kek lol arbidol",
+    },
+    {
+      id: idFactory.next(),
+      shape: {
+        height: (50).closestSize(),
+        width: (50).closestSize(),
+        type: "rect",
+      },
+      rawX: 0,
+      rawY: 0,
+      x: (0).closestDotX(),
+      y: (80).closestDotY(),
+      selectedAtClick: false,
+      fill: "orange",
+      text: "kek lol arbidol",
+    },
+
+    {
+      id: idFactory.next(),
+      shape: {
+        height: (50).closestSize(),
+        width: (50).closestSize(),
+        type: "rect",
+      },
+      rawX: 0,
+      rawY: 0,
+      x: (80).closestDotX(),
+      y: (80).closestDotY(),
+      selectedAtClick: false,
+      fill: "orange",
+      text: "kek lol arbidol",
+    },
+
     // {
     //   id: idFactory.next(),
     //   rawX: 50,
@@ -162,12 +190,6 @@ function heightFromStart(element: Element): number {
     case "rect":
       return element.shape.height
   }
-}
-
-export type PositionUpdatePayload = {
-  id: string
-  x: number
-  y: number
 }
 
 export type MouseMovePayload = {
@@ -246,7 +268,7 @@ function defaultCircle(x: number, y: number): Element<CircleShape> {
       type: "circle",
       radius: (75).closestSize(),
     },
-    x: (x).closestDotX(),
+    x: x.closestDotX(),
     y: y.closestDotY(),
     rawX: x,
     rawY: y,
@@ -257,9 +279,16 @@ function defaultCircle(x: number, y: number): Element<CircleShape> {
 }
 
 function deselectElements(elements: Elements): Elements {
-  return elements.map(el => (el.selected ? { ...el, selected: false } : el))
+  return elements.map(el =>
+    el.selectedAtClick || el.selectedWithWindow
+      ? { ...el, selectedAtClick: false, selectedWithWindow: false }
+      : el,
+  )
 }
-const PADDING = 20
+
+const NEW_PLACEMENT_PADDING = 20
+
+const SELECTION_WINDOW_PADDING = 10
 
 export const editorSlice = createAppSlice({
   name: "editor",
@@ -270,16 +299,55 @@ export const editorSlice = createAppSlice({
         el.id === action.payload
           ? {
               ...el,
-              selected: true,
+              selectedAtClick: true,
             }
-          : el.selected
-            ? { ...el, selected: false }
+          : el.selectedAtClick
+            ? { ...el, selectedAtClick: false }
             : el,
       )
       // state.selected = [action.payload]
     }),
+    selectionUpdated: create.reducer(
+      (state, action: PayloadAction<SelectionWindow>) => {
+        state.elements = state.elements.map((el: Element) => {
+          return elementInSelectionWindow(el, action.payload)
+            ? { ...el, selectedWithWindow: true, selectedAtClick: false }
+            : el.selectedAtClick || el.selectedWithWindow
+              ? { ...el, selectedAtClick: false, selectedWithWindow: false }
+              : el
+        })
+        const selLeftBound = state.elements.reduce((prev, curr) => {
+          return curr.selectedWithWindow ? Math.min(curr.x, prev) : prev
+        }, Number.MAX_VALUE)
+        const selTopBound = state.elements.reduce((prev, curr) => {
+          return curr.selectedWithWindow ? Math.min(curr.y, prev) : prev
+        }, Number.MAX_VALUE)
+        const selRightBound = state.elements.reduce((prev, curr) => {
+          return curr.selectedWithWindow
+            ? Math.max(rightBound(curr), prev)
+            : prev
+        }, Number.MIN_VALUE)
+        const selBottomBound = state.elements.reduce((prev, curr) => {
+          return curr.selectedWithWindow
+            ? Math.max(bottomBound(curr), prev)
+            : prev
+        }, Number.MIN_VALUE)
+
+        state.selectionWindow = {
+          x: Math.max(selLeftBound - SELECTION_WINDOW_PADDING, 0),
+          y: Math.max(0, selTopBound - SELECTION_WINDOW_PADDING),
+          height:
+            Math.max(0, selBottomBound - selTopBound) +
+            SELECTION_WINDOW_PADDING * 2,
+          width:
+            Math.max(0, selRightBound - selLeftBound) +
+            SELECTION_WINDOW_PADDING * 2,
+        }
+      },
+    ),
     elementSelectionCancelled: create.reducer(state => {
       state.elements = deselectElements(state.elements)
+      state.selectionWindow = null
     }),
     elementPositionUpdate: create.reducer(
       (state, action: PayloadAction<PositionUpdatePayload>) => {
@@ -290,7 +358,8 @@ export const editorSlice = createAppSlice({
                 x: action.payload.x.closestDotX(),
                 y: action.payload.y.closestDotY(),
                 rawX: action.payload.x,
-                rawY: action.payload.y
+                rawY: action.payload.y,
+                shape: getUpdatedShape(el.shape, action.payload)
               }
             : el,
         )
@@ -323,9 +392,12 @@ export const editorSlice = createAppSlice({
         const el = state.elements.find(el => el.id === contextMenuElement)
 
         if (el) {
-          const x = el.x + PADDING // need to find proper start position for new rect
-          const y = el.y + heightFromStart(el) + PADDING
-          const newRect: AnyElement = { ...defaultRect(x, y), selected: true }
+          const x = el.x + NEW_PLACEMENT_PADDING // need to find proper start position for new rect
+          const y = el.y + heightFromStart(el) + NEW_PLACEMENT_PADDING
+          const newRect: AnyElement = {
+            ...defaultRect(x, y),
+            selectedAtClick: true,
+          }
           state.elements = deselectElements(state.elements).concat(newRect)
           state.contextMenu = null
         }
@@ -339,7 +411,10 @@ export const editorSlice = createAppSlice({
         if (el) {
           // const x = el.x + PADDING // need to find proper start position for new rect
           // const y = el.y + heightFromStart(el) + PADDING
-          const newRect: AnyElement = { ...defaultCircle(0, 0), selected: true }
+          const newRect: AnyElement = {
+            ...defaultCircle(0, 0),
+            selectedAtClick: true,
+          }
           state.elements = deselectElements(state.elements).concat(newRect)
           state.contextMenu = null
         }
@@ -357,12 +432,23 @@ export const editorSlice = createAppSlice({
     //   (state: EditorSliceState) => state.elements,
     //   (elements: Elements) => elements.map(el => el.id),
     // ),
+    selectionWindowElementsSelector: state => {
+      if (!state.selectionWindow) return null
+      
+      return {
+        selectedElements: state.elements.filter(el =>
+          el.selectedWithWindow ? el.selectedWithWindow : false,
+        ),
+        window: state.selectionWindow,
+      }
+    },
     contextMenuSelector: state => state.contextMenu,
   },
 })
 
 export const {
   elementSelected,
+  selectionUpdated,
   elementSelectionCancelled,
   elementPositionUpdate,
   elementDragEpicTrigger,
@@ -374,8 +460,11 @@ export const {
   contextMenuAddPlace,
 } = editorSlice.actions
 
-export const { elementSelector, /* selectedIdsSelector,*/ contextMenuSelector } =
-  editorSlice.selectors
+export const {
+  elementSelector,
+  selectionWindowElementsSelector,
+  /* selectedIdsSelector,*/ contextMenuSelector,
+} = editorSlice.selectors
 
 export const editorActionFilter = createActionFilter(
   elementDragEpicTrigger,
