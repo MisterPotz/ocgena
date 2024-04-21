@@ -305,7 +305,6 @@ export const editorSlice = createAppSlice({
             ? { ...el, selectedAtClick: false }
             : el,
       )
-      // state.selected = [action.payload]
     }),
     selectionUpdated: create.reducer(
       (state, action: PayloadAction<SelectionWindow>) => {
@@ -420,10 +419,6 @@ export const editorSlice = createAppSlice({
         }
       }
     }),
-
-    // elementMoved: create.asyncThunk({
-
-    // })
   }),
   selectors: {
     elementSelector: state => state.elements,

@@ -3,33 +3,17 @@ import { Coord } from "./Coord"
 import { MutableRefObject, useEffect } from "react"
 import Konva from "konva"
 import { Circle, KonvaNodeEvents, Rect } from "react-konva"
-import { ELEMENT_CHILD_PREFIX, ELEMENT_CHILD_SHAPE_PREFIX } from "./Keywords"
+import { ELEMENT_CHILD_SHAPE_PREFIX } from "./Keywords"
 import { CircleShape, Element, PositionUpdatePayload } from "./Models"
-import { getRealHeight, getRealWidth } from "./primitiveShapeUtils"
+import { Text } from "konva/lib/shapes/Text"
+import { Vector2d } from "konva/lib/types"
 
 class ShapeDelegateCommon {
   private static _instance: ShapeDelegateCommon
-
-  private consumeScaleToDimens(node: Konva.Node) {
-    const width = node.width()
-    const height = node.height()
-    const scaleX = node.scaleX()
-    const scaleY = node.scaleY()
-    const newWidth = scaleX * width
-    const newHeight = scaleY * height
-    // we will reset it back
-    node.scaleX(1)
-    node.scaleY(1)
-    node.width(newWidth)
-    node.height(newHeight)
-  }
-
   createCommonShapeProps(
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Konva.Shape | null>,
     localCoord: Coord,
-    syncPositions: () => void,
-    updatePosition: (positionUpdatePayload: PositionUpdatePayload) => void,
   ): Konva.NodeConfig & KonvaNodeEvents {
     return {
       ...nodeConfig,
@@ -37,26 +21,6 @@ class ShapeDelegateCommon {
       x: localCoord.x,
       y: localCoord.y,
       draggable: false,
-      onTransform(evt: Konva.KonvaEventObject<Event>) {
-        console.log("on transform", evt.target)
-        syncPositions()
-      },
-
-      onTransformEnd: (evt: Konva.KonvaEventObject<Event>) => {
-        this.consumeScaleToDimens(shapeRef.current!)
-        console.log("on transform end", evt.target)
-        syncPositions()
-        const groupAbsolutePosition = (
-          shapeRef.current!.getParent() as Konva.Group
-        ).getAbsolutePosition()
-        updatePosition({
-          id: nodeConfig.id!,
-          x: groupAbsolutePosition.x,
-          y: groupAbsolutePosition.y,
-          width: getRealWidth(evt.target! as Konva.Shape),
-          height: getRealHeight(evt.target! as Konva.Shape),
-        })
-      },
     }
   }
 
@@ -72,39 +36,34 @@ export interface ShapeDelegateNew<Type extends PossibleShapes = Konva.Shape> {
     element: Element,
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Type | null>,
-    text: () => Konva.Text,
-    updatePosition: (positionUpdatePayload: PositionUpdatePayload) => void,
   ): JSX.Element
 
   synchronizeTextAreaPosition(shape: Type, textArea: HTMLTextAreaElement): void
+  synchronizeTextAndShape(shape: Type, text: Konva.Text): void
+  updateShapeSize(shape: Type, size: Vector2d): void
 }
 
 class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
   private static _instance: RectShapeDelegate
 
-  private synchronizeSizeAndLocalCoord(shape: Konva.Rect) {
-    const width = (shape.width() * shape.scaleX()).closestSize()
-    const height = (shape.height() * shape.scaleY()).closestSize()
-
+  synchronizeTextAndShape(shape: Konva.Rect, text: Text): void {
+    text.setAttrs({
+      width: shape.width(),
+      height: shape.height(),
+      x: 0,
+      y: 0,
+    })
     shape.setAttrs({
       x: 0,
       y: 0,
-      width: width,
-      height: height,
     })
   }
 
-  private syncPositions(shape: Konva.Rect, textSelector: () => Konva.Text) {
-    const group = shape.getParent() as Konva.Group
-    const text = textSelector()
-    text.setAttrs({
-      width: shape.scaleX() * shape.width(),
-      height: shape.scaleY() * shape.height(),
-      x: 0,
-      y: 0,
+  updateShapeSize(shape: Konva.Rect, size: Vector2d): void {
+    shape.setAttrs({
+      height: size.y,
+      width: size.x,
     })
-    group?.setAbsolutePosition(shape.getAbsolutePosition())
-    shape.setPosition({ x: 0, y: 0 })
   }
 
   synchronizeTextAreaPosition(
@@ -130,25 +89,12 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
     element: Element,
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Konva.Rect | null>,
-    text: () => Konva.Text,
-    updatePosition: (positionUpdatePayload: PositionUpdatePayload) => void,
   ) {
     const props = ShapeDelegateCommon.Instance.createCommonShapeProps(
       nodeConfig,
       shapeRef,
       { x: 0, y: 0 },
-      () => {
-        this.syncPositions(shapeRef.current!, text)
-      },
-      updatePosition,
     )
-    useEffect(() => {
-      this.synchronizeSizeAndLocalCoord(shapeRef.current!)
-    }, [nodeConfig])
-
-    useEffect(() => {
-      this.syncPositions(shapeRef.current!, text)
-    }, [])
     return <Rect ref={shapeRef} {...props} />
   }
 
@@ -163,51 +109,28 @@ class RectShapeDelegate implements ShapeDelegateNew<Konva.Rect> {
 class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
   private static _instance: CircleShapeDelegate
 
-  private synchronizeSizeAndLocalCoord(shape: Konva.Circle) {
-    const realRadius = (shape.width() * shape.scaleX()) / 2
-    const closestSize = (shape.getWidth() * shape.scaleX()).closestSize()
-    const closestRadius = closestSize / 2
+  synchronizeTextAndShape(shape: Konva.Circle, text: Text): void {
+    const radius = shape.radius()
+    const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * radius
 
+    text.setAttrs({
+      width: innerRectSize,
+      height: innerRectSize,
+      x: radius - innerRectSize / 2,
+      y: radius - innerRectSize / 2,
+    })
     shape.setAttrs({
-      x: closestRadius,
-      y: closestRadius,
-      radius: closestRadius,
+      x: radius,
+      y: radius,
     })
   }
 
-  private syncPositions(shape: Konva.Circle, textSelector: () => Konva.Text) {
-    const group = shape.getParent() as Konva.Group
-    const text = textSelector()
-    const realRadius = (shape.width() * shape.scaleX()) / 2
-    const innerRectSize = 2 * Math.cos((45 * Math.PI) / 180) * realRadius
-    const xOffset = -innerRectSize / 2
-    const yOffset = -innerRectSize / 2
-    const width = innerRectSize
-    const height = innerRectSize
-
-    text.setAttrs({
-      width: width,
-      height: height,
-      x: realRadius + xOffset,
-      y: realRadius + yOffset,
-    })
-    console.log("shape absolute position", shape.getAbsolutePosition())
-    const absoluteCirclePosition = shape.getAbsolutePosition()
-    group?.setAbsolutePosition({
-      x: absoluteCirclePosition.x - realRadius,
-      y: absoluteCirclePosition.y - realRadius,
-    })
-    console.log(
-      "circle group abs position",
-      shape.getAbsolutePosition(),
-      "shape radius",
-      shape.radius(),
-      "local",
-      shape.position(),
-    )
+  updateShapeSize(shape: Konva.Circle, size: Vector2d): void {
+    const radius = size.x / 2
     shape.setAttrs({
-      x: realRadius,
-      y: realRadius,
+      x: radius,
+      y: radius,
+      radius: radius
     })
   }
 
@@ -237,26 +160,12 @@ class CircleShapeDelegate implements ShapeDelegateNew<Konva.Circle> {
     element: Element<CircleShape>,
     nodeConfig: NodeConfig,
     shapeRef: MutableRefObject<Konva.Circle | null>,
-    text: () => Konva.Text,
-    updatePosition: (positionUpdatePayload: PositionUpdatePayload) => void,
   ) {
     const props = ShapeDelegateCommon.Instance.createCommonShapeProps(
       nodeConfig,
       shapeRef,
       { x: element.shape.radius, y: element.shape.radius },
-      () => {
-        this.syncPositions(shapeRef.current!, text)
-      },
-      updatePosition,
     )
-    useEffect(() => {
-      this.synchronizeSizeAndLocalCoord(shapeRef!.current!)
-      this.syncPositions(shapeRef!.current!, text)
-    }, [nodeConfig])
-
-    useEffect(() => {
-      this.syncPositions(shapeRef.current!, text)
-    }, [])
     return <Circle ref={shapeRef} {...props} />
   }
 

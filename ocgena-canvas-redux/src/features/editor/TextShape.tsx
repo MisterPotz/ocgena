@@ -2,7 +2,7 @@ import Konva from "konva"
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from "react"
 import React from "react"
 import { Circle, Group, Rect, Text, Transformer } from "react-konva"
-import { elementToNodeConfig } from "./Utils"
+import { elementToNodeConfig, isGroup } from "./Utils"
 import { KonvaEventObject, NodeConfig } from "konva/lib/Node"
 import { ShapeDelegateNew, selectShapeDelegate } from "./shapeDelegates"
 import {
@@ -11,7 +11,12 @@ import {
   TRANSFORMER_PREFIX,
 } from "./Keywords"
 import { AnyElement, PositionUpdatePayload } from "./Models"
-import { height, width } from "./primitiveShapeUtils"
+import {
+  getRealHeight,
+  getRealWidth,
+  height,
+  width,
+} from "./primitiveShapeUtils"
 
 const MIN_WIDTH = 50
 const MIN_HEIGHT = 50
@@ -70,12 +75,56 @@ export function TextShape(
   React.useEffect(() => {
     if (selectedAtClick) {
       if (trRef.current && groupRef.current) {
-        let transformableNodes = [shapeRef.current!]
+        let transformableNodes = [groupRef.current!]
         trRef.current.nodes(transformableNodes)
         trRef.current.getLayer()?.batchDraw()
       }
     }
   }, [selectedAtClick])
+
+  function consumeScaleToDimens(node: Konva.Node) {
+    const width = node.width()
+    const height = node.height()
+    const scaleX = node.scaleX()
+    const scaleY = node.scaleY()
+    const newWidth = scaleX * width
+    const newHeight = scaleY * height
+    // we will reset it back
+    node.scaleX(1)
+    node.scaleY(1)
+    node.width(newWidth)
+    node.height(newHeight)
+  }
+
+  // function returnTextToDefaults() {
+  //   const text = textRef.current!
+  //   text.fontSize(24)
+  // }
+
+  useEffect(() => {
+    shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
+  }, [])
+
+  function synchronizeGroupWithShape() {
+    const group = groupRef.current!
+    const scaleX = group.scaleX()
+    const scaleY = group.scaleY()
+    const shape = shapeRef.current!
+    const width = shape.width() * scaleX
+    const height = shape.height() * scaleY
+
+    group.scaleX(1)
+    group.scaleY(1)
+    
+    shapeDelegate.updateShapeSize(shapeRef.current!, { 
+      x: width,
+      y: height,
+     })
+  }
+
+  function synchronizeTextWithShape() {
+    shapeDelegate.synchronizeTextAndShape(shapeRef.current!, textRef.current!)
+  }
 
   return (
     <React.Fragment key={element.id}>
@@ -85,11 +134,29 @@ export function TextShape(
         ref={groupRef}
         draggable={true}
         listening={true}
-        onTransform={() => {
-          console.log("on group transform")
+        onTransform={(evt: KonvaEventObject<Event>) => {
+          console.log("on group transform", evt.target.id())
+          synchronizeGroupWithShape()
+          synchronizeTextWithShape()
+
         }}
-        onTransformEnd={() => {
-          console.log("on group transform end")
+        onTransformEnd={(evt: KonvaEventObject<Event>) => {
+          synchronizeGroupWithShape()
+          synchronizeTextWithShape()
+
+          const group = groupRef.current!
+
+          const shape = shapeRef.current!
+          const groupAbsolutePosition = group.absolutePosition()
+          console.log("on group transform end", evt.target.id())
+
+          updatePosition({
+            id: element.id,
+            x: groupAbsolutePosition.x,
+            y: groupAbsolutePosition.y,
+            height: shape.height(),
+            width: shape.width(),
+          })
         }}
         x={nodeConfig.x}
         y={nodeConfig.y}
@@ -98,10 +165,6 @@ export function TextShape(
           element,
           nodeConfig,
           shapeRef,
-          () => {
-            return textRef.current!
-          },
-          updatePosition,
         )}
         <Text
           id={ELEMENT_CHILD_PREFIX + "text_" + element.id}
