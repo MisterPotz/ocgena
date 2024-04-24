@@ -261,10 +261,10 @@ export function Editor() {
       })
       .addCallbackPack("keydown", {
         window: (ev: KeyboardEvent) => {
-          if (ev.key === " ") {
-            ev.preventDefault()
-            spacePressedRef.current = true
-          }
+          // if (ev.key === " ") {
+          //   ev.preventDefault()
+          //   spacePressedRef.current = true
+          // }
         },
       })
       .addCallbackPack("keyup", {
@@ -430,7 +430,7 @@ export function Editor() {
         <Layer ref={elementsLayerRef}>
           {elements.map((el, index) => {
             return (
-              <PrimitiveTextShape
+              <AutoSizeTextShape
                 key={el.id}
                 element={el}
                 updatePosition={payload => {

@@ -183,7 +183,7 @@ export function PrimitiveTextShape({ element, updatePosition }: TextShapeProps) 
           align="center"
           verticalAlign="middle"
           wrap="word"
-          text="kek lol arbidol"
+          text={element.text}
           draggable={false}
           listening={false}
         />
