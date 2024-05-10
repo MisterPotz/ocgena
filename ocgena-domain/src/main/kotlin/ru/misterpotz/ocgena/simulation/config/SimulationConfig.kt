@@ -56,13 +56,7 @@ data class SimulationConfig(
         return copy(initialMarking = MarkingScheme(initialMarking))
     }
 
-//    fun asTimePNConfig() : SimulationConfig {
-//        return copy(
-//            simulationSemantics = SimulationSemantics(type = SimulationSemanticsType.SIMPLE_TIME_PN)
-//        )
-//    }
-//
-    fun asTimePNwithSpec(timePNSpec: TransitionsTimePNSpec) : SimulationConfig {
+    fun asTimePNwithSpec(timePNSpec: TransitionsTimePNSpec): SimulationConfig {
         return copy(
             transitionsSpec = timePNSpec,
             simulationSemantics = SimulationSemantics(type = SimulationSemanticsType.SIMPLE_TIME_PN)
