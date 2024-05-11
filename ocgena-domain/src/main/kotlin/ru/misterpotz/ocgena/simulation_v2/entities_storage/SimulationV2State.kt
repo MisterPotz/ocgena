@@ -2,10 +2,7 @@ package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.OCNetAccessor
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.PlaceWrapper
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.Places
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.TokenWrapper
+import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
 import ru.misterpotz.ocgena.utils.PatternIdCreator
 import java.util.SortedSet
 
@@ -22,6 +19,7 @@ import java.util.SortedSet
 
 interface TokenSlice {
     val relatedPlaces: Set<PlaceWrapper>
+    val tokensIterator : Iterator<TokenWrapper>
 
     fun withPlaceFilter(places: Places): TokenSlice
     fun setAmount(placeWrapper: PlaceWrapper, new: Int)
@@ -35,12 +33,12 @@ interface TokenSlice {
 class TokenStore(
     val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
     private val internalSlice: TokenSlice,
-    private val ocNetAccessor: OCNetAccessor,
+    private val simulationStateAccessor: SimulationStateAccessor,
 ) : TokenSlice by internalSlice {
     private val tokenCreators = TokenCreators()
 
     fun generateRealToken(typeId: ObjectTypeId): TokenWrapper {
-        val type = ocNetAccessor.ocNet.objectTypeRegistry[typeId]
+        val type = simulationStateAccessor.ocNet.objectTypeRegistry[typeId]
 
         return tokenCreators.create(type).also {
             issuedTokens[it.tokenId] = it
@@ -89,6 +87,15 @@ data class SimpleTokenSlice(
 ) : TokenSlice {
     override val relatedPlaces: Set<PlaceWrapper>
         get() = internalRelatedPlaces
+    override val tokensIterator: Iterator<TokenWrapper>
+        get() = iterator {
+             for (relatedPlace in internalRelatedPlaces) {
+                 val sortedTokens = tokensMap[relatedPlace]
+                 if (sortedTokens != null) {
+                     yieldAll(sortedTokens)
+                 }
+             }
+        }
 
     override fun withPlaceFilter(places: Places): TokenSlice {
         return copy(internalRelatedPlaces = internalRelatedPlaces.intersect(places).toMutableSet())

@@ -2,6 +2,8 @@ package ru.misterpotz.ocgena.simulation_v2.entities_selection
 
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
+import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 
 fun getTransitionPreplacesMap(
     ocNet: OCNet,
@@ -63,3 +65,11 @@ fun getDependentTransitions(ocNet: OCNet, targetTransition: PetriAtomId): List<A
     }
 }
 
+fun getSyncGroups(
+    simulationInput: SimulationInput,
+    targetTransition: PetriAtomId
+): List<SynchronizedArcGroup>? {
+    return simulationInput
+        .transitions[targetTransition]!!
+        .synchronizedArcGroups
+}

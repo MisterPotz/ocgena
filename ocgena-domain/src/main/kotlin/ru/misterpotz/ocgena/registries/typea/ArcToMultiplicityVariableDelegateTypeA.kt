@@ -1,10 +1,8 @@
 package ru.misterpotz.ocgena.registries.typea
 
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
-import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArcMetaTypeA
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
@@ -60,7 +58,7 @@ class ArcToMultiplicityVariableDelegateTypeA @Inject constructor(
         val objectTypeId = placeToObjectTypeRegistry[targetPlace]!!
         val batchForType = tokenGroupedInfo.getTokenSetBy(
             toPlaceObjectTypeId = objectTypeId,
-            outputArcMeta = VariableArcMetaTypeA
+            outputArcMeta = AalstVariableArcMeta
         )!!
         val tokensAtBuffer = batchForType.size
 

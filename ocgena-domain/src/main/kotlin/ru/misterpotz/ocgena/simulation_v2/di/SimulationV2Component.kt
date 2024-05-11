@@ -17,7 +17,7 @@ import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 abstract class SimulationV2Module {
     companion object {
         @Provides
-        fun providesTokenBunch() : SparseTokenBunch {
+        fun providesTokenBunch(): SparseTokenBunch {
             return SparseTokenBunchImpl()
         }
     }
@@ -39,7 +39,11 @@ interface SimulationV2Component {
     }
 
     companion object {
-        fun create() {
+        fun create(
+            simulationInput: SimulationInput,
+            ocNetStruct: OCNetStruct,
+            simulationV2Interactor: SimulationV2Interactor
+        ) {
             return DaggerSimulationV2Component.factory()
                 .create(
                     simulationInput,

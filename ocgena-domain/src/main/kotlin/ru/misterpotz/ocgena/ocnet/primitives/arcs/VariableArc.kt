@@ -7,10 +7,9 @@ import ru.misterpotz.expression.facade.getVariablesNames
 import ru.misterpotz.expression.node.MathNode
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 
-data class VariableArcMeta(
+data class LomazovaVariableArcMeta(
     val variableName: String?
 ) : ArcMeta {
     override fun toString(): String {
@@ -22,7 +21,7 @@ data class VariableArcMeta(
     }
 }
 
-object VariableArcMetaTypeA : ArcMeta {
+object AalstVariableArcMeta : ArcMeta {
     override fun toString(): String {
         return "var. aalst"
     }
@@ -54,7 +53,7 @@ data class VariableArc(
         }?.first()
     }
     override val arcMeta: ArcMeta by lazy(LazyThreadSafetyMode.NONE) {
-        VariableArcMeta(variableName)
+        LomazovaVariableArcMeta(variableName)
     }
 
     override fun isSameArcType(other: Arc): Boolean {

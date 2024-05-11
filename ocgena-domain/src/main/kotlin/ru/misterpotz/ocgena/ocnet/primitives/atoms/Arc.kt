@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.ocnet.primitives.atoms
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcArrowId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcTailId
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
@@ -11,19 +12,6 @@ enum class ArcType {
     VARIABLE,
 }
 
-interface ArcMeta {
-    fun shortString() : String
-}
-
-object NormalArcMeta : ArcMeta {
-    override fun toString(): String {
-        return "norm."
-    }
-
-    override fun shortString() : String {
-        return "n  "
-    }
-}
 
 abstract class Arc : PetriAtom {
     val arrowNodeId: PetriAtomId? by lazy(LazyThreadSafetyMode.NONE) {
