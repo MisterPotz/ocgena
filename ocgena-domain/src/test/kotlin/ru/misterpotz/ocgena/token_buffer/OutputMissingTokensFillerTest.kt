@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.NormalArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.config.original.withUntilNext
@@ -52,8 +52,8 @@ class OutputMissingTokensFillerTest {
         val transitionBufferInfo = simComp.mockTransitionBufferInfo(
             "t1"
         ) {
-            add("o1".withArcMeta(NormalArcMeta).withTokenBuffer(sortedSetOf()))
-            add("o2".withArcMeta(NormalArcMeta).withTokenBuffer(sortedSetOf()))
+            add("o1".withArcMeta(NormalArcMeta(1)).withTokenBuffer(sortedSetOf()))
+            add("o2".withArcMeta(NormalArcMeta(1)).withTokenBuffer(sortedSetOf()))
         }
 
         val outputMissingTokensFiller = outputMissingTokensGeneratorFactory.create(

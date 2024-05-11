@@ -6,7 +6,7 @@ import dagger.assisted.AssistedInject
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.simulation.ObjectTokenId

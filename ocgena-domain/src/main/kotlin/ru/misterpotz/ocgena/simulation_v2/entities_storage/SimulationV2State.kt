@@ -31,9 +31,9 @@ interface TokenSlice {
 }
 
 class TokenStore(
-    val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
-    private val internalSlice: TokenSlice,
+    private val internalSlice: SimpleTokenSlice,
     private val simulationStateAccessor: SimulationStateAccessor,
+    val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
 ) : TokenSlice by internalSlice {
     private val tokenCreators = TokenCreators()
 

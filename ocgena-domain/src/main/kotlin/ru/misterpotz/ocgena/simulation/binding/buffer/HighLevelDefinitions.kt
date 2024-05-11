@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.simulation.binding.buffer
 import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.binding.TokenSet
@@ -56,9 +56,6 @@ interface TokenGroupedInfo {
         toPlaceObjectTypeId: ObjectTypeId,
         outputArcMeta: ArcMeta
     ): TokenSet?
-
-//    fun getInputArcs(): Collection<Arc>
-//    fun getTokenAmountComingThroughInputArc(arc: Arc): Int
 
     interface TokenGroupingStrategy {
         fun findTokenBatchForOTypeAndArc(

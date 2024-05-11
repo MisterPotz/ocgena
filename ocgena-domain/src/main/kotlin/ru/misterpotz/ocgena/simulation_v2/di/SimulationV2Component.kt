@@ -7,18 +7,51 @@ import dagger.Provides
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.ShiftTimeSelector
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.StepExecutor
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.TransitionSelector
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.TransitionSolutionSelector
+import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 
 @Module
 abstract class SimulationV2Module {
     companion object {
+
         @Provides
-        fun providesTokenBunch(): SparseTokenBunch {
-            return SparseTokenBunchImpl()
+        fun simulationStateAccessor(
+            ocNetStruct: OCNetStruct,
+            simulationInput: SimulationInput
+        ): SimulationStateAccessor {
+            val simulationStateAccessor = SimulationStateAccessor(ocNetStruct, simulationInput)
+            simulationStateAccessor.init()
+            return simulationStateAccessor
+        }
+
+        @Provides
+        fun providesTokens(simulationStateAccessor: SimulationStateAccessor): TokenStore {
+            return TokenStore(
+                internalSlice = SimpleTokenSlice(
+                    simulationStateAccessor.placesRef.ref.toMutableSet(),
+                ),
+                simulationStateAccessor = simulationStateAccessor
+            )
+        }
+
+        @Provides
+        fun providesStepExecutor(
+            simulationStateAccessor: SimulationStateAccessor,
+            interactor: SimulationV2Interactor,
+            tokenStore: TokenStore,
+        ): StepExecutor {
+            return StepExecutor(
+                transitions = simulationStateAccessor.transitionsRef.ref,
+                places = simulationStateAccessor.placesRef.ref,
+                shiftTimeSelector = interactor,
+                transitionSelector = interactor,
+                transitionSolutionSelector = interactor,
+                tokenStore = tokenStore,
+                simulationStateAccessor
+            )
         }
     }
 }
@@ -43,7 +76,7 @@ interface SimulationV2Component {
             simulationInput: SimulationInput,
             ocNetStruct: OCNetStruct,
             simulationV2Interactor: SimulationV2Interactor
-        ) {
+        ): SimulationV2Component {
             return DaggerSimulationV2Component.factory()
                 .create(
                     simulationInput,

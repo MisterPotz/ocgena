@@ -4,7 +4,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.NormalArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
 import ru.misterpotz.ocgena.simulation.config.original.withUntilNext
 import ru.misterpotz.ocgena.simulation.di.SimulationComponent
@@ -47,8 +47,8 @@ class OutputTokensBufferConsumerTest {
         val transitionBufferInfo = simComp.mockTransitionBufferInfo(
             "t1"
         ) {
-            add("o1".withArcMeta(NormalArcMeta).withTokenBuffer(sortedSetOf(1)))
-            add("o2".withArcMeta(NormalArcMeta).withTokenBuffer(sortedSetOf()))
+            add("o1".withArcMeta(NormalArcMeta(1)).withTokenBuffer(sortedSetOf(1)))
+            add("o2".withArcMeta(NormalArcMeta(1)).withTokenBuffer(sortedSetOf()))
         }
 
         val outputTokensBufferConsumer = outputTokensBufferConsumerFactory.create(

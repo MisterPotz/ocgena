@@ -1,13 +1,12 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 
 import ru.misterpotz.ocgena.ocnet.OCNet
-import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.*
@@ -16,7 +15,7 @@ import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.utils.TimePNRef
-import java.util.SortedSet
+import java.util.*
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -79,7 +78,7 @@ interface TransitionSolutionSelector {
 }
 
 class SimulationStateAccessor(
-    val ocNet: OCNet,
+    val ocNet: OCNetStruct,
     val simulationInput: SimulationInput
 ) {
     val transitionsRef: Ref<Transitions> = Ref()
@@ -88,6 +87,22 @@ class SimulationStateAccessor(
     val transitionIdIssuer = TransitionIdIssuer()
     val outPlaces: Places by lazy {
         placesRef.ref.places.selectIn(ocNet.outputPlaces.iterable).wrap()
+    }
+
+    fun init() {
+        transitionsRef._ref = ocNet.transitionsRegistry.map {
+            TransitionWrapper(
+                it.id,
+                simulationStateAccessor = this, arcLogicsFactory = ArcLogicsFactory.Stub
+            )
+        }.wrap()
+
+        placesRef._ref = ocNet.placeRegistry.places.map {
+            PlaceWrapper(
+                it.id,
+                objectType = ocNet.objectTypeRegistry.get(ocNet.placeToObjectTypeRegistry[it.id]!!)
+            )
+        }.wrap()
     }
 }
 
@@ -104,7 +119,7 @@ interface Identifiable {
 
 class PlaceWrapper(
     val placeId: PetriAtomId,
-    val objectType: ObjectTypeId,
+    val objectType: ObjectType,
 ) : Identifiable {
     override val id: String
         get() = placeId
@@ -163,6 +178,16 @@ interface ArcLogicsFactory {
         prePlaces: Places,
         toTransition: TransitionWrapper,
     ): ArcSolver
+
+    object Stub : ArcLogicsFactory {
+        override fun getArcChecker(ocNet: OCNet, prePlaces: Places, toTransition: TransitionWrapper): ArcChecker {
+            TODO("Not yet implemented")
+        }
+
+        override fun getArcSolver(ocNet: OCNet, prePlaces: Places, toTransition: TransitionWrapper): ArcSolver {
+            TODO("Not yet implemented")
+        }
+    }
 }
 
 //class ArcCondition(
@@ -187,9 +212,9 @@ class SynchronizedArcGroupCondition(
     fun check(tokenSlice: TokenSlice) {
         // lets see how much they should it
 
-        arcs.ref.map {
-            it.
-        }
+//        arcs.ref.map {
+//            it.
+//        }
 
     }
 
@@ -199,7 +224,7 @@ class SynchronizedArcGroupCondition(
 
         currentApplicableTokensSorted.forEach {
             it.currentSolutionSeachFilteredTokens!!.forEach {
-                it.participatedTransitionIndices.intersect(arcs.)
+//                it.participatedTransitionIndices.intersect(arcs.)
             }
         }
     }
@@ -306,9 +331,9 @@ class InputArcWrapper(
 
 class TransitionWrapper(
     val transitionId: PetriAtomId,
-    val timer: TransitionTimer = TransitionTimer(0),
     val simulationStateAccessor: SimulationStateAccessor,
     val arcLogicsFactory: ArcLogicsFactory,
+    val timer: TransitionTimer = TransitionTimer(0),
 ) : Identifiable {
 
     val transitionHistory = TransitionHistory()
@@ -562,13 +587,13 @@ class TokenArcFlowSnapshot(
 }
 
 class StepExecutor(
-    val transitions: Transitions,
-    val places: Places,
-    val shiftTimeSelector: ShiftTimeSelector,
-    val transitionSelector: TransitionSelector,
-    val transitionSolutionSelector: TransitionSolutionSelector,
-    val tokenStore: TokenStore,
-    val simulationStateAccessor: SimulationStateAccessor,
+    private val transitions: Transitions,
+    private val places: Places,
+    private val shiftTimeSelector: ShiftTimeSelector,
+    private val transitionSelector: TransitionSelector,
+    private val transitionSolutionSelector: TransitionSolutionSelector,
+    private val tokenStore: TokenStore,
+    private val simulationStateAccessor: SimulationStateAccessor,
 ) {
     private fun collectTransitions(filter: EnabledMode, sourceTransitions: Transitions? = null): Transitions {
         return (sourceTransitions ?: transitions).filter {

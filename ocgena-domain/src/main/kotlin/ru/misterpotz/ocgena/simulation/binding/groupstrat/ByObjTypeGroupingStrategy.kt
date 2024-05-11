@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation.binding.groupstrat
 
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroup
 import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
 import javax.inject.Inject

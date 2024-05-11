@@ -5,7 +5,7 @@ import io.mockk.mockk
 import ru.misterpotz.DBLogger
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.simulation.ObjectTokenId
 import ru.misterpotz.ocgena.simulation.SimulationTask
