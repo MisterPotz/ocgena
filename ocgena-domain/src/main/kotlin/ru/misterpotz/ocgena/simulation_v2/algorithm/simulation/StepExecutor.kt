@@ -190,14 +190,6 @@ interface ArcLogicsFactory {
     }
 }
 
-//class ArcCondition(
-//    val synchronizingTransition: TransitionWrapper,
-//    val arcsInCondition: List<>
-//) {
-//
-//}
-
-
 class SynchronizedArcGroupCondition(
     val syncTarget: TransitionWrapper,
     val index: Int,

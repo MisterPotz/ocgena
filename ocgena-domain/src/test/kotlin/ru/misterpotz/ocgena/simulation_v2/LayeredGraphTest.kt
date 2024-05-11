@@ -7,9 +7,9 @@ import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Node
 
 class LayeredGraphTest {
 
-    fun List<Node<Int>>.by(data: Int): Node<Int> = find { it.data == data }!!
+    private fun List<Node<Int>>.by(data: Int): Node<Int> = find { it.data == data }!!
 
-    fun createNodes() = listOf(
+    private fun createNodes() = listOf(
         Node(0, 0, 1),
         Node(1, 0, 5),
 
@@ -24,7 +24,7 @@ class LayeredGraphTest {
         Node(8, 3, 8),
     )
 
-    fun initializeGraph(nodes: List<Node<Int>>): LayeredGraph<Int> {
+    private fun initializeGraph(nodes: List<Node<Int>>): LayeredGraph<Int> {
         val graph = LayeredGraph<Int>()
         graph.apply {
             nodes.forEach {
@@ -238,6 +238,7 @@ class LayeredGraphTest {
         val graph = initializeGraph(nodes)
 
         graph.pruneClean()
+        graph.verifyGraphIntegrity()
 
         Assertions.assertEquals(
             listOf<Node<Int>>(),
@@ -263,6 +264,7 @@ class LayeredGraphTest {
         )
 
         graph.pruneClean()
+        graph.verifyGraphIntegrity()
 
         Assertions.assertEquals(
             listOf(

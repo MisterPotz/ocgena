@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
-import io.mockk.InternalPlatformDsl.toArray
 import java.util.*
 import kotlin.collections.HashSet
 
