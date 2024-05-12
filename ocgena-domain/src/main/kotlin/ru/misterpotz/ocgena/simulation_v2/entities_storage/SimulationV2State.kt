@@ -1,9 +1,12 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
+import net.bytebuddy.TypeCache.Sort
+import net.bytebuddy.build.HashCodeAndEqualsPlugin.Sorted
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
 import ru.misterpotz.ocgena.utils.PatternIdCreator
+import ru.misterpotz.ocgena.utils.buildMutableMap
 import java.util.SortedSet
 
 //class SimulationV2State {
@@ -19,7 +22,7 @@ import java.util.SortedSet
 
 interface TokenSlice {
     val relatedPlaces: Set<PlaceWrapper>
-    val tokensIterator : Iterator<TokenWrapper>
+    val tokensIterator: Iterator<TokenWrapper>
 
     fun withPlaceFilter(places: Places): TokenSlice
     fun setAmount(placeWrapper: PlaceWrapper, new: Int)
@@ -28,6 +31,8 @@ interface TokenSlice {
     fun tokensAt(placeWrapper: PlaceWrapper): SortedTokens
     fun minusInPlace(tokenSlice: TokenSlice)
     fun plusInPlace(tokenSlice: TokenSlice)
+    fun filterTokensInPlaces(places: Places, predicate: (TokenWrapper, PlaceWrapper) -> Boolean): TokenSlice
+    fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>>
 }
 
 class TokenStore(
@@ -89,16 +94,59 @@ data class SimpleTokenSlice(
         get() = internalRelatedPlaces
     override val tokensIterator: Iterator<TokenWrapper>
         get() = iterator {
-             for (relatedPlace in internalRelatedPlaces) {
-                 val sortedTokens = tokensMap[relatedPlace]
-                 if (sortedTokens != null) {
-                     yieldAll(sortedTokens)
-                 }
-             }
+            for (relatedPlace in internalRelatedPlaces) {
+                val sortedTokens = tokensMap[relatedPlace]
+                if (sortedTokens != null) {
+                    yieldAll(sortedTokens)
+                }
+            }
         }
 
     override fun withPlaceFilter(places: Places): TokenSlice {
         return copy(internalRelatedPlaces = internalRelatedPlaces.intersect(places).toMutableSet())
+    }
+
+    override fun byPlaceIterator() : Iterator<Pair<PlaceWrapper, SortedTokens>> {
+        return object : Iterator<Pair<PlaceWrapper, SortedTokens>> {
+            val mapIterator = tokensMap.iterator()
+            override fun hasNext(): Boolean {
+                return mapIterator.hasNext()
+            }
+
+            override fun next(): Pair<PlaceWrapper, SortedTokens> {
+                val next = mapIterator.next()
+                return Pair(next.key, next.value)
+            }
+        }
+    }
+    override fun filterTokensInPlaces(
+        places: Places,
+        predicate: (TokenWrapper, PlaceWrapper) -> Boolean
+    ): SimpleTokenSlice {
+        val filteredRelatedPlaces = internalRelatedPlaces.intersect(places)
+
+        val tokensMap: MutableMap<PlaceWrapper, MutableSortedTokens> = buildMutableMap {
+            for (place in filteredRelatedPlaces) {
+                val tokens = tokensAt(place).toMutableSet()
+                put(place, sortedSetOf<TokenWrapper?>().apply {
+                    tokens.filter { token -> predicate(token, place) })
+                })
+            }
+        }
+        val newAmountMap: MutableMap<PlaceWrapper, Int> = buildMutableMap {
+            for (place in filteredRelatedPlaces) {
+                val original = amountAt(place)
+                val originalTokenSize = tokensAt(place).size
+                val newTokenSize = tokensMap[place]!!.size
+                val tokenDiff = originalTokenSize - newTokenSize
+                require(tokenDiff >= 0)
+                val newamount = original - tokenDiff
+                require(newamount >= 0)
+                put(place, newamount)
+            }
+        }
+
+        return SimpleTokenSlice(filteredRelatedPlaces.toMutableSet(), tokensMap, newAmountMap)
     }
 
     override fun setAmount(placeWrapper: PlaceWrapper, new: Int) {

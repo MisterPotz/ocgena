@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 
 
@@ -8,71 +7,54 @@ class TransitionArcSolver(
     val transition: TransitionWrapper,
 ) {
 
-    fun getSolutions(tokenSlice: TokenSlice) {
+    suspend fun getSolutions(tokenSlice: TokenSlice): List<ArcSolver.LazySolution> {
         // need to consider the conditions
         // filtering it is
 
-        val preliminaryCheck = transition.inputArcs.all { arc ->
+        val preliminaryDumbCheck = transition.inputArcs.all { arc ->
             arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
         }
 
-        if (!preliminaryCheck) {
-            return
-        }
-        // проверили что токенов в принципе хватит, дальше че?
-        // нужно начать с самого забористого условия
-        // как определить самое забористое условие? где пересекаются несколько транзишенов
-
-
-        val strongestArcsApplicableTokens =
-            transition.inputArcConditions.associateBy(
-                keySelector = { it.arcWithStrongestCondition },
-                valueTransform = { inputCondition ->
-                    inputCondition.arcWithStrongestCondition.selectApplicableTokens(tokenSlice)
-                    inputCondition.arcWithStrongestCondition.currentSolutionSeachFilteredTokens!!
-                }
-            )
-
-        val strongestArcsHaveEnoughSatisfactoryTokens = strongestArcsApplicableTokens.all { (arc, tokens) ->
-            arc.consumptionSpec.complies(tokens.size)
+        if (!preliminaryDumbCheck) {
+            return emptyList()
         }
 
-        if (!strongestArcsHaveEnoughSatisfactoryTokens) {
-            return
+        // visited all required sync transitions
+        val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
+            token.visitedTransitions.containsAll(transition.inputArcBy(place.placeId).syncTransitions)
         }
 
-        val buffer = SimpleTokenSlice(tokenSlice.relatedPlaces.toMutableSet())
-        strongestArcsApplicableTokens.forEach { (arc, tokens) ->
-            {
-                buffer.modifyTokensAt(arc.fromPlace) {
-                    it.addAll(tokens)
-                }
-            }
+        val secondPreliminaryDumbCheck = transition.inputArcs.all { arc ->
+            arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
+        }
+        if (!secondPreliminaryDumbCheck) {
+            return emptyList()
+        }
 
-            // теперь нужно найти для каждого группового условия подходящие по синхронизации варианты
-            // надо как-то не очень прямолинейно число солюшенов искать, надо за это число принять другое, солюшенов
-            // может быть гипер дохрена и больше и нормально это может не получиться посчитать
+        for (intersectingCondition in transition.intersectingMultiArcConditions.sortedByDescending { it.biggestArcConditionAmount }) {
+            for (strongArc in intersectingCondition.strongestConditionArcs) {
+                val fromPlace = strongArc.fromPlace
+
+                filteredTokenSlice.modifyTokensAt(fromPlace) { tokens ->
+                    for (token in tokens) {
+                        token.prepareBuffer()
+
+                        // try to find a match from other place of the condition of strongest arc
+                        for (relatedArc in strongArc.allAssociatedArcs) {
+                            val relatedArcTokens = filteredTokenSlice.tokensAt(relatedArc.fromPlace)
+                            // try find a relative token
 
 
-            val inputArc = transition.inputArcs.maxBy { it.syncTransitions.size }
-            if (inputArc.syncTransitions.size == 0) {
-                // do standard logic
-            } else {
-                // applicable tokens
-                val tokens = tokenSlice.tokensAt(inputArc.fromPlace).filter { token ->
-                    inputArc.syncTransitions.all { it in token.visitedTransitions }
+
+                            token.buffer.put(token.participatedTransitionIndices)
+                        }
+                        if (token.participatedTransitionIndices.)
+                    }
                 }
             }
-
-            transition.inputArcConditions.map {
-
-            }
-
-
-            // need to start from the most narrow condition
-
-//            for ()
         }
+
+
     }
 
     class ArcGroupCondition(

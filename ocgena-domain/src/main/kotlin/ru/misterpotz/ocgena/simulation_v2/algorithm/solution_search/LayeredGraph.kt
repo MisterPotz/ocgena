@@ -254,7 +254,7 @@ data class Path<T>(val nodes: MutableList<CombinationNodeWrapper<T>>) {
 class LayeredGraph<T> {
     private val layers: SortedMap<Int, Layer<T>> = sortedMapOf()
 
-    var nodeIdIssuer = 0L
+    private var nodeIdIssuer = 0L
     val STUB: Byte = 0
     val invalidAssociatedPaths : HashMap<Int, MutableList<HashSet<CombinationNodeWrapper<T>>>> = hashMapOf()
 
@@ -265,6 +265,11 @@ class LayeredGraph<T> {
     fun addNode(/*level: Int,*/ node: Node<T>) {
         val layer = layers.getOrPut(node.layer) { Layer(node.layer) }
         layer.nodes.add(node)
+    }
+
+    fun addNode(layer: Int, data: T) {
+        val node = Node(nodeIdIssuer++, layer, data)
+        addNode(node)
     }
 
     fun printByLayer() {
@@ -280,8 +285,6 @@ class LayeredGraph<T> {
             throw IllegalArgumentException("Cannot add connection to same or higher layer")
         }
     }
-
-    // Add node and connection methods remain unchanged...
 
     fun iterateConnectedCombinations(vararg layersToInclude: Int): MutableIterator<List<Node<T>>> {
         val relevantLayers = layers.filterKeys { it in layersToInclude }.toSortedMap()

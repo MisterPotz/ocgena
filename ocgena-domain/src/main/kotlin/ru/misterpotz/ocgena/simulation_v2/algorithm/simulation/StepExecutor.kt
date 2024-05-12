@@ -37,13 +37,31 @@ class TokenWrapper(
     private val _visited = mutableSetOf<TransitionWrapper>()
     val visitedTransitions: Set<TransitionWrapper> = _visited
 
-    private val _participatedTransitionIndices = sortedSetOf<Long>()
-    val participatedTransitionIndices: SortedSet<Long> = _participatedTransitionIndices
+    private val _participatedTransitionIndices = mutableMapOf<TransitionWrapper, SortedSet<Long>>()
+    val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
+
+    var tempIndicesBuffer: MutableMap<TransitionWrapper, SortedSet<Long>>? = null
+    val buffer : MutableMap<TransitionWrapper, SortedSet<Long>>
+        get() = tempIndicesBuffer!!
+
+    fun cleanBuffer() {
+        tempIndicesBuffer?.clear()
+        tempIndicesBuffer = null
+    }
+
+    fun prepareBuffer() {
+        cleanBuffer()
+        tempIndicesBuffer = mutableMapOf()
+    }
 
     fun recordTransitionVisit(transitionIndex: Long, transitionWrapper: TransitionWrapper) {
         _visited.add(transitionWrapper)
-        _participatedTransitionIndices.add(transitionIndex)
+        _participatedTransitionIndices.getOrPut(transitionWrapper) {
+            sortedSetOf()
+        }.add(transitionIndex)
     }
+
+    data class TransitionAssociationEntry(val index: Long, val transition: TransitionWrapper)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -172,6 +190,10 @@ interface ArcSolver {
         val tokensAppended: TokenSlice,
         val garbagedTokens: SortedTokens
     )
+
+    class LazySolution(val solutionFactory: () -> Solution) {
+
+    }
 }
 
 interface ArcLogicsFactory {
@@ -199,7 +221,52 @@ interface ArcLogicsFactory {
     }
 }
 
-class SynchronizedArcGroupCondition(
+class IntersectingMultiArcConditions(
+    val conditions: Set<MultiArcCondition>,
+    val transition: TransitionWrapper,
+) {
+
+    val relatedInputArcs by lazy(LazyThreadSafetyMode.NONE) {
+        conditions.flatMap { it.arcs.ref }.toSet()
+    }
+
+    val strongestConditionArcs by lazy(LazyThreadSafetyMode.NONE) {
+        val maxConditions = relatedInputArcs.maxOf { it.underConditions.size }
+        relatedInputArcs.filter { it.underConditions.size == maxConditions }
+    }
+//
+//    val strongestConditionArc by lazy(LazyThreadSafetyMode.NONE) {
+//        strongestConditionArcs.first()
+//    }
+
+    val biggestArcConditionAmount by lazy(LazyThreadSafetyMode.NONE) {
+        strongestConditionArcs.first().underConditions.size
+    }
+
+    fun transitionsToHistoryOrder(): Map<TransitionWrapper, Int> {
+        return conditions.map { it.transitionWrapper }.associateBy({ it }, { it.transitionHistory.allLogIndices })
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as IntersectingMultiArcConditions
+
+        if (conditions != other.conditions) return false
+        if (transition != other.transition) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = conditions.hashCode()
+        result = 31 * result + transition.hashCode()
+        return result
+    }
+}
+
+class MultiArcCondition(
     val syncTarget: TransitionWrapper,
     val index: Int,
     val arcs: Ref<List<InputArcWrapper>>,
@@ -235,7 +302,7 @@ class SynchronizedArcGroupCondition(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as SynchronizedArcGroupCondition
+        other as MultiArcCondition
 
         if (syncTarget != other.syncTarget) return false
         if (index != other.index) return false
@@ -254,7 +321,7 @@ class InputArcWrapper(
     val fromPlace: PlaceWrapper,
     val transition: TransitionWrapper,
     val modelAccessor: ModelAccessor,
-    val underConditions: List<SynchronizedArcGroupCondition>
+    val underConditions: List<MultiArcCondition>
 ) {
     val syncTransitions by lazy {
         buildSet {
@@ -263,6 +330,7 @@ class InputArcWrapper(
             }
         }
     }
+
     val arc by lazy {
         modelAccessor.ocNet.arcsRegistry.withArrow(transition.id).from(fromPlace.placeId)
     }
@@ -271,11 +339,17 @@ class InputArcWrapper(
         arc.arcMeta
     }
 
-    val allAssociatedConditions: Set<SynchronizedArcGroupCondition> by lazy(LazyThreadSafetyMode.NONE) {
+    val allAssociatedConditions: Set<MultiArcCondition> by lazy(LazyThreadSafetyMode.NONE) {
         val allAssociatedArcs = underConditions.flatMap { it.arcs.ref }.toSet()
         allAssociatedArcs.flatMap {
             it.underConditions
         }.toMutableSet()
+    }
+
+    val allAssociatedArcs: Set<InputArcWrapper> by lazy(LazyThreadSafetyMode.NONE) {
+        underConditions.flatMap { it.arcs.ref }.toMutableSet().apply {
+            remove(this@InputArcWrapper)
+        }
     }
 
     var currentSolutionSeachFilteredTokens: MutableSet<TokenWrapper>? = null
@@ -288,6 +362,14 @@ class InputArcWrapper(
             syncTransitions.all { it in token.visitedTransitions }
         }
         currentSolutionSeachFilteredTokens!!.addAll(applicable)
+    }
+
+    fun checkAmount(amount: Int): Boolean {
+        return consumptionSpec.complies(amount)
+    }
+
+    fun getTokens(tokenSlice: TokenSlice): SortedTokens {
+        return tokenSlice.tokensAt(fromPlace)
     }
 
     val consumptionSpec: ConsumptionSpec by lazy(LazyThreadSafetyMode.NONE) {
@@ -382,11 +464,16 @@ class TransitionWrapper(
         }
     }
 
-    val synchronizationDependencyGroups: Set<Set<SynchronizedArcGroupCondition>> by lazy {
-        val groups = mutableSetOf<Set<SynchronizedArcGroupCondition>>()
+    val intersectingMultiArcConditions: Set<IntersectingMultiArcConditions> by lazy {
+        val groups = mutableSetOf<IntersectingMultiArcConditions>()
 
         for (i in inputArcs) {
-            groups.add(i.allAssociatedConditions)
+            groups.add(
+                IntersectingMultiArcConditions(
+                    conditions = i.allAssociatedConditions,
+                    transition = this
+                )
+            )
         }
 
         groups
@@ -404,7 +491,7 @@ class TransitionWrapper(
 
     val inputArcs by lazy {
         val syncGroups = getSyncGroups(modelAccessor.simulationInput, transitionId)
-        val allocatedArcGroups = mutableMapOf<Int, SynchronizedArcGroupCondition>()
+        val allocatedArcGroups = mutableMapOf<Int, MultiArcCondition>()
 
         val inputArcWrappers = prePlaces.map { preplace ->
             val participatingSyncGroups =
@@ -418,7 +505,7 @@ class TransitionWrapper(
 
             val createdSyncGroups = participatingSyncGroups?.map { (index, group) ->
                 allocatedArcGroups.getOrPut(index) {
-                    SynchronizedArcGroupCondition(
+                    MultiArcCondition(
                         syncTarget = modelAccessor.transitionsRef.ref.map[group.syncTransition]!!,
                         index = index,
                         arcs = Ref(),
@@ -494,7 +581,7 @@ class TransitionWrapper(
 
     fun removeTokenVisit(tokenWrapper: TokenWrapper) {
         val intersectedIndices = tokenWrapper.participatedTransitionIndices
-            .intersect(transitionHistory.allIds)
+            .intersect(transitionHistory.allLogIndices)
 
         for (i in intersectedIndices) {
             transitionHistory.decrementReference(i, tokenWrapper)
@@ -536,31 +623,35 @@ class TransitionIdIssuer {
 }
 
 class TransitionHistory {
-    private val idToReferenceCounter = mutableMapOf<Long, Long>()
+    private val logIdToReferenceCounter = mutableMapOf<Long, Long>()
     private val idToAssociations = mutableMapOf<Long, MutableSet<TokenWrapper>>()
     private val _allIds = sortedSetOf<Long>()
 
-    val allIds: Set<Long> = _allIds
+    val allLogIndices: Set<Long> = _allIds
 
-    fun recordReference(transitionIndex: Long, tokenWrapper: TokenWrapper) {
-        val current = idToReferenceCounter.getOrPut(transitionIndex) {
-            _allIds.add(transitionIndex)
+    fun size(): Int {
+        return allLogIndices.size
+    }
+
+    fun recordReference(transitionLogIndex: Long, tokenWrapper: TokenWrapper) {
+        val current = logIdToReferenceCounter.getOrPut(transitionLogIndex) {
+            _allIds.add(transitionLogIndex)
             0
         }
-        idToAssociations.getOrPut(transitionIndex) {
+        idToAssociations.getOrPut(transitionLogIndex) {
             mutableSetOf()
         }.add(tokenWrapper)
-        idToReferenceCounter[transitionIndex] = current + 1
+        logIdToReferenceCounter[transitionLogIndex] = current + 1
     }
 
     fun decrementReference(transitionIndex: Long, tokenWrapper: TokenWrapper) {
-        val new = (idToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
-        if (new == 0L) {
-            idToReferenceCounter.remove(transitionIndex)
+        val newReferencesToLog = (logIdToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
+        if (newReferencesToLog == 0L) {
+            logIdToReferenceCounter.remove(transitionIndex)
             idToAssociations.remove(transitionIndex)
             _allIds.remove(transitionIndex)
         } else {
-            idToReferenceCounter[transitionIndex] = new
+            logIdToReferenceCounter[transitionIndex] = newReferencesToLog
             idToAssociations[transitionIndex]!!.remove(tokenWrapper)
         }
     }

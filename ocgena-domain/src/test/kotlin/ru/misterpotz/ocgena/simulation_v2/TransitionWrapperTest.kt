@@ -93,8 +93,8 @@ class TransitionWrapperTest {
             transition.inputArcs
         )
 
-        Assertions.assertEquals(1, transition.synchronizationDependencyGroups.size)
-        Assertions.assertTrue(transition.synchronizationDependencyGroups.first().isNotEmpty())
+        Assertions.assertEquals(1, transition.intersectingMultiArcConditions.size)
+        Assertions.assertTrue(transition.intersectingMultiArcConditions.first().conditions.isNotEmpty())
     }
 
     @Test
@@ -118,7 +118,7 @@ class TransitionWrapperTest {
             transition.inputArcs
         )
 
-        Assertions.assertEquals(2, transition.synchronizationDependencyGroups.size)
+        Assertions.assertEquals(2, transition.intersectingMultiArcConditions.size)
 
         Assertions.assertEquals(
             simulationInput.transitions["testt"]!!.synchronizedArcGroups!!.let { list ->
@@ -133,8 +133,8 @@ class TransitionWrapperTest {
                     }.let(::add)
                 }
             },
-            transition.synchronizationDependencyGroups.map {
-                it.map { it.originalCondition }.toSet()
+            transition.intersectingMultiArcConditions.map {
+                it.conditions.map { it.originalCondition }.toSet()
             }.toSet()
         )
     }
