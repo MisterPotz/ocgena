@@ -2,9 +2,6 @@ package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
-import java.lang.IllegalStateException
-import java.util.SortedMap
-import java.util.SortedSet
 
 
 class TransitionArcSolver(
@@ -15,11 +12,11 @@ class TransitionArcSolver(
         // need to consider the conditions
         // filtering it is
 
-        val allPlacesHaveEnoughTokensForCondition = transition.inputArcs.all { arc ->
+        val preliminaryCheck = transition.inputArcs.all { arc ->
             arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
         }
 
-        if (!allPlacesHaveEnoughTokensForCondition) {
+        if (!preliminaryCheck) {
             return
         }
         // проверили что токенов в принципе хватит, дальше че?

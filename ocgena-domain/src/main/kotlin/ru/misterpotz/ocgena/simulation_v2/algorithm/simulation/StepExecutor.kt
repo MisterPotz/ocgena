@@ -14,6 +14,7 @@ import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
+import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.utils.TimePNRef
 import java.util.*
 import kotlin.contracts.ExperimentalContracts
@@ -77,7 +78,12 @@ interface TransitionSolutionSelector {
     suspend fun get(solutionMeta: ArcSolver.Meta): Int
 }
 
-class SimulationStateAccessor(
+fun OCNetStruct.toDefaultSim(simulationInput: SimulationInput = SimulationInput()) =
+    ModelAccessor(this, simulationInput).apply {
+        init()
+    }
+
+class ModelAccessor(
     val ocNet: OCNetStruct,
     val simulationInput: SimulationInput
 ) {
@@ -89,11 +95,14 @@ class SimulationStateAccessor(
         placesRef.ref.places.selectIn(ocNet.outputPlaces.iterable).wrap()
     }
 
+    fun transitionBy(id: PetriAtomId) = transitionsRef.ref.map[id]!!
+
     fun init() {
         transitionsRef._ref = ocNet.transitionsRegistry.map {
             TransitionWrapper(
                 it.id,
-                simulationStateAccessor = this, arcLogicsFactory = ArcLogicsFactory.Stub
+                modelAccessor = this,
+                arcLogicsFactory = ArcLogicsFactory.Stub
             )
         }.wrap()
 
@@ -194,6 +203,7 @@ class SynchronizedArcGroupCondition(
     val syncTarget: TransitionWrapper,
     val index: Int,
     val arcs: Ref<List<InputArcWrapper>>,
+    val originalCondition: SynchronizedArcGroup,
     val transitionWrapper: TransitionWrapper,
 ) {
 
@@ -243,7 +253,7 @@ class SynchronizedArcGroupCondition(
 class InputArcWrapper(
     val fromPlace: PlaceWrapper,
     val transition: TransitionWrapper,
-    val simulationStateAccessor: SimulationStateAccessor,
+    val modelAccessor: ModelAccessor,
     val underConditions: List<SynchronizedArcGroupCondition>
 ) {
     val syncTransitions by lazy {
@@ -254,11 +264,18 @@ class InputArcWrapper(
         }
     }
     val arc by lazy {
-        simulationStateAccessor.ocNet.arcsRegistry.withArrow(transition.id).from(fromPlace.placeId)
+        modelAccessor.ocNet.arcsRegistry.withArrow(transition.id).from(fromPlace.placeId)
     }
 
     val arcMeta: ArcMeta by lazy {
         arc.arcMeta
+    }
+
+    val allAssociatedConditions: Set<SynchronizedArcGroupCondition> by lazy(LazyThreadSafetyMode.NONE) {
+        val allAssociatedArcs = underConditions.flatMap { it.arcs.ref }.toSet()
+        allAssociatedArcs.flatMap {
+            it.underConditions
+        }.toMutableSet()
     }
 
     var currentSolutionSeachFilteredTokens: MutableSet<TokenWrapper>? = null
@@ -323,8 +340,8 @@ class InputArcWrapper(
 
 class TransitionWrapper(
     val transitionId: PetriAtomId,
-    val simulationStateAccessor: SimulationStateAccessor,
-    val arcLogicsFactory: ArcLogicsFactory,
+    val modelAccessor: ModelAccessor,
+    val arcLogicsFactory: ArcLogicsFactory = ArcLogicsFactory.Stub,
     val timer: TransitionTimer = TransitionTimer(0),
 ) : Identifiable {
 
@@ -334,25 +351,29 @@ class TransitionWrapper(
         get() = transitionId
 
     val prePlaces by lazy {
-        simulationStateAccessor.placesRef.ref.selectIn(prePlacesIds).let { Places(it) }
+        modelAccessor.placesRef.ref.selectIn(prePlacesIds).let { Places(it) }
     }
     val prePlacesIds by lazy {
-        getTransitionPreplacesMap(simulationStateAccessor.ocNet)[transitionId]!!
+        getTransitionPreplacesMap(modelAccessor.ocNet)[transitionId]!!
     }
     val postPlaces by lazy {
-        simulationStateAccessor.placesRef.ref.selectIn(postPlacesIds).let { Places(it) }
+        modelAccessor.placesRef.ref.selectIn(postPlacesIds).let { Places(it) }
     }
     val postPlacesIds by lazy {
-        getTransitionPostPlaces(simulationStateAccessor.ocNet)[transitionId]!!
+        getTransitionPostPlaces(modelAccessor.ocNet)[transitionId]!!
     }
     val transitionsWithSharedPreplaces by lazy {
-        simulationStateAccessor.transitionsRef.ref.selectIn(transitionsWithSharedPreplacesIds).let { Transitions(it) }
+        modelAccessor.transitionsRef.ref.selectIn(transitionsWithSharedPreplacesIds).let { Transitions(it) }
     }
     val transitionsWithSharedPreplacesIds by lazy {
-        getTransitionsWithSharedPreplacesFor(simulationStateAccessor.ocNet, transitionId)
+        getTransitionsWithSharedPreplacesFor(modelAccessor.ocNet, transitionId)
     }
     val dependentTransitionsIds by lazy {
-        getDependentTransitions(simulationStateAccessor.ocNet, transitionId)
+        getDependentTransitions(modelAccessor.ocNet, transitionId)
+    }
+
+    fun inputArcBy(placeId: PetriAtomId): InputArcWrapper {
+        return inputArcs.find { it.fromPlace.id == placeId }!!
     }
 
     val inputArcConditions by lazy {
@@ -361,8 +382,28 @@ class TransitionWrapper(
         }
     }
 
+    val synchronizationDependencyGroups: Set<Set<SynchronizedArcGroupCondition>> by lazy {
+        val groups = mutableSetOf<Set<SynchronizedArcGroupCondition>>()
+
+        for (i in inputArcs) {
+            groups.add(i.allAssociatedConditions)
+        }
+
+        groups
+    }
+
+    val isolatedInputArcCombinations by lazy {
+        for (arc in inputArcs) {
+            val allAssociatedArcs = arc.underConditions.flatMap { it.arcs.ref }.toSet()
+            val allArcAssociatedConditions = allAssociatedArcs.flatMap {
+                it.underConditions
+            }.toMutableSet()
+
+        }
+    }
+
     val inputArcs by lazy {
-        val syncGroups = getSyncGroups(simulationStateAccessor.simulationInput, transitionId)
+        val syncGroups = getSyncGroups(modelAccessor.simulationInput, transitionId)
         val allocatedArcGroups = mutableMapOf<Int, SynchronizedArcGroupCondition>()
 
         val inputArcWrappers = prePlaces.map { preplace ->
@@ -378,17 +419,18 @@ class TransitionWrapper(
             val createdSyncGroups = participatingSyncGroups?.map { (index, group) ->
                 allocatedArcGroups.getOrPut(index) {
                     SynchronizedArcGroupCondition(
-                        syncTarget = simulationStateAccessor.transitionsRef.ref.map[group.syncTransition]!!,
+                        syncTarget = modelAccessor.transitionsRef.ref.map[group.syncTransition]!!,
                         index = index,
                         arcs = Ref(),
-                        transitionWrapper = this
+                        transitionWrapper = this,
+                        originalCondition = group
                     )
                 }
             }
             InputArcWrapper(
                 fromPlace = preplace,
                 transition = this,
-                simulationStateAccessor,
+                modelAccessor,
                 underConditions = createdSyncGroups ?: listOf()
             )
         }
@@ -400,13 +442,13 @@ class TransitionWrapper(
     }
 
     val dependentTransitions by lazy {
-        simulationStateAccessor.transitionsRef.ref.transitions.mapNotNull { wrapper ->
+        modelAccessor.transitionsRef.ref.transitions.mapNotNull { wrapper ->
             val entry = dependentTransitionsIds.find { wrapper.id == it.transition }
 
             if (entry != null) {
                 AffectedTransition(
                     wrapper,
-                    simulationStateAccessor.placesRef.ref
+                    modelAccessor.placesRef.ref
                         .selectIn(entry.middlemanPlaces)
                         .wrap()
                 )
@@ -419,18 +461,18 @@ class TransitionWrapper(
     // 3 modes 3 modes 3 modes
     val arcChecker by lazy {
         arcLogicsFactory.getArcChecker(
-            ocNet = simulationStateAccessor.ocNet,
+            ocNet = modelAccessor.ocNet,
             prePlaces = prePlaces,
             toTransition = this
         )
     }
 
     val arcSolver by lazy {
-        arcLogicsFactory.getArcSolver(simulationStateAccessor.ocNet, prePlaces, toTransition = this)
+        arcLogicsFactory.getArcSolver(modelAccessor.ocNet, prePlaces, toTransition = this)
     }
 
     fun getNewTransitionReference(): Long {
-        return simulationStateAccessor.transitionIdIssuer.issueTransitionId()
+        return modelAccessor.transitionIdIssuer.issueTransitionId()
     }
 
     fun enabledByTokens(tokenSlice: TokenSlice): Boolean {
@@ -585,7 +627,7 @@ class StepExecutor(
     private val transitionSelector: TransitionSelector,
     private val transitionSolutionSelector: TransitionSolutionSelector,
     private val tokenStore: TokenStore,
-    private val simulationStateAccessor: SimulationStateAccessor,
+    private val modelAccessor: ModelAccessor,
 ) {
     private fun collectTransitions(filter: EnabledMode, sourceTransitions: Transitions? = null): Transitions {
         return (sourceTransitions ?: transitions).filter {
@@ -659,7 +701,7 @@ class StepExecutor(
     }
 
     private fun cleanGarbageTokens() {
-        simulationStateAccessor.outPlaces.forEach { endPlace ->
+        modelAccessor.outPlaces.forEach { endPlace ->
             tokenStore.tokensAt(endPlace).forEach { token ->
                 cleanTokenTransitionVisits(token)
             }

@@ -5,11 +5,8 @@ import dagger.Component
 import dagger.Module
 import dagger.Provides
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 
@@ -21,36 +18,36 @@ abstract class SimulationV2Module {
         fun simulationStateAccessor(
             ocNetStruct: OCNetStruct,
             simulationInput: SimulationInput
-        ): SimulationStateAccessor {
-            val simulationStateAccessor = SimulationStateAccessor(ocNetStruct, simulationInput)
-            simulationStateAccessor.init()
-            return simulationStateAccessor
+        ): ModelAccessor {
+            val modelAccessor = ModelAccessor(ocNetStruct, simulationInput)
+            modelAccessor.init()
+            return modelAccessor
         }
 
         @Provides
-        fun providesTokens(simulationStateAccessor: SimulationStateAccessor): TokenStore {
+        fun providesTokens(modelAccessor: ModelAccessor): TokenStore {
             return TokenStore(
                 internalSlice = SimpleTokenSlice(
-                    simulationStateAccessor.placesRef.ref.toMutableSet(),
+                    modelAccessor.placesRef.ref.toMutableSet(),
                 ),
-                simulationStateAccessor = simulationStateAccessor
+                modelAccessor = modelAccessor
             )
         }
 
         @Provides
         fun providesStepExecutor(
-            simulationStateAccessor: SimulationStateAccessor,
+            modelAccessor: ModelAccessor,
             interactor: SimulationV2Interactor,
             tokenStore: TokenStore,
         ): StepExecutor {
             return StepExecutor(
-                transitions = simulationStateAccessor.transitionsRef.ref,
-                places = simulationStateAccessor.placesRef.ref,
+                transitions = modelAccessor.transitionsRef.ref,
+                places = modelAccessor.placesRef.ref,
                 shiftTimeSelector = interactor,
                 transitionSelector = interactor,
                 transitionSolutionSelector = interactor,
                 tokenStore = tokenStore,
-                simulationStateAccessor
+                modelAccessor
             )
         }
     }

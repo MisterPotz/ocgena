@@ -10,7 +10,7 @@ import ru.misterpotz.ocgena.registries.*
 
 interface SimulatableOcNetInstance : OCNet {
     val ocNet: OCNet
-    val ocNetType: OcNetType
+    override val ocNetType: OcNetType
     val state : State
 
     override val objectTypeRegistry: ObjectTypeRegistry

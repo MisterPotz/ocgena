@@ -53,8 +53,8 @@ fun OCNetBuildingCodeBlock.installOnto(builder: OCNetBuilder.AtomDefinitionBlock
     builder.install(this)
 }
 
-fun buildOCNet(atomDefinitionBlock: OCNetBuildingCodeBlock): OCNetStruct {
-    val ocNet = OCNetBuilder().defineAtoms(atomDefinitionBlock)
+fun buildOCNet(ocNetType: OcNetType = OcNetType.AALST, atomDefinitionBlock: OCNetBuildingCodeBlock): OCNetStruct {
+    val ocNet = OCNetBuilder(ocNetType = ocNetType).defineAtoms(atomDefinitionBlock)
     val errors = OCNetChecker(ocNet).checkConsistency()
 
 

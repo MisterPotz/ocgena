@@ -3,6 +3,7 @@ package ru.misterpotz.ocgena.ocnet.utils
 import ru.misterpotz.expression.node.MathNode
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
@@ -39,10 +40,11 @@ val defaultObjType = ObjectType(defaultObjTypeId, defaultObjTypeId)
 typealias ArrowAtomId = PetriAtomId
 
 class OCNetBuilder(
-    private var useSpecialSymbolsInNaming: Boolean = true
+    private var useSpecialSymbolsInNaming: Boolean = true,
+    val ocNetType: OcNetType = OcNetType.AALST
 ) {
     fun defineAtoms(atomDefinitionBlock: AtomDefinitionBlock.() -> Unit): OCNetStruct {
-        val atomBlock = AtomDefinitionBlockImpl(useSpecialSymbolsInNaming)
+        val atomBlock = AtomDefinitionBlockImpl(useSpecialSymbolsInNaming, ocNetType = ocNetType)
         atomBlock.atomDefinitionBlock()
         val builderRegistry = atomBlock.builderRegistry
 
@@ -50,7 +52,8 @@ class OCNetBuilder(
             objectTypeRegistry = builderRegistry.objectTypeRegistry as ObjectTypeRegistryMap,
             placeTypeRegistry = builderRegistry.placeTypeRegistry,
             placeToObjectTypeRegistry = builderRegistry.placeObjectTypeRegistry,
-            petriAtomRegistry = builderRegistry.petriAtomRegistry as PetriAtomRegistryStruct
+            petriAtomRegistry = builderRegistry.petriAtomRegistry as PetriAtomRegistryStruct,
+            ocNetType = ocNetType
         )
     }
 
@@ -67,8 +70,8 @@ class OCNetBuilder(
         ): ArrowAtomId
     }
 
-    class AtomDefinitionBlockImpl(useSpecialSymbolsInNaming: Boolean) : AtomDefinitionBlock {
-        internal val builderRegistry = BuilderRegistry(useSpecialSymbolsInNaming)
+    class AtomDefinitionBlockImpl(useSpecialSymbolsInNaming: Boolean, ocNetType: OcNetType) : AtomDefinitionBlock {
+        internal val builderRegistry = BuilderRegistry(useSpecialSymbolsInNaming, ocNetType = ocNetType)
         override val String.t: String
             get() {
                 return this.t()

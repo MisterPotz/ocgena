@@ -1,7 +1,10 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
+import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
@@ -13,7 +16,7 @@ import ru.misterpotz.ocgena.registries.*
 import ru.misterpotz.ocgena.simulation.ObjectType
 import java.lang.IllegalArgumentException
 
-internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean) {
+internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean, ocNetType: OcNetType) {
     private val atomBuilders: MutableMap<PetriAtomId, OCNetBuilder.AtomBlock> = mutableMapOf()
 
     fun getPlace(petriAtomId: PetriAtomId): OCNetBuilder.PlaceBlock {
@@ -139,7 +142,19 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean) {
 
                 is OCNetBuilder.ArcBlockImpl -> {
                     when (it.type) {
-                        VAR -> VariableArc(id = it.id, mathExpression = it.innerMathExpr)
+                        VAR -> VariableArc(
+                            id = it.id,
+                            when (ocNetType) {
+                                OcNetType.AALST -> {
+                                    AalstVariableArcMeta
+                                }
+
+                                OcNetType.LOMAZOVA -> {
+                                    LomazovaVariableArcMeta(it.innerMathExpr)
+                                }
+                            }
+                        )
+
                         NORMAL -> NormalArc(id = it.id, multiplicity = it.multiplicity)
                     }
                 }

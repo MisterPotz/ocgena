@@ -229,11 +229,11 @@ class ConsistencyCheckPetriAtomVisitorDFS(
         }
 
         // case 2 - input place has input arcs
-        if (placeTypeRegistry[place.id] == PlaceType.INPUT && place.fromTransitions.isNotEmpty()) {
-            recInconsistency(
-                ConsistencyCheckError.InputPlaceHasInputArcs(place.id, copyAndAppendTraversalPath())
-            )
-        }
+//        if (placeTypeRegistry[place.id] == PlaceType.INPUT && place.fromTransitions.isNotEmpty()) {
+//            recInconsistency(
+//                ConsistencyCheckError.InputPlaceHasInputArcs(place.id, copyAndAppendTraversalPath())
+//            )
+//        }
         // case 3 - output place has output arcs
         if (placeTypeRegistry[place.id] == PlaceType.OUTPUT && place.toTransitions.isNotEmpty()) {
             recInconsistency(

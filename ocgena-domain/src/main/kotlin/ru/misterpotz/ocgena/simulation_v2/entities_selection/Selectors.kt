@@ -70,6 +70,6 @@ fun getSyncGroups(
     targetTransition: PetriAtomId
 ): List<SynchronizedArcGroup>? {
     return simulationInput
-        .transitions[targetTransition]!!
-        .synchronizedArcGroups
+        .transitions[targetTransition]
+        ?.synchronizedArcGroups
 }

@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.primitives.arcs
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.expression.facade.fullConvertM
@@ -9,38 +10,11 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 
-data class LomazovaVariableArcMeta(
-    val variableName: String?
-) : ArcMeta {
-    override fun toString(): String {
-        return "var. l. $variableName"
-    }
-
-    override fun shortString(): String {
-        return "vl${variableName ?: " "}"
-    }
-}
-
-object AalstVariableArcMeta : ArcMeta {
-    override fun toString(): String {
-        return "var. aalst"
-    }
-
-    override fun shortString(): String {
-        return "va "
-    }
-}
-
 @Serializable
-@SerialName("vararc")
-data class VariableArc(
-    override val id: String,
+data class LomazovaVariableArcMeta(
     @SerialName("math_exp")
     val mathExpression: String? = null,
-) : Arc() {
-    override val arcType: ArcType
-        get() = ArcType.VARIABLE
-
+) : ArcMeta {
     val mathNode: MathNode? by lazy(LazyThreadSafetyMode.NONE) {
         mathExpression?.fullConvertM
     }
@@ -52,9 +26,41 @@ data class VariableArc(
             }
         }?.first()
     }
-    override val arcMeta: ArcMeta by lazy(LazyThreadSafetyMode.NONE) {
-        LomazovaVariableArcMeta(variableName)
+
+    override fun toString(): String {
+        return "v/l [${mathExpression ?: ""}]"
     }
+
+    override fun shortString(): String {
+        return "vl${variableName ?: " "}"
+    }
+}
+
+@Serializable
+data object AalstVariableArcMeta : ArcMeta {
+    override fun toString(): String {
+        return "v/a"
+    }
+
+    override fun shortString(): String {
+        return "va "
+    }
+}
+
+@Serializable
+@SerialName("vararc")
+data class VariableArc(
+    override val id: String,
+    @Contextual
+    override val arcMeta: ArcMeta,
+) : Arc() {
+    override val arcType: ArcType
+        get() = ArcType.VARIABLE
+
+
+//    override val arcMeta: ArcMeta by lazy(LazyThreadSafetyMode.NONE) {
+//        LomazovaVariableArcMeta(variableName)
+//    }
 
     override fun isSameArcType(other: Arc): Boolean {
         return other is VariableArc

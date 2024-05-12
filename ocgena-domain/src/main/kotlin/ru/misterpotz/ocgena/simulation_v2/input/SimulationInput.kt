@@ -3,39 +3,38 @@ package ru.misterpotz.ocgena.simulation_v2.input
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.*
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.listSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 
 @Serializable
 data class SimulationInput(
-    val places: Map<PetriAtomId, PlaceSetting>,
-    @SerialName("oc_net_type") val ocNetType: OcNetType,
-    val transitions: Map<PetriAtomId, TransitionSetting>,
+    val places: Map<PetriAtomId, PlaceSetting> = mapOf(),
+    val transitions: Map<PetriAtomId, TransitionSetting> = mapOf(),
     @SerialName("default_transition_eft_lft")
-    val defaultEftLft: Interval?,
+    val defaultEftLft: Interval? = null,
     @SerialName("default_token_gen_interval")
-    val defaultTokenGenerationInterval: Interval?,
+    val defaultTokenGenerationInterval: Interval? = null,
     @SerialName("seed")
-    val randomSeed: Int?
+    val randomSeed: Int? = null
 )
 
 @Serializable
 data class PlaceSetting(
-    val type: String,
-    val label: String?,
-    @SerialName("initial_tokens_amount") val initialTokens: Int?,
-    @SerialName("generation_interval") val generationInterval: Interval?,
-    @SerialName("generate_tokens_target") val generateTokensTarget: Int?
+//    val type: String,
+    val label: String? = null,
+    @SerialName("initial_tokens_amount") val initialTokens: Int? = null,
+    @SerialName("generation_interval") val generationInterval: Interval? = null,
+    @SerialName("generate_tokens_target") val generateTokensTarget: Int? = null
 )
 
 @Serializable
 data class TransitionSetting(
     @SerialName("eft_lft")
-    val eftLft: Interval?,
-    val synchronizedArcGroups: List<SynchronizedArcGroup>?
+    val eftLft: Interval? = null,
+    val synchronizedArcGroups: List<SynchronizedArcGroup>? = null
 )
 
 @Serializable

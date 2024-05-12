@@ -32,13 +32,13 @@ interface TokenSlice {
 
 class TokenStore(
     private val internalSlice: SimpleTokenSlice,
-    private val simulationStateAccessor: SimulationStateAccessor,
+    private val modelAccessor: ModelAccessor,
     val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
 ) : TokenSlice by internalSlice {
     private val tokenCreators = TokenCreators()
 
     fun generateRealToken(typeId: ObjectTypeId): TokenWrapper {
-        val type = simulationStateAccessor.ocNet.objectTypeRegistry[typeId]
+        val type = modelAccessor.ocNet.objectTypeRegistry[typeId]
 
         return tokenCreators.create(type).also {
             issuedTokens[it.tokenId] = it
