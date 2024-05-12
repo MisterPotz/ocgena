@@ -1,6 +1,9 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
-import java.util.*
+import java.util.SortedSet
+import java.util.SortedMap
+
+import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
 typealias ReferencingLayer = Int
@@ -29,27 +32,24 @@ class Node<T>(
     val layer: Int,
     val data: T
 ) : Comparable<Node<T>> {
-    private val referenceCounter: MutableMap<ReferencingLayer, Int> = mutableMapOf()
+    private var referenceCounter : Int = 0
     val connections: SortedSet<Node<T>> = sortedSetOf()
 
     private var markedAsDeleted = false
 
-    val invalidAssociatedPaths: MutableList<HashSet<CombinationNodeWrapper<T>>> = mutableListOf()
+//    val invalidAssociatedPaths: MutableList<HashSet<CombinationNodeWrapper<T>>> = mutableListOf()
 
-    fun getReferenceCountToThisNode() =
-        if (referenceCounter.isEmpty()) 0 else referenceCounter.values.reduce { acc, i -> acc + i }
+    fun getReferenceCountToThisNode() = referenceCounter
 
     fun hasParents(): Boolean {
         return getReferenceCountToThisNode() > 0
     }
 
-    fun getReferenceCountFromLayer(layer: Int) = referenceCounter.getOrElse(layer) { 0 }
-
     fun addReferenceFrom(referencingLayer: Int) {
         require(this.layer != referencingLayer) {
             "tried to add reference from the same layer"
         }
-        referenceCounter[referencingLayer] = referenceCounter.getOrPut(referencingLayer) { 0 } + 1
+        referenceCounter++
     }
 
     fun isLeaf(): Boolean {
@@ -67,8 +67,7 @@ class Node<T>(
     }
 
     fun removeReferenceFrom(referencingLayer: Int) {
-        referenceCounter[referencingLayer] =
-            (referenceCounter.getOrPut(referencingLayer) { 0 } - 1).coerceAtLeast(0)
+        referenceCounter--
     }
 
     fun removeConnection(child: Node<T>) {
@@ -97,10 +96,6 @@ class Node<T>(
         connections.removeAll { it.isMarkedAsDeleted() }
     }
 
-    fun addInvalidAssociatedPath(set: HashSet<CombinationNodeWrapper<T>>) {
-        invalidAssociatedPaths.add(set)
-    }
-
     fun getChildIteratorFilterByLayers(
         filters: List<Int>,
         parentNode: Node<T>? = null
@@ -108,20 +103,7 @@ class Node<T>(
         return TransitiveAssociationsNodeIterator(parentNode, connections, filters)
     }
 
-    fun isConnectedToAllOtherLayers(totalLayersNumber: Int): Boolean {
-        // has connection from each upper layer
-        val hasConnectionsFromAllUppers = (0..<layer).all { it in referenceCounter.keys }
-
-        return hasConnectionsFromAllUppers && run {
-            val visitedLayerMask = MutableList(totalLayersNumber) { it <= layer }
-            for (connection in connections) {
-                visitedLayerMask[connection.layer] = true
-            }
-            ((layer + 1)..<totalLayersNumber).all { visitedLayerMask[it] }
-        }
-    }
-
-    class IteratorStack<T>() {
+    class IteratorStack<T> {
         private val list: MutableList<MutableIterator<CombinationNodeWrapper<T>>> = mutableListOf()
 
         fun isEmpty(): Boolean {
@@ -253,17 +235,6 @@ class Layer<T>(val level: Int) {
             throw IllegalStateException("during integrity no undeleted nodes should be left")
         }
     }
-
-    fun findAndMarkNodesToDelete(totalLayers: Int) {
-        for (lastLayer in 0..<totalLayers) {
-
-        }
-        for (node in nodes) {
-            if (!node.isConnectedToAllOtherLayers(totalLayers)) {
-                node.prepareToDeletion()
-            }
-        }
-    }
 }
 
 data class Path<T>(val nodes: MutableList<CombinationNodeWrapper<T>>) {
@@ -284,6 +255,8 @@ class LayeredGraph<T> {
     private val layers: SortedMap<Int, Layer<T>> = sortedMapOf()
 
     var nodeIdIssuer = 0L
+    val STUB: Byte = 0
+    val invalidAssociatedPaths : HashMap<Int, MutableList<HashSet<CombinationNodeWrapper<T>>>> = hashMapOf()
 
     fun getLayer(level: Int): Layer<T> {
         return layers[level]!!
@@ -312,7 +285,7 @@ class LayeredGraph<T> {
 
     fun iterateConnectedCombinations(vararg layersToInclude: Int): MutableIterator<List<Node<T>>> {
         val relevantLayers = layers.filterKeys { it in layersToInclude }.toSortedMap()
-        return ConnectionsCombinationIterator(relevantLayers)
+        return ConnectionsCombinationIterator(this, relevantLayers)
     }
 
     fun pruneClean() {
@@ -361,6 +334,7 @@ class LayeredGraph<T> {
     }
 
     class ConnectionsCombinationIterator<T>(
+        val graph: LayeredGraph<T>,
         private val layers: SortedMap<Int, Layer<T>>
     ) :
         MutableIterator<List<Node<T>>> {
@@ -381,22 +355,22 @@ class LayeredGraph<T> {
             }
         }
 
-        private fun <T> checkPathIsValid(path: MutableList<CombinationNodeWrapper<T>>): Boolean {
+        private fun checkPathIsValid(path: MutableList<CombinationNodeWrapper<T>>): Boolean {
             val pathToCheck = path.toHashSet()
             return path.none {
-                it.node.invalidAssociatedPaths.any { invalidPath ->
-                    invalidPath.intersect(pathToCheck).size == invalidPath.size
-                }
+                graph.invalidAssociatedPaths[pathToCheck.hashCode()]?.any { invalidPath ->
+                    pathToCheck.containsAll(invalidPath)
+                } ?: false
             }
         }
 
-        suspend fun <T> SequenceScope<List<CombinationNodeWrapper<T>>>.recursiveChildIteration(
+        suspend fun SequenceScope<List<CombinationNodeWrapper<T>>>.recursiveChildIteration(
             nodeWrapper: CombinationNodeWrapper<T>,
             path: Path<T>
         ) {
-            println("entering recursive with $nodeWrapper")
+//            println("entering recursive with $nodeWrapper")
             if (nodeWrapper.node.layer >= layersFilter.last() || path.nodes.size >= layersFilter.size) {
-                println("checking $path")
+//                println("checking $path")
                 if (path.nodes.size == layersFilter.size && checkPathIsValid(path.nodes)) {
                     // as we navigated to last required layer we can yield currently generated combination
                     yield(path.copyStack())
@@ -406,9 +380,33 @@ class LayeredGraph<T> {
 
             nodeWrapper.node.getChildIteratorFilterByLayers(layersFilter, nodeWrapper.parent).forEach {
                 path.push(it)
-                println("pushing onto stack $it")
+//                println("pushing onto stack $it")
                 recursiveChildIteration(it, path)
                 path.pop()
+            }
+        }
+
+        private fun MutableList<HashSet<CombinationNodeWrapper<T>>>.optimizingInsertInvalidCombination(
+            invalidCombination : HashSet<CombinationNodeWrapper<T>>
+        ) {
+            val combSize = invalidCombination.size
+            val insertionIndex = indexOfFirst { it.size >= combSize }
+            for (i in 0..insertionIndex) {
+                val comb = get(i)
+                if (invalidCombination.containsAll(comb)) {
+                    return
+                }
+            }
+            for (i in lastIndex downTo insertionIndex.coerceAtLeast(0)) {
+                val comb = get(i)
+                if (comb.containsAll(invalidCombination)) {
+                    removeAt(i)
+                }
+            }
+            if (insertionIndex > lastIndex || insertionIndex == -1) {
+                add(invalidCombination)
+            } else {
+                add(insertionIndex, invalidCombination)
             }
         }
 
@@ -446,9 +444,9 @@ class LayeredGraph<T> {
                 else -> {
                     val invalidPathAssociation = lastGaveOutValue.map { it }.toHashSet()
 
-                    for (node in lastGaveOutValue) {
-                        node.node.addInvalidAssociatedPath(invalidPathAssociation)
-                    }
+                    graph.invalidAssociatedPaths.getOrPut(invalidPathAssociation.hashCode()) {
+                        mutableListOf()
+                    }.optimizingInsertInvalidCombination(invalidPathAssociation)
                 }
             }
         }

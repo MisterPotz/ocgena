@@ -274,7 +274,6 @@ class LayeredGraphTest {
             graph.iterateConnectedCombinations(0, 1, 2, 3).asSequence().toList()
         )
 
-        graph.printByLayer()
         Assertions.assertEquals(listOf(nodes.by(1), nodes.by(5)), graph.getLayer(0).nodes.toMutableList())
         Assertions.assertEquals(listOf(nodes.by(2)), graph.getLayer(1).nodes.toMutableList())
         Assertions.assertEquals(listOf(nodes.by(3)), graph.getLayer(2).nodes.toMutableList())
