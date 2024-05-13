@@ -19,10 +19,6 @@ class TokenWrapper(
     val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
     val allParticipatedTransitionEntries: HashSet<Long> = hashSetOf()
 
-    var tempIndicesBuffer: MutableMap<TransitionWrapper, SortedSet<Long>>? = null
-    val buffer: MutableMap<TransitionWrapper, SortedSet<Long>>
-        get() = tempIndicesBuffer!!
-
     fun hasSharedTransitionEntry(otherToken: TokenWrapper): Boolean {
         val haveSharedTransition = visitedTransitions.any { otherToken.visitedTransitions.contains(it) }
         if (!haveSharedTransition) return false
@@ -44,16 +40,6 @@ class TokenWrapper(
         return haveSharedTransitionEntry
     }
 
-    fun cleanBuffer() {
-        tempIndicesBuffer?.clear()
-        tempIndicesBuffer = null
-    }
-
-    fun prepareBuffer() {
-        cleanBuffer()
-        tempIndicesBuffer = mutableMapOf()
-    }
-
     fun recordTransitionVisit(transitionIndex: Long, transitionWrapper: TransitionWrapper) {
         _visited.add(transitionWrapper)
         _participatedTransitionIndices.getOrPut(transitionWrapper) {
@@ -61,8 +47,6 @@ class TokenWrapper(
         }.add(transitionIndex)
         allParticipatedTransitionEntries.add(transitionIndex)
     }
-
-    data class TransitionAssociationEntry(val index: Long, val transition: TransitionWrapper)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -78,5 +62,9 @@ class TokenWrapper(
     override fun hashCode(): Int {
         var result = tokenId.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return tokenId
     }
 }

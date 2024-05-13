@@ -9,36 +9,45 @@ import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiCon
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.utils.step
 
+typealias SolutionTokens = Map<PlaceWrapper, List<TokenWrapper>>
+
+typealias IndependentConditionsSolution = Pair<IndependentMultiConditionGroup, Map<PlaceWrapper, List<TokenWrapper>>>
+
 class TransitionArcSolver(
     val transition: TransitionWrapper,
 ) {
 
-    fun getSolutions(
+    fun getSolutionFinderIterable(
         tokenSlice: TokenSlice,
         shuffler: Shuffler
-    ): Map<PlaceWrapper, List<TokenWrapper>> {
-        // need to consider the conditions
-        // filtering it is
+    ): Iterable<SolutionTokens>? {
+        val filteredTokenSlice = preCheckHeuristicFiltering(tokenSlice) ?: return null
 
-        val preliminaryDumbCheck = transition.inputArcs.all { arc ->
-            arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
+        val combinator = createGroupSolutionCombinator(
+            filteredTokenSlice,
+            shuffler,
+            transition
+        )
+        return IteratorMapper<List<IndependentConditionsSolution>, SolutionTokens>(combinator) { groupSolutionCombination ->
+            groupSolutionCombination
+                .fold(sortedMapOf()) { acc: MutableMap<PlaceWrapper, List<TokenWrapper>>,
+                                      (group, placeToTokens) ->
+                    for ((place, token) in placeToTokens) {
+                        require(place !in acc) {
+                            "at this stage there should be totally no intersections between places of solutions"
+                        }
+                        acc[place] = token
+                    }
+                    acc
+                }
         }
+    }
 
-        if (!preliminaryDumbCheck) {
-            return emptyMap()
-        }
-
-        // visited all required sync transitions
-        val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
-            token.visitedTransitions.containsAll(transition.inputArcBy(place.placeId).syncTransitions)
-        }
-
-        val secondPreliminaryDumbCheck = transition.inputArcs.all { arc ->
-            arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
-        }
-        if (!secondPreliminaryDumbCheck) {
-            return emptyMap()
-        }
+    fun findAnyExistingSolution(
+        tokenSlice: TokenSlice,
+        shuffler: Shuffler
+    ): SolutionTokens? {
+        val filteredTokenSlice = preCheckHeuristicFiltering(tokenSlice) ?: return null
 
         // finding solution for each independent arc group
         val foundCombinations = transition.independentMultiArcConditions
@@ -80,7 +89,7 @@ class TransitionArcSolver(
                 acc
             }
 
-        if (foundCombinations.contains(null)) return emptyMap()
+        if (foundCombinations.contains(null)) return null
 
         return foundCombinations.filterNotNull()
             .fold(mutableMapOf()) { acc: MutableMap<PlaceWrapper, List<TokenWrapper>>,
@@ -94,6 +103,91 @@ class TransitionArcSolver(
                 acc
             }
     }
+
+
+    private fun preCheckHeuristicFiltering(tokenSlice: TokenSlice): TokenSlice? {
+        // need to consider the conditions
+        // filtering it is
+
+        val preliminaryDumbCheck = transition.inputArcs.all { arc ->
+            arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
+        }
+
+        if (!preliminaryDumbCheck) {
+            return null
+        }
+
+        // visited all required sync transitions
+        val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
+            token.visitedTransitions.containsAll(transition.inputArcBy(place.placeId).syncTransitions)
+        }
+
+        val secondPreliminaryDumbCheck = transition.inputArcs.all { arc ->
+            arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
+        }
+        if (!secondPreliminaryDumbCheck) {
+            return null
+        }
+        return filteredTokenSlice
+    }
+
+    private fun getIndependentMultiArcConditionSolutionIterator(
+        filteredTokenSlice: TokenSlice,
+        shuffler: Shuffler,
+        independentMultiConditionGroup: IndependentMultiConditionGroup
+    ): Iterator<IndependentConditionsSolution> = iterator {
+        val sortedArcs = independentMultiConditionGroup.conditionArcSortedByStrongestDescending()
+
+        val (placeToIndex, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
+            filteredTokenSlice,
+            shuffler = shuffler
+        )
+
+        while (combinationsIterator.hasNext()) {
+            val hypotheticCombination = combinationsIterator.next()
+
+            val combinationIsGood =
+                checkCombination(
+                    filteredTokenSlice,
+                    independentMultiConditionGroup,
+                    sortedArcs,
+                    placeToIndex,
+                    hypotheticCombination
+                )
+
+            if (combinationIsGood) {
+                yield(
+                    Pair(
+                        independentMultiConditionGroup,
+                        indicesToTokenLists(hypotheticCombination, placeToIndex, filteredTokenSlice)
+                    )
+                )
+            }
+        }
+    }
+
+    private fun createGroupSolutionCombinator(
+        filteredTokenSlice: TokenSlice,
+        shuffler: Shuffler,
+        transition: TransitionWrapper,
+    ): Iterable<List<IndependentConditionsSolution>> {
+        val independentMultiConditionGroups = transition.independentMultiArcConditions
+
+        val solutionSearchIterables = independentMultiConditionGroups.map {
+            object : Iterable<IndependentConditionsSolution> {
+                override fun iterator(): Iterator<IndependentConditionsSolution> {
+                    return getIndependentMultiArcConditionSolutionIterator(
+                        filteredTokenSlice,
+                        shuffler,
+                        it
+                    )
+                }
+            }
+        }
+
+        return IteratorsCombinator(solutionSearchIterables)
+    }
+
 
     private fun indicesToTokenLists(
         indices: List<List<Int>>,
@@ -139,8 +233,8 @@ class TransitionArcSolver(
 
         val allMultiArcConditionsSatisfied = step(
             """
-                Now we know that there are enough tokens at each place,
-                that satisfy only condition of the arc from one place.
+                Now we know that there are enough tokens at each place
+                that satisfy condition only of the respective arc from one place.
                 
                 We need to verify that all conditions in $independentMultiConditionGroup
                 are satisfied with this token combination.
@@ -148,7 +242,6 @@ class TransitionArcSolver(
         ) {
             // cross-place by condition check,
             // for each group of intersecting conditions
-
             independentMultiConditionGroup.conditions.all { condition ->
                 checkConditionIsSatisfied(
                     condition,
@@ -180,7 +273,7 @@ class TransitionArcSolver(
 
         placeIterator.forEach { place ->
             val (_, entriesHash) = placesToTokensAndCommonEntires[place]!!
-            common.intersect(entriesHash)
+            common.retainAll(entriesHash)
             common.filterContainedInAny(syncTransition)
 
             if (common.isEmpty()) {
@@ -231,5 +324,61 @@ class TransitionArcSolver(
 
     private fun HashSet<Long>.retailAllShared(tokenWrapper: TokenWrapper) {
         this.retainAll(tokenWrapper.allParticipatedTransitionEntries)
+    }
+
+    class IteratorMapper<T, R>(
+        val iterable: Iterable<T>, val mapper: (T) -> R
+    ) : Iterable<R> {
+        override fun iterator(): Iterator<R> {
+            val innerIterator = iterable.iterator()
+
+            return iterator {
+                while (innerIterator.hasNext()) {
+                    val nextValue = innerIterator.next()
+                    val newValue = mapper(nextValue)
+                    yield(newValue)
+                }
+            }
+        }
+    }
+
+    class IteratorsCombinator<T>(
+        private val iterables: List<Iterable<T>>
+    ) : Iterable<List<T>> {
+        private suspend fun SequenceScope<List<T>>.generateCombinationsDepthFirst(
+            level: Int,
+            levelIterables: List<Iterable<T>>,
+            current: MutableList<T?>
+        ) {
+            if (level == iterables.size) {
+                yield(current.mapNotNull { it })
+                return
+            }
+            val thisLevelIterable = levelIterables[level].iterator()
+
+            for (i in thisLevelIterable) {
+                current[level] = i
+                generateCombinationsDepthFirst(level + 1, levelIterables, current)
+            }
+        }
+
+        override fun iterator(): Iterator<List<T>> {
+            val dumbIterator = iterator {
+                generateCombinationsDepthFirst(
+                    0,
+                    iterables,
+                    MutableList(iterables.size) { null }
+                )
+            }
+            return object : Iterator<List<T>> {
+                override fun hasNext(): Boolean {
+                    return dumbIterator.hasNext()
+                }
+
+                override fun next(): List<T> {
+                    return dumbIterator.next()
+                }
+            }
+        }
     }
 }

@@ -23,6 +23,7 @@ interface TokenSlice {
     fun plusInPlace(tokenSlice: TokenSlice)
     fun filterTokensInPlaces(places: Places, predicate: (TokenWrapper, PlaceWrapper) -> Boolean): TokenSlice
     fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>>
+    fun print()
 }
 
 class TokenStore(
@@ -92,11 +93,33 @@ data class SimpleTokenSlice(
             }
         }
 
+    fun tokenBy(id: String) : TokenWrapper {
+        return tokensMap.values.find { it.find { it.tokenId == id } != null }!!.find { it.tokenId == id }!!
+    }
+
     override fun withPlaceFilter(places: Places): TokenSlice {
         return copy(internalRelatedPlaces = internalRelatedPlaces.intersect(places).toMutableSet())
     }
 
-    override fun byPlaceIterator() : Iterator<Pair<PlaceWrapper, SortedTokens>> {
+    override fun print() {
+        buildString {
+            appendLine("tokensmap:")
+
+            appendLine(
+                buildString {
+                    for ((place, tokens) in tokensMap) {
+                        appendLine(
+                            "${place.placeId} (size:${tokens.size}) ->  ${tokens.joinToString(",", prefix = "[", postfix = "]")}"
+                        )
+                    }
+                }.prependIndent()
+            )
+        }.let {
+            println(it)
+        }
+    }
+
+    override fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>> {
         return object : Iterator<Pair<PlaceWrapper, SortedTokens>> {
             val mapIterator = tokensMap.iterator()
             override fun hasNext(): Boolean {
@@ -109,6 +132,7 @@ data class SimpleTokenSlice(
             }
         }
     }
+
     override fun filterTokensInPlaces(
         places: Places,
         predicate: (TokenWrapper, PlaceWrapper) -> Boolean
@@ -198,4 +222,30 @@ data class SimpleTokenSlice(
             setAmount(place, amountAt(place) + tokenSlice.amountAt(place))
         }
     }
+
+
+    companion object {
+        fun build(block: ConstructionBlock.() -> Unit): SimpleTokenSlice {
+            val mutableMap = mutableMapOf<PlaceWrapper, MutableSortedTokens>()
+
+            val constructionBlock = object : ConstructionBlock {
+                override fun addTokens(placeWrapper: PlaceWrapper, tokens: Collection<TokenWrapper>) {
+                    mutableMap.getOrPut(placeWrapper) {
+                        sortedSetOf()
+                    }.addAll(tokens)
+                }
+            }
+            constructionBlock.block()
+            return SimpleTokenSlice(
+                internalRelatedPlaces = mutableMap.keys.toMutableSet(),
+                tokensMap = mutableMap,
+                amountsMap = mutableMap.mapValues { it.value.size }
+                    .let { mutableMapOf<PlaceWrapper, Int>().apply { putAll(it) } }
+            )
+        }
+    }
+}
+
+interface ConstructionBlock {
+    fun addTokens(placeWrapper: PlaceWrapper, tokens: Collection<TokenWrapper>)
 }

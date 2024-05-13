@@ -25,6 +25,16 @@ class TransitionWrapper(
         return comparator.compare(this, other)
     }
 
+    fun printIndependentArcGroups() {
+        buildString {
+            appendLine("independent arc groups:")
+            buildString {
+                for (group in independentMultiArcConditions) {
+                    appendLine(group)
+                }
+            }.prependIndent().let { append(it) }
+        }.let { println(it) }
+    }
     val transitionHistory = TransitionHistory()
 
     override val id: String
@@ -67,12 +77,14 @@ class TransitionWrapper(
         val groups = mutableSetOf<IndependentMultiConditionGroup>()
 
         for (i in inputArcs) {
-            groups.add(
-                IndependentMultiConditionGroup(
-                    conditions = i.allAssociatedConditions,
-                    transition = this
+            if (i.underConditions.isNotEmpty()) {
+                groups.add(
+                    IndependentMultiConditionGroup(
+                        conditions = i.allAssociatedConditions,
+                        transition = this
+                    )
                 )
-            )
+            }
         }
 
         groups.sorted()
@@ -190,6 +202,7 @@ class TransitionWrapper(
         }
     }
 
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -201,6 +214,10 @@ class TransitionWrapper(
 
     override fun hashCode(): Int {
         return transitionId.hashCode()
+    }
+
+    override fun toString(): String {
+        return "t($id)"
     }
 
     data class AffectedTransition(

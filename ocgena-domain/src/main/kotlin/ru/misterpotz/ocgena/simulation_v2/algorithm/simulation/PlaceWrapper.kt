@@ -45,4 +45,8 @@ class PlaceWrapper(
         var result = placeId.hashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "PlaceWrapper($placeId)"
+    }
 }

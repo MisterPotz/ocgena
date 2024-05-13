@@ -41,10 +41,21 @@ class MultiArcCondition(
         return true
     }
 
+
     override fun hashCode(): Int {
         var result = syncTarget.hashCode()
         result = 31 * result + index
         result = 31 * result + transitionWrapper.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "MultiArcCondition(${
+            fromPlaces.joinToString(
+                ",",
+                prefix = "[",
+                postfix = "]"
+            )
+        }, syncTarget=$syncTarget, transition=${transitionWrapper.id})"
     }
 }

@@ -11,15 +11,13 @@ import ru.misterpotz.ocgena.testing.buildOCNet
 
 class TransitionWrapperTest {
 
-    val leftSync = "leftsync"
-    val middleSync = "middlesync"
-    val rightSync = "rightsync"
+    private val leftSync = "leftsync"
+    private val middleSync = "middlesync"
+    private val rightSync = "rightsync"
 
-
-    fun ocnet(): OCNetStruct {
+    private fun ocnet(): OCNetStruct {
         return buildOCNet {
             "i1".p { input; }
-//            "i2".p { input; }
             "i3".p { input }
 
             val leftSync = leftSync.t()
@@ -27,8 +25,7 @@ class TransitionWrapperTest {
             val rightSync = rightSync.t()
 
             "i1".arc(leftSync.t()) { multiplicity = 2 }
-//            "i2".arc(leftSync.t())
-//            "i2".arc(middleSync.t())
+
             "i1".arc(middleSync)
             "i3".arc(middleSync.t())
             "i3".arc(rightSync.t())
@@ -36,11 +33,6 @@ class TransitionWrapperTest {
             middleSync.arc("i1")
             middleSync.arc("i3")
 
-//            "middlesynced".p()
-//                .arc("synct1")
-//                .arc("synct2")
-
-//            "synct1".arc("p1".p())
             leftSync.arc("p1".p)
             leftSync.arc("p3".p)
             middleSync.arc("p2".p { objectTypeId = "2" })

@@ -158,4 +158,8 @@ class InputArcWrapper(
         result = 31 * result + transition.hashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "inparc(${fromPlace.id}-${transition.id},[${underConditions.joinToString(",") { it.syncTarget.id }}])"
+    }
 }

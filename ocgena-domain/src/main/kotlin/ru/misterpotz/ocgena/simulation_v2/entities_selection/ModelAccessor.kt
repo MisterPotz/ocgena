@@ -21,6 +21,9 @@ class ModelAccessor(
     }
 
     fun transitionBy(id: PetriAtomId) = transitionsRef.ref.map[id]!!
+    fun place(id: PetriAtomId) = placesRef.ref.map[id]!!
+
+    fun defaultObjectType() = ocNet.objectTypeRegistry.types.first()
 
     fun init() {
         transitionsRef._ref = ocNet.transitionsRegistry.map {

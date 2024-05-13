@@ -91,4 +91,8 @@ class IndependentMultiConditionGroup(
         result = 31 * result + transition.hashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "$transition (syncs: ${conditions.map { it.syncTarget }.joinToString(",")}) [${relatedInputArcs.joinToString(",")}]"
+    }
 }
