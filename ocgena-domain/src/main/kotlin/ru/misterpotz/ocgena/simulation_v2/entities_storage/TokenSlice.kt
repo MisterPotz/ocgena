@@ -1,24 +1,13 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
-import net.bytebuddy.TypeCache.Sort
-import net.bytebuddy.build.HashCodeAndEqualsPlugin.Sorted
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
+import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
+import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.utils.PatternIdCreator
 import ru.misterpotz.ocgena.utils.buildMutableMap
 import java.util.SortedSet
-
-//class SimulationV2State {
-//    val transitions: Transitions
-//    val places : Places
-//
-//    companion object {
-//        fun create(ocNetStruct: OCNetStruct): SimulationV2State {
-//
-//        }
-//    }
-//}
 
 interface TokenSlice {
     val relatedPlaces: Set<PlaceWrapper>
@@ -128,8 +117,8 @@ data class SimpleTokenSlice(
         val tokensMap: MutableMap<PlaceWrapper, MutableSortedTokens> = buildMutableMap {
             for (place in filteredRelatedPlaces) {
                 val tokens = tokensAt(place).toMutableSet()
-                put(place, sortedSetOf<TokenWrapper?>().apply {
-                    tokens.filter { token -> predicate(token, place) })
+                put(place, sortedSetOf<TokenWrapper>().apply {
+                    addAll(tokens.filter { token -> predicate(token, place) })
                 })
             }
         }

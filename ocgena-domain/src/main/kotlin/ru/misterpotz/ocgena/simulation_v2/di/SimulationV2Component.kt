@@ -6,6 +6,7 @@ import dagger.Module
 import dagger.Provides
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
+import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput

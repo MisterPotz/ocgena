@@ -18,7 +18,7 @@ class RandomIteratorTest {
     fun producesUniqueKeys(size: Int) {
         val randomIterator =
             RandomIterator(
-                size = size,
+                amountToGenerate = size,
                 rangeToSelectFrom = 0 until size,
                 randomizer = ByRandomRandomizer(random = Random(42))
             )

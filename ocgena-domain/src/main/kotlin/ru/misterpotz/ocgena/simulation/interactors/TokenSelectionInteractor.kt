@@ -8,14 +8,11 @@ import ru.misterpotz.ocgena.simulation.binding.TokenSet
 import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.utils.ByRandomRandomizer
-import ru.misterpotz.ocgena.utils.NoOpIteratorRandomizer
 import ru.misterpotz.ocgena.utils.RandomIterator
 import ru.misterpotz.ocgena.utils.Randomizer
 import simulation.random.RandomSource
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Qualifier
-import kotlin.random.Random
 
 interface TokenSelectionInteractor {
     fun selectAndInitializeTokensFromPlace(
@@ -60,7 +57,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
         val randomizer = createRandomizerOrNoOp()
         val objectTypeId = placeToObjectTypeRegistry[petriAtomId]!!
         val randomIterator = RandomIterator(
-            size = amount,
+            amountToGenerate = amount,
             randomizer = randomizer,
             rangeToSelectFrom = 0 until tokensAtPlace
         )
@@ -100,7 +97,7 @@ class TokenSelectionInteractorImpl @Inject constructor(
         val randomizer = createRandomizerOrNoOp()
 
         val randomIterator = RandomIterator(
-            size = selectionAmount.coerceAtMost(tokenSet.size),
+            amountToGenerate = selectionAmount.coerceAtMost(tokenSet.size),
             randomizer = randomizer,
             rangeToSelectFrom = 0 until tokenSet.size
         )
