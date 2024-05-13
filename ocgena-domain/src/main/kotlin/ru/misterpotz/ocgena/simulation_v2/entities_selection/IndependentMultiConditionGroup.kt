@@ -1,26 +1,26 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_selection
 
-import ru.misterpotz.ocgena.simulation_v2.entities.MultiArcCondition
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.PlaceWrapper
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.RandomLeveledCombinationIterator
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
 import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.MultiArcCondition
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
-import ru.misterpotz.ocgena.utils.Randomizer
-import java.util.SortedSet
+import java.util.*
 
 fun List<InputArcWrapper>.makePreplaceTokenRequrements(): List<Int> {
     return map { it.consumptionSpec.tokenRequirement() }
 }
 
-fun List<InputArcWrapper>.orderedMapToPreplaces(): List<PlaceWrapper> {
+fun List<InputArcWrapper>.mapToPreplaces(): List<PlaceWrapper> {
     return map { it.fromPlace }
 }
 
-class IntersectingMultiArcConditions(
+class IndependentMultiConditionGroup(
     val conditions: SortedSet<MultiArcCondition>,
     val transition: TransitionWrapper,
-) : Comparable<IntersectingMultiArcConditions> {
+) : Comparable<IndependentMultiConditionGroup> {
     val relatedInputArcs by lazy(LazyThreadSafetyMode.NONE) {
         conditions.flatMap { it.arcs.ref }.toSet()
     }
@@ -33,29 +33,38 @@ class IntersectingMultiArcConditions(
         return relatedInputArcs.sortedWith(InputArcWrapper.ByConditionSizeByArcSpecByTransitionEntries)
     }
 
+    data class Iteration(
+        val placeToIndex: Map<PlaceWrapper, Int>,
+        val randomLeveledCombinationIterator: RandomLeveledCombinationIterator
+    )
+
     fun makeRandomCombinationIterator(
         tokenSlice: TokenSlice,
-        randomizer: Randomizer
-    ): RandomLeveledCombinationIterator {
+        shuffler: Shuffler
+    ): Iteration {
         val sortedArcs = conditionArcSortedByStrongestDescending()
         val tokenRequirements = sortedArcs.makePreplaceTokenRequrements()
-        val orderedPreplaces = sortedArcs.orderedMapToPreplaces()
+        val orderedPreplaces = sortedArcs.mapToPreplaces()
 
         val randomLeveledCombinationIterator = RandomLeveledCombinationIterator(
             orderedPreplaces.map { it.tokenRangeAt(tokenSlice) },
             tokenRequirements,
-            randomizer,
+            shuffler,
             mode = RandomLeveledCombinationIterator.Mode.BFS,
         )
-        return randomLeveledCombinationIterator
+        return Iteration(
+            orderedPreplaces.withIndex()
+                .associateBy({ (_, placeWrapper) -> placeWrapper }, { (index, _) -> index }),
+            randomLeveledCombinationIterator
+        )
     }
 
-    override fun compareTo(other: IntersectingMultiArcConditions): Int {
+    override fun compareTo(other: IndependentMultiConditionGroup): Int {
         return comparator.compare(this, other)
     }
 
     companion object {
-        val comparator = compareBy<IntersectingMultiArcConditions>(
+        val comparator = compareBy<IndependentMultiConditionGroup>(
             {
                 it.conditions.max()
             },
@@ -69,7 +78,7 @@ class IntersectingMultiArcConditions(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as IntersectingMultiArcConditions
+        other as IndependentMultiConditionGroup
 
         if (conditions != other.conditions) return false
         if (transition != other.transition) return false

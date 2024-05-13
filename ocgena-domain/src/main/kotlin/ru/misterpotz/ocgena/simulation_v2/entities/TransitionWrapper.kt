@@ -50,7 +50,7 @@ class TransitionWrapper(
         getTransitionsWithSharedPreplacesFor(modelAccessor.ocNet, transitionId).sortedBy { it }
     }
     val dependentTransitionsIds by lazy {
-        getDependentTransitions(modelAccessor.ocNet, transitionId).sortedBy { it }
+        getDependentTransitions(modelAccessor.ocNet, transitionId).sorted()
     }
 
     fun inputArcBy(placeId: PetriAtomId): InputArcWrapper {
@@ -63,12 +63,12 @@ class TransitionWrapper(
         }
     }
 
-    val intersectingMultiArcConditions: List<IntersectingMultiArcConditions> by lazy {
-        val groups = mutableSetOf<IntersectingMultiArcConditions>()
+    val independentMultiArcConditions: List<IndependentMultiConditionGroup> by lazy {
+        val groups = mutableSetOf<IndependentMultiConditionGroup>()
 
         for (i in inputArcs) {
             groups.add(
-                IntersectingMultiArcConditions(
+                IndependentMultiConditionGroup(
                     conditions = i.allAssociatedConditions,
                     transition = this
                 )
@@ -157,7 +157,7 @@ class TransitionWrapper(
     }
 
     val arcSolver by lazy {
-        arcLogicsFactory.getArcSolver(modelAccessor.ocNet, prePlaces, toTransition = ths)
+        arcLogicsFactory.getArcSolver(modelAccessor.ocNet, prePlaces, toTransition = this)
     }
 
     fun getNewTransitionReference(): Long {

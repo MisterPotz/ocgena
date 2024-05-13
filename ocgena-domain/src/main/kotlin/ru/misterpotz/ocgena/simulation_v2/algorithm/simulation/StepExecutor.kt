@@ -6,11 +6,8 @@ import ru.misterpotz.ocgena.simulation_v2.entities_selection.*
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
-import ru.misterpotz.ocgena.simulation_v2.utils.Identifiable
+import ru.misterpotz.ocgena.simulation_v2.utils.sstep
 import java.util.*
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
 
 interface ShiftTimeSelector {
     suspend fun get(timeRange: LongRange): Long
@@ -108,22 +105,12 @@ class StepExecutor(
         }.wrap()
     }
 
-    @OptIn(ExperimentalContracts::class)
-    private suspend inline fun <T> step(description: String, crossinline action: suspend () -> T): T {
-        contract {
-            callsInPlace(action, InvocationKind.EXACTLY_ONCE)
-        }
-        return run {
-            action()
-        }
-    }
-
     suspend fun execute() {
-        val simulationFinish = step("try finding shift time and increment clocks") {
+        val simulationFinish = sstep("try finding shift time and increment clocks") {
             // определяем какие transition enabled
             val enabledByMarkign = collectTransitions(EnabledMode.ENABLED_BY_MARKING)
 
-            val shiftTimes = determineShiftTimes(enabledByMarkign) ?: return@step true
+            val shiftTimes = determineShiftTimes(enabledByMarkign) ?: return@sstep true
 
             val shiftTime = selectShiftTime(shiftTimes)
             enabledByMarkign.forEach { t -> t.timer.incrementCounter(shiftTime) }
@@ -131,20 +118,20 @@ class StepExecutor(
         }
         if (simulationFinish) return
 
-        step("execute transition if possible") {
+        sstep("execute transition if possible") {
             val fireableTransitions = collectTransitions(EnabledMode.CAN_FIRE)
             val selectedTransition = selectTransitionToFire(fireableTransitions)
 
             fireTransition(selectedTransition)
         }
 
-        step("reset clocks of transitions that became disabled") {
+        sstep("reset clocks of transitions that became disabled") {
             collectTransitions(EnabledMode.DISABLED_BY_MARKING).forEach { t ->
                 t.timer.resetCounter()
             }
         }
 
-        step("clean tokens whose participation is finished") {
+        sstep("clean tokens whose participation is finished") {
             cleanGarbageTokens()
         }
     }

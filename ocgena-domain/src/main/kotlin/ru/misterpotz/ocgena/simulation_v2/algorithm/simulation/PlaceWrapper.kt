@@ -3,6 +3,7 @@ package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.utils.Identifiable
 
@@ -23,6 +24,10 @@ class PlaceWrapper(
 
     fun tokenRangeAt(tokenSlice: TokenSlice): IntRange {
         return tokenSlice.tokensAt(this).indices
+    }
+
+    fun getTokens(tokenSlice: TokenSlice): SortedTokens {
+        return tokenSlice.tokensAt(this)
     }
 
     override fun equals(other: Any?): Boolean {

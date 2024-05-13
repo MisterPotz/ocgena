@@ -1,85 +1,93 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
-import ru.misterpotz.ocgena.utils.RandomIterator
-import ru.misterpotz.ocgena.utils.Randomizer
+import kotlin.random.Random
 
-class CombinationIterator(
+class CombinationIterable(
     private val indicesToVisit: List<Int>,
     private val combinationSize: Int,
-) : MutableIterator<List<Int>> {
+) : MutableIterable<List<Int>> {
     private val discardedCombinations: MutableSet<Set<Int>> = mutableSetOf()
-
-    private fun makeIterators() = (0..<combinationSize).map { indicesToVisit.iterator() }
-
-    fun discardCombination(combination: Set<Int>) {
-        discardedCombinations.add(combination)
-    }
 
     private var lastCombination: List<Int>? = null
 
     private suspend fun SequenceScope<List<Int>>.generateCombination(
         level: Int,
-        iterators: List<Iterator<Int>>,
+        startIndex: Int,
         current: MutableList<Int>
     ) {
         if (level == combinationSize) {
-            yield(current)
+            yield(current.toList())
             return
         }
-        current[level] = iterators[level].next()
-
-        for (i in indicesToVisit.indices) {
-            generateCombination(level + 1, iterators, current)
+        for (i in startIndex..indicesToVisit.lastIndex) {
+            current[level] = indicesToVisit[i]
+            generateCombination(level + 1, i + 1, current)
         }
     }
 
-    private val dumbIterator = iterator {
-        generateCombination(0, makeIterators(), MutableList(combinationSize) { 0 })
+    private fun makeDumbIteraton() = iterator {
+        generateCombination(0, 0, MutableList(combinationSize) { 0 })
     }
 
-    override fun hasNext(): Boolean {
-        return dumbIterator.hasNext()
-    }
+    override fun iterator(): MutableIterator<List<Int>> {
+        return object : MutableIterator<List<Int>> {
+            val iterator = makeDumbIteraton()
 
-    override fun next(): List<Int> {
-        return dumbIterator.next()
-    }
+            override fun hasNext(): Boolean {
+                return iterator.hasNext()
+            }
 
-    override fun remove() {
-        lastCombination?.let { lastCombination ->
-            discardedCombinations.add(lastCombination.toSet())
+            override fun next(): List<Int> {
+                return iterator.next()
+            }
+
+            override fun remove() {
+                lastCombination?.let { lastCombination ->
+                    discardedCombinations.add(lastCombination.toSet())
+                }
+            }
         }
     }
 }
 
+interface Shuffler {
+    fun makeShuffled(intRange: IntRange): List<Int>
+}
+
+class NormalShuffler(val random: Random) : Shuffler {
+    override fun makeShuffled(intRange: IntRange): List<Int> {
+        return intRange.shuffled(random)
+    }
+}
+
 class RandomLeveledCombinationIterator(
-    private val ranges: List<IntRange>,
+    ranges: List<IntRange>,
     private val nodesAtLevel: List<Int>,
-    private val randomizer: Randomizer,
-    private val mode : Mode,
+    private val shuffler: Shuffler,
+    private val mode: Mode,
 ) :
     Iterator<List<List<Int>>> {
     enum class Mode { BFS, DFS }
-    private val combinationEntries = mutableMapOf<Int, List<Int>>()
-    private val combinationSize = nodesAtLevel.size
+
+    private val combinationFuel = mutableMapOf<Int, List<Int>>()
+    private val combinationSize = ranges.size
 
     init {
-        val initIterators = ranges.map { RandomIterator(it.count(), it, randomizer) }
-        combinationEntries.putAll(
-            initIterators.withIndex().associateBy({ it.index }) { it.value.asSequence().toList() })
+        val initIterators = ranges.map { shuffler.makeShuffled(it) }
+
+        combinationFuel.putAll(
+            initIterators.withIndex().associateBy({ it.index }) { it.value })
 
     }
 
-    private val levelIterators = ranges.mapIndexed { index, intRange ->
-        CombinationIterator(combinationEntries[index]!!, nodesAtLevel[index])
+    private val levelIterables = List(ranges.size) { index ->
+        CombinationIterable(combinationFuel[index]!!, nodesAtLevel[index])
     }
-
-    private val discardCombinations: MutableSet<Set<Int>> = mutableSetOf()
 
     private val dumbIterator = iterator {
         val reorderedLevels = when (mode) {
-            Mode.BFS -> levelIterators.reversed()
-            Mode.DFS -> levelIterators
+            Mode.BFS -> levelIterables.reversed()
+            Mode.DFS -> levelIterables
         }
         generateCombinationsDepthFirst(
             0,
@@ -90,21 +98,22 @@ class RandomLeveledCombinationIterator(
 
     private suspend fun SequenceScope<List<List<Int>>>.generateCombinationsDepthFirst(
         level: Int,
-        levelIterators: List<CombinationIterator>,
+        levelIterables: List<CombinationIterable>,
         current: MutableList<List<Int>>
     ) {
         if (level == combinationSize) {
             val reorderedCombination = when (mode) {
                 Mode.BFS -> current.reversed()
-                Mode.DFS -> current
+                Mode.DFS -> current.toList()
             }
             yield(reorderedCombination)
             return
         }
+        val thisLevelIterable = levelIterables[level].iterator()
 
-        while (levelIterators[level].hasNext()) {
-            current[level] = levelIterators[level].next()
-            generateCombinationsDepthFirst(level + 1, levelIterators, current)
+        for (i in thisLevelIterable) {
+            current[level] = i
+            generateCombinationsDepthFirst(level + 1, levelIterables, current)
         }
     }
 
@@ -114,17 +123,5 @@ class RandomLeveledCombinationIterator(
 
     override fun next(): List<List<Int>> {
         return dumbIterator.next()
-    }
-
-    fun discardCurrentCombinationAtLevel(level : Int) {
-        levelIterators[level].remove()
-    }
-
-    fun discardCombinationAtLevel(level: Int, set: Set<Int>) {
-        levelIterators[level].discardCombination(set)
-    }
-
-    fun discardCombination(set: Set<Int>) {
-        discardCombinations.add(set)
     }
 }

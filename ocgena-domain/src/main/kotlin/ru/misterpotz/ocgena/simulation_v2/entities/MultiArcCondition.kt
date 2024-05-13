@@ -1,9 +1,7 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.utils.Ref
-import java.util.Comparator
 
 class MultiArcCondition(
     val syncTarget: TransitionWrapper,
@@ -12,6 +10,10 @@ class MultiArcCondition(
     val originalCondition: SynchronizedArcGroup,
     val transitionWrapper: TransitionWrapper,
 ) : Comparable<MultiArcCondition> {
+
+    val fromPlaces by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        arcs.ref.map { it.fromPlace }.sorted()
+    }
 
     companion object {
         // Assuming TransitionWrapper has a sensible compareTo implementation
@@ -24,30 +26,6 @@ class MultiArcCondition(
 
     override fun compareTo(other: MultiArcCondition): Int {
         return comparator.compare(this, other)
-    }
-
-    val arcWithStrongestCondition by lazy {
-        arcs.ref.maxBy { it.underConditions.size }
-    }
-
-    fun check(tokenSlice: TokenSlice) {
-        // lets see how much they should it
-
-//        arcs.ref.map {
-//            it.
-//        }
-
-    }
-
-    fun synchronizeSolutionsFromArcs() {
-        val currentApplicableTokensSorted = arcs.ref.filter { it.currentSolutionSeachFilteredTokens != null }
-            .sortedBy { it.currentSolutionSeachFilteredTokens!!.size }
-
-        currentApplicableTokensSorted.forEach {
-            it.currentSolutionSeachFilteredTokens!!.forEach {
-//                it.participatedTransitionIndices.intersect(arcs.)
-            }
-        }
     }
 
     override fun equals(other: Any?): Boolean {

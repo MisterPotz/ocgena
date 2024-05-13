@@ -2,7 +2,6 @@ package ru.misterpotz.ocgena.simulation_v2.entities_selection
 
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.Transitions
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 
@@ -43,7 +42,11 @@ fun getTransitionsWithSharedPreplacesFor(ocNet: OCNet, targetTransition: PetriAt
 data class AffectedTransition(
     val transition: PetriAtomId,
     val middlemanPlaces: Set<PetriAtomId>
-)
+): Comparable<AffectedTransition> {
+    override fun compareTo(other: AffectedTransition): Int {
+        return transition.compareTo(other.transition)
+    }
+}
 
 fun getDependentTransitions(ocNet: OCNet, targetTransition: PetriAtomId): List<AffectedTransition> {
     val set = mutableSetOf<PetriAtomId>()

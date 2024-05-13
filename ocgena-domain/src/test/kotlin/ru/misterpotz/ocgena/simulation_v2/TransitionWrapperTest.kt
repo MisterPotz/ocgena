@@ -3,10 +3,10 @@ package ru.misterpotz.ocgena.simulation_v2
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.toDefaultSim
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
+import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 
 class TransitionWrapperTest {
@@ -93,8 +93,8 @@ class TransitionWrapperTest {
             transition.inputArcs
         )
 
-        Assertions.assertEquals(1, transition.intersectingMultiArcConditions.size)
-        Assertions.assertTrue(transition.intersectingMultiArcConditions.first().conditions.isNotEmpty())
+        Assertions.assertEquals(1, transition.independentMultiArcConditions.size)
+        Assertions.assertTrue(transition.independentMultiArcConditions.first().conditions.isNotEmpty())
     }
 
     @Test
@@ -118,7 +118,7 @@ class TransitionWrapperTest {
             transition.inputArcs
         )
 
-        Assertions.assertEquals(2, transition.intersectingMultiArcConditions.size)
+        Assertions.assertEquals(2, transition.independentMultiArcConditions.size)
 
         Assertions.assertEquals(
             simulationInput.transitions["testt"]!!.synchronizedArcGroups!!.let { list ->
@@ -133,7 +133,7 @@ class TransitionWrapperTest {
                     }.let(::add)
                 }
             },
-            transition.intersectingMultiArcConditions.map {
+            transition.independentMultiArcConditions.map {
                 it.conditions.map { it.originalCondition }.toSet()
             }.toSet()
         )
