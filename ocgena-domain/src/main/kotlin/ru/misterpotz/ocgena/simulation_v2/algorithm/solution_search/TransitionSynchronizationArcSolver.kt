@@ -10,8 +10,17 @@ import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 
 typealias SolutionTokens = Map<PlaceWrapper, List<TokenWrapper>>
 
-typealias IndependentConditionsSolution = Pair<IndependentMultiConditionGroup, Map<PlaceWrapper, List<TokenWrapper>>>
+sealed interface IndependentSolution {
+    data class MultiConditionGroup(
+        val independentMultiConditionGroup: IndependentMultiConditionGroup,
+        val combination: Map<PlaceWrapper, List<TokenWrapper>>
+    ) : IndependentSolution
 
+    data class Unconditional(
+        val place: PlaceWrapper,
+        val tokens: List<TokenWrapper>,
+    ) : IndependentSolution
+}
 
 class TransitionSynchronizationArcSolver(
     val transition: TransitionWrapper,
@@ -21,32 +30,73 @@ class TransitionSynchronizationArcSolver(
         tokenSlice: TokenSlice,
         shuffler: Shuffler
     ): Iterable<SolutionTokens>? {
-        val filteredTokenSlice = preCheckHeuristicFiltering(tokenSlice) ?: return null
+        val filteredTokenSlice = preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return null
 
-        val combinator = createGroupSolutionCombinator(
+        val heavySynchronizationSearchCombinator = createGroupSolutionCombinator(
             filteredTokenSlice,
             shuffler,
             transition
         )
-        return IteratorMapper<List<IndependentConditionsSolution>, SolutionTokens>(combinator) { groupSolutionCombination ->
-            groupSolutionCombination
-                .fold(sortedMapOf()) { acc: MutableMap<PlaceWrapper, List<TokenWrapper>>,
-                                       (group, placeToTokens) ->
-                    for ((place, token) in placeToTokens) {
-                        require(place !in acc) {
-                            "at this stage there should be totally no intersections between places of solutions"
+        val easyArcsSolutionCombinator = createUnconditionalArcsCombinationSolver(tokenSlice, shuffler)
+
+        val fullCombinator =
+            IteratorsCombinator(listOf(heavySynchronizationSearchCombinator, easyArcsSolutionCombinator))
+
+        return IteratorMapper<List<List<IndependentSolution>>, SolutionTokens>(
+            fullCombinator
+        ) { independentSolutionCombination ->
+
+            val fullSolutionMap = sortedMapOf<PlaceWrapper, List<TokenWrapper>>()
+
+            for (independentSolutionList in independentSolutionCombination) {
+                for (partialSolution in independentSolutionList) {
+                    when (partialSolution) {
+                        is IndependentSolution.MultiConditionGroup -> {
+                            require(fullSolutionMap.keys.intersect(partialSolution.combination.keys).isEmpty()) {
+                                "solution place-independence condition broken: each combination concerns only its own place, solutions don't intersect places"
+                            }
+                            fullSolutionMap.putAll(partialSolution.combination)
                         }
-                        acc[place] = token
+
+                        is IndependentSolution.Unconditional -> {
+                            require(fullSolutionMap.keys.contains(partialSolution.place).not()) {
+                                "solution place-independence condition broken: each combination concerns only its own place, solutions don't intersect places"
+                            }
+                            fullSolutionMap[partialSolution.place] = partialSolution.tokens
+                        }
                     }
-                    acc
                 }
+            }
+            fullSolutionMap
         }
     }
 
-    private fun preCheckHeuristicFiltering(tokenSlice: TokenSlice): TokenSlice? {
-        // need to consider the conditions
-        // filtering it is
+    private fun createUnconditionalArcsCombinationSolver(
+        tokenSlice: TokenSlice,
+        shuffler: Shuffler
+    ): Iterable<List<IndependentSolution.Unconditional>> {
+        val allUnconditionalCombinationsIterator = transition.unconditionalArcs.map { unconditionalArc ->
+            val tokenIndicesRange = unconditionalArc.fromPlace.tokenRangeAt(tokenSlice)
+            val tokensTotal = tokenSlice.tokensAt(unconditionalArc.fromPlace).size
 
+            val tokensToTake = unconditionalArc.consumptionSpec.tokensShouldTake(tokensTotal)
+
+            val combination = CombinationIterable(
+                shuffler.makeShuffled(tokenIndicesRange),
+                combinationSize = tokensToTake
+            )
+
+            IteratorMapper(combination) { combination ->
+                IndependentSolution.Unconditional(
+                    unconditionalArc.fromPlace,
+                    tokenSlice.tokensAt(unconditionalArc.fromPlace).selectTokens(combination)
+                )
+            }
+        }
+        return IteratorsCombinator(allUnconditionalCombinationsIterator)
+    }
+
+    private fun preCheckSynchronizationHeuristicFiltering(tokenSlice: TokenSlice): TokenSlice? {
         val preliminaryDumbCheck = transition.inputArcs.all { arc ->
             arc.consumptionSpec.complies(tokenSlice.amountAt(arc.fromPlace))
         }
@@ -55,7 +105,6 @@ class TransitionSynchronizationArcSolver(
             return null
         }
 
-        // visited all required sync transitions
         val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
             token.visitedTransitions.containsAll(transition.inputArcBy(place.placeId).syncTransitions)
         }
@@ -73,7 +122,7 @@ class TransitionSynchronizationArcSolver(
         filteredTokenSlice: TokenSlice,
         shuffler: Shuffler,
         independentMultiConditionGroup: IndependentMultiConditionGroup
-    ): Iterator<IndependentConditionsSolution> = iterator {
+    ): Iterator<IndependentSolution.MultiConditionGroup> = iterator {
         val sortedArcs = independentMultiConditionGroup.conditionArcSortedByStrongestDescending()
 
         val (placeToIndex, indexToPlace, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
@@ -110,7 +159,7 @@ class TransitionSynchronizationArcSolver(
                 )
 
                 yield(
-                    Pair(
+                    IndependentSolution.MultiConditionGroup(
                         independentMultiConditionGroup,
                         indicesToTokenLists(completeSolution, placeToIndex, filteredTokenSlice)
                     )
@@ -165,12 +214,12 @@ class TransitionSynchronizationArcSolver(
         filteredTokenSlice: TokenSlice,
         shuffler: Shuffler,
         transition: TransitionWrapper,
-    ): Iterable<List<IndependentConditionsSolution>> {
+    ): Iterable<List<IndependentSolution.MultiConditionGroup>> {
         val independentMultiConditionGroups = transition.independentMultiArcConditions
 
         val solutionSearchIterables = independentMultiConditionGroups.map {
-            object : Iterable<IndependentConditionsSolution> {
-                override fun iterator(): Iterator<IndependentConditionsSolution> {
+            object : Iterable<IndependentSolution.MultiConditionGroup> {
+                override fun iterator(): Iterator<IndependentSolution.MultiConditionGroup> {
                     return getIndependentMultiArcConditionSolutionIterator(
                         filteredTokenSlice,
                         shuffler,

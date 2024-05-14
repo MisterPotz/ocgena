@@ -14,7 +14,7 @@ import ru.misterpotz.ocgena.simulation_v2.utils.Ref
 import ru.misterpotz.ocgena.simulation_v2.utils.selectIn
 import ru.misterpotz.ocgena.utils.TimePNRef
 
-class CheckingCache(var validForStep: Long = -1) {
+class CheckingCache {
 
     var isEnabledByMarking: Boolean = false
 
@@ -156,6 +156,10 @@ class TransitionWrapper(
         }
 
         groups.sorted()
+    }
+
+    val unconditionalArcs by lazy {
+        inputArcs.filter { it.underConditions.isEmpty() }.sorted()
     }
 
     val isolatedInputArcCombinations by lazy {

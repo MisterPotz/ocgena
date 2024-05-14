@@ -17,14 +17,16 @@ import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random
 
 
-class TransitionSynchronizationArcSolverTest {
+class TransitionSynchronizationVariableArcSolverTest {
     fun ocnet() = buildOCNet {
         "input".p { input }
+        "input2".p { input; objectTypeId = "2" }
 
         "input".arc("t0".t)
         "input".arc("t1".t)
         "input".arc("t2".t)
         "input".arc("t3".t)
+        "input2".arc("t1".t) { vari; }
         "p1".p
         "p2".p
         "p3".p
@@ -34,6 +36,7 @@ class TransitionSynchronizationArcSolverTest {
         "t1".apply {
             arc("p1")
             arc("buffer".p) { multiplicity = 2 }.arc("t2".t)
+            arc("buffer2".p { objectTypeId = "2" }) { vari; }
         }
         "t2".apply {
             arc("p2")
@@ -55,6 +58,7 @@ class TransitionSynchronizationArcSolverTest {
         "p3".p.arc("test".t)
         "p4".p.arc("test".t)
         "p5".p.arc("test".t)
+        "buffer2".arc("test".t) { vari }
         "test".t.arc("out".p { output })
     }
 
@@ -63,13 +67,13 @@ class TransitionSynchronizationArcSolverTest {
 
 
         val t1History = listOf(
-            listOf(1, 2, 100), // p1, p3, p2
-            listOf(3, 4, 102), // p1, p3, p2
-            listOf(5, 6, 103), // p1, p3, p2
-            listOf(7, 8, 104), // p1, p3, p2
-            listOf(9, 10, 105), // p1, p2, p2
-            listOf(71, 72, 106), // p1, p2, p2
-            listOf(73, 74, 107), // p1, p2, p2
+            listOf(1, 2, 100, 201, 202), // p1, p3, p2, buff2, buff2
+            listOf(3, 4, 102, 210), // p1, p3, p2, buff2
+            listOf(5, 6, 103, 215, 216), // p1, p3, p2, buff2, buff2
+            listOf(7, 8, 104, 220, 221), // p1, p3, p2, buff2, buff2
+            listOf(9, 10, 105, 223, 225, 227), // p1, p2, p2, buff2, buff2, buff2
+            listOf(71, 72, 106, 230), // p1, p2, p2, buff2
+            listOf(73, 74, 107, 240), // p1, p2, p2, buff2
         )
 
         val t2History = listOf(
@@ -150,6 +154,19 @@ class TransitionSynchronizationArcSolverTest {
 
             // from t3
             addTokens(model.place("p5"), listOf(30, 31, 32, 33).selectTokens())
+
+            // from t1
+            addTokens(
+                model.place("buffer2"), listOf(
+                    201, 202,
+                    210,
+                    215, 216,
+                    220, 221,
+                    223, 225, 227,
+                    230,
+                    240
+                ).selectTokens()
+            )
         }
 
         return tokenSlice
@@ -234,23 +251,28 @@ class TransitionSynchronizationArcSolverTest {
                 .asSequence().toList()
 
         assertEquals(24, solutions.size)
+        println(solutions)
+
+        assertEquals(
+            mapOf(
+                "p1" to listOf(9),
+                "p2" to listOf(10),
+                "p3" to listOf(14),
+                "p4" to listOf(45),
+                "p5" to listOf(33),
+                "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
+            ).let { tokenSlice.copyFromMap(model, it) },
+            solutions[2]
+        )
+        
         assertEquals(
             mapOf(
                 "p1" to listOf(73),
                 "p2" to listOf(74),
                 "p3" to listOf(16),
                 "p4" to listOf(44),
-                "p5" to listOf(33)
-            ).let { tokenSlice.copyFromMap(model, it) },
-            solutions[2]
-        )
-        assertEquals(
-            mapOf(
-                "p1" to listOf(71),
-                "p2" to listOf(72),
-                "p3" to listOf(15),
-                "p4" to listOf(45),
-                "p5" to listOf(33)
+                "p5" to listOf(33),
+                "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
             ).let { tokenSlice.copyFromMap(model, it) },
             solutions[22]
         )

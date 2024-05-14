@@ -121,13 +121,26 @@ class InputArcWrapper(
             }
         }
 
-        fun isUnconstrained() : Boolean
+        fun tokensShouldTake(totalAmount: Int): Int {
+            return when (this) {
+                AtLeastOne -> totalAmount
+                is Exact -> number
+            }
+        }
+
+        fun isUnconstrained(): Boolean
 
         data class Exact(val number: Int) : ConsumptionSpec {
             override fun compareTo(other: ConsumptionSpec): Int {
                 return when (other) {
-                    AtLeastOne -> number.compareTo(1)
-                    is Exact -> number.compareTo(other.number)
+                    AtLeastOne -> (-number).compareTo(1)
+                    is Exact -> forExactComparator.compare(this, other)
+                }
+            }
+
+            companion object {
+                val forExactComparator = compareBy<Exact> {
+                    -it.number
                 }
             }
 
@@ -140,7 +153,7 @@ class InputArcWrapper(
             override fun compareTo(other: ConsumptionSpec): Int {
                 return when (other) {
                     AtLeastOne -> 0
-                    is Exact -> -1
+                    is Exact -> (1).compareTo(-other.number)
                 }
             }
 
