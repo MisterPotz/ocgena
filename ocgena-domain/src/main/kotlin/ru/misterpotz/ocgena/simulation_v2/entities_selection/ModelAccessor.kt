@@ -20,6 +20,14 @@ class ModelAccessor(
         placesRef.ref.places.selectIn(ocNet.outputPlaces.iterable).wrap()
     }
 
+    val loggedTransitions by lazy {
+        transitionsRef.ref.flatMap { it.inputArcConditions.map { it.syncTarget } }.toSet().toList()
+    }
+
+    fun isSynchronizationMode() : Boolean {
+        return loggedTransitions.isNotEmpty()
+    }
+
     fun transitionBy(id: PetriAtomId) = transitionsRef.ref.map[id]!!
     fun place(id: PetriAtomId) = placesRef.ref.map[id]!!
 
@@ -29,7 +37,7 @@ class ModelAccessor(
         transitionsRef._ref = ocNet.transitionsRegistry.map {
             TransitionWrapper(
                 it.id,
-                modelAccessor = this,
+                model = this,
                 arcLogicsFactory = ArcLogicsFactory.Stub
             )
         }.wrap()

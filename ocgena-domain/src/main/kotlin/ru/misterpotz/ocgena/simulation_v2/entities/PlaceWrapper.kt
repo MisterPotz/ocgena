@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
+package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.simulation.ObjectType

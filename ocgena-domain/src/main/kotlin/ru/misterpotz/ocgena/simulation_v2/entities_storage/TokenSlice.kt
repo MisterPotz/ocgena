@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
+import ru.misterpotz.ocgena.simulation_v2.entities.PlaceWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.Places
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
@@ -93,7 +93,7 @@ data class SimpleTokenSlice(
             }
         }
 
-    fun tokenBy(id: String) : TokenWrapper {
+    fun tokenBy(id: String): TokenWrapper {
         return tokensMap.values.find { it.find { it.tokenId == id } != null }!!.find { it.tokenId == id }!!
     }
 
@@ -109,7 +109,13 @@ data class SimpleTokenSlice(
                 buildString {
                     for ((place, tokens) in tokensMap) {
                         appendLine(
-                            "${place.placeId} (size:${tokens.size}) ->  ${tokens.joinToString(",", prefix = "[", postfix = "]")}"
+                            "${place.placeId} (size:${tokens.size}) ->  ${
+                                tokens.joinToString(
+                                    ",",
+                                    prefix = "[",
+                                    postfix = "]"
+                                )
+                            }"
                         )
                     }
                 }.prependIndent()
@@ -223,7 +229,6 @@ data class SimpleTokenSlice(
         }
     }
 
-
     companion object {
         fun build(block: ConstructionBlock.() -> Unit): SimpleTokenSlice {
             val mutableMap = mutableMapOf<PlaceWrapper, MutableSortedTokens>()
@@ -242,6 +247,15 @@ data class SimpleTokenSlice(
                 amountsMap = mutableMap.mapValues { it.value.size }
                     .let { mutableMapOf<PlaceWrapper, Int>().apply { putAll(it) } }
             )
+        }
+
+        fun of(map: Map<PlaceWrapper, List<TokenWrapper>>): SimpleTokenSlice {
+            return build {
+                for ((place, tokens) in map) {
+                    addTokens(place, tokens)
+                }
+            }
+
         }
     }
 }

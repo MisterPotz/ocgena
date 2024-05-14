@@ -1,31 +1,45 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.PlaceWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 
-class TokenArcFlowSnapshot(
-    val records: List<ConsumedPlaceRecord>
+enum class GroupingStrategy {
+    ByType,
+    ByTypeAndArc
+}
+
+class TokenArcFlowSnapshotFactory(
+    private val transitionWrapper: TransitionWrapper,
+    private val consumed: TokenSlice,
 ) {
     private val groupedByType by lazy(LazyThreadSafetyMode.NONE) {
-        val map: MutableMap<SimpleGroupedRecords.CompoundKey, MutableList<ConsumedPlaceRecord>> = mutableMapOf()
-        for (record in records) {
-            val key = SimpleGroupedRecords.CompoundKey(arcMeta = null, objectType = record.objectType)
+        val map: MutableMap<CompoundKey, MutableList<ConsumedPlaceRecord>> = mutableMapOf()
+
+        consumed.byPlaceIterator().forEach { (place, tokens) ->
+            val inputArc = transitionWrapper.findInputArcByPlace(place)
+
+            val key = makeCompoundKey(GroupingStrategy.ByType, place.objectType, inputArc)
+
+            val record = ConsumedPlaceRecord(
+                amount = tokens.size,
+                tokens = tokens.toList(),
+                objectType = place.objectType,
+                arc = inputArc
+            )
 
             map.getOrPut(key) {
                 mutableListOf()
             }.add(record)
         }
-        @Suppress("UNCHECKED_CAST")
-        (SimpleGroupedRecords(
-        map as Map<Any, List<ConsumedPlaceRecord>>
-    ))
+        SimpleSnapshot(map, GroupingStrategy.ByType)
     }
 
-    fun getGrouped(groupingStrategy: GroupingStrategy): GroupedRecords {
+    fun getGrouped(groupingStrategy: GroupingStrategy): Snapshot {
         return when (groupingStrategy) {
             GroupingStrategy.ByType -> groupedByType
+            GroupingStrategy.ByTypeAndArc -> throw NotImplementedError()
         }
     }
 
@@ -33,30 +47,65 @@ class TokenArcFlowSnapshot(
         val amount: Int,
         val tokens: List<TokenWrapper>?,
         val objectType: ObjectType,
-        val place: PlaceWrapper,
-        val arcMeta: ArcMeta
+        val arc: InputArcWrapper,
     )
 
-    interface GroupedRecords {
+    interface Snapshot {
         fun getRecords(
             objectType: ObjectType,
-            arcMeta: ArcMeta
+            inputArcWrapper: InputArcWrapper
         ): List<ConsumedPlaceRecord>
     }
 
-    enum class GroupingStrategy {
-        ByType
+    companion object {
+        fun makeCompoundKey(
+            groupingStrategy: GroupingStrategy,
+            objectType: ObjectType,
+            inputArcWrapper: InputArcWrapper?
+        ): CompoundKey {
+            return when (groupingStrategy) {
+                GroupingStrategy.ByType -> CompoundKey(objectType, null)
+                GroupingStrategy.ByTypeAndArc -> CompoundKey(
+                    objectType,
+                    inputArcWrapper
+                )
+            }
+        }
     }
 
-    private class SimpleGroupedRecords(
-        val groupedRecords: Map<Any, List<ConsumedPlaceRecord>>
-    ) : GroupedRecords {
-        override fun getRecords(objectType: ObjectType, arcMeta: ArcMeta): List<ConsumedPlaceRecord> {
-            val compoundKey = CompoundKey(arcMeta, objectType)
+    class SimpleSnapshot(
+        private val groupedRecords: Map<CompoundKey, List<ConsumedPlaceRecord>>,
+        private val groupingStrategy: GroupingStrategy,
+    ) : Snapshot {
 
+        val iterable = groupedRecords
+
+        override fun getRecords(
+            objectType: ObjectType,
+            inputArcWrapper: InputArcWrapper,
+        ): List<ConsumedPlaceRecord> {
+            val compoundKey = makeCompoundKey(groupingStrategy, objectType, inputArcWrapper)
             return groupedRecords[compoundKey]!!
         }
+    }
 
-        data class CompoundKey(val arcMeta: ArcMeta?, val objectType: ObjectType?)
+    data class CompoundKey(
+        val objectType: ObjectType?,
+        val inputArcWrapper: InputArcWrapper?,
+    ) : Comparable<CompoundKey> {
+        override fun compareTo(other: CompoundKey): Int {
+            return comparator.compare(this, other)
+        }
+
+        companion object {
+            val comparator = compareBy<CompoundKey>(
+                {
+                    it.objectType
+                },
+                {
+                    it.inputArcWrapper
+                },
+            )
+        }
     }
 }

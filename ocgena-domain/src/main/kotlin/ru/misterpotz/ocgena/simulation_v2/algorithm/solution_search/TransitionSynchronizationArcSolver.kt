@@ -1,19 +1,19 @@
-package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
+package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
+import ru.misterpotz.ocgena.simulation_v2.entities.PlaceWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.MultiArcCondition
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
-import ru.misterpotz.ocgena.simulation_v2.utils.step
 
 typealias SolutionTokens = Map<PlaceWrapper, List<TokenWrapper>>
 
 typealias IndependentConditionsSolution = Pair<IndependentMultiConditionGroup, Map<PlaceWrapper, List<TokenWrapper>>>
 
-class TransitionArcSolver(
+
+class TransitionSynchronizationArcSolver(
     val transition: TransitionWrapper,
 ) {
 
@@ -31,7 +31,7 @@ class TransitionArcSolver(
         return IteratorMapper<List<IndependentConditionsSolution>, SolutionTokens>(combinator) { groupSolutionCombination ->
             groupSolutionCombination
                 .fold(sortedMapOf()) { acc: MutableMap<PlaceWrapper, List<TokenWrapper>>,
-                                      (group, placeToTokens) ->
+                                       (group, placeToTokens) ->
                     for ((place, token) in placeToTokens) {
                         require(place !in acc) {
                             "at this stage there should be totally no intersections between places of solutions"
@@ -42,68 +42,6 @@ class TransitionArcSolver(
                 }
         }
     }
-
-    fun findAnyExistingSolution(
-        tokenSlice: TokenSlice,
-        shuffler: Shuffler
-    ): SolutionTokens? {
-        val filteredTokenSlice = preCheckHeuristicFiltering(tokenSlice) ?: return null
-
-        // finding solution for each independent arc group
-        val foundCombinations = transition.independentMultiArcConditions
-            .fold(
-                mutableListOf<Pair<IndependentMultiConditionGroup, Map<PlaceWrapper, List<TokenWrapper>>>?>()
-            ) { acc, independentMultiConditionGroup ->
-                if (acc.contains(null)) return@fold acc
-
-                val sortedArcs = independentMultiConditionGroup.conditionArcSortedByStrongestDescending()
-
-                val (placeToIndex, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
-                    filteredTokenSlice,
-                    shuffler = shuffler
-                )
-
-                while (combinationsIterator.hasNext()) {
-                    val hypotheticCombination = combinationsIterator.next()
-
-                    val combinationIsGood =
-                        checkCombination(
-                            filteredTokenSlice,
-                            independentMultiConditionGroup,
-                            sortedArcs,
-                            placeToIndex,
-                            hypotheticCombination
-                        )
-
-                    if (combinationIsGood) {
-                        acc.add(
-                            Pair(
-                                independentMultiConditionGroup,
-                                indicesToTokenLists(hypotheticCombination, placeToIndex, filteredTokenSlice)
-                            )
-                        )
-                        return@fold acc
-                    }
-                }
-                acc.add(null)
-                acc
-            }
-
-        if (foundCombinations.contains(null)) return null
-
-        return foundCombinations.filterNotNull()
-            .fold(mutableMapOf()) { acc: MutableMap<PlaceWrapper, List<TokenWrapper>>,
-                                    (group, placeToTokens) ->
-                for ((place, token) in placeToTokens) {
-                    require(place !in acc) {
-                        "at this stage there should be totally no intersections between places of solutions"
-                    }
-                    acc[place] = token
-                }
-                acc
-            }
-    }
-
 
     private fun preCheckHeuristicFiltering(tokenSlice: TokenSlice): TokenSlice? {
         // need to consider the conditions
@@ -138,7 +76,7 @@ class TransitionArcSolver(
     ): Iterator<IndependentConditionsSolution> = iterator {
         val sortedArcs = independentMultiConditionGroup.conditionArcSortedByStrongestDescending()
 
-        val (placeToIndex, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
+        val (placeToIndex, indexToPlace, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
             filteredTokenSlice,
             shuffler = shuffler
         )
@@ -146,22 +84,79 @@ class TransitionArcSolver(
         while (combinationsIterator.hasNext()) {
             val hypotheticCombination = combinationsIterator.next()
 
-            val combinationIsGood =
-                checkCombination(
-                    filteredTokenSlice,
+            val perPlaceSharedEntries = makePerPlaceSharedTransitionEntries(
+                sortedArcs,
+                filteredTokenSlice,
+                placeToIndex,
+                indicesCombination = hypotheticCombination
+            )
+
+            val conditionSatisfactoryEntries =
+                getConditionSatisfactoryEntries(
                     independentMultiConditionGroup,
                     sortedArcs,
-                    placeToIndex,
-                    hypotheticCombination
+                    hypotheticCombination,
+                    perPlaceSharedEntries
                 )
 
-            if (combinationIsGood) {
+            if (conditionSatisfactoryEntries.isNotEmpty()) {
+                val completeSolution = makeCompleteSolution(
+                    hypotheticCombination,
+                    placeToIndex,
+                    indexToPlace,
+                    filteredTokenSlice,
+                    independentMultiConditionGroup,
+                    conditionSatisfactoryEntries
+                )
+
                 yield(
                     Pair(
                         independentMultiConditionGroup,
-                        indicesToTokenLists(hypotheticCombination, placeToIndex, filteredTokenSlice)
+                        indicesToTokenLists(completeSolution, placeToIndex, filteredTokenSlice)
                     )
                 )
+            }
+        }
+    }
+
+    private fun makeCompleteSolution(
+        potentiallyUncompleteCombination: List<List<Int>>,
+        placeToIndex: Map<PlaceWrapper, Int>,
+        indexToPlace: Map<Int, PlaceWrapper>,
+        filteredTokenSlice: TokenSlice,
+        independentMultiConditionGroup: IndependentMultiConditionGroup,
+        conditionRequiredEntries: Map<MultiArcCondition, HashSet<Long>>
+    ): List<List<Int>> {
+        val newIndicesToAppend = mutableMapOf<PlaceWrapper, List<Int>>()
+
+        for (inputArc in independentMultiConditionGroup.relatedInputArcs) {
+            if (inputArc.consumptionSpec.isUnconstrained()) {
+                val fromPlace = inputArc.fromPlace
+                val allPlaceTokens = filteredTokenSlice.tokensAt(fromPlace)
+                val alreadyGoodIndices = potentiallyUncompleteCombination[placeToIndex[fromPlace]!!]
+
+                val newIndicesToAppendBuffer = mutableListOf<Int>()
+
+                for (arcCondition in inputArc.underConditions) {
+                    val requiredEntries = conditionRequiredEntries[arcCondition]!!
+
+                    for ((index, token) in allPlaceTokens.withIndex()) {
+                        if (index !in alreadyGoodIndices && token.participatedInAll(requiredEntries)) {
+                            newIndicesToAppendBuffer.add(index)
+                        }
+                    }
+                }
+                if (newIndicesToAppendBuffer.isNotEmpty()) {
+                    newIndicesToAppend[fromPlace] = newIndicesToAppendBuffer
+                }
+            }
+        }
+        if (newIndicesToAppend.isEmpty()) return potentiallyUncompleteCombination
+
+        return potentiallyUncompleteCombination.mapIndexed { index, ints ->
+            buildList {
+                addAll(ints)
+                addAll(newIndicesToAppend[indexToPlace[index]] ?: emptyList())
             }
         }
     }
@@ -188,7 +183,6 @@ class TransitionArcSolver(
         return IteratorsCombinator(solutionSearchIterables)
     }
 
-
     private fun indicesToTokenLists(
         indices: List<List<Int>>,
         placeToIndex: Map<PlaceWrapper, Int>,
@@ -201,86 +195,84 @@ class TransitionArcSolver(
         }.associateBy({ it.first }, { it.second })
     }
 
-    private fun checkCombination(
-        tokenSlice: TokenSlice,
-        independentMultiConditionGroup: IndependentMultiConditionGroup,
+    private fun makePerPlaceSharedTransitionEntries(
         sortedArcWrappers: List<InputArcWrapper>,
+        tokenSlice: TokenSlice,
         placeToIndex: Map<PlaceWrapper, Int>,
         indicesCombination: List<List<Int>>
-    ): Boolean {
-        require(sortedArcWrappers.size == indicesCombination.size)
-
-        val sharedEntriesPerPlace: Map<PlaceWrapper, Pair<List<TokenWrapper>, HashSet<Long>>> = step(
-            """
-                For each place respectively:
-                  - find transition entries that are shared between all tokens at the place.
-            """
-        ) {
-            sortedArcWrappers.map { inputArc ->
-                val tokenIndices = indicesCombination[placeToIndex[inputArc.fromPlace]!!]
-                val selectedTokens = tokenSlice.tokensAt(inputArc.fromPlace).selectTokens(tokenIndices)
-                Triple(
-                    inputArc.fromPlace,
-                    selectedTokens,
-                    selectedTokens.sharedTransitionEntries(inputArc.underConditions.map { it.syncTarget })
-                )
-            }.associateBy({ it.first }, { Pair(it.second, it.third) })
-        }
-
-        if (sharedEntriesPerPlace.any { it.value.second.isEmpty() }) {
-            return false
-        }
-
-        val allMultiArcConditionsSatisfied = step(
-            """
-                Now we know that there are enough tokens at each place
-                that satisfy condition only of the respective arc from one place.
-                
-                We need to verify that all conditions in $independentMultiConditionGroup
-                are satisfied with this token combination.
-            """
-        ) {
-            // cross-place by condition check,
-            // for each group of intersecting conditions
-            independentMultiConditionGroup.conditions.all { condition ->
-                checkConditionIsSatisfied(
-                    condition,
-                    sharedEntriesPerPlace,
-                )
-            }
-        }
-
-        return allMultiArcConditionsSatisfied
+    ): Map<PlaceWrapper, Pair<List<TokenWrapper>, HashSet<Long>>> {
+        return sortedArcWrappers.map { inputArc ->
+            val tokenIndices = indicesCombination[placeToIndex[inputArc.fromPlace]!!]
+            val selectedTokens = tokenSlice.tokensAt(inputArc.fromPlace).selectTokens(tokenIndices)
+            Triple(
+                inputArc.fromPlace,
+                selectedTokens,
+                selectedTokens.sharedTransitionEntries(inputArc.underConditions.map { it.syncTarget })
+            )
+        }.associateBy({ it.first }, { Pair(it.second, it.third) })
     }
 
-    private fun checkConditionIsSatisfied(
+    private fun getConditionSatisfactoryEntries(
+        independentMultiConditionGroup: IndependentMultiConditionGroup,
+        sortedArcWrappers: List<InputArcWrapper>,
+        indicesCombination: List<List<Int>>,
+        perPlaceSharedEntries: Map<PlaceWrapper, Pair<List<TokenWrapper>, HashSet<Long>>>
+    ): Map<MultiArcCondition, HashSet<Long>> {
+        require(sortedArcWrappers.size == indicesCombination.size)
+
+        if (perPlaceSharedEntries.any { it.value.second.isEmpty() }) {
+            return emptyMap()
+        }
+
+        val conditionToSatisfactoryEntries = mutableMapOf<MultiArcCondition, HashSet<Long>>()
+
+        // index to multi arc condition satisfying
+        // cross-place by condition check,
+        // for each group of intersecting conditions
+        val allSatisfied = independentMultiConditionGroup.conditions.all { condition ->
+            val conditionSatisfactoryEntries = findConditionSatisfactoryTransionEntries(
+                multiArcCondition = condition,
+                placesToTokensAndCommonEntries = perPlaceSharedEntries
+            )
+
+            conditionToSatisfactoryEntries[condition] = conditionSatisfactoryEntries
+            conditionSatisfactoryEntries.isNotEmpty()
+        }
+
+        if (!allSatisfied) return emptyMap()
+
+        return conditionToSatisfactoryEntries
+    }
+
+    private fun findConditionSatisfactoryTransionEntries(
         multiArcCondition: MultiArcCondition,
-        placesToTokensAndCommonEntires: Map<PlaceWrapper, Pair<List<TokenWrapper>, HashSet<Long>>>,
-    ): Boolean {
+        placesToTokensAndCommonEntries: Map<PlaceWrapper, Pair<List<TokenWrapper>, HashSet<Long>>>,
+    ): HashSet<Long> {
         // need to confirm hashes that tokens at fromPlaces are not empty when intersected
         val common = hashSetOf<Long>()
         val placeIterator = multiArcCondition.fromPlaces.iterator()
         val syncTransition = listOf(multiArcCondition.syncTarget)
 
-        if (!placeIterator.hasNext()) return false
+        if (!placeIterator.hasNext()) return hashSetOf()
 
         val firstPlace = placeIterator.next()
 
-        placesToTokensAndCommonEntires[firstPlace]!!.let { (_, entriesHash) ->
+        placesToTokensAndCommonEntries[firstPlace]!!.let { (_, entriesHash) ->
             common.addAll(entriesHash)
             common.filterContainedInAny(syncTransition)
         }
 
         placeIterator.forEach { place ->
-            val (_, entriesHash) = placesToTokensAndCommonEntires[place]!!
+            val (_, entriesHash) = placesToTokensAndCommonEntries[place]!!
             common.retainAll(entriesHash)
             common.filterContainedInAny(syncTransition)
 
             if (common.isEmpty()) {
-                return false
+                return common
             }
         }
-        return true
+
+        return common
     }
 
     private fun Collection<TokenWrapper>.selectTokens(indices: List<Int>): List<TokenWrapper> {

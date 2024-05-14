@@ -1,11 +1,8 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_selection
 
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.PlaceWrapper
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.RandomLeveledCombinationIterator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
-import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
-import ru.misterpotz.ocgena.simulation_v2.entities.MultiArcCondition
-import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import java.util.*
 
@@ -35,6 +32,7 @@ class IndependentMultiConditionGroup(
 
     data class Iteration(
         val placeToIndex: Map<PlaceWrapper, Int>,
+        val indexToPlace: Map<Int, PlaceWrapper>,
         val randomLeveledCombinationIterator: RandomLeveledCombinationIterator
     )
 
@@ -55,6 +53,8 @@ class IndependentMultiConditionGroup(
         return Iteration(
             orderedPreplaces.withIndex()
                 .associateBy({ (_, placeWrapper) -> placeWrapper }, { (index, _) -> index }),
+            orderedPreplaces.withIndex()
+                .associateBy({ (index, _) -> index }, { (_, placeWrapper) -> placeWrapper }),
             randomLeveledCombinationIterator
         )
     }
@@ -93,6 +93,8 @@ class IndependentMultiConditionGroup(
     }
 
     override fun toString(): String {
-        return "$transition (syncs: ${conditions.map { it.syncTarget }.joinToString(",")}) [${relatedInputArcs.joinToString(",")}]"
+        return "$transition (syncs: ${
+            conditions.map { it.syncTarget }.joinToString(",")
+        }) [${relatedInputArcs.joinToString(",")}]"
     }
 }

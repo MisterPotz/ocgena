@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.simulation.ObjectType
 import java.util.*
+import kotlin.collections.HashSet
 
 class TokenWrapper(
     val tokenId: String,
@@ -18,6 +19,10 @@ class TokenWrapper(
     private val _participatedTransitionIndices = mutableMapOf<TransitionWrapper, SortedSet<Long>>()
     val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
     val allParticipatedTransitionEntries: HashSet<Long> = hashSetOf()
+
+    fun participatedInAll(entries: HashSet<Long>) : Boolean {
+        return entries.all { allParticipatedTransitionEntries.contains(it) }
+    }
 
     fun hasSharedTransitionEntry(otherToken: TokenWrapper): Boolean {
         val haveSharedTransition = visitedTransitions.any { otherToken.visitedTransitions.contains(it) }

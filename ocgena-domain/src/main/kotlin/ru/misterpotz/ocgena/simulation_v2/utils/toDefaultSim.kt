@@ -40,9 +40,7 @@ inline fun <T> step(description: String, crossinline action: () -> T): T {
     contract {
         callsInPlace(action, InvocationKind.EXACTLY_ONCE)
     }
-    return run {
-        action()
-    }
+    return action()
 }
 
 fun Int.factorial(): Int {

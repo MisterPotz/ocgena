@@ -1,7 +1,5 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.PlaceWrapper
-
 class Transitions(val transitions: List<TransitionWrapper>) : List<TransitionWrapper> by transitions {
     val map by lazy(LazyThreadSafetyMode.NONE) {
         transitions.associateBy { it.transitionId }

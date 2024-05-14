@@ -4,7 +4,6 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
@@ -122,12 +121,18 @@ class InputArcWrapper(
             }
         }
 
+        fun isUnconstrained() : Boolean
+
         data class Exact(val number: Int) : ConsumptionSpec {
             override fun compareTo(other: ConsumptionSpec): Int {
                 return when (other) {
                     AtLeastOne -> number.compareTo(1)
                     is Exact -> number.compareTo(other.number)
                 }
+            }
+
+            override fun isUnconstrained(): Boolean {
+                return false
             }
         }
 
@@ -137,6 +142,10 @@ class InputArcWrapper(
                     AtLeastOne -> 0
                     is Exact -> -1
                 }
+            }
+
+            override fun isUnconstrained(): Boolean {
+                return true
             }
         }
     }
