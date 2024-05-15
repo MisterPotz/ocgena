@@ -60,8 +60,8 @@ class TransitionSynchronizationArcSolver(
 
         val fullCombinator =
             IteratorsCombinator(
-                listOf(
-                    heavySynchronizationSearchCombinator,
+                listOfNotNull(
+                    heavySynchronizationSearchCombinator.takeIf { transition.model.isSynchronizedMode() },
                     easyArcsSolutionCombinator
                 )
             )

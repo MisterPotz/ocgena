@@ -78,3 +78,36 @@ fun buildTransitionHistory(
 
     return tokenSlice
 }
+
+fun buildTokenSlice(
+    model: ModelAccessor,
+    placeToTokens: Map<String, List<Int>>
+): SimpleTokenSlice {
+
+    fun List<TokenWrapper>.by(int: Int): TokenWrapper {
+        val id = int.toString()
+        return find { it.tokenId == id }!!
+    }
+
+    val allTokens = placeToTokens.flatMap { (place, ints) ->
+            ints.map {
+                TokenWrapper(
+                    it.toString(),
+                    model.defaultObjectType()
+                )
+            }
+
+        }
+
+    fun List<Int>.selectTokens(): List<TokenWrapper> {
+        return map { allTokens.by(it) }
+    }
+
+    val tokenSlice = SimpleTokenSlice.build {
+        for ((place, tokens) in placeToTokens) {
+            addTokens(model.place(place), tokens.selectTokens())
+        }
+    }
+
+    return tokenSlice
+}
