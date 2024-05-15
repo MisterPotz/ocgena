@@ -18,12 +18,13 @@ data class SimulationInput(
     @SerialName("default_token_gen_interval")
     val defaultTokenGenerationInterval: Interval? = null,
     @SerialName("seed")
-    val randomSeed: Int? = null
+    val randomSeed: Int? = null,
+    @SerialName("logging")
+    val loggingEnabled: Boolean? = null
 )
 
 @Serializable
 data class PlaceSetting(
-//    val type: String,
     val label: String? = null,
     @SerialName("initial_tokens_amount") val initialTokens: Int? = null,
     @SerialName("generation_interval") val generationInterval: Interval? = null,

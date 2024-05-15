@@ -13,18 +13,18 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 @Serializable
 data class LomazovaVariableArcMeta(
     @SerialName("math_exp")
-    val mathExpression: String? = null,
+    val mathExpression: String,
 ) : ArcMeta {
-    val mathNode: MathNode? by lazy(LazyThreadSafetyMode.NONE) {
-        mathExpression?.fullConvertM
+    val mathNode: MathNode by lazy(LazyThreadSafetyMode.NONE) {
+        mathExpression.fullConvertM
     }
 
-    val variableName: String? by lazy(LazyThreadSafetyMode.NONE) {
-        mathNode?.getVariablesNames()?.also {
+    val variableName: String by lazy(LazyThreadSafetyMode.NONE) {
+        mathNode.getVariablesNames().also {
             require(it.size == 1) {
                 "variable arcs must have no mroe than one variable"
             }
-        }?.first()
+        }.first()
     }
 
     override fun toString(): String {
@@ -56,11 +56,6 @@ data class VariableArc(
 ) : Arc() {
     override val arcType: ArcType
         get() = ArcType.VARIABLE
-
-
-//    override val arcMeta: ArcMeta by lazy(LazyThreadSafetyMode.NONE) {
-//        LomazovaVariableArcMeta(variableName)
-//    }
 
     override fun isSameArcType(other: Arc): Boolean {
         return other is VariableArc

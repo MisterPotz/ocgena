@@ -158,7 +158,10 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean, ocNetType: Oc
                                 }
 
                                 OcNetType.LOMAZOVA -> {
-                                    LomazovaVariableArcMeta(it.innerMathExpr)
+                                    require(it.innerMathExpr != null) {
+                                        "Lomazova arcs must have a variable denoted"
+                                    }
+                                    LomazovaVariableArcMeta(it.innerMathExpr!!)
                                 }
                             }
                         )

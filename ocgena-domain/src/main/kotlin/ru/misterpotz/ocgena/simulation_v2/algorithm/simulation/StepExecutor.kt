@@ -3,13 +3,11 @@ package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
 import ru.misterpotz.ocgena.simulation_v2.entities.*
-import ru.misterpotz.ocgena.simulation_v2.entities_selection.*
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.utils.sstep
-import java.util.*
 
 interface ShiftTimeSelector {
     suspend fun get(timeRange: LongRange): Long
@@ -166,7 +164,7 @@ class StepExecutor(
         }
     }
 
-    private fun cleanTokenTransitionVisits(tokens: SortedTokens) {
+    private fun cleanTokenTransitionVisits(tokens: Collection<TokenWrapper>) {
         for (token in tokens) {
             cleanTokenTransitionVisits(token)
         }
@@ -174,14 +172,15 @@ class StepExecutor(
 
     private fun cleanGarbageTokens() {
         model.outPlaces.forEach { endPlace ->
-            tokenStore.tokensAt(endPlace).forEach { token ->
-                cleanTokenTransitionVisits(token)
+            cleanTokenTransitionVisits(tokenStore.tokensAt(endPlace))
+            tokenStore.modifyTokensAt(endPlace) { tokens ->
+                tokens.forEach { tokenStore.removeToken(it) }
+                tokens.clear()
             }
-            tokenStore.modifyTokensAt(endPlace) { tokens -> tokens.clear() }
         }
     }
 
-    private suspend fun fireTransition(transition: TransitionWrapper) {
+    private fun fireTransition(transition: TransitionWrapper) {
         val solution = transition.inputArcsSolutions(tokenStore, shuffler)
             .iterator().also {
                 require(it.hasNext()) {
@@ -189,25 +188,18 @@ class StepExecutor(
                 }
             }
             .next()
+        val minusTokens = solution.toTokenSlice()
+        val (plusTokens, consumed) = transition.outputArcsSolutions(minusTokens, shuffler, tokenGenerator = tokenStore)
 
-        transition.logTokensOnFireIfSynchronized(solution)
+        tokenStore.minus(minusTokens)
+        tokenStore.plus(plusTokens)
 
-        val tokensRemoved = SimpleTokenSlice.of(solution)
-
-        tokenStore.minus(tokensRemoved)
-
-//        val outputArcsSolution = transition.outputArcsSolutions()
-//        tokenStore.plus(solution.tokensAppended)
-
-//        solution.tokensAppended.tokensIterator.forEach { tokenWrapper ->
-//            transition.addTokenVisit(reference, tokenWrapper)
-//        }
-
+        transition.logTokensOnFireIfSynchronized(plusTokens)
         transition.transitionsWithSharedPreplaces.forEach { t ->
             t.timer.resetCounter()
         }
-
-//        cleanTokenTransitionVisits(solution.garbagedTokens)
+        cleanTokenTransitionVisits(consumed)
+        tokenStore.removeTokens(consumed)
     }
 
     private fun determineShiftTimes(enabledByMarking: Transitions): LongRange? {

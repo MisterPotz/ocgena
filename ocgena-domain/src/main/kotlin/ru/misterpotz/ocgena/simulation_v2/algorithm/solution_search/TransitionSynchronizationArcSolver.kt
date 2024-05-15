@@ -6,7 +6,25 @@ import ru.misterpotz.ocgena.simulation_v2.entities.MultiArcCondition
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
+
+sealed interface FullSolution {
+    data class Tokens(val solutionTokens: SolutionTokens) : FullSolution
+    data class Amounts(val solutionAmounts: SolutionAmounts) : FullSolution
+
+    fun toTokenSlice(): TokenSlice {
+        return when (this) {
+            is Amounts -> {
+                SimpleTokenSlice.ofAmounts(solutionAmounts)
+            }
+
+            is Tokens -> {
+                SimpleTokenSlice.of(solutionTokens)
+            }
+        }
+    }
+}
 
 typealias SolutionTokens = Map<PlaceWrapper, List<TokenWrapper>>
 
@@ -20,6 +38,7 @@ sealed interface IndependentSolution {
         val place: PlaceWrapper,
         val tokens: List<TokenWrapper>,
     ) : IndependentSolution
+
 }
 
 class TransitionSynchronizationArcSolver(
@@ -29,7 +48,7 @@ class TransitionSynchronizationArcSolver(
     fun getSolutionFinderIterable(
         tokenSlice: TokenSlice,
         shuffler: Shuffler
-    ): Iterable<SolutionTokens>? {
+    ): Iterable<FullSolution>? {
         val filteredTokenSlice = preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return null
 
         val heavySynchronizationSearchCombinator = createGroupSolutionCombinator(
@@ -42,7 +61,7 @@ class TransitionSynchronizationArcSolver(
         val fullCombinator =
             IteratorsCombinator(listOf(heavySynchronizationSearchCombinator, easyArcsSolutionCombinator))
 
-        return IteratorMapper<List<List<IndependentSolution>>, SolutionTokens>(
+        return IteratorMapper<List<List<IndependentSolution>>, FullSolution>(
             fullCombinator
         ) { independentSolutionCombination ->
 
@@ -67,7 +86,7 @@ class TransitionSynchronizationArcSolver(
                     }
                 }
             }
-            fullSolutionMap
+            FullSolution.Tokens(fullSolutionMap)
         }
     }
 
@@ -75,7 +94,7 @@ class TransitionSynchronizationArcSolver(
         tokenSlice: TokenSlice,
         shuffler: Shuffler
     ): Iterable<List<IndependentSolution.Unconditional>> {
-        val allUnconditionalCombinationsIterator = transition.unconditionalArcs.map { unconditionalArc ->
+        val allUnconditionalCombinationsIterator = transition.unconditionalInputArcs.map { unconditionalArc ->
             val tokenIndicesRange = unconditionalArc.fromPlace.tokenRangeAt(tokenSlice)
             val tokensTotal = tokenSlice.tokensAt(unconditionalArc.fromPlace).size
 

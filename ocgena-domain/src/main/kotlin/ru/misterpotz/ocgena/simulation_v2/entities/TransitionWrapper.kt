@@ -1,14 +1,11 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.SolutionTokens
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.*
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.GroupingStrategy
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenArcFlowSnapshotFactory
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.*
 import ru.misterpotz.ocgena.simulation_v2.utils.Identifiable
 import ru.misterpotz.ocgena.simulation_v2.utils.Ref
 import ru.misterpotz.ocgena.simulation_v2.utils.selectIn
@@ -82,8 +79,8 @@ class TransitionWrapper(
     fun inputArcsSolutions(
         tokenSlice: TokenSlice,
         shuffler: Shuffler
-    ): Iterable<SolutionTokens> {
-        return when (model.isSynchronizationMode()) {
+    ): Iterable<FullSolution> {
+        return when (model.tokensAreEntities()) {
             true -> {
                 TransitionSynchronizationArcSolver(this)
                     .getSolutionFinderIterable(tokenSlice, shuffler)
@@ -91,18 +88,130 @@ class TransitionWrapper(
             }
 
             false -> {
-                emptyList()
+                SimpleArcSolver(tokenSlice, this)
             }
         }
     }
 
+    private fun nonDeterministicDistributeTokensOverArcs(
+        snapshot: TokenArcFlowSnapshotFactory.Snapshot,
+        shuffler: Shuffler
+    ): MutableMap<OutputArcWrapper, MutableList<TokenWrapper>> {
+        val typeToArcs = mutableMapOf<ObjectType, MutableList<OutputArcWrapper>>()
+        outputArcs.forEach {
+            typeToArcs.getOrPut(it.objectType) { mutableListOf() }.add(it)
+        }
 
-    fun outputArcsSolutions(tokenSlice: TokenSlice): Iterable<SolutionTokens> {
-        val snapshot = TokenArcFlowSnapshotFactory(this, tokenSlice)
+        // which tokens to generate and how much?
+        val requiredAmountPerArc = outputArcs.associateBy({ it }) {
+            it.getAmountToProduce(snapshot)
+        }
+
+        val arcToTokens = mutableMapOf<OutputArcWrapper, MutableList<TokenWrapper>>()
+
+        for ((objectType, arcs) in typeToArcs) {
+            val objectTypeTokens =
+                snapshot.getGroup(objectType)
+                    .tokens
+                    .let {
+                        it.buildFromIndices(shuffler.makeShuffled(it.indices))
+                    }
+                    .toMutableList()
+
+            val stackPerArc = List(arcs.size) { mutableListOf<TokenWrapper>() }
+
+            val iterator = objectTypeTokens.iterator()
+
+            while (iterator.hasNext()) {
+                // determine arcs that still need token consumption
+                val writableArcIndices = arcs.mapIndexedNotNull { index, outputArcWrapper ->
+                    if (stackPerArc[index].size == requiredAmountPerArc[outputArcWrapper]!!) {
+                        null
+                    } else {
+                        index
+                    }
+                }
+                val consumer = shuffler.select(writableArcIndices)
+                stackPerArc[consumer].add(iterator.next())
+            }
+
+            arcs.zip(stackPerArc) { arc, tokens ->
+                arcToTokens[arc] = tokens.toMutableList()
+            }
+        }
+        return arcToTokens
+    }
+
+    private fun simpleAmountsSolution(
+        tokenSlice: TokenSlice,
+    ): TokenSlice {
+        val snapshot: TokenArcFlowSnapshotFactory.Snapshot = TokenArcFlowSnapshotFactory(this, tokenSlice)
             .getGrouped(GroupingStrategy.ByType)
 
-        // depending on lomazova or aalst will be different results
-        throw IllegalStateException()
+        val arcsToTokens = outputArcs.associateBy({ it }) {
+            it.getAmountToProduce(snapshot)
+        }
+        return SimpleTokenSlice.build {
+            for ((outputArc, tokens) in arcsToTokens) {
+                addAmount(outputArc.toPlace, tokens)
+            }
+        }
+    }
+
+    private fun tokenEntitiesOutputArcSolution(
+        tokenSlice: TokenSlice,
+        shuffler: Shuffler,
+        tokenGenerator: TokenGenerator
+    ): OutputArcsSolution {
+        val snapshot: TokenArcFlowSnapshotFactory.Snapshot = TokenArcFlowSnapshotFactory(this, tokenSlice)
+            .getGrouped(GroupingStrategy.ByType)
+
+        // which tokens to generate and how much?
+        val requiredAmountPerArc = outputArcs.associateBy({ it }) {
+            it.getAmountToProduce(snapshot)
+        }
+
+        val tokensDistribution = nonDeterministicDistributeTokensOverArcs(snapshot, shuffler)
+
+        val distributedTokens = tokensDistribution.values.flatten().toSet()
+        val deletedTokens = snapshot.allTokens.toSet().minus(distributedTokens).toList()
+
+        outputArcs.forEach {
+            val requiredAmount = requiredAmountPerArc[it]!!
+            val alreadyHave = tokensDistribution[it]!!.size
+
+            val tokensToGenerate = (requiredAmount - alreadyHave).coerceAtLeast(0)
+            for (i in 0..<tokensToGenerate) {
+                val newToken = tokenGenerator.generateRealToken(it.objectType)
+                tokensDistribution[it]!!.add(newToken)
+            }
+        }
+
+        val outputTokens = SimpleTokenSlice.build {
+            for ((outputArc, tokens) in tokensDistribution) {
+                addTokens(outputArc.toPlace, tokens)
+            }
+        }
+        return OutputArcsSolution(plusTokens = outputTokens, deletedTokens)
+    }
+
+    data class OutputArcsSolution(
+        val plusTokens: TokenSlice,
+        val consumedTokens: List<TokenWrapper>
+    ) {
+
+    }
+
+    fun outputArcsSolutions(
+        tokenSlice: TokenSlice,
+        shuffler: Shuffler,
+        tokenGenerator: TokenGenerator
+    ): OutputArcsSolution {
+        return if (model.tokensAreEntities()) {
+            tokenEntitiesOutputArcSolution(tokenSlice, shuffler, tokenGenerator)
+        } else {
+            OutputArcsSolution(simpleAmountsSolution(tokenSlice), emptyList())
+        }
     }
 
     override val id: String
@@ -158,7 +267,7 @@ class TransitionWrapper(
         groups.sorted()
     }
 
-    val unconditionalArcs by lazy {
+    val unconditionalInputArcs by lazy {
         inputArcs.filter { it.underConditions.isEmpty() }.sorted()
     }
 
@@ -219,6 +328,12 @@ class TransitionWrapper(
         inputArcWrappers
     }
 
+    val outputArcs by lazy {
+        postPlaces.places.map {
+            OutputArcWrapper(toPlace = it, transition = this, model = model)
+        }
+    }
+
     val dependentTransitions by lazy {
         model.transitionsRef.ref.transitions.mapNotNull { wrapper ->
             val entry = dependentTransitionsIds.find { wrapper.id == it.transition }
@@ -244,12 +359,14 @@ class TransitionWrapper(
         arcLogicsFactory.getArcSolver(model.ocNet, prePlaces, toTransition = this)
     }
 
-    fun logTokensOnFireIfSynchronized(placeToTokens: Map<PlaceWrapper, List<TokenWrapper>>) {
-        val newTransitionReference = getNewTransitionReference()
+    fun logTokensOnFireIfSynchronized(tokenSlice: TokenSlice) {
+        if (model.tokensAreEntities() && this in model.loggedTransitions) {
+            val newTransitionReference = getNewTransitionReference()
 
-        for ((_, tokens) in placeToTokens) {
-            for (token in tokens) {
-                addTokenVisit(newTransitionReference, token)
+            for ((_, tokens) in tokenSlice.byPlaceIterator()) {
+                for (token in tokens) {
+                    addTokenVisit(newTransitionReference, token)
+                }
             }
         }
     }

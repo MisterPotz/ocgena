@@ -24,8 +24,8 @@ class ModelAccessor(
         transitionsRef.ref.flatMap { it.inputArcConditions.map { it.syncTarget } }.toSet().toList()
     }
 
-    fun isSynchronizationMode() : Boolean {
-        return loggedTransitions.isNotEmpty()
+    fun tokensAreEntities(): Boolean {
+        return simulationInput.loggingEnabled ?: false
     }
 
     fun transitionBy(id: PetriAtomId) = transitionsRef.ref.map[id]!!

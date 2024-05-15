@@ -111,6 +111,7 @@ class InputArcWrapper(
             return when (this) {
                 AtLeastOne -> amount > 0
                 is Exact -> amount >= number
+                is DependsOnVariable -> TODO()
             }
         }
 
@@ -146,6 +147,22 @@ class InputArcWrapper(
 
             override fun isUnconstrained(): Boolean {
                 return false
+            }
+        }
+
+        data class DependsOnVariable(
+            val variableName: String
+        ) : ConsumptionSpec {
+            override fun isUnconstrained(): Boolean {
+                return true
+            }
+
+            override fun compareTo(other: ConsumptionSpec): Int {
+                return when (other) {
+                    AtLeastOne -> -1
+                    is DependsOnVariable -> variableName.compareTo(other.variableName)
+                    is Exact -> 1
+                }
             }
         }
 

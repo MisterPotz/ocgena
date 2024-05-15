@@ -51,12 +51,19 @@ class CombinationIterable(
 }
 
 interface Shuffler {
+    // makes completely shuffled indices
     fun makeShuffled(intRange: IntRange): List<Int>
+    // select random from the given list
+    fun select(ints: List<Int>) : Int
 }
 
 class NormalShuffler(val random: Random) : Shuffler {
     override fun makeShuffled(intRange: IntRange): List<Int> {
         return intRange.shuffled(random)
+    }
+
+    override fun select(ints: List<Int>): Int {
+        return ints.random(random)
     }
 }
 

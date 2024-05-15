@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
@@ -15,25 +16,40 @@ class TokenArcFlowSnapshotFactory(
     private val consumed: TokenSlice,
 ) {
     private val groupedByType by lazy(LazyThreadSafetyMode.NONE) {
-        val map: MutableMap<CompoundKey, MutableList<ConsumedPlaceRecord>> = mutableMapOf()
+        // merge token datas here to aggregate in snapshot
+
+        val objTypeToToken = mutableMapOf<ObjectType, MutableList<TokenWrapper>>()
+        val objTypeToAmount = mutableMapOf<ObjectType, Int>()
+        val variableValues = mutableMapOf<String, Int>()
 
         consumed.byPlaceIterator().forEach { (place, tokens) ->
+            for (token in tokens) {
+                objTypeToToken.getOrPut(token.objectType) { mutableListOf() }.add(token)
+            }
+            objTypeToAmount[place.objectType] =
+                objTypeToAmount.getOrPut(place.objectType) { 0 } + consumed.amountAt(place)
+
             val inputArc = transitionWrapper.findInputArcByPlace(place)
 
-            val key = makeCompoundKey(GroupingStrategy.ByType, place.objectType, inputArc)
+            (inputArc.arcMeta as? LomazovaVariableArcMeta)?.let { arcMeta ->
+                variableValues[arcMeta.variableName] = consumed.amountAt(place)
+            }
 
-            val record = ConsumedPlaceRecord(
-                amount = tokens.size,
-                tokens = tokens.toList(),
-                objectType = place.objectType,
-                arc = inputArc
-            )
-
-            map.getOrPut(key) {
-                mutableListOf()
-            }.add(record)
+            inputArc.arcMeta.isVar()
         }
-        SimpleSnapshot(map, GroupingStrategy.ByType)
+
+        val objTypeToTokenData = objTypeToToken.mapValues {
+            TokenData(
+                objectType = it.key,
+                amount = objTypeToAmount[it.key]!!,
+                tokens = it.value
+            )
+        }
+
+        SimpleSnapshot(
+            groupedRecords = objTypeToTokenData,
+            variablesValues = variableValues,
+        )
     }
 
     fun getGrouped(groupingStrategy: GroupingStrategy): Snapshot {
@@ -43,18 +59,16 @@ class TokenArcFlowSnapshotFactory(
         }
     }
 
-    data class ConsumedPlaceRecord(
-        val amount: Int,
-        val tokens: List<TokenWrapper>?,
+    data class TokenData(
         val objectType: ObjectType,
-        val arc: InputArcWrapper,
+        val amount: Int,
+        val tokens: List<TokenWrapper>
     )
 
     interface Snapshot {
-        fun getRecords(
-            objectType: ObjectType,
-            inputArcWrapper: InputArcWrapper
-        ): List<ConsumedPlaceRecord>
+        fun getVariableValue(value: String): Int
+        fun getGroup(type: ObjectType): TokenData
+        val allTokens: Iterable<TokenWrapper>
     }
 
     companion object {
@@ -74,18 +88,19 @@ class TokenArcFlowSnapshotFactory(
     }
 
     class SimpleSnapshot(
-        private val groupedRecords: Map<CompoundKey, List<ConsumedPlaceRecord>>,
-        private val groupingStrategy: GroupingStrategy,
+        private val variablesValues: Map<String, Int>,
+        private val groupedRecords: Map<ObjectType, TokenData>,
     ) : Snapshot {
+        override fun getVariableValue(value: String): Int {
+            return variablesValues[value]!!
+        }
 
-        val iterable = groupedRecords
+        override fun getGroup(type: ObjectType): TokenData {
+            return groupedRecords[type]!!
+        }
 
-        override fun getRecords(
-            objectType: ObjectType,
-            inputArcWrapper: InputArcWrapper,
-        ): List<ConsumedPlaceRecord> {
-            val compoundKey = makeCompoundKey(groupingStrategy, objectType, inputArcWrapper)
-            return groupedRecords[compoundKey]!!
+        override val allTokens: Iterable<TokenWrapper> = groupedRecords.values.flatMap {
+            it.tokens
         }
     }
 

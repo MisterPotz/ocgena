@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.FullSolution
 import ru.misterpotz.ocgena.simulation_v2.entities.PlaceWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.Places
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
@@ -26,16 +27,28 @@ interface TokenSlice {
     fun print()
 }
 
+interface TokenGenerator {
+    fun generateRealToken(type: ObjectType): TokenWrapper
+}
+
 class TokenStore(
     private val internalSlice: SimpleTokenSlice,
     private val modelAccessor: ModelAccessor,
-    val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
-) : TokenSlice by internalSlice {
+    private val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
+) : TokenSlice by internalSlice, TokenGenerator {
     private val tokenCreators = TokenCreators()
 
-    fun generateRealToken(typeId: ObjectTypeId): TokenWrapper {
-        val type = modelAccessor.ocNet.objectTypeRegistry[typeId]
+    fun removeToken(tokenWrapper: TokenWrapper) {
+        issuedTokens.remove(tokenWrapper.tokenId)
+    }
 
+    fun removeTokens(tokens: Collection<TokenWrapper>) {
+        for (token in tokens) {
+            removeToken(token)
+        }
+    }
+
+    override fun generateRealToken(type: ObjectType): TokenWrapper {
         return tokenCreators.create(type).also {
             issuedTokens[it.tokenId] = it
         }
@@ -233,19 +246,27 @@ data class SimpleTokenSlice(
         fun build(block: ConstructionBlock.() -> Unit): SimpleTokenSlice {
             val mutableMap = mutableMapOf<PlaceWrapper, MutableSortedTokens>()
 
+            val amounts = mutableMapOf<PlaceWrapper, Int>()
+
             val constructionBlock = object : ConstructionBlock {
                 override fun addTokens(placeWrapper: PlaceWrapper, tokens: Collection<TokenWrapper>) {
                     mutableMap.getOrPut(placeWrapper) {
                         sortedSetOf()
                     }.addAll(tokens)
                 }
+
+                override fun addAmount(placeWrapper: PlaceWrapper, amount: Int) {
+                    amounts[placeWrapper] = amount
+                }
             }
             constructionBlock.block()
             return SimpleTokenSlice(
-                internalRelatedPlaces = mutableMap.keys.toMutableSet(),
+                internalRelatedPlaces = mutableMap.keys.toMutableSet().union(amounts.keys).toMutableSet(),
                 tokensMap = mutableMap,
-                amountsMap = mutableMap.mapValues { it.value.size }
-                    .let { mutableMapOf<PlaceWrapper, Int>().apply { putAll(it) } }
+                amountsMap = if (amounts.isEmpty()) {
+                    mutableMap.mapValues { it.value.size }
+                        .let { mutableMapOf<PlaceWrapper, Int>().apply { putAll(it) } }
+                } else amounts
             )
         }
 
@@ -257,9 +278,18 @@ data class SimpleTokenSlice(
             }
 
         }
+
+        fun ofAmounts(map: Map<PlaceWrapper, Int>): SimpleTokenSlice {
+            return build {
+                for ((place, value) in map) {
+                    addAmount(place, value)
+                }
+            }
+        }
     }
 }
 
 interface ConstructionBlock {
     fun addTokens(placeWrapper: PlaceWrapper, tokens: Collection<TokenWrapper>)
+    fun addAmount(placeWrapper: PlaceWrapper, amount: Int)
 }
