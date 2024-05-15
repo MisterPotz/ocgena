@@ -59,102 +59,65 @@ class TransitionSynchronizationArcSolverTest {
         "test".t.arc("out".p { output })
     }
 
-    private fun buildTransitionHistory(model: ModelAccessor): SimpleTokenSlice {
-        fun List<Int>.makeTokens(): List<TokenWrapper> = map { TokenWrapper(it.toString(), model.defaultObjectType()) }
+    private fun buildTransitionHistory(model: ModelAccessor): SimpleTokenSlice = buildTransitionHistory(
+        model = model,
+        transitionToHistoryEntries = mapOf(
+            "t1" to listOf(
+                listOf(1, 2, 100), // p1, p3, p2, buff2, buff2
+                listOf(3, 4, 102, ), // p1, p3, p2, buff2
+                listOf(5, 6, 103), // p1, p3, p2, buff2, buff2
+                listOf(7, 8, 104), // p1, p3, p2, buff2, buff2
+                listOf(9, 10, 105), // p1, p2, p2, buff2, buff2, buff2
+                listOf(71, 72, 106), // p1, p2, p2, buff2
+                listOf(73, 74, 107), // p1, p2, p2, buff2
+            ),
+            "t2" to listOf(
+                listOf(2, 11), // p3, p2
+                listOf(4, 12), // p3, p2
+                listOf(6, 13), // p3, p2
+                listOf(8, 108), // p3, p2
+                listOf(14, 10), // p3, p2
+                listOf(15, 72), // p3, p2
+                listOf(16, 74), // p3, p2
 
-
-        val t1History = listOf(
-            listOf(1, 2, 100), // p1, p3, p2
-            listOf(3, 4, 102), // p1, p3, p2
-            listOf(5, 6, 103), // p1, p3, p2
-            listOf(7, 8, 104), // p1, p3, p2
-            listOf(9, 10, 105), // p1, p2, p2
-            listOf(71, 72, 106), // p1, p2, p2
-            listOf(73, 74, 107), // p1, p2, p2
-        )
-
-        val t2History = listOf(
-            listOf(2, 11), // p3, p2
-            listOf(4, 12), // p3, p2
-            listOf(6, 13), // p3, p2
-            listOf(8, 108), // p3, p2
-            listOf(14, 10), // p3, p2
-            listOf(15, 72), // p3, p2
-            listOf(16, 74), // p3, p2
-        )
-
-        val t3History = listOf(
-            listOf(30),
-            listOf(31),
-            listOf(32),
-            listOf(33),
-        )
-
-        val t0History = listOf(
-            listOf(40, 41, 42),
-            listOf(43, 44, 45)
-        )
-        val tokenEntries = mutableMapOf<String, TokenWrapper>()
-        fun List<List<Int>>.recordTokensToHistory(transitionWrapper: TransitionWrapper): List<TokenWrapper> {
-            return flatMap { it ->
-                val tokens = it.map { tokenIndex ->
-                    tokenEntries.getOrPut(tokenIndex.toString()) {
-                        TokenWrapper(
-                            tokenIndex.toString(),
-                            model.defaultObjectType()
-                        )
-                    }
-                }
-                val newLogReference = transitionWrapper.getNewTransitionReference()
-                for (token in tokens) {
-                    transitionWrapper.addTokenVisit(newLogReference, token)
-                }
-                tokens
-            }
-        }
-
-        fun List<TokenWrapper>.by(int: Int): TokenWrapper {
-            val id = int.toString()
-            return find { it.tokenId == id }!!
-        }
-
-        val allTokens = listOf(
-            t1History to model.transitionBy("t1"),
-            t2History to model.transitionBy("t2"),
-            t3History to model.transitionBy("t3"),
-            t0History to model.transitionBy("t0")
-        ).flatMap { (history, transition) -> history.recordTokensToHistory(transition) }
-
-        fun List<Int>.selectTokens(): List<TokenWrapper> {
-            return map { allTokens.by(it) }
-        }
-
-        val tokenSlice = SimpleTokenSlice.build {
-            // from t1
-            addTokens(model.place("p1"), listOf(1, 3, 5, 7, 9, 71, 73).selectTokens())
-            // from t0
-            addTokens(model.place("p1"), listOf(40, 41).selectTokens())
-
-            // from t2
-            addTokens(
-                model.place("p2"),
-                listOf(11, 12, 13, 10, 72, 74, 100, 102, 103, 104, 105, 106, 107, 108).selectTokens()
+            ),
+            "t3" to listOf(
+                listOf(30),
+                listOf(31),
+                listOf(32),
+                listOf(33),
+            ),
+            "t0" to listOf(
+                listOf(40, 41, 42),
+                listOf(43, 44, 45)
             )
-
-            // from t2
-            addTokens(model.place("p3"), listOf(2, 4, 6, 8, 14, 15, 16).selectTokens())
-            // from t0
-            addTokens(model.place("p3"), listOf(42, 43).selectTokens())
-
-            // from t0
-            addTokens(model.place("p4"), listOf(44, 45).selectTokens())
-
-            // from t3
-            addTokens(model.place("p5"), listOf(30, 31, 32, 33).selectTokens())
-        }
-
-        return tokenSlice
-    }
+        ),
+        placeToTokens = mapOf(
+            "p1" to listOf(
+                // from t1
+                1, 3, 5, 7, 9, 71, 73,
+                // from t0
+                40, 41
+            ),
+            "p2" to listOf(
+                11, 12, 13, 10, 72, 74, 100, 102, 103, 104, 105, 106, 107, 108
+            ),
+            "p3" to listOf(
+                // from t2
+                2, 4, 6, 8, 14, 15, 16,
+                // from t0
+                42, 43
+            ),
+            "p4" to listOf(
+                // from t0
+                44, 45
+            ),
+            "p5" to listOf(
+                // t3
+                30, 31, 32, 33
+            ),
+        )
+    )
 
     @Test
     fun print() {
@@ -231,7 +194,7 @@ class TransitionSynchronizationArcSolverTest {
                 "p3" to listOf(16),
                 "p4" to listOf(44),
                 "p5" to listOf(33)
-            ).let { tokenSlice.copyFromMap(model, it) },
+            ).toTokenSliceFrom(tokenSlice, model),
             solutions[2].toTokenSlice()
         )
         assertEquals(
@@ -241,7 +204,7 @@ class TransitionSynchronizationArcSolverTest {
                 "p3" to listOf(15),
                 "p4" to listOf(45),
                 "p5" to listOf(33)
-            ).let { tokenSlice.copyFromMap(model, it) },
+            ).toTokenSliceFrom(tokenSlice, model),
             solutions[22].toTokenSlice()
         )
     }

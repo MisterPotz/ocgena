@@ -23,6 +23,15 @@ fun Map<String, List<Int>>.toTokenSliceFrom(tokenSlice: SimpleTokenSlice, model:
     return tokenSlice.copyFromMap(model, this)
 }
 
+fun Map<String, Int>.toTokenSliceAmounts(model: ModelAccessor): TokenSlice {
+    val map = this
+    return SimpleTokenSlice.build {
+        for ((place, amount) in map) {
+            addAmount(model.place(place), amount)
+        }
+    }
+}
+
 
 fun buildTransitionHistory(
     model: ModelAccessor,

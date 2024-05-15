@@ -13,43 +13,46 @@ import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random
 
-class TransitionSyncLomazovaVarArcSolverTest {
-    fun ocnet() = buildOCNet(OcNetType.LOMAZOVA) {
-        "order".p { input; objectTypeId = "1" }
-        "package".p { input; objectTypeId = "2" }
-        "track".p { input; objectTypeId = "3" }
+fun synchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {
+    "order".p { input; objectTypeId = "1" }
+    "package".p { input; objectTypeId = "2" }
+    "track".p { input; objectTypeId = "3" }
 
-        "place order".t
-        "order".arc("place order")
-        "package".arc("place order") { vari; mathExpr = "m" }
+    "place order".t
+    "order".arc("place order")
+    "package".arc("place order") { vari; mathExpr = "m" }
 
-        "place order".arc("o2".p { objectTypeId = "1" })
-        "place order".arc("p2".p { objectTypeId = "2" }) { vari; mathExpr = "m" }
+    "place order".arc("o2".p { objectTypeId = "1" })
+    "place order".arc("p2".p { objectTypeId = "2" }) { vari; mathExpr = "m" }
 
-        "p2".arc("arrange packages to tracks".t) { vari; mathExpr = "2*n" }
-        "track".arc("arrange packages to tracks") { vari; mathExpr = "n" }
-        "arrange packages to tracks".apply {
-            arc("p3".p { objectTypeId = "2" }) { vari; mathExpr = "2*n" }
-            arc("t2".p { objectTypeId = "3" }) { vari; mathExpr = "n" }
-        }
-
-        "bill".p { input; objectTypeId = "4" }
-            .arc("send invoices".t) { vari; mathExpr = "k" }
-            .arc("b2".p { objectTypeId = "4" }) { vari; mathExpr = "k" }
-        "o2".p.arc("send invoices".t)
-        "send invoices".arc("o3".p { objectTypeId = "1" })
-
-        "test all sync".t
-
-        "o3".arc("test all sync") { vari; mathExpr = "o" }
-        "b2".arc("test all sync") { vari; mathExpr = "2*o" }
-        "p3".arc("test all sync") { vari; mathExpr = "2*o" }
-        "t2".arc("test all sync") { vari; mathExpr = "t" }
-
-        "test all sync".arc("output".p { objectTypeId = "1"; output }) { vari; mathExpr = "o" }
+    "p2".arc("arrange packages to tracks".t) { vari; mathExpr = "2*n" }
+    "track".arc("arrange packages to tracks") { vari; mathExpr = "n" }
+    "arrange packages to tracks".apply {
+        arc("p3".p { objectTypeId = "2" }) { vari; mathExpr = "2*n" }
+        arc("t2".p { objectTypeId = "3" }) { vari; mathExpr = "n" }
     }
 
-    fun ModelAccessor.buildTransitionHistoryNonWorking() = buildTransitionHistory(
+    "bill".p { input; objectTypeId = "4" }
+        .arc("send invoices".t) { vari; mathExpr = "k" }
+        .arc("b2".p { objectTypeId = "4" }) { vari; mathExpr = "k" }
+    "o2".p.arc("send invoices".t)
+    "send invoices".arc("o3".p { objectTypeId = "1" })
+
+    "test all sync".t
+
+    "o3".arc("test all sync") { vari; mathExpr = "o" }
+    "b2".arc("test all sync") { vari; mathExpr = "2*o" }
+    "p3".arc("test all sync") { vari; mathExpr = "2*o" }
+    "t2".arc("test all sync") { vari; mathExpr = "t" }
+
+    "test all sync".arc("output".p { objectTypeId = "1"; output }) { vari; mathExpr = "o" }
+}
+
+
+class TransitionSyncLomazovaVarArcSolverTest {
+    private fun ocnet() = synchronizingLomazovaExampleModel()
+
+    private fun ModelAccessor.buildTransitionHistoryNonWorking() = buildTransitionHistory(
         this,
         transitionToHistoryEntries = mapOf(
             "place_order" to listOf(
@@ -182,11 +185,11 @@ class TransitionSyncLomazovaVarArcSolverTest {
         assertEquals(null, solutions)
     }
 
-
     @Test
     fun `no solution due to required synchronization amount and non intersecting history`() {
         val model = ocnet().toDefaultSim(
             SimulationInput(
+                loggingEnabled = true,
                 transitions = mapOf(
                     "test_all_sync" to TransitionSetting(
                         synchronizedArcGroups = listOf(
@@ -216,6 +219,7 @@ class TransitionSyncLomazovaVarArcSolverTest {
     fun `only one solution exists`() {
         val model = ocnet().toDefaultSim(
             SimulationInput(
+                loggingEnabled = true,
                 transitions = mapOf(
                     "test_all_sync" to TransitionSetting(
                         synchronizedArcGroups = listOf(
@@ -229,11 +233,10 @@ class TransitionSyncLomazovaVarArcSolverTest {
         )
 
         val tokenSlice = model.buildTransitionHistoryWorking()
-        val transitionSynchronizationArcSolver = TransitionSynchronizationArcSolver(model.transitionBy("test_all_sync"))
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler)!!.iterator()
-                .asSequence().toList()
+            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler).iterator().asSequence()
+                .toList()
 
         println(solutions)
         assertEquals(1, solutions.size)
