@@ -1,15 +1,38 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
-import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.FullSolution
-import ru.misterpotz.ocgena.simulation_v2.entities.PlaceWrapper
-import ru.misterpotz.ocgena.simulation_v2.entities.Places
+import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
-import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.utils.PatternIdCreator
 import ru.misterpotz.ocgena.utils.buildMutableMap
-import java.util.SortedSet
+import java.util.*
+
+fun TokenSlice.resolveVariables(inputsArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
+    val variables = mutableMapOf<String, Int>()
+    for (inputArc in inputsArcs) {
+        val spec = inputArc.consumptionSpec
+        if (spec is InputArcWrapper.ConsumptionSpec.Variable && relatedPlaces.contains(inputArc.fromPlace)) {
+            val amount = amountAt(inputArc.fromPlace)
+            variables[spec.variableName] = amount
+        }
+    }
+    return ResolvedVariablesSpace(variables)
+}
+
+fun MutableMap<PlaceWrapper, Collection<Any>>.resolveVariables(inputArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
+    val variables = mutableMapOf<String, Int>()
+    for (inputArc in inputArcs) {
+        val spec = inputArc.consumptionSpec
+        if (spec is InputArcWrapper.ConsumptionSpec.Variable) {
+            val amount = this[inputArc.fromPlace]
+            if (amount != null) {
+                variables[spec.variableName] = amount.size
+            }
+        }
+    }
+    return ResolvedVariablesSpace(variables)
+}
+
 
 interface TokenSlice {
     val relatedPlaces: Set<PlaceWrapper>

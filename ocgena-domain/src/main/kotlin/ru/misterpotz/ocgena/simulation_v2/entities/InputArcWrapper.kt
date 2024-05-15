@@ -1,19 +1,47 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
+import ru.misterpotz.expression.facade.isSimpleVariable
+import ru.misterpotz.expression.node.MathNode
+import ru.misterpotz.expression.paramspace.VariableParameterSpace
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
+import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
+import ru.misterpotz.ocgena.simulation_v2.utils.Ref
 import java.util.*
+
+class ResolvedVariablesSpace(
+    private val variables: MutableMap<String, Int>
+) {
+
+    fun getVariable(variableName: String): Int {
+        return variables[variableName]!!
+    }
+
+    fun setVariable(variableName: String, value: Int) {
+        variables[variableName] = value
+    }
+
+    fun copyFrom(resolvedVariablesSpace: ResolvedVariablesSpace) {
+        for ((variable, value) in resolvedVariablesSpace.variables) {
+            this.variables[variable] = value
+        }
+    }
+
+    fun copy() : ResolvedVariablesSpace {
+        return ResolvedVariablesSpace(variables.toMutableMap())
+    }
+}
 
 class InputArcWrapper(
     val fromPlace: PlaceWrapper,
     val transition: TransitionWrapper,
     val modelAccessor: ModelAccessor,
-    val underConditions: List<MultiArcCondition>
+    val underConditions: List<MultiArcCondition>,
+    val _independentGroup : Ref<IndependentMultiConditionGroup?>,
 ) : Comparable<InputArcWrapper> {
 
     override fun compareTo(other: InputArcWrapper): Int {
@@ -62,6 +90,10 @@ class InputArcWrapper(
         }.toSortedSet()
     }
 
+    val independentGroup : IndependentMultiConditionGroup? by lazy {
+        _independentGroup.ref
+    }
+
     val allAssociatedArcs: Set<InputArcWrapper> by lazy(LazyThreadSafetyMode.NONE) {
         underConditions.flatMap { it.arcs.ref }.toMutableSet().apply {
             remove(this@InputArcWrapper)
@@ -81,102 +113,134 @@ class InputArcWrapper(
     }
 
 
-    fun checkAmount(amount: Int): Boolean {
-        return consumptionSpec.complies(amount)
-    }
-
-    fun getTokens(tokenSlice: TokenSlice): SortedTokens {
-        return tokenSlice.tokensAt(fromPlace)
-    }
-
     val consumptionSpec: ConsumptionSpec by lazy(LazyThreadSafetyMode.NONE) {
+        val arcMeta = arcMeta
         when (arcMeta) {
             AalstVariableArcMeta -> {
                 ConsumptionSpec.AtLeastOne
             }
 
             is LomazovaVariableArcMeta -> {
-                ConsumptionSpec.AtLeastOne
+                when (arcMeta.mathNode.isSimpleVariable()) {
+                    true -> ConsumptionSpec.Variable(arcMeta.variableName)
+                    false -> ConsumptionSpec.DependsOnVariable(arcMeta.variableName, arcMeta.mathNode)
+                }
             }
 
             is NormalArcMeta -> {
-                ConsumptionSpec.Exact((arcMeta as NormalArcMeta).multiplicity)
+                ConsumptionSpec.Exact(arcMeta.multiplicity)
             }
         }
     }
 
     sealed interface ConsumptionSpec : Comparable<ConsumptionSpec> {
 
-        fun complies(amount: Int): Boolean {
+        val type: Type
+
+        companion object {
+            val comparator = compareBy<ConsumptionSpec>({
+                it.type
+            }, {
+                when (it) {
+                    // biggest required numbers come first
+                    is Exact -> -it.number
+                    is DependsOnVariable -> -it.initialRequirement
+                    is Variable -> it.variableName
+                    AtLeastOne -> 0
+                }
+            })
+        }
+
+        enum class Type {
+            DEPENDS_ON_VAR,
+            EXACT,
+            VAR,
+            AT_LEAST_ONE,
+        }
+
+        override fun compareTo(other: ConsumptionSpec): Int {
+            return comparator.compare(this, other)
+        }
+
+        fun strongComplies(
+            amount: Int,
+            variablesSpace: ResolvedVariablesSpace
+        ): Boolean {
             return when (this) {
-                AtLeastOne -> amount > 0
                 is Exact -> amount >= number
-                is DependsOnVariable -> TODO()
+                is Variable -> amount > 0
+                is DependsOnVariable -> {
+                    val required = valueResolver.evaluate(
+                        VariableParameterSpace(
+                            variableName to variablesSpace.getVariable(variableName).toDouble()
+                        )
+                    )
+                    amount >= required
+                }
+
+                AtLeastOne -> amount > 0
             }
+        }
+
+        fun weakComplies(
+            amount: Int,
+        ): Boolean {
+            val requirement = tokenRequirement()
+            return amount >= requirement
         }
 
         fun tokenRequirement(): Int {
             return when (this) {
+                is Exact -> number
+                is Variable -> 1
+                is DependsOnVariable -> initialRequirement
                 AtLeastOne -> 1
-                is Exact -> number
             }
         }
 
-        fun tokensShouldTake(totalAmount: Int): Int {
+        fun tokensShouldTake(totalAmount: Int, variablesSpace: ResolvedVariablesSpace): Int {
             return when (this) {
-                AtLeastOne -> totalAmount
                 is Exact -> number
+                is Variable -> totalAmount
+                is DependsOnVariable -> valueResolver.evaluate(
+                    VariableParameterSpace(
+                        variableName to variablesSpace.getVariable(variableName).toDouble()
+                    )
+                ).toInt()
+
+                AtLeastOne -> totalAmount
             }
         }
 
-        fun isUnconstrained(): Boolean
+        fun isUnconstrained(): Boolean {
+            return when (this) {
+                is Exact -> false
+                is Variable -> true
+                is DependsOnVariable -> true
+                AtLeastOne -> true
+            }
+        }
 
         data class Exact(val number: Int) : ConsumptionSpec {
-            override fun compareTo(other: ConsumptionSpec): Int {
-                return when (other) {
-                    AtLeastOne -> (-number).compareTo(1)
-                    is Exact -> forExactComparator.compare(this, other)
-                }
-            }
+            override val type: Type = Type.EXACT
+        }
 
-            companion object {
-                val forExactComparator = compareBy<Exact> {
-                    -it.number
-                }
-            }
-
-            override fun isUnconstrained(): Boolean {
-                return false
-            }
+        data class Variable(
+            val variableName: String
+        ) : ConsumptionSpec {
+            override val type: Type = Type.VAR
         }
 
         data class DependsOnVariable(
-            val variableName: String
+            val variableName: String,
+            val valueResolver: MathNode
         ) : ConsumptionSpec {
-            override fun isUnconstrained(): Boolean {
-                return true
-            }
-
-            override fun compareTo(other: ConsumptionSpec): Int {
-                return when (other) {
-                    AtLeastOne -> -1
-                    is DependsOnVariable -> variableName.compareTo(other.variableName)
-                    is Exact -> 1
-                }
-            }
+            val initialRequirement = valueResolver.evaluate(VariableParameterSpace(variableName to 1.0)).toInt()
+            override val type: Type = Type.DEPENDS_ON_VAR
         }
 
         data object AtLeastOne : ConsumptionSpec {
-            override fun compareTo(other: ConsumptionSpec): Int {
-                return when (other) {
-                    AtLeastOne -> 0
-                    is Exact -> (1).compareTo(-other.number)
-                }
-            }
-
-            override fun isUnconstrained(): Boolean {
-                return true
-            }
+            override val type: Type = Type.AT_LEAST_ONE
         }
     }
 

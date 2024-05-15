@@ -24,6 +24,10 @@ class ModelAccessor(
         transitionsRef.ref.flatMap { it.inputArcConditions.map { it.syncTarget } }.toSet().toList()
     }
 
+    fun isSynchronizedMode(): Boolean {
+        return loggedTransitions.isNotEmpty()
+    }
+
     fun tokensAreEntities(): Boolean {
         return simulationInput.loggingEnabled ?: false
     }

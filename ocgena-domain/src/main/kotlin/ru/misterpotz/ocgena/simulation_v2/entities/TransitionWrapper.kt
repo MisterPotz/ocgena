@@ -1,6 +1,8 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.*
@@ -10,11 +12,10 @@ import ru.misterpotz.ocgena.simulation_v2.utils.Identifiable
 import ru.misterpotz.ocgena.simulation_v2.utils.Ref
 import ru.misterpotz.ocgena.simulation_v2.utils.selectIn
 import ru.misterpotz.ocgena.utils.TimePNRef
+import ru.misterpotz.ocgena.utils.cast
 
 class CheckingCache {
-
     var isEnabledByMarking: Boolean = false
-
     var needCheckCache: Boolean = true
         set(value) {
             if (value) {
@@ -22,6 +23,14 @@ class CheckingCache {
             }
             field = value
         }
+}
+
+fun InputArcWrapper.ConsumptionSpec.castVar(): InputArcWrapper.ConsumptionSpec.Variable {
+    return this as InputArcWrapper.ConsumptionSpec.Variable
+}
+
+fun InputArcWrapper.ConsumptionSpec.castDependent(): InputArcWrapper.ConsumptionSpec.DependsOnVariable? {
+    return this as? InputArcWrapper.ConsumptionSpec.DependsOnVariable?
 }
 
 class TransitionWrapper(
@@ -251,20 +260,7 @@ class TransitionWrapper(
     }
 
     val independentMultiArcConditions: List<IndependentMultiConditionGroup> by lazy {
-        val groups = mutableSetOf<IndependentMultiConditionGroup>()
-
-        for (i in inputArcs) {
-            if (i.underConditions.isNotEmpty()) {
-                groups.add(
-                    IndependentMultiConditionGroup(
-                        conditions = i.allAssociatedConditions,
-                        transition = this
-                    )
-                )
-            }
-        }
-
-        groups.sorted()
+        inputArcs.mapNotNull { it.independentGroup }.toSortedSet().toList()
     }
 
     val unconditionalInputArcs by lazy {
@@ -279,6 +275,43 @@ class TransitionWrapper(
             }.toMutableSet()
 
         }
+    }
+
+    val inputArcsSortedByRequiredTokens by lazy {
+        inputArcs.sortedBy { it.consumptionSpec }
+    }
+
+    val lomazovaVariabilityArcs by lazy {
+        inputArcs.filter { it.arcMeta is LomazovaVariableArcMeta }
+    }
+
+    val aalstVariabilityArcs by lazy {
+        inputArcs.filter { it.arcMeta is AalstVariableArcMeta }
+    }
+
+    val variables by lazy {
+        lomazovaVariabilityArcs.map { it.arcMeta.cast<LomazovaVariableArcMeta>().variableName }.toSet()
+    }
+
+    val lomazovaVariableArcsToDependent by lazy {
+        val variableDefinerArcs = lomazovaVariabilityArcs.filter {
+            it.consumptionSpec is InputArcWrapper.ConsumptionSpec.Variable
+        }
+
+        val variableCreationArcToDependents = mutableMapOf<InputArcWrapper, MutableSet<InputArcWrapper>>()
+
+        for (varDefiningArc in variableDefinerArcs) {
+            val variable = varDefiningArc.consumptionSpec.castVar().variableName
+            for (inputArc in inputArcs) {
+                inputArc.consumptionSpec.castDependent()?.let {
+                    if (it.variableName == variable) {
+                        variableCreationArcToDependents.getOrPut(varDefiningArc) { mutableSetOf() }.add(inputArc)
+                    }
+                }
+            }
+        }
+
+        variableCreationArcToDependents
     }
 
     val inputArcs by lazy {
@@ -317,12 +350,34 @@ class TransitionWrapper(
                 fromPlace = preplace,
                 transition = this,
                 model,
-                underConditions = createdSyncGroups ?: listOf()
+                underConditions = createdSyncGroups ?: listOf(),
+                _independentGroup = Ref()
             )
         }
         allocatedArcGroups.values.forEach { condition ->
             condition.arcs._ref =
                 inputArcWrappers.filter { condition in it.underConditions }.sorted()
+        }
+
+        val groups = mutableSetOf<IndependentMultiConditionGroup>()
+
+        for (i in inputArcWrappers) {
+            if (i.underConditions.isNotEmpty()) {
+                groups.add(
+                    IndependentMultiConditionGroup(
+                        conditions = i.allAssociatedConditions,
+                        transition = this
+                    )
+                )
+            }
+        }
+
+        for (i in groups) {
+            for (arc in inputArcWrappers) {
+                if (arc in i.relatedInputArcs) {
+                    arc._independentGroup._ref = i
+                }
+            }
         }
 
         inputArcWrappers
