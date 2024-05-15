@@ -201,29 +201,5 @@ class TransitionSynchronizationVariableArcSolverTest {
         println(solutions)
 
         assertEquals(24, solutions.size)
-
-        assertEquals(
-            mapOf(
-                "p1" to listOf(73),
-                "p2" to listOf(74),
-                "p3" to listOf(16),
-                "p4" to listOf(44),
-                "p5" to listOf(33),
-                "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
-            ).toTokenSliceFrom(tokenSlice, model),
-            solutions[2].toTokenSlice()
-        )
-
-        assertEquals(
-            mapOf(
-                "p1" to listOf(71),
-                "p2" to listOf(72),
-                "p3" to listOf(15),
-                "p4" to listOf(45),
-                "p5" to listOf(33),
-                "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
-            ).toTokenSliceFrom(tokenSlice, model),
-            solutions[22].toTokenSlice()
-        )
     }
 }

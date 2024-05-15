@@ -32,65 +32,70 @@ petri_atoms:
       label: "t1"
       from_places: ["p1"]
       to_places: ["p2", "o1"]
-    "p1_t1":
+    "p1.t1":
       type: "arc"
-      id: "p1_t1"
+      id: "p1.t1"
     "p2":
       type: "place"
       id: "p2"
       label: "p2"
       from_transtns: ["t1"]
       to_transtns: ["t2", "t3"]
-    "t1_p2":
+    "t1.p2":
       type: "arc"
-      id: "t1_p2"
+      id: "t1.p2"
     "o1":
       type: "place"
       id: "o1"
       label: "o1"
       from_transtns: ["t1"]
       to_transtns: ["t3"]
-    "t1_o1":
+    "t1.o1":
       type: "arc"
-      id: "t1_o1"
+      id: "t1.o1"
     "t2":
       type: "transition"
       id: "t2"
       label: "t2"
       from_places: ["p2"]
       to_places: ["p3"]
-    "p2_t2":
+    "p2.t2":
       type: "arc"
-      id: "p2_t2"
+      id: "p2.t2"
     "p3":
       type: "place"
       id: "p3"
       label: "p3"
       from_transtns: ["t2", "t3"]
-    "t2_p3":
+    "t2.p3":
       type: "arc"
-      id: "t2_p3"
+      id: "t2.p3"
     "t3":
       type: "transition"
       id: "t3"
       label: "t3"
       from_places: ["p2", "o1"]
       to_places: ["o2", "p3"]
-    "p2_t3":
+    "p2.t3":
       type: "arc"
-      id: "p2_t3"
-    "o1_t3":
+      id: "p2.t3"
+    "o1.t3":
       type: "vararc"
-      id: "o1_t3"
+      id: "o1.t3"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
     "o2":
       type: "place"
       id: "o2"
       label: "o2"
       from_transtns: ["t3"]
-    "t3_o2":
+    "t3.o2":
       type: "vararc"
-      id: "t3_o2"
-    "t3_p3":
+      id: "t3.o2"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "t3.p3":
       type: "arc"
-      id: "t3_p3"
+      id: "t3.p3"
       multiplicity: 0
+oc_net_type: "aalst"

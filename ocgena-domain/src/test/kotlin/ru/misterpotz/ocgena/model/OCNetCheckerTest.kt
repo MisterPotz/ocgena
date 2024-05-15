@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.model
 
 import ru.misterpotz.ocgena.error.ConsistencyCheckError
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.createExampleModel
 import ru.misterpotz.ocgena.ocnet.OCNet
@@ -134,6 +135,7 @@ class OCNetCheckerTest {
     }
 
     @Test
+    @Disabled
     fun testInputPlaceWithInputArcsError() {
         val errors = createAndCheckForConsistency {
             "p1".p

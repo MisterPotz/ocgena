@@ -13,7 +13,7 @@ fun SimpleTokenSlice.copyFromMap(
     return SimpleTokenSlice.of(
         buildMap {
             for ((place, tokens) in map) {
-                put(model.place(place), tokens.map { tokenBy(it.toString()) })
+                put(model.place(place), tokens.map { tokenBy(it.toLong()) })
             }
         }
     )
@@ -45,7 +45,7 @@ fun buildTransitionHistory(
             val tokens = it.map { tokenIndex ->
                 tokenEntries.getOrPut(tokenIndex.toString()) {
                     TokenWrapper(
-                        tokenIndex.toString(),
+                        tokenIndex.toLong(),
                         model.defaultObjectType()
                     )
                 }
@@ -60,7 +60,7 @@ fun buildTransitionHistory(
 
     fun List<TokenWrapper>.by(int: Int): TokenWrapper {
         val id = int.toString()
-        return find { it.tokenId == id }!!
+        return find { it.tokenId == id.toLong() }!!
     }
 
     val allTokens = transitionToHistoryEntries.map { it.value to model.transitionBy(it.key) }
@@ -86,13 +86,13 @@ fun buildTokenSlice(
 
     fun List<TokenWrapper>.by(int: Int): TokenWrapper {
         val id = int.toString()
-        return find { it.tokenId == id }!!
+        return find { it.tokenId == id.toLong() }!!
     }
 
     val allTokens = placeToTokens.flatMap { (place, ints) ->
             ints.map {
                 TokenWrapper(
-                    it.toString(),
+                    it.toLong(),
                     model.defaultObjectType()
                 )
             }

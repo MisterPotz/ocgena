@@ -1,15 +1,11 @@
 package ru.misterpotz.ocgena.simulation_v2
 
-import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
-import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
-import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random

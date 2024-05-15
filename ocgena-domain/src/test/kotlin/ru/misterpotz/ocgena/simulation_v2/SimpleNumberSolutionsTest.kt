@@ -9,7 +9,7 @@ import kotlin.random.Random
 
 class SimpleNumberSolutionsTest {
 
-    fun ocnet() = synchronizingLomazovaExampleModel()
+    fun ocnet() = buildSynchronizingLomazovaExampleModel()
 
     @Test
     fun simpleNumberNoSolutionLomazovaArcs() {

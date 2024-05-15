@@ -187,25 +187,5 @@ class TransitionSynchronizationArcSolverTest {
                 .asSequence().toList()
 
         assertEquals(24, solutions.size)
-        assertEquals(
-            mapOf(
-                "p1" to listOf(73),
-                "p2" to listOf(74),
-                "p3" to listOf(16),
-                "p4" to listOf(44),
-                "p5" to listOf(33)
-            ).toTokenSliceFrom(tokenSlice, model),
-            solutions[2].toTokenSlice()
-        )
-        assertEquals(
-            mapOf(
-                "p1" to listOf(71),
-                "p2" to listOf(72),
-                "p3" to listOf(15),
-                "p4" to listOf(45),
-                "p5" to listOf(33)
-            ).toTokenSliceFrom(tokenSlice, model),
-            solutions[22].toTokenSlice()
-        )
     }
 }

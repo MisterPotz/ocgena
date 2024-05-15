@@ -58,7 +58,7 @@ interface TokenGenerator {
 class TokenStore(
     private val internalSlice: SimpleTokenSlice,
     private val modelAccessor: ModelAccessor,
-    private val issuedTokens: MutableMap<String, TokenWrapper> = mutableMapOf(),
+    private val issuedTokens: MutableMap<Long, TokenWrapper> = mutableMapOf(),
 ) : TokenSlice by internalSlice, TokenGenerator {
     private val tokenCreators = TokenCreators()
 
@@ -104,7 +104,7 @@ class SingleTypeTokenCreator(
 ) {
     fun makeNew(): TokenWrapper {
         return TokenWrapper(
-            tokenId = idIssuer.newIdGetLabel(),
+            tokenId = idIssuer.newIntId,
             objectType = type,
         )
     }
@@ -130,7 +130,7 @@ class SimpleTokenSlice(
             }
         }
 
-    fun tokenBy(id: String): TokenWrapper {
+    fun tokenBy(id: Long): TokenWrapper {
         return tokensMap.values.find { it.find { it.tokenId == id } != null }!!.find { it.tokenId == id }!!
     }
 

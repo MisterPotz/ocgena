@@ -5,7 +5,7 @@ import java.util.*
 import kotlin.collections.HashSet
 
 class TokenWrapper(
-    val tokenId: String,
+    val tokenId: Long,
     val objectType: ObjectType
 ): Comparable<TokenWrapper> {
 
@@ -70,6 +70,6 @@ class TokenWrapper(
     }
 
     override fun toString(): String {
-        return tokenId
+        return tokenId.toString()
     }
 }

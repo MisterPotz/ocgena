@@ -32,39 +32,44 @@ petri_atoms:
       label: "t1"
       from_places: ["p1", "o1", "p3"]
       to_places: ["p2", "o2"]
-    "p1_t1":
+    "p1.t1":
       type: "arc"
-      id: "p1_t1"
+      id: "p1.t1"
     "p2":
       type: "place"
       id: "p2"
       label: "p2"
       from_transtns: ["t1"]
-    "t1_p2":
+    "t1.p2":
       type: "arc"
-      id: "t1_p2"
+      id: "t1.p2"
     "o1":
       type: "place"
       id: "o1"
       label: "o1"
       to_transtns: ["t1"]
-    "o1_t1":
+    "o1.t1":
       type: "vararc"
-      id: "o1_t1"
+      id: "o1.t1"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
     "o2":
       type: "place"
       id: "o2"
       label: "o2"
       from_transtns: ["t1"]
-    "t1_o2":
+    "t1.o2":
       type: "vararc"
-      id: "t1_o2"
+      id: "t1.o2"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
     "p3":
       type: "place"
       id: "p3"
       label: "p3"
       to_transtns: ["t1"]
-    "p3_t1":
+    "p3.t1":
       type: "arc"
-      id: "p3_t1"
+      id: "p3.t1"
       multiplicity: 3
+oc_net_type: "aalst"

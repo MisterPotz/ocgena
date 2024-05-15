@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.serialization
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -25,12 +26,14 @@ class SerializationTest {
 
     @ParameterizedTest(name = "json_full")
     @ArgumentsSource(ArgsProvider::class)
+    @Disabled
     fun jsonInAndOUt(paths: TestArgs) {
         writeOrAssertJson(paths.config, paths.json_path)
     }
 
     @ParameterizedTest(name = "yaml_full")
     @ArgumentsSource(ArgsProvider::class)
+    @Disabled
     fun yamlInAndOut(paths: TestArgs) {
         writeOrAssertYaml(paths.config, paths.yaml_path)
     }

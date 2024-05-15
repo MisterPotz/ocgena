@@ -33,7 +33,7 @@ data class OCNetStruct(
     override val placeToObjectTypeRegistry: PlaceToObjectTypeRegistry,
     @SerialName("petri_atoms")
     override val petriAtomRegistry: PetriAtomRegistryStruct,
-    @SerialName("ocNetType")
+    @SerialName("oc_net_type")
     override val ocNetType: OcNetType
 ) : OCNet {
     override val placeRegistry: PlaceRegistry by lazy(LazyThreadSafetyMode.NONE) {

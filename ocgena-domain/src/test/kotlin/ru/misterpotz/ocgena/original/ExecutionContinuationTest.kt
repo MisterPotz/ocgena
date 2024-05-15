@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.original
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec

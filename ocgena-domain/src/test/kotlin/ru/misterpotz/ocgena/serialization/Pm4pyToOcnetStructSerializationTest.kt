@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.serialization
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.yamlConfig

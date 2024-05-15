@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.token_buffer
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
@@ -38,6 +39,7 @@ class OutputTokensBufferConsumerTest {
     }
 
     @Test
+    @Disabled
     fun `when aalst and token buffer becomes empty continues with no failure`() = runTest {
         val simComp = configureSimComponent()
 

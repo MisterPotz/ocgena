@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.serialization
 
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.testing.OCNetBuildingCodeBlock
@@ -11,6 +12,7 @@ import ru.misterpotz.ocgena.testing.installOnto
  * Images are here
  * <img src="./doc-files/img.png" >
  */
+
 class ModelYamlCreator {
 
     @Test

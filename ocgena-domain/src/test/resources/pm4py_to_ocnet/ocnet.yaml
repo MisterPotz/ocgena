@@ -419,3 +419,4 @@ place_types:
     orders-source: INPUT
     packages-sink: OUTPUT
     packages-source: INPUT
+oc_net_type: aalst

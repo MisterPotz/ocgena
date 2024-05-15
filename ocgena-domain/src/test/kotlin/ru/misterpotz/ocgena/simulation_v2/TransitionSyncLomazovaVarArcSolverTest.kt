@@ -13,7 +13,7 @@ import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random
 
-fun synchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {
+fun buildSynchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {
     "order".p { input; objectTypeId = "1" }
     "package".p { input; objectTypeId = "2" }
     "track".p { input; objectTypeId = "3" }
@@ -50,7 +50,7 @@ fun synchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {
 
 
 class TransitionSyncLomazovaVarArcSolverTest {
-    private fun ocnet() = synchronizingLomazovaExampleModel()
+    private fun ocnet() = buildSynchronizingLomazovaExampleModel()
 
     private fun ModelAccessor.buildTransitionHistoryNonWorking() = buildTransitionHistory(
         this,

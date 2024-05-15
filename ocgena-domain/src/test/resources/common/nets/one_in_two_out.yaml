@@ -38,14 +38,15 @@ petri_atoms:
       label: "t1"
       from_places: ["p1"]
       to_places: ["p2", "p3"]
-    "p1_t1":
+    "p1.t1":
       type: "arc"
-      id: "p1_t1"
+      id: "p1.t1"
       multiplicity: 2
-    "t1_p2":
+    "t1.p2":
       type: "arc"
-      id: "t1_p2"
+      id: "t1.p2"
       multiplicity: 4
-    "t1_p3":
+    "t1.p3":
       type: "arc"
-      id: "t1_p3"
+      id: "t1.p3"
+oc_net_type: "aalst"

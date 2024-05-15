@@ -46,197 +46,214 @@ petri_atoms:
       type: "place"
       id: "o1"
       label: "o1"
-      to_transtns: ["place order"]
+      to_transtns: ["place_order"]
     "o2":
       type: "place"
       id: "o2"
       label: "o2"
-      from_transtns: ["place order"]
-      to_transtns: ["send invoice"]
+      from_transtns: ["place_order"]
+      to_transtns: ["send_invoice"]
     "o3":
       type: "place"
       id: "o3"
       label: "o3"
-      from_transtns: ["send invoice", "send reminder"]
-      to_transtns: ["send reminder", "pay order"]
+      from_transtns: ["send_invoice", "send_reminder"]
+      to_transtns: ["send_reminder", "pay_order"]
     "o4":
       type: "place"
       id: "o4"
       label: "o4"
-      from_transtns: ["pay order"]
-      to_transtns: ["mark as completed"]
+      from_transtns: ["pay_order"]
+      to_transtns: ["mark_as_completed"]
     "o5":
       type: "place"
       id: "o5"
       label: "o5"
-      from_transtns: ["mark as completed"]
+      from_transtns: ["mark_as_completed"]
     "i1":
       type: "place"
       id: "i1"
       label: "i1"
-      to_transtns: ["place order"]
+      to_transtns: ["place_order"]
     "i2":
       type: "place"
       id: "i2"
       label: "i2"
-      from_transtns: ["place order"]
-      to_transtns: ["pick item"]
+      from_transtns: ["place_order"]
+      to_transtns: ["pick_item"]
     "i3":
       type: "place"
       id: "i3"
       label: "i3"
-      from_transtns: ["pick item"]
-      to_transtns: ["start route"]
+      from_transtns: ["pick_item"]
+      to_transtns: ["start_route"]
     "i4":
       type: "place"
       id: "i4"
       label: "i4"
-      from_transtns: ["start route"]
-      to_transtns: ["end route"]
+      from_transtns: ["start_route"]
+      to_transtns: ["end_route"]
     "i5":
       type: "place"
       id: "i5"
       label: "i5"
-      from_transtns: ["end route"]
-      to_transtns: ["mark as completed"]
+      from_transtns: ["end_route"]
+      to_transtns: ["mark_as_completed"]
     "i6":
       type: "place"
       id: "i6"
       label: "i6"
-      from_transtns: ["mark as completed"]
+      from_transtns: ["mark_as_completed"]
     "r1":
       type: "place"
       id: "r1"
       label: "r1"
-      to_transtns: ["start route"]
+      to_transtns: ["start_route"]
     "r2":
       type: "place"
       id: "r2"
       label: "r2"
-      from_transtns: ["start route"]
-      to_transtns: ["end route"]
+      from_transtns: ["start_route"]
+      to_transtns: ["end_route"]
     "r3":
       type: "place"
       id: "r3"
       label: "r3"
-      from_transtns: ["end route"]
-    "place order":
+      from_transtns: ["end_route"]
+    "place_order":
       type: "transition"
-      id: "place order"
-      label: "place order"
+      id: "place_order"
+      label: "place_order"
       from_places: ["o1", "i1"]
       to_places: ["o2", "i2"]
-    "send invoice":
+    "send_invoice":
       type: "transition"
-      id: "send invoice"
-      label: "send invoice"
+      id: "send_invoice"
+      label: "send_invoice"
       from_places: ["o2"]
       to_places: ["o3"]
-    "pick item":
+    "pick_item":
       type: "transition"
-      id: "pick item"
-      label: "pick item"
+      id: "pick_item"
+      label: "pick_item"
       from_places: ["i2"]
       to_places: ["i3"]
-    "start route":
+    "start_route":
       type: "transition"
-      id: "start route"
-      label: "start route"
+      id: "start_route"
+      label: "start_route"
       from_places: ["i3", "r1"]
       to_places: ["i4", "r2"]
-    "end route":
+    "end_route":
       type: "transition"
-      id: "end route"
-      label: "end route"
+      id: "end_route"
+      label: "end_route"
       from_places: ["i4", "r2"]
       to_places: ["i5", "r3"]
-    "mark as completed":
+    "mark_as_completed":
       type: "transition"
-      id: "mark as completed"
-      label: "mark as completed"
+      id: "mark_as_completed"
+      label: "mark_as_completed"
       from_places: ["o4", "i5"]
       to_places: ["o5", "i6"]
-    "pay order":
+    "pay_order":
       type: "transition"
-      id: "pay order"
-      label: "pay order"
+      id: "pay_order"
+      label: "pay_order"
       from_places: ["o3"]
       to_places: ["o4"]
-    "send reminder":
+    "send_reminder":
       type: "transition"
-      id: "send reminder"
-      label: "send reminder"
+      id: "send_reminder"
+      label: "send_reminder"
       from_places: ["o3"]
       to_places: ["o3"]
-    "o1_place order":
+    "o1.place_order":
       type: "arc"
-      id: "o1_place order"
-    "place order_o2":
+      id: "o1.place_order"
+    "place_order.o2":
       type: "arc"
-      id: "place order_o2"
-    "o2_send invoice":
+      id: "place_order.o2"
+    "o2.send_invoice":
       type: "arc"
-      id: "o2_send invoice"
-    "send invoice_o3":
+      id: "o2.send_invoice"
+    "send_invoice.o3":
       type: "arc"
-      id: "send invoice_o3"
-    "o3_send reminder":
+      id: "send_invoice.o3"
+    "o3.send_reminder":
       type: "arc"
-      id: "o3_send reminder"
-    "send reminder_o3":
+      id: "o3.send_reminder"
+    "send_reminder.o3":
       type: "arc"
-      id: "send reminder_o3"
-    "o3_pay order":
+      id: "send_reminder.o3"
+    "o3.pay_order":
       type: "arc"
-      id: "o3_pay order"
-    "pay order_o4":
+      id: "o3.pay_order"
+    "pay_order.o4":
       type: "arc"
-      id: "pay order_o4"
-    "o4_mark as completed":
+      id: "pay_order.o4"
+    "o4.mark_as_completed":
       type: "arc"
-      id: "o4_mark as completed"
-    "mark as completed_o5":
+      id: "o4.mark_as_completed"
+    "mark_as_completed.o5":
       type: "arc"
-      id: "mark as completed_o5"
-    "i1_place order":
+      id: "mark_as_completed.o5"
+    "i1.place_order":
       type: "vararc"
-      id: "i1_place order"
-    "place order_i2":
+      id: "i1.place_order"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "place_order.i2":
       type: "vararc"
-      id: "place order_i2"
-    "i2_pick item":
+      id: "place_order.i2"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "i2.pick_item":
       type: "arc"
-      id: "i2_pick item"
-    "pick item_i3":
+      id: "i2.pick_item"
+    "pick_item.i3":
       type: "arc"
-      id: "pick item_i3"
-    "i3_start route":
+      id: "pick_item.i3"
+    "i3.start_route":
       type: "vararc"
-      id: "i3_start route"
-    "start route_i4":
+      id: "i3.start_route"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "start_route.i4":
       type: "vararc"
-      id: "start route_i4"
-    "i4_end route":
+      id: "start_route.i4"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "i4.end_route":
       type: "vararc"
-      id: "i4_end route"
-    "end route_i5":
+      id: "i4.end_route"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "end_route.i5":
       type: "vararc"
-      id: "end route_i5"
-    "i5_mark as completed":
+      id: "end_route.i5"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "i5.mark_as_completed":
       type: "vararc"
-      id: "i5_mark as completed"
-    "mark as completed_i6":
+      id: "i5.mark_as_completed"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "mark_as_completed.i6":
       type: "vararc"
-      id: "mark as completed_i6"
-    "r1_start route":
+      id: "mark_as_completed.i6"
+      arcMeta:
+        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+    "r1.start_route":
       type: "arc"
-      id: "r1_start route"
-    "start route_r2":
+      id: "r1.start_route"
+    "start_route.r2":
       type: "arc"
-      id: "start route_r2"
-    "r2_end route":
+      id: "start_route.r2"
+    "r2.end_route":
       type: "arc"
-      id: "r2_end route"
-    "end route_r3":
+      id: "r2.end_route"
+    "end_route.r3":
       type: "arc"
-      id: "end route_r3"
+      id: "end_route.r3"
+oc_net_type: "aalst"

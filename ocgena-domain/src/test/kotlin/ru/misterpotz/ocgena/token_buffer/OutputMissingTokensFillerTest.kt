@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.token_buffer
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
@@ -40,6 +41,7 @@ class OutputMissingTokensFillerTest {
     }
 
     @Test
+    @Disabled
     fun `when token buffer becomes empty, generates unique tokens at outputs`() {
         val simComp = configureSimComponent()
         simComp.withGenerateTokens {

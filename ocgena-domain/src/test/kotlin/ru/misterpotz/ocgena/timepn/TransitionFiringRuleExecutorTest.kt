@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.timepn
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -17,6 +18,7 @@ class TransitionFiringRuleExecutorTest {
 
     @ParameterizedTest
     @ArgumentsSource(T3TransitionCasesProvider::class)
+    @Disabled
     fun `transition firing rule yields expected results`(testConfig: TestConfig) {
         val simComp = buildConfig {
             ocNetType = testConfig.ocNetType

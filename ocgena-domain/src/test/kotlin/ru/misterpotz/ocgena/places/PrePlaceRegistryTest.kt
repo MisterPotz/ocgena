@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.places
 
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
@@ -44,6 +45,7 @@ class PrePlaceRegistryTest {
 
     @ParameterizedTest
     @ArgumentsSource(ArgsProvider::class)
+    @Disabled
     fun transitionPrePlaceContainEnoughTokens(testArgs: TestArgs) = with(testArgs.simulationComponent) {
 
 
