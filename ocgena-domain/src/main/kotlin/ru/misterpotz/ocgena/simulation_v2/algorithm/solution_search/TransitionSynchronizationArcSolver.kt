@@ -69,6 +69,7 @@ class TransitionSynchronizationArcSolver(
         return IteratorMapper(
             fullCombinator
         ) { independentSolutionCombination ->
+            println(independentSolutionCombination)
             completeSolutionFromPartials(independentSolutionCombination.flatten(), filteredTokenSlice, shuffler)
         }
     }
@@ -163,13 +164,14 @@ class TransitionSynchronizationArcSolver(
             }
         }
 
+        if (!preliminaryDumbCheck) {
+            return null
+        }
+
         if (!transition.model.isSynchronizedMode()) {
             return tokenSlice
         }
 
-        if (!preliminaryDumbCheck) {
-            return null
-        }
 
         val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
             val inputArc = transition.inputArcBy(place.placeId)
@@ -198,7 +200,7 @@ class TransitionSynchronizationArcSolver(
     ): Iterator<PartialSolutionCandidate.MultiConditionGroup> = iterator {
         val sortedArcs = independentMultiConditionGroup.conditionArcSortedByStrongestDescending()
 
-        val (placeToIndex, indexToPlace, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
+        val (placeToIndex, _, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
             filteredTokenSlice,
             shuffler = shuffler
         )
@@ -212,7 +214,6 @@ class TransitionSynchronizationArcSolver(
                 placeToIndex,
                 indicesCombination = hypotheticCombination
             )
-
             val conditionSatisfactoryEntries =
                 getConditionSatisfactoryEntries(
                     independentMultiConditionGroup,
@@ -222,15 +223,16 @@ class TransitionSynchronizationArcSolver(
                 )
 
             if (conditionSatisfactoryEntries.isNotEmpty()) {
+                val goodCombination = indicesToTokenLists(
+                    hypotheticCombination,
+                    placeToIndex,
+                    filteredTokenSlice
+                )
                 yield(
                     PartialSolutionCandidate.MultiConditionGroup(
                         independentMultiConditionGroup,
                         conditionSatisfactoryEntries,
-                        potentiallyUncompleteCombination = indicesToTokenLists(
-                            hypotheticCombination,
-                            placeToIndex,
-                            filteredTokenSlice
-                        ),
+                        potentiallyUncompleteCombination = goodCombination,
                     )
                 )
             }

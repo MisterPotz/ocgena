@@ -89,17 +89,17 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean, ocNetType: Oc
 
     private fun Collection<PetriAtomId>.filterArcsEndWith(petriAtomId: PetriAtomId): List<PetriAtomId> {
         return filter {
-            it.endsWith(petriAtomId) && it.length != petriAtomId.length && it.contains("_") &&
-                    it.substringAfter("_") == petriAtomId
+            it.endsWith(petriAtomId) && it.length != petriAtomId.length && it.contains(".") &&
+                    it.substringAfter(".") == petriAtomId
         }
     }
 
     private fun Collection<PetriAtomId>.filterArcsStartWith(petriAtomId: PetriAtomId): List<PetriAtomId> {
         return filter {
             it.startsWith(petriAtomId) &&
-                    it.contains("_") &&
+                    it.contains(".") &&
                     it.length != petriAtomId.length &&
-                    it.substringBefore("_") == petriAtomId
+                    it.substringBefore(".") == petriAtomId
         }
     }
 

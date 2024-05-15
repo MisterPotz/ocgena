@@ -12,7 +12,7 @@ class OCNetChecker(
     /**
      * places from which all subgraphs of the net are reachable, and the structure is setup
      */
-    ocNet: OCNet,
+    val ocNet: OCNet,
     private val developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup()
 ) {
     private var lastConsistencyResults: List<ConsistencyCheckError>? = null
@@ -49,7 +49,8 @@ class OCNetChecker(
                     placeTypeRegistry = placeTypeRegistry,
                     petriAtomRegistry = petriAtomRegistry,
                     placeToObjectTypeRegistry = placeToObjectTypeRegistry,
-                    loggingEnabled = developmentDebugConfig.dumpConsistencyCheckLogs
+                    loggingEnabled = developmentDebugConfig.dumpConsistencyCheckLogs,
+                    ocNet = ocNet.ocNetType
                 )
                 createdCheckVisitors.add(visitor)
                 petriNode.acceptVisitor(visitor)

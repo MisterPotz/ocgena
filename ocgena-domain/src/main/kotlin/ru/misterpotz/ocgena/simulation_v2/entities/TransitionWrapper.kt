@@ -358,24 +358,33 @@ class TransitionWrapper(
             condition.arcs.setRef(inputArcWrappers.filter { condition in it.underConditions }.sorted())
         }
 
-        val groups = mutableSetOf<IndependentMultiConditionGroup>()
-
-        for (i in inputArcWrappers) {
-            if (i.underConditions.isNotEmpty()) {
-                groups.add(
-                    IndependentMultiConditionGroup(
-                        conditions = i.allAssociatedConditions,
-                        transition = this
-                    )
-                )
+        val conditionsByArcs = inputArcWrappers.map { arc ->
+            Pair(arc, arc.underConditions.toMutableSet())
+        }.fold(mutableSetOf<MutableSet<MultiArcCondition>>()) { acc, (arc, conditions) ->
+            if (acc.isEmpty()) {
+                acc.add(conditions)
+            } else {
+                for (i in acc) {
+                    if (i.intersect(conditions).isNotEmpty()) {
+                        i.addAll(conditions)
+                        return@fold acc
+                    }
+                }
+                acc.add(conditions)
             }
+            acc
         }
 
-        for (i in groups) {
-            for (arc in inputArcWrappers) {
-                if (arc in i.relatedInputArcs) {
-                    arc._independentGroup.setRef(i)
-                }
+        val independentGroups = conditionsByArcs.map {
+            IndependentMultiConditionGroup(
+                conditions = it.toSortedSet(),
+                transition = this
+            )
+        }
+
+        for (indepentGroup in independentGroups) {
+            for (arc in indepentGroup.conditions.flatMap { it.arcs.ref }) {
+                arc._independentGroup.setRef(indepentGroup)
             }
         }
 

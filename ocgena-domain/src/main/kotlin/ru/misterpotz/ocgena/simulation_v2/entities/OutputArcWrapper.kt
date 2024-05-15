@@ -75,6 +75,6 @@ class OutputArcWrapper(
     }
 
     override fun toString(): String {
-        return "outarc(${transition.id}-${toPlace.id})"
+        return "outarc(${transition.id}.${toPlace.id})"
     }
 }

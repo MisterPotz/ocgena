@@ -82,36 +82,45 @@ class OCNetBuilder(
             }
 
         override fun String.t(block: (TransitionBlock.() -> Unit)?): String {
-            val receiver = builderRegistry.getTransition(this)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val receiver = builderRegistry.getTransition(this)
+                if (block != null) {
+                    receiver.block()
+                }
+                return this
             }
-            return this
+
         }
 
         override fun String.arc(block: (ArcBlock.() -> Unit)?): String {
-            val receiver = builderRegistry.getArc(this)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val receiver = builderRegistry.getArc(this)
+                if (block != null) {
+                    receiver.block()
+                }
+                return this
             }
-            return this
         }
 
         override fun PetriAtomId.arc(petriAtomId: PetriAtomId, block: (ArcBlock.() -> Unit)?): String {
-            val arcId = arcIdTo(petriAtomId)
-            val receiver = builderRegistry.getArc(arcId)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val arcId = arcIdTo(petriAtomId)
+                val receiver = builderRegistry.getArc(arcId)
+                if (block != null) {
+                    receiver.block()
+                }
+                return petriAtomId.replace(" ", "_")
             }
-            return petriAtomId
         }
 
         override fun String.p(block: (PlaceBlock.() -> Unit)?): String {
-            val receiver = builderRegistry.getPlace(this)
-            if (block != null) {
-                receiver.block()
+            this.replace(" ", "_").apply {
+                val receiver = builderRegistry.getPlace(this)
+                if (block != null) {
+                    receiver.block()
+                }
+                return this
             }
-            return this
         }
     }
 
@@ -152,7 +161,7 @@ class OCNetBuilder(
         var type: Type
         var multiplicity: Int
 
-        var mathExpr : String
+        var mathExpr: String
 
         val vari: Unit
         val norm: Unit
@@ -183,7 +192,7 @@ class OCNetBuilder(
             this.multiplicity = multiplicity
         }
 
-        var innerMathExpr : String? = null
+        var innerMathExpr: String? = null
 
         override var mathExpr: String
             get() = throw IllegalStateException()

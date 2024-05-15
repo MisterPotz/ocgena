@@ -31,7 +31,7 @@ class ResolvedVariablesSpace(
         }
     }
 
-    fun copy() : ResolvedVariablesSpace {
+    fun copy(): ResolvedVariablesSpace {
         return ResolvedVariablesSpace(variables.toMutableMap())
     }
 }
@@ -41,14 +41,14 @@ class InputArcWrapper(
     val transition: TransitionWrapper,
     val modelAccessor: ModelAccessor,
     val underConditions: List<MultiArcCondition>,
-    val _independentGroup : Ref<IndependentMultiConditionGroup?>,
+    val _independentGroup: Ref<IndependentMultiConditionGroup?>,
 ) : Comparable<InputArcWrapper> {
 
     override fun compareTo(other: InputArcWrapper): Int {
         return ByConditionSizeByArcSpec.compare(this, other)
     }
 
-    fun isAalstArc() : Boolean {
+    fun isAalstArc(): Boolean {
         return consumptionSpec is ConsumptionSpec.AtLeastOne
     }
 
@@ -88,13 +88,20 @@ class InputArcWrapper(
         get() = transition.transitionHistory.size()
 
     val allAssociatedConditions: SortedSet<MultiArcCondition> by lazy(LazyThreadSafetyMode.NONE) {
-        val allAssociatedArcs = underConditions.flatMap { it.arcs.ref }.toSet()
-        allAssociatedArcs.flatMap {
-            it.underConditions
-        }.toSortedSet()
+        val allAssociated = underConditions.flatMap { it.arcs.ref.flatMap { arc -> arc.underConditions } }.toSortedSet()
+        val nig = 6
+        allAssociated
+//
+//
+//        val allAssociatedArcs = underConditions.flatMap { it.arcs.ref }.toSet()
+//        allAssociatedArcs.flatMap {
+//            it.underConditions
+//        }.toSortedSet()
+
+
     }
 
-    val independentGroup : IndependentMultiConditionGroup? by lazy {
+    val independentGroup: IndependentMultiConditionGroup? by lazy {
         _independentGroup.nullable
     }
 
@@ -220,7 +227,7 @@ class InputArcWrapper(
             return when (this) {
                 is Exact -> false
                 is Variable -> true
-                is DependsOnVariable -> true
+                is DependsOnVariable -> false
                 AtLeastOne -> true
             }
         }
@@ -267,6 +274,6 @@ class InputArcWrapper(
     }
 
     override fun toString(): String {
-        return "inparc(${fromPlace.id}-${transition.id},[${underConditions.joinToString(",") { it.syncTarget.id }}])"
+        return "inparc(${fromPlace.id}.${transition.id},[${underConditions.joinToString(",") { it.syncTarget.id }}])"
     }
 }

@@ -12,17 +12,23 @@ fun OCNetStruct.toDefaultSim(simulationInput: SimulationInput = SimulationInput(
         init()
     }
 
-class Ref<T>() {
+class Ref<T> {
     private var _ref: T? = null
 
     fun setRef(value : T?) {
         _ref = value
     }
 
+    override fun toString(): String {
+        return "Ref($_ref)"
+    }
+
     val nullable: T?
         get() = _ref
     val ref: T
         get() = _ref!!
+
+
 }
 
 interface Identifiable {

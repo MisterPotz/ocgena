@@ -250,7 +250,7 @@ class TransitionSynchronizationVariableArcSolverTest {
                 "p4" to listOf(44),
                 "p5" to listOf(33),
                 "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
-            ).let { tokenSlice.copyFromMap(model, it) },
+            ).toTokenSliceFrom(tokenSlice, model),
             solutions[2].toTokenSlice()
         )
 
@@ -262,7 +262,7 @@ class TransitionSynchronizationVariableArcSolverTest {
                 "p4" to listOf(45),
                 "p5" to listOf(33),
                 "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
-            ).let { tokenSlice.copyFromMap(model, it) },
+            ).toTokenSliceFrom(tokenSlice, model),
             solutions[22].toTokenSlice()
         )
     }
