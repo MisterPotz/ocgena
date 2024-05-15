@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
+import net.bytebuddy.build.Plugin.Factory.Simple
 import ru.misterpotz.ocgena.simulation.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
@@ -112,10 +113,10 @@ class SingleTypeTokenCreator(
 typealias MutableSortedTokens = SortedSet<TokenWrapper>
 typealias SortedTokens = Set<TokenWrapper>
 
-data class SimpleTokenSlice(
-    private val internalRelatedPlaces: MutableSet<PlaceWrapper>,
-    private val tokensMap: MutableMap<PlaceWrapper, MutableSortedTokens> = mutableMapOf(),
-    private val amountsMap: MutableMap<PlaceWrapper, Int> = mutableMapOf()
+class SimpleTokenSlice(
+    private val internalRelatedPlaces: SortedSet<PlaceWrapper>,
+    private val tokensMap: SortedMap<PlaceWrapper, MutableSortedTokens> = sortedMapOf(),
+    private val amountsMap: SortedMap<PlaceWrapper, Int> = sortedMapOf()
 ) : TokenSlice {
     override val relatedPlaces: Set<PlaceWrapper>
         get() = internalRelatedPlaces
@@ -134,7 +135,11 @@ data class SimpleTokenSlice(
     }
 
     override fun withPlaceFilter(places: Places): TokenSlice {
-        return copy(internalRelatedPlaces = internalRelatedPlaces.intersect(places).toMutableSet())
+        return SimpleTokenSlice(
+            internalRelatedPlaces = internalRelatedPlaces.intersect(places).toSortedSet(),
+            tokensMap.toSortedMap(),
+            amountsMap.toSortedMap()
+        )
     }
 
     override fun print() {
@@ -202,7 +207,11 @@ data class SimpleTokenSlice(
             }
         }
 
-        return SimpleTokenSlice(filteredRelatedPlaces.toMutableSet(), tokensMap, newAmountMap)
+        return SimpleTokenSlice(
+            filteredRelatedPlaces.toSortedSet(),
+            tokensMap.toSortedMap(),
+            newAmountMap.toSortedMap()
+        )
     }
 
     override fun setAmount(placeWrapper: PlaceWrapper, new: Int) {
@@ -265,6 +274,34 @@ data class SimpleTokenSlice(
         }
     }
 
+
+    override fun toString(): String {
+        return buildString {
+            append("TokenSlice($tokensMap, $amountsMap)")
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SimpleTokenSlice
+
+        if (internalRelatedPlaces != other.internalRelatedPlaces) return false
+        if (tokensMap != other.tokensMap) return false
+        if (amountsMap != other.amountsMap) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = internalRelatedPlaces.hashCode()
+        result = 31 * result + tokensMap.hashCode()
+        result = 31 * result + amountsMap.hashCode()
+        return result
+    }
+
+
     companion object {
         fun build(block: ConstructionBlock.() -> Unit): SimpleTokenSlice {
             val mutableMap = mutableMapOf<PlaceWrapper, MutableSortedTokens>()
@@ -284,12 +321,12 @@ data class SimpleTokenSlice(
             }
             constructionBlock.block()
             return SimpleTokenSlice(
-                internalRelatedPlaces = mutableMap.keys.toMutableSet().union(amounts.keys).toMutableSet(),
-                tokensMap = mutableMap,
-                amountsMap = if (amounts.isEmpty()) {
+                internalRelatedPlaces = mutableMap.keys.toMutableSet().union(amounts.keys).toSortedSet(),
+                tokensMap = mutableMap.toSortedMap(),
+                amountsMap = (if (amounts.isEmpty()) {
                     mutableMap.mapValues { it.value.size }
                         .let { mutableMapOf<PlaceWrapper, Int>().apply { putAll(it) } }
-                } else amounts
+                } else amounts).toSortedMap()
             )
         }
 

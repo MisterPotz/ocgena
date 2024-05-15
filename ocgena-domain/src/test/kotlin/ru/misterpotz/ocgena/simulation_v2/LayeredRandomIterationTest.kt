@@ -15,6 +15,11 @@ class LayeredRandomIterationTest {
         override fun makeShuffled(intRange: IntRange): List<Int> {
             return iterator.next()
         }
+
+        override fun select(ints: List<Int>): Int {
+            require(ints.isNotEmpty()) { "cannot select random from an empty list" }
+            return ints.first()
+        }
     }
 
     @Test

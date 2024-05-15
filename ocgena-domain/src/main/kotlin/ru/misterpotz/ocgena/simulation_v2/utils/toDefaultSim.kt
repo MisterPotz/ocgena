@@ -13,8 +13,14 @@ fun OCNetStruct.toDefaultSim(simulationInput: SimulationInput = SimulationInput(
     }
 
 class Ref<T>() {
-    var _ref: T? = null
+    private var _ref: T? = null
 
+    fun setRef(value : T?) {
+        _ref = value
+    }
+
+    val nullable: T?
+        get() = _ref
     val ref: T
         get() = _ref!!
 }

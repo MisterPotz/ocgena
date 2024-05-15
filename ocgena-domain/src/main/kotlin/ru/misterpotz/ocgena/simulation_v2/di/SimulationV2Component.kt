@@ -32,7 +32,7 @@ abstract class SimulationV2Module {
         fun providesTokens(modelAccessor: ModelAccessor): TokenStore {
             return TokenStore(
                 internalSlice = SimpleTokenSlice(
-                    modelAccessor.placesRef.ref.toMutableSet(),
+                    modelAccessor.placesRef.ref.toSortedSet(),
                 ),
                 modelAccessor = modelAccessor
             )

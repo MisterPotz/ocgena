@@ -121,10 +121,24 @@ class TransitionSynchronizationArcSolver(
     ): Iterable<List<PartialSolutionCandidate.Unconditional>> {
         val allUnconditionalCombinationsIterator = transition.unconditionalInputArcs.map { unconditionalArc ->
             val tokenIndicesRange = unconditionalArc.fromPlace.tokenRangeAt(tokenSlice)
-            val tokensToTake = unconditionalArc.consumptionSpec.tokenRequirement()
+            val tokens = tokenSlice.tokensAt(unconditionalArc.fromPlace)
+
+            val tokensToTake = if (unconditionalArc.isAalstArc()) {
+                // do not select, take all for aalst arc, as its not conditioned, all tokens can be consumed
+                tokens.size
+            } else {
+                unconditionalArc.consumptionSpec.tokenRequirement()
+            }
+
+            val shuffling = if (unconditionalArc.isAalstArc()) {
+                // do not shuffle
+                tokens.indices.toList()
+            } else {
+                shuffler.makeShuffled(tokenIndicesRange)
+            }
 
             val combination = CombinationIterable(
-                shuffler.makeShuffled(tokenIndicesRange),
+                shuffling,
                 combinationSize = tokensToTake
             )
 
@@ -241,6 +255,16 @@ class TransitionSynchronizationArcSolver(
                 val allPlaceTokens = filteredTokenSlice.tokensAt(fromPlace)
                 val alreadyGoodTokens = potentiallyUncompleteSolution[fromPlace]!!
 
+                if (inputArc.underConditions.isEmpty()) {
+                    placeToApplicableNewTokens.getOrPut(fromPlace) { mutableListOf() }
+                        .addAll(
+                            // add all not already added
+                            filteredTokenSlice.tokensAt(inputArc.fromPlace).filter {
+                                it !in potentiallyUncompleteSolution[inputArc.fromPlace]!!
+                            }
+                        )
+                }
+
                 for (arcCondition in inputArc.underConditions) {
                     val requiredEntries = conditionRequiredEntries[inputArc.independentGroup]!![arcCondition]!!
 
@@ -335,7 +359,7 @@ class TransitionSynchronizationArcSolver(
             potentiallyUncompleteSolution.map { (place, tokens) ->
                 put(place, buildList {
                     addAll(tokens)
-                    addAll(placeToApplicableNewTokens[place]!!)
+                    addAll(placeToApplicableNewTokens[place] ?: emptyList())
                 })
             }
         }

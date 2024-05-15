@@ -2,9 +2,8 @@ package ru.misterpotz.ocgena.simulation_v2
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.simulation_v2.entities.PlaceWrapper
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
@@ -215,17 +214,6 @@ class TransitionSynchronizationVariableArcSolverTest {
         assertEquals(2, model.transitionBy("test").independentMultiArcConditions.size)
     }
 
-    fun SimpleTokenSlice.copyFromMap(
-        model: ModelAccessor,
-        map: Map<String, List<Int>>
-    ): Map<PlaceWrapper, List<TokenWrapper>> {
-        return buildMap {
-            for ((place, tokens) in map) {
-                put(model.place(place), tokens.map { tokenBy(it.toString()) })
-            }
-        }
-    }
-
     @Test
     fun testMultiSearchTokenSolver() {
         val model = ocnet().toDefaultSim(
@@ -250,21 +238,10 @@ class TransitionSynchronizationVariableArcSolverTest {
             transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler)!!.iterator()
                 .asSequence().toList()
 
-        assertEquals(24, solutions.size)
         println(solutions)
 
-        assertEquals(
-            mapOf(
-                "p1" to listOf(9),
-                "p2" to listOf(10),
-                "p3" to listOf(14),
-                "p4" to listOf(45),
-                "p5" to listOf(33),
-                "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
-            ).let { tokenSlice.copyFromMap(model, it) },
-            solutions[2]
-        )
-        
+        assertEquals(24, solutions.size)
+
         assertEquals(
             mapOf(
                 "p1" to listOf(73),
@@ -274,7 +251,19 @@ class TransitionSynchronizationVariableArcSolverTest {
                 "p5" to listOf(33),
                 "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
             ).let { tokenSlice.copyFromMap(model, it) },
-            solutions[22]
+            solutions[2].toTokenSlice()
+        )
+
+        assertEquals(
+            mapOf(
+                "p1" to listOf(71),
+                "p2" to listOf(72),
+                "p3" to listOf(15),
+                "p4" to listOf(45),
+                "p5" to listOf(33),
+                "buffer2" to listOf(201, 202, 210, 215, 216, 220, 221, 223, 225, 227, 230, 240)
+            ).let { tokenSlice.copyFromMap(model, it) },
+            solutions[22].toTokenSlice()
         )
     }
 }

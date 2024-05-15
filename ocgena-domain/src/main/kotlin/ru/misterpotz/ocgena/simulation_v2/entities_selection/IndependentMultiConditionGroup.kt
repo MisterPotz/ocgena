@@ -23,10 +23,6 @@ class IndependentMultiConditionGroup(
     }
 
     fun conditionArcSortedByStrongestDescending(): List<InputArcWrapper> {
-        val maxConditions = relatedInputArcs.maxOf { it.underConditions.size }
-
-        relatedInputArcs.filter { it.underConditions.size == maxConditions }
-
         return relatedInputArcs.sortedWith(InputArcWrapper.ByConditionSizeByArcSpecByTransitionEntries)
     }
 

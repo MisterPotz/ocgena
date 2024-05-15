@@ -48,6 +48,10 @@ class InputArcWrapper(
         return ByConditionSizeByArcSpec.compare(this, other)
     }
 
+    fun isAalstArc() : Boolean {
+        return consumptionSpec is ConsumptionSpec.AtLeastOne
+    }
+
     companion object {
         val ByConditionSizeByArcSpecByTransitionEntries = compareBy<InputArcWrapper>({
             -it.underConditions.size
@@ -91,7 +95,7 @@ class InputArcWrapper(
     }
 
     val independentGroup : IndependentMultiConditionGroup? by lazy {
-        _independentGroup.ref
+        _independentGroup.nullable
     }
 
     val allAssociatedArcs: Set<InputArcWrapper> by lazy(LazyThreadSafetyMode.NONE) {

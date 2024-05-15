@@ -9,6 +9,7 @@ import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
@@ -198,17 +199,6 @@ class TransitionSynchronizationArcSolverTest {
         assertEquals(2, model.transitionBy("test").independentMultiArcConditions.size)
     }
 
-    fun SimpleTokenSlice.copyFromMap(
-        model: ModelAccessor,
-        map: Map<String, List<Int>>
-    ): Map<PlaceWrapper, List<TokenWrapper>> {
-        return buildMap {
-            for ((place, tokens) in map) {
-                put(model.place(place), tokens.map { tokenBy(it.toString()) })
-            }
-        }
-    }
-
     @Test
     fun testMultiSearchTokenSolver() {
         val model = ocnet().toDefaultSim(
@@ -242,7 +232,7 @@ class TransitionSynchronizationArcSolverTest {
                 "p4" to listOf(44),
                 "p5" to listOf(33)
             ).let { tokenSlice.copyFromMap(model, it) },
-            solutions[2]
+            solutions[2].toTokenSlice()
         )
         assertEquals(
             mapOf(
@@ -252,7 +242,7 @@ class TransitionSynchronizationArcSolverTest {
                 "p4" to listOf(45),
                 "p5" to listOf(33)
             ).let { tokenSlice.copyFromMap(model, it) },
-            solutions[22]
+            solutions[22].toTokenSlice()
         )
     }
 }

@@ -38,19 +38,23 @@ class ModelAccessor(
     fun defaultObjectType() = ocNet.objectTypeRegistry.types.first()
 
     fun init() {
-        transitionsRef._ref = ocNet.transitionsRegistry.map {
-            TransitionWrapper(
-                it.id,
-                model = this,
-                arcLogicsFactory = ArcLogicsFactory.Stub
-            )
-        }.wrap()
+        transitionsRef.setRef(
+            ocNet.transitionsRegistry.map {
+                TransitionWrapper(
+                    it.id,
+                    model = this,
+                    arcLogicsFactory = ArcLogicsFactory.Stub
+                )
+            }.wrap()
+        )
 
-        placesRef._ref = ocNet.placeRegistry.places.map {
-            PlaceWrapper(
-                it.id,
-                objectType = ocNet.objectTypeRegistry.get(ocNet.placeToObjectTypeRegistry[it.id]!!)
-            )
-        }.wrap()
+        placesRef.setRef(
+            ocNet.placeRegistry.places.map {
+                PlaceWrapper(
+                    it.id,
+                    objectType = ocNet.objectTypeRegistry.get(ocNet.placeToObjectTypeRegistry[it.id]!!)
+                )
+            }.wrap()
+        )
     }
 }

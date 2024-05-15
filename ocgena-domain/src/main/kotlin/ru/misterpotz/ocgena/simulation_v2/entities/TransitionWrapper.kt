@@ -355,8 +355,7 @@ class TransitionWrapper(
             )
         }
         allocatedArcGroups.values.forEach { condition ->
-            condition.arcs._ref =
-                inputArcWrappers.filter { condition in it.underConditions }.sorted()
+            condition.arcs.setRef(inputArcWrappers.filter { condition in it.underConditions }.sorted())
         }
 
         val groups = mutableSetOf<IndependentMultiConditionGroup>()
@@ -375,7 +374,7 @@ class TransitionWrapper(
         for (i in groups) {
             for (arc in inputArcWrappers) {
                 if (arc in i.relatedInputArcs) {
-                    arc._independentGroup._ref = i
+                    arc._independentGroup.setRef(i)
                 }
             }
         }
