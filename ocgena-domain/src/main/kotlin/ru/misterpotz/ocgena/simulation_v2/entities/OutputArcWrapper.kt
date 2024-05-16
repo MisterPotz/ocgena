@@ -9,9 +9,12 @@ import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenArcFlowSnapshotFactory
 
 fun List<TokenWrapper>.buildFromIndices(indices: List<Int>): List<TokenWrapper> {
+    val thisList = this
     return buildList {
         for (i in indices) {
-            add(get(i))
+            if (i < size) {
+                add(thisList[i])
+            }
         }
     }
 }

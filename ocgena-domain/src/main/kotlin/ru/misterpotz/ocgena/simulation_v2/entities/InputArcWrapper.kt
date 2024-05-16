@@ -249,6 +249,33 @@ class InputArcWrapper(
             }
         }
 
+        fun isExact() : Boolean {
+            return when(this) {
+                AtLeastOne -> false
+                is DependsOnVariable -> false
+                is Exact -> true
+                is Variable -> false
+            }
+        }
+
+        fun isAalstUnconstraint() : Boolean {
+            return when (this) {
+                AtLeastOne -> true
+                is DependsOnVariable -> false
+                is Exact -> false
+                is Variable -> false
+            }
+        }
+
+        fun isLomazovaConstraint() : Boolean {
+            return when (this) {
+                AtLeastOne -> false
+                is DependsOnVariable -> true
+                is Exact -> false
+                is Variable -> true
+            }
+        }
+
         data class Exact(val number: Int) : ConsumptionSpec {
             override val type: Type = Type.EXACT
         }

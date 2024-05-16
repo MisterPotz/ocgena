@@ -5,6 +5,7 @@ import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.castVar
 
 enum class GroupingStrategy {
     ByType,
@@ -31,11 +32,9 @@ class TokenArcFlowSnapshotFactory(
 
             val inputArc = transitionWrapper.findInputArcByPlace(place)
 
-            (inputArc.arcMeta as? LomazovaVariableArcMeta)?.let { arcMeta ->
-                variableValues[arcMeta.variableName] = consumed.amountAt(place)
+            if (inputArc.consumptionSpec is InputArcWrapper.ConsumptionSpec.Variable) {
+                variableValues[inputArc.consumptionSpec.castVar().variableName] = consumed.amountAt(place)
             }
-
-            inputArc.arcMeta.isVar()
         }
 
         val objTypeToTokenData = objTypeToToken.mapValues {

@@ -19,7 +19,7 @@ fun TokenSlice.resolveVariables(inputsArcs: Collection<InputArcWrapper>): Resolv
     return ResolvedVariablesSpace(variables)
 }
 
-fun MutableMap<PlaceWrapper, Collection<Any>>.resolveVariables(inputArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
+fun SortedMap<PlaceWrapper, List<TokenWrapper>>.resolveVariables(inputArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
     val variables = mutableMapOf<String, Int>()
     for (inputArc in inputArcs) {
         val spec = inputArc.consumptionSpec
@@ -262,7 +262,7 @@ class SimpleTokenSlice(
                 it.removeAll(tokenSlice.tokensAt(place))
             }
             val totalPlace = amountAt(place) - tokenSlice.amountAt(place)
-            require(totalPlace < 0) {
+            require(totalPlace >= 0) {
                 throw IllegalStateException("can't deduct from what doesn't exist")
             }
             setAmount(place, totalPlace)

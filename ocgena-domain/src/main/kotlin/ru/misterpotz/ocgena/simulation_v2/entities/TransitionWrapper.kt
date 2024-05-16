@@ -311,6 +311,7 @@ class TransitionWrapper(
                     }
                 }
             }
+            variableCreationArcToDependents.getOrPut(varDefiningArc) { mutableSetOf() }
         }
 
         variableCreationArcToDependents

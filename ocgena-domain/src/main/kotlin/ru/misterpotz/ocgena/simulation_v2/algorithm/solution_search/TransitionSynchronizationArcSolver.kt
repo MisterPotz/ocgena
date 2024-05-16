@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
+import net.bytebuddy.description.ByteCodeElement.Token
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
@@ -10,7 +11,11 @@ import java.util.*
 import kotlin.collections.HashSet
 
 sealed interface FullSolution {
-    data class Tokens(val solutionTokens: SolutionTokens, val generatedTokens: List<TokenWrapper>) : FullSolution
+    data class Tokens(
+        val solutionTokens: SolutionTokens,
+        val generatedTokens: List<TokenWrapper>
+    ) : FullSolution
+
     data class Amounts(val solutionAmounts: SolutionAmounts) : FullSolution
 
     fun toTokenSlice(): TokenSlice {
@@ -150,7 +155,9 @@ class TransitionSynchronizationArcSolver(
                 // do not shuffle
                 tokens.indices.toList()
             } else {
-                shuffler.makeShuffled(0..<realTokenAmount)
+                unconditionalArc.fromPlace.getTokens(tokenSlice).size.takeIf { it > 0 }?.let {
+                    shuffler.makeShuffled(0..<it)
+                } ?: listOf(0)
             }
 
             val combination = CombinationIterable(
@@ -255,6 +262,65 @@ class TransitionSynchronizationArcSolver(
         }
     }
 
+    private fun generateRequiredTokens(
+        potentiallyUncompleteSolution: SortedMap<PlaceWrapper, List<TokenWrapper>>,
+        tokensCanGenerate: SortedMap<PlaceWrapper, Int>,
+    ): Map<PlaceWrapper, List<TokenWrapper>> {
+        val requiredItems = mutableMapOf<PlaceWrapper, List<TokenWrapper>>(
+
+        )
+        for (place in potentiallyUncompleteSolution.keys) {
+            val inputArc = transition.findInputArcByPlace(place)
+            val tokenRequirement = inputArc.consumptionSpec.tokenRequirement()
+
+            if (potentiallyUncompleteSolution[place]!!.size < tokenRequirement) {
+                potentiallyUncompleteSolution[inputArc.fromPlace] = mutableListOf<TokenWrapper>().apply {
+                    val tokensAlreadyExist = potentiallyUncompleteSolution[inputArc.fromPlace]!!.size
+                    val generationAmount = tokenRequirement - tokensAlreadyExist
+                    require(generationAmount <= tokensCanGenerate[inputArc.fromPlace]!!) {
+                        "cannot generate for requirements, seems the upstream algorithm is broken"
+                    }
+                    val newgeneratedTokens = (0..<(generationAmount)).map {
+                        tokenGenerator.generateRealToken(inputArc.fromPlace.objectType)
+                    }
+                    generatedTokens.addAll(newgeneratedTokens)
+
+                    tokensCanGenerate[inputArc.fromPlace] =
+                        tokensCanGenerate[inputArc.fromPlace]!! - newgeneratedTokens.size
+
+                    addAll(potentiallyUncompleteSolution[inputArc.fromPlace] ?: emptyList())
+                    addAll(newgeneratedTokens)
+                }
+            }
+        }
+
+
+        for (inputArc in transition.inputArcs) {
+            val inputArc = transition.findInputArcByPlace(place)
+            val tokenRequirement = inputArc.consumptionSpec.tokenRequirement()
+
+            if (potentiallyUncompleteSolution[place]!!.size < tokenRequirement) {
+                potentiallyUncompleteSolution[inputArc.fromPlace] = mutableListOf<TokenWrapper>().apply {
+                    val tokensAlreadyExist = potentiallyUncompleteSolution[inputArc.fromPlace]!!.size
+                    val generationAmount = tokenRequirement - tokensAlreadyExist
+                    require(generationAmount <= tokensCanGenerate[inputArc.fromPlace]!!) {
+                        "cannot generate for requirements, seems the upstream algorithm is broken"
+                    }
+                    val newgeneratedTokens = (0..<(generationAmount)).map {
+                        tokenGenerator.generateRealToken(inputArc.fromPlace.objectType)
+                    }
+                    generatedTokens.addAll(newgeneratedTokens)
+
+                    tokensCanGenerate[inputArc.fromPlace] =
+                        tokensCanGenerate[inputArc.fromPlace]!! - newgeneratedTokens.size
+
+                    addAll(potentiallyUncompleteSolution[inputArc.fromPlace] ?: emptyList())
+                    addAll(newgeneratedTokens)
+                }
+            }
+        }
+    }
+
     private fun makeCompleteTokenSolution(
         potentiallyUncompleteSolution: SortedMap<PlaceWrapper, List<TokenWrapper>>,
         tokensCanGenerate: SortedMap<PlaceWrapper, Int>,
@@ -266,25 +332,89 @@ class TransitionSynchronizationArcSolver(
         val placeToApplicableNewTokens = mutableMapOf<PlaceWrapper, MutableList<TokenWrapper>>()
         val generatedTokens = mutableListOf<TokenWrapper>()
 
-        val resolvedVariablesSpace = filteredTokenSlice.resolveVariables(transition.inputArcs)
+        // 1. generate what not generated yet to complete requirements
+        // 2. find candidates for further analysis - for all arcs, they must each be unconstrained or dependent on variables.
+        // 3. for variable arcs do smart filling based on candidates from step 2
+        // 4.
+
+        for (place in potentiallyUncompleteSolution.keys) {
+            val inputArc = transition.findInputArcByPlace(place)
+            val tokenRequirement = inputArc.consumptionSpec.tokenRequirement()
+
+            if (potentiallyUncompleteSolution[place]!!.size < tokenRequirement) {
+                potentiallyUncompleteSolution[inputArc.fromPlace] = mutableListOf<TokenWrapper>().apply {
+                    val tokensAlreadyExist = potentiallyUncompleteSolution[inputArc.fromPlace]!!.size
+                    val generationAmount = tokenRequirement - tokensAlreadyExist
+                    require(generationAmount <= tokensCanGenerate[inputArc.fromPlace]!!) {
+                        "cannot generate for requirements, seems the upstream algorithm is broken"
+                    }
+                    val newgeneratedTokens = (0..<(generationAmount)).map {
+                        tokenGenerator.generateRealToken(inputArc.fromPlace.objectType)
+                    }
+                    generatedTokens.addAll(newgeneratedTokens)
+
+                    tokensCanGenerate[inputArc.fromPlace] =
+                        tokensCanGenerate[inputArc.fromPlace]!! - newgeneratedTokens.size
+
+                    addAll(potentiallyUncompleteSolution[inputArc.fromPlace] ?: emptyList())
+                    addAll(newgeneratedTokens)
+                }
+            }
+        }
+
+        val resolvedVariablesSpace = potentiallyUncompleteSolution.resolveVariables(transition.inputArcs)
         val bufferVariablesSpace = resolvedVariablesSpace.copy()
 
         // найти для каждой арки потенциальный максимальный набор подходящих токенов
         for (inputArc in transition.inputArcs) {
-            if (inputArc.consumptionSpec.isUnconstrained()) {
-                val fromPlace = inputArc.fromPlace
+            val fromPlace = inputArc.fromPlace
+
+            if (inputArc.underConditions.isEmpty()) {
+                when (inputArc.consumptionSpec) {
+                    InputArcWrapper.ConsumptionSpec.AtLeastOne -> {
+                        placeToApplicableNewTokens.getOrPut(fromPlace) { mutableListOf() }
+                            .addAll(
+                                // add all not already added
+                                filteredTokenSlice.tokensAt(inputArc.fromPlace).filter {
+                                    it !in potentiallyUncompleteSolution[inputArc.fromPlace]!!
+                                }
+                            )
+                    }
+
+                    is InputArcWrapper.ConsumptionSpec.Exact,
+                    is InputArcWrapper.ConsumptionSpec.DependsOnVariable,
+                    is InputArcWrapper.ConsumptionSpec.Variable -> Unit
+                }
+
+                val tokensCanGenerate = when (inputArc.consumptionSpec) {
+                    InputArcWrapper.ConsumptionSpec.AtLeastOne -> {
+                        tokensCanGenerate[inputArc.fromPlace] ?: 0
+                    }
+
+                    is InputArcWrapper.ConsumptionSpec.Exact -> {
+                        (tokensCanGenerate[inputArc.fromPlace]
+                            ?: 0).coerceAtMost(inputArc.consumptionSpec.tokenRequirement())
+                    }
+                    // separate token generation logics for lomazova arcs
+                    is InputArcWrapper.ConsumptionSpec.DependsOnVariable,
+                    is InputArcWrapper.ConsumptionSpec.Variable -> 0
+                }
+                if (tokensCanGenerate > 0) {
+                    // can generate new tokens here
+                    val generated = (0..<tokensCanGenerate).map {
+                        tokenGenerator.generateRealToken(inputArc.fromPlace.objectType)
+                    }
+                    generatedTokens.addAll(generated)
+                    placeToApplicableNewTokens[fromPlace] = mutableListOf<TokenWrapper>().apply {
+                        addAll(placeToApplicableNewTokens[fromPlace] ?: emptyList())
+                        addAll(generated)
+                    }
+                }
+            }
+
+            if (inputArc.consumptionSpec.isUnconstrained() && inputArc.underConditions.isNotEmpty()) {
                 val allPlaceTokens = filteredTokenSlice.tokensAt(fromPlace)
                 val alreadyGoodTokens = potentiallyUncompleteSolution[fromPlace]!!
-
-                if (inputArc.underConditions.isEmpty()) {
-                    placeToApplicableNewTokens.getOrPut(fromPlace) { mutableListOf() }
-                        .addAll(
-                            // add all not already added
-                            filteredTokenSlice.tokensAt(inputArc.fromPlace).filter {
-                                it !in potentiallyUncompleteSolution[inputArc.fromPlace]!!
-                            }
-                        )
-                }
 
                 for (arcCondition in inputArc.underConditions) {
                     val requiredEntries = conditionRequiredEntries[inputArc.independentGroup]!![arcCondition]!!
@@ -303,20 +433,29 @@ class TransitionSynchronizationArcSolver(
             // try to gather more tokens for var arc
             val fromPlace = varArc.fromPlace
 
-            if (placeToApplicableNewTokens[fromPlace] == null ||
-                placeToApplicableNewTokens[fromPlace]!!.isEmpty() ||
-                dependent.isEmpty()
+            if (
+                (
+                        placeToApplicableNewTokens[fromPlace] == null ||
+                                placeToApplicableNewTokens[fromPlace]!!.isEmpty()
+                        ) &&
+                (
+                        tokensCanGenerate[fromPlace] == null || tokensCanGenerate[fromPlace] == 0
+                        )
             ) {
                 // leaving all new tokens per var arc as its
                 continue
             }
             val variableName = varArc.consumptionSpec.castVar().variableName
-            val newTokensGoodForVarArc = placeToApplicableNewTokens[fromPlace]!!
+            val newTokensGoodForVarArc = placeToApplicableNewTokens[fromPlace] ?: emptyList()
             val totalPotentialNewTokensForVarArc = newTokensGoodForVarArc.size + (tokensCanGenerate[fromPlace] ?: 0)
 
             var newTokensAmountForVarArcSolution = 0
 
             for (index in 0..<totalPotentialNewTokensForVarArc) {
+                if (dependent.isEmpty()) {
+                    newTokensAmountForVarArcSolution = tokensCanGenerate[varArc.fromPlace] ?: 0;
+                    break;
+                }
                 bufferVariablesSpace.copyFrom(resolvedVariablesSpace)
                 val initialVariableValue = bufferVariablesSpace.getVariable(variableName)
                 bufferVariablesSpace.setVariable(variableName, initialVariableValue + index + 1)
@@ -381,6 +520,7 @@ class TransitionSynchronizationArcSolver(
                     break;
                 }
             }
+
             // leaving current var arc solution for the variable as it is
             if (newTokensAmountForVarArcSolution == 0) continue
 
@@ -397,7 +537,7 @@ class TransitionSynchronizationArcSolver(
                         require(it >= 0) { "consistency check" }
                     }
                     mutableListOf<TokenWrapper>().apply {
-                        addAll(placeToApplicableNewTokens[fromPlace]!!)
+                        addAll(placeToApplicableNewTokens[fromPlace] ?: emptyList())
                         val tokensToAdditionallyGenerate =
                             newTokensAmountForVarArcSolution - newTokensGoodForVarArc.size
                         addAll((0..<(tokensToAdditionallyGenerate)).map {
@@ -421,7 +561,7 @@ class TransitionSynchronizationArcSolver(
             for (dependentArc in dependent) {
                 val dependentArcPlace = dependentArc.fromPlace
 
-                val tokensAtDependentArcPlace = placeToApplicableNewTokens[dependentArcPlace]!!
+                val tokensAtDependentArcPlace = placeToApplicableNewTokens[dependentArcPlace] ?: emptyList()
                 // for each dependent place must
                 val tokensToTake = dependentArc.consumptionSpec.tokensShouldTake(
                     tokensAtDependentArcPlace.size,
