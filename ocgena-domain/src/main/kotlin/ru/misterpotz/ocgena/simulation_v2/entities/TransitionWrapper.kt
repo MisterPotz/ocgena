@@ -35,9 +35,16 @@ fun InputArcWrapper.ConsumptionSpec.castDependent(): InputArcWrapper.Consumption
 class TransitionWrapper(
     val transitionId: PetriAtomId,
     val model: ModelAccessor,
-    val timer: TransitionTimer = TransitionTimer(0),
 ) : Identifiable, Comparable<TransitionWrapper> {
     val checkingCache = CheckingCache()
+
+    val timer: TransitionTimer by lazy {
+        val eftLft =
+            model.simulationInput.transitions[transitionId]?.eftLft?.values
+                ?: model.simulationInput.defaultEftLft?.values ?: 0..0
+
+        TransitionTimer(0, eft = eftLft.first.toLong(), lft = eftLft.last.toLong())
+    }
 
     fun setNeedCheckCache() {
         checkingCache.needCheckCache = true

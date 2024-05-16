@@ -93,8 +93,6 @@ internal abstract class SimulationV2Module {
         ): Simulation {
             return Simulation(
                 simulationInput = simulationInput,
-                modelAccessor = modelAccessor,
-                tokenStore = tokenStore,
                 stepExecutor = stepExecutor,
                 logger = logger
             )

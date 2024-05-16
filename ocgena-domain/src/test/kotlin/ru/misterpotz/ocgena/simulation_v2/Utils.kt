@@ -10,6 +10,8 @@ import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 
+fun List<SimulationStepLog>.prettyString() = joinToString("\n") { it.prettyString() }
+
 class StepSequenceLogger : Logger {
     sealed interface Event {
         data object Prepared : Event

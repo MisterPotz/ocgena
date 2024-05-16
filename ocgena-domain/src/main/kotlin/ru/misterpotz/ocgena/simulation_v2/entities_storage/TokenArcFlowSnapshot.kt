@@ -23,12 +23,15 @@ class TokenArcFlowSnapshotFactory(
         val objTypeToAmount = mutableMapOf<ObjectType, Int>()
         val variableValues = mutableMapOf<String, Int>()
 
+        consumed.relatedPlaces.forEach { it ->
+            objTypeToToken.getOrPut(it.objectType) { mutableListOf() }
+            objTypeToAmount.getOrPut(it.objectType) { consumed.amountAt(it) }
+        }
+
         consumed.byPlaceIterator().forEach { (place, tokens) ->
             for (token in tokens) {
                 objTypeToToken.getOrPut(token.objectType) { mutableListOf() }.add(token)
             }
-            objTypeToAmount[place.objectType] =
-                objTypeToAmount.getOrPut(place.objectType) { 0 } + consumed.amountAt(place)
 
             val inputArc = transitionWrapper.findInputArcByPlace(place)
 
@@ -37,11 +40,11 @@ class TokenArcFlowSnapshotFactory(
             }
         }
 
-        val objTypeToTokenData = objTypeToToken.mapValues {
+        val objTypeToTokenData = objTypeToToken.mapValues { (key, _) ->
             TokenData(
-                objectType = it.key,
-                amount = objTypeToAmount[it.key]!!,
-                tokens = it.value
+                objectType = key,
+                amount = objTypeToAmount[key]!!,
+                tokens = objTypeToToken[key]!!
             )
         }
 

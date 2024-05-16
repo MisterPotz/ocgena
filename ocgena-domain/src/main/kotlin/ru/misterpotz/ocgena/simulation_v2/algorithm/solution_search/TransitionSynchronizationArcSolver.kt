@@ -75,7 +75,6 @@ class TransitionSynchronizationArcSolver(
         return IteratorMapper(
             fullCombinator
         ) { independentSolutionCombination ->
-            println("combinations for ${transition.transitionId} ${independentSolutionCombination.flatten()}")
             if (solutionExistenceConfirmationMode) {
                 FullSolution.Exists
             } else {

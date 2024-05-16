@@ -18,6 +18,7 @@ import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random
 
 
+
 class TransitionSynchronizationArcSolverTest {
     fun ocnet() = buildOCNet {
         "input".p { input }

@@ -13,51 +13,51 @@ import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random
 
+fun buildAalstArcModel() = buildOCNet {
+    "input".p { input }
+    "input2".p { input; objectTypeId = "2" }
+
+    "input".arc("t0".t)
+    "input".arc("t1".t)
+    "input".arc("t2".t)
+    "input".arc("t3".t)
+    "input2".arc("t1".t) { vari; }
+    "p1".p
+    "p2".p
+    "p3".p
+    "p4".p
+    "p5".p
+
+    "t1".apply {
+        arc("p1")
+        arc("buffer".p) { multiplicity = 2 }.arc("t2".t)
+        arc("buffer2".p { objectTypeId = "2" }) { vari; }
+    }
+    "t2".apply {
+        arc("p2")
+        arc("p3")
+    }
+
+    "t0".apply {
+        arc("p1")
+        arc("p3")
+        arc("p4")
+    }
+
+    "t3".apply {
+        arc("p5")
+    }
+
+    "p1".p.arc("test".t)
+    "p2".p.arc("test".t)
+    "p3".p.arc("test".t)
+    "p4".p.arc("test".t)
+    "p5".p.arc("test".t)
+    "buffer2".arc("test".t) { vari }
+    "test".t.arc("out".p { output })
+}
 
 class TransitionSynchronizationVariableArcSolverTest {
-    fun ocnet() = buildOCNet {
-        "input".p { input }
-        "input2".p { input; objectTypeId = "2" }
-
-        "input".arc("t0".t)
-        "input".arc("t1".t)
-        "input".arc("t2".t)
-        "input".arc("t3".t)
-        "input2".arc("t1".t) { vari; }
-        "p1".p
-        "p2".p
-        "p3".p
-        "p4".p
-        "p5".p
-
-        "t1".apply {
-            arc("p1")
-            arc("buffer".p) { multiplicity = 2 }.arc("t2".t)
-            arc("buffer2".p { objectTypeId = "2" }) { vari; }
-        }
-        "t2".apply {
-            arc("p2")
-            arc("p3")
-        }
-
-        "t0".apply {
-            arc("p1")
-            arc("p3")
-            arc("p4")
-        }
-
-        "t3".apply {
-            arc("p5")
-        }
-
-        "p1".p.arc("test".t)
-        "p2".p.arc("test".t)
-        "p3".p.arc("test".t)
-        "p4".p.arc("test".t)
-        "p5".p.arc("test".t)
-        "buffer2".arc("test".t) { vari }
-        "test".t.arc("out".p { output })
-    }
 
     private fun buildTransitionHistory(model: ModelAccessor): SimpleTokenSlice = buildTransitionHistory(
         model = model,
@@ -134,12 +134,12 @@ class TransitionSynchronizationVariableArcSolverTest {
     @Test
     fun print() {
         // http://magjac.com/graphviz-visual-editor/
-        println(ocnet().toDot())
+        println(buildAalstArcModel().toDot())
     }
 
     @Test
     fun transitionHistoryBuildTest() {
-        val model = ocnet().toDefaultSim()
+        val model = buildAalstArcModel().toDefaultSim()
         val tokenSlice = buildTransitionHistory(model)
 
         tokenSlice.print()
@@ -151,7 +151,7 @@ class TransitionSynchronizationVariableArcSolverTest {
     }
 
     fun buildModel(): ModelAccessor {
-        return ocnet().toDefaultSim(
+        return buildAalstArcModel().toDefaultSim(
             SimulationInput(
                 transitions = mapOf(
                     "test" to TransitionSetting(
@@ -176,7 +176,7 @@ class TransitionSynchronizationVariableArcSolverTest {
 
     @Test
     fun testMultiSearchTokenSolver() {
-        val model = ocnet().toDefaultSim(
+        val model = buildAalstArcModel().toDefaultSim(
             SimulationInput(
                 transitions = mapOf(
                     "test" to TransitionSetting(

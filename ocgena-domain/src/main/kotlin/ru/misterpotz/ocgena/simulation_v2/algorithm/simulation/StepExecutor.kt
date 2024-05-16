@@ -32,6 +32,9 @@ class StepExecutor(
     private val model: ModelAccessor,
     private val shuffler: Shuffler
 ) {
+    companion object {
+        private const val DEBUG = false
+    }
     enum class EnabledMode {
         DISABLED_BY_MARKING,
         ENABLED_BY_MARKING,
@@ -171,10 +174,12 @@ class StepExecutor(
 
         tokenStore.minus(minusTokens)
         tokenStore.plus(plusTokens)
-        println("minusTokens ${minusTokens.makeBeautifulString()}")
-        println("plusTokens ${plusTokens.makeBeautifulString()}")
-        println("removed tokens $consumed")
-        println("generated tokens ${generatedAtInputSolution + generatedAtOutput}")
+        if (DEBUG) {
+            println("minusTokens ${minusTokens.makeBeautifulString()}")
+            println("plusTokens ${plusTokens.makeBeautifulString()}")
+            println("removed tokens $consumed")
+            println("generated tokens ${generatedAtInputSolution + generatedAtOutput}")
+        }
         logBuilder.recordTokens(
             minusTokens,
             plusTokens,
