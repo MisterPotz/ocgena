@@ -3,13 +3,14 @@ package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.resolveVariables
 import java.util.*
 import kotlin.collections.HashSet
 
 sealed interface FullSolution {
-    data class Tokens(val solutionTokens: SolutionTokens) : FullSolution
+    data class Tokens(val solutionTokens: SolutionTokens, val generatedTokens: List<TokenWrapper>) : FullSolution
     data class Amounts(val solutionAmounts: SolutionAmounts) : FullSolution
 
     fun toTokenSlice(): TokenSlice {
@@ -37,6 +38,7 @@ sealed interface PartialSolutionCandidate {
     data class Unconditional(
         val place: PlaceWrapper,
         val tokens: List<TokenWrapper>,
+        val tokensCanAdditionallyGenerate: Int,
     ) : PartialSolutionCandidate
 
 }
@@ -47,7 +49,8 @@ class TransitionSynchronizationArcSolver(
 
     fun getSolutionFinderIterable(
         tokenSlice: TokenSlice,
-        shuffler: Shuffler
+        shuffler: Shuffler,
+        tokenGenerator: TokenGenerator
     ): Iterable<FullSolution>? {
         val filteredTokenSlice = preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return null
 
@@ -70,7 +73,12 @@ class TransitionSynchronizationArcSolver(
             fullCombinator
         ) { independentSolutionCombination ->
             println(independentSolutionCombination)
-            completeSolutionFromPartials(independentSolutionCombination.flatten(), filteredTokenSlice, shuffler)
+            completeSolutionFromPartials(
+                independentSolutionCombination.flatten(),
+                filteredTokenSlice,
+                shuffler,
+                tokenGenerator = tokenGenerator
+            )
         }
     }
 
@@ -78,8 +86,10 @@ class TransitionSynchronizationArcSolver(
         partials: List<PartialSolutionCandidate>,
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
+        tokenGenerator: TokenGenerator
     ): FullSolution {
         val fullSolutionMap = sortedMapOf<PlaceWrapper, List<TokenWrapper>>()
+        val tokensCanGenerate = sortedMapOf<PlaceWrapper, Int>()
         val independentGroupSolutionTransitionEntries =
             mutableMapOf<IndependentMultiConditionGroup, Map<MultiArcCondition, HashSet<Long>>>()
 
@@ -103,17 +113,20 @@ class TransitionSynchronizationArcSolver(
                         "solution place-independence condition broken: each combination concerns only its own place, solutions don't intersect places"
                     }
                     fullSolutionMap[partial.place] = partial.tokens
+                    tokensCanGenerate[partial.place] = partial.tokensCanAdditionallyGenerate
                 }
             }
         }
 
-        val completeSolution = makeCompleteSolution(
+        val completeSolution = makeCompleteTokenSolution(
             fullSolutionMap,
+            tokensCanGenerate,
             independentGroupSolutionTransitionEntries,
             tokenSlice,
-            shuffler = shuffler
+            shuffler = shuffler,
+            tokenGenerator = tokenGenerator
         )
-        return FullSolution.Tokens(completeSolution)
+        return completeSolution
     }
 
     private fun createUnconditionalArcsCombinationSolutionSuggester(
@@ -121,8 +134,10 @@ class TransitionSynchronizationArcSolver(
         shuffler: Shuffler
     ): Iterable<List<PartialSolutionCandidate.Unconditional>> {
         val allUnconditionalCombinationsIterator = transition.unconditionalInputArcs.map { unconditionalArc ->
-            val tokenIndicesRange = unconditionalArc.fromPlace.tokenRangeAt(tokenSlice)
+            val realTokenAmount = unconditionalArc.fromPlace.tokenAmountAt(tokenSlice)
             val tokens = tokenSlice.tokensAt(unconditionalArc.fromPlace)
+
+            val tokensCanGenerate = realTokenAmount - tokenSlice.tokensAt(unconditionalArc.fromPlace).size
 
             val tokensToTake = if (unconditionalArc.isAalstArc()) {
                 // do not select, take all for aalst arc, as its not conditioned, all tokens can be consumed
@@ -135,7 +150,7 @@ class TransitionSynchronizationArcSolver(
                 // do not shuffle
                 tokens.indices.toList()
             } else {
-                shuffler.makeShuffled(tokenIndicesRange)
+                shuffler.makeShuffled(0..<realTokenAmount)
             }
 
             val combination = CombinationIterable(
@@ -146,7 +161,8 @@ class TransitionSynchronizationArcSolver(
             IteratorMapper(combination) { combination ->
                 PartialSolutionCandidate.Unconditional(
                     unconditionalArc.fromPlace,
-                    tokenSlice.tokensAt(unconditionalArc.fromPlace).selectTokens(combination)
+                    tokenSlice.tokensAt(unconditionalArc.fromPlace).selectTokens(combination),
+                    tokensCanAdditionallyGenerate = tokensCanGenerate
                 )
             }
         }
@@ -239,13 +255,16 @@ class TransitionSynchronizationArcSolver(
         }
     }
 
-    private fun makeCompleteSolution(
+    private fun makeCompleteTokenSolution(
         potentiallyUncompleteSolution: SortedMap<PlaceWrapper, List<TokenWrapper>>,
+        tokensCanGenerate: SortedMap<PlaceWrapper, Int>,
         conditionRequiredEntries: Map<IndependentMultiConditionGroup, Map<MultiArcCondition, HashSet<Long>>>,
         filteredTokenSlice: TokenSlice,
         shuffler: Shuffler,
-    ): Map<PlaceWrapper, List<TokenWrapper>> {
+        tokenGenerator: TokenGenerator
+    ): FullSolution.Tokens {
         val placeToApplicableNewTokens = mutableMapOf<PlaceWrapper, MutableList<TokenWrapper>>()
+        val generatedTokens = mutableListOf<TokenWrapper>()
 
         val resolvedVariablesSpace = filteredTokenSlice.resolveVariables(transition.inputArcs)
         val bufferVariablesSpace = resolvedVariablesSpace.copy()
@@ -293,28 +312,73 @@ class TransitionSynchronizationArcSolver(
             }
             val variableName = varArc.consumptionSpec.castVar().variableName
             val newTokensGoodForVarArc = placeToApplicableNewTokens[fromPlace]!!
+            val totalPotentialNewTokensForVarArc = newTokensGoodForVarArc.size + (tokensCanGenerate[fromPlace] ?: 0)
 
             var newTokensAmountForVarArcSolution = 0
-            for (index in newTokensGoodForVarArc.indices) {
+
+            for (index in 0..<totalPotentialNewTokensForVarArc) {
                 bufferVariablesSpace.copyFrom(resolvedVariablesSpace)
                 val initialVariableValue = bufferVariablesSpace.getVariable(variableName)
                 bufferVariablesSpace.setVariable(variableName, initialVariableValue + index + 1)
 
                 val allDependendsArcsSatisfied = dependent.all { dependentArc ->
-                    val tokensAtDependentArcPlace = placeToApplicableNewTokens[dependentArc.fromPlace]
-                    if (tokensAtDependentArcPlace == null) {
-                        false
-                    } else {
-                        dependentArc.consumptionSpec.strongComplies(
-                            tokensAtDependentArcPlace.size,
-                            bufferVariablesSpace
-                        )
-                    }
+                    dependentArc.totallySatisfiedWithTokens(
+                        placeToApplicableNewTokens[dependentArc.fromPlace],
+                        bufferVariablesSpace
+                    )
                 }
                 if (allDependendsArcsSatisfied) {
                     newTokensAmountForVarArcSolution = index + 1
+                    continue
+                }
+                val minAdditionalGenerationAmounts: MutableMap<InputArcWrapper, Int> = mutableMapOf()
+                // uncomplied dependent arcs
+                for (dependentArc in dependent) {
+                    val tokens = placeToApplicableNewTokens[dependentArc.fromPlace]
+                    val maxCanGenerate = (tokensCanGenerate[dependentArc.fromPlace] ?: 0)
+                    var minSatisfactoryAmount: Int? = null
+                    for (testTokenAmount in maxCanGenerate downTo 1) {
+                        if (dependentArc.canBeSatisfiedWithAdditionalAmount(
+                                tokens,
+                                testTokenAmount,
+                                bufferVariablesSpace
+                            )
+                        ) {
+                            minSatisfactoryAmount = testTokenAmount
+                        } else {
+                            break
+                        }
+                    }
+                    if (minSatisfactoryAmount != null) {
+                        minAdditionalGenerationAmounts[dependentArc] = minSatisfactoryAmount
+                    }
+                }
+                // all input arcs have amount of tokens that can be generated for their satisfaction
+                if (minAdditionalGenerationAmounts.size == dependent.size) {
+                    // reduce the amount of tokens that can be generated for dependent arcs and generate
+                    for (dependentArc in dependent) {
+                        val satisfactoryAmount = minAdditionalGenerationAmounts[dependentArc]!!
+                        tokensCanGenerate[dependentArc.fromPlace] =
+                            (tokensCanGenerate[dependentArc.fromPlace]!! - satisfactoryAmount).also {
+                                require(it >= 0) { "consistency check failed" }
+                            }
+
+                        placeToApplicableNewTokens[dependentArc.fromPlace] =
+                            mutableListOf<TokenWrapper>().apply {
+                                addAll(placeToApplicableNewTokens[dependentArc.fromPlace] ?: emptyList())
+                                addAll(
+                                    (0..<satisfactoryAmount).map {
+                                        val generated =
+                                            tokenGenerator.generateRealToken(dependentArc.fromPlace.objectType)
+                                        generatedTokens.add(generated)
+                                        generated
+                                    }
+                                )
+                            }
+                    }
                 } else {
-                    break
+                    // even with slight increase of the var arc there are no additional tokens that satisfy dependent amount
+                    break;
                 }
             }
             // leaving current var arc solution for the variable as it is
@@ -326,11 +390,31 @@ class TransitionSynchronizationArcSolver(
                 resolvedVariablesSpace.getVariable(variableName) + newTokensAmountForVarArcSolution
             )
             val newTokensToAddToVarArcSolution =
-                placeToApplicableNewTokens[fromPlace]!!.selectTokens(
-                    shuffler.makeShuffled(newTokensGoodForVarArc.indices)
-                        .take(newTokensAmountForVarArcSolution)
-                )
-                    .toMutableList()
+                // no need to shuffle, as need to generate additional
+                if (newTokensAmountForVarArcSolution > newTokensGoodForVarArc.size) {
+                    tokensCanGenerate[fromPlace] = (tokensCanGenerate[fromPlace]!! -
+                            (newTokensAmountForVarArcSolution - newTokensGoodForVarArc.size)).also {
+                        require(it >= 0) { "consistency check" }
+                    }
+                    mutableListOf<TokenWrapper>().apply {
+                        addAll(placeToApplicableNewTokens[fromPlace]!!)
+                        val tokensToAdditionallyGenerate =
+                            newTokensAmountForVarArcSolution - newTokensGoodForVarArc.size
+                        addAll((0..<(tokensToAdditionallyGenerate)).map {
+                            val generated =
+                                tokenGenerator.generateRealToken(varArc.fromPlace.objectType)
+                            generatedTokens.add(generated)
+                            generated
+                        })
+                    }
+                } else {
+                    placeToApplicableNewTokens[fromPlace]!!.selectTokens(
+                        shuffler.makeShuffled(newTokensGoodForVarArc.indices)
+                            .take(newTokensAmountForVarArcSolution)
+                    )
+                        .toMutableList()
+                }
+
 
             placeToApplicableNewTokens[fromPlace] = newTokensToAddToVarArcSolution
 
@@ -344,20 +428,26 @@ class TransitionSynchronizationArcSolver(
                     resolvedVariablesSpace
                 )
 
-                val newTokensToAddToDependentArcSolution =
-                    placeToApplicableNewTokens[dependentArcPlace]!!.selectTokens(
-                        shuffler.makeShuffled(tokensAtDependentArcPlace.indices)
-                            .take(tokensToTake)
-                    )
-                        .toMutableList()
+                val newTokensToAddToDependentArcSolution = if (tokensAtDependentArcPlace.size == tokensToTake) {
+                    placeToApplicableNewTokens[dependentArcPlace]!!
+                } else {
+                    mutableListOf<TokenWrapper>().apply {
+                        addAll(
+                            placeToApplicableNewTokens[dependentArcPlace]!!.selectTokens(
+                                shuffler.makeShuffled(tokensAtDependentArcPlace.indices)
+                                    .take(tokensToTake)
+                            )
+                        )
+                    }
+                }
 
                 placeToApplicableNewTokens[dependentArcPlace] = newTokensToAddToDependentArcSolution
             }
         }
 
-        if (placeToApplicableNewTokens.isEmpty()) return potentiallyUncompleteSolution
+        if (placeToApplicableNewTokens.isEmpty()) return FullSolution.Tokens(potentiallyUncompleteSolution, emptyList())
 
-        return buildMap {
+        val completeSolution = buildMap {
             potentiallyUncompleteSolution.map { (place, tokens) ->
                 put(place, buildList {
                     addAll(tokens)
@@ -365,6 +455,7 @@ class TransitionSynchronizationArcSolver(
                 })
             }
         }
+        return FullSolution.Tokens(completeSolution, generatedTokens)
     }
 
     private fun createGroupSolutionCombinator(

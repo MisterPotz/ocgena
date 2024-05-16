@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 
 import ru.misterpotz.SimulationStepLog
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.FullSolution
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
@@ -63,11 +64,26 @@ class StepExecutor(
         for (transition in transitions) {
             if (transition.needCheckCache()) {
 
-                val hasSolution = transition.inputArcsSolutions(
+                val solutionIterator = transition.inputArcsSolutions(
                     tokenStore,
                     shuffler = shuffler,
-                ).iterator().hasNext()
+                    tokenGenerator = tokenStore
+                ).iterator()
 
+                val hasSolution = solutionIterator.hasNext()
+                if (hasSolution) {
+                    val solution = solutionIterator.next()
+                    // need to create additional logics to only calculate availability, where additional tokens are not generated...
+                    when (solution) {
+                        is FullSolution.Tokens -> {
+                            for (token in solution.generatedTokens) {
+                                tokenStore.removeToken(token)
+                            }
+                        }
+
+                        else -> Unit
+                    }
+                }
                 transition.setEnabledByMarkingCache(hasSolution)
             }
         }
@@ -151,7 +167,7 @@ class StepExecutor(
 
     private fun fireTransition(transition: TransitionWrapper) {
         logBuilder.recordFiredTransition(transition)
-        val solution = transition.inputArcsSolutions(tokenStore, shuffler)
+        val solution = transition.inputArcsSolutions(tokenStore, shuffler, tokenGenerator = tokenStore)
             .iterator().also {
                 require(it.hasNext()) {
                     "during transition fire there must already exist solution that was checked before"

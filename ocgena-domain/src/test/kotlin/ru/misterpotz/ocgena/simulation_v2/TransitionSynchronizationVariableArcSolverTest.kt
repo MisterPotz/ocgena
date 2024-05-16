@@ -195,7 +195,8 @@ class TransitionSynchronizationVariableArcSolverTest {
 
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler)!!.iterator()
+            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler, NoTokenGenerator)!!
+                .iterator()
                 .asSequence().toList()
 
         println(solutions)

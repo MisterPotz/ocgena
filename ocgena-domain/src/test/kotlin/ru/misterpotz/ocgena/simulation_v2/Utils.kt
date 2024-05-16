@@ -2,10 +2,12 @@ package ru.misterpotz.ocgena.simulation_v2
 
 import ru.misterpotz.Logger
 import ru.misterpotz.SimulationStepLog
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 
 class StepSequenceLogger() : Logger {
@@ -59,12 +61,16 @@ fun Map<String, Int>.toTokenSliceAmounts(model: ModelAccessor): TokenSlice {
     }
 }
 
+object NoTokenGenerator : TokenGenerator {
+    override fun generateRealToken(type: ObjectType): TokenWrapper {
+        throw IllegalStateException("not allowed to generate")
+    }
+}
 
 fun buildTransitionHistory(
     model: ModelAccessor,
     transitionToHistoryEntries: Map<String, List<List<Int>>>,
     placeToTokens: Map<String, List<Int>>
-
 ): SimpleTokenSlice {
     val tokenEntries = mutableMapOf<String, TokenWrapper>()
     fun List<List<Int>>.recordTokensToHistory(transitionWrapper: TransitionWrapper): List<TokenWrapper> {

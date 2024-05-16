@@ -64,7 +64,7 @@ class TransitionSynchronizationArcSolverTest {
         transitionToHistoryEntries = mapOf(
             "t1" to listOf(
                 listOf(1, 2, 100), // p1, p3, p2, buff2, buff2
-                listOf(3, 4, 102, ), // p1, p3, p2, buff2
+                listOf(3, 4, 102), // p1, p3, p2, buff2
                 listOf(5, 6, 103), // p1, p3, p2, buff2, buff2
                 listOf(7, 8, 104), // p1, p3, p2, buff2, buff2
                 listOf(9, 10, 105), // p1, p2, p2, buff2, buff2, buff2
@@ -183,7 +183,8 @@ class TransitionSynchronizationArcSolverTest {
 
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler)!!.iterator()
+            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler, NoTokenGenerator)!!
+                .iterator()
                 .asSequence().toList()
 
         assertEquals(24, solutions.size)

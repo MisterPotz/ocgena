@@ -9,6 +9,7 @@ import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
+import ru.misterpotz.ocgena.simulation_v2.utils.NoOpLogger
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 import kotlin.random.Random
@@ -177,7 +178,7 @@ class TransitionSyncLomazovaVarArcSolverTest {
         val transitionSynchronizationArcSolver = TransitionSynchronizationArcSolver(model.transitionBy("test_all_sync"))
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler)
+            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler, NoTokenGenerator)
                 ?.iterator()
 
         println(solutions)
@@ -208,7 +209,8 @@ class TransitionSyncLomazovaVarArcSolverTest {
         val transitionSynchronizationArcSolver = TransitionSynchronizationArcSolver(model.transitionBy("test_all_sync"))
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler)!!.iterator()
+            transitionSynchronizationArcSolver.getSolutionFinderIterable(tokenSlice, normalShuffler, NoTokenGenerator)!!
+                .iterator()
                 .asSequence().toList()
 
         println(solutions)
@@ -235,7 +237,8 @@ class TransitionSyncLomazovaVarArcSolverTest {
         val tokenSlice = model.buildTransitionHistoryWorking()
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler).iterator().asSequence()
+            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator)
+                .iterator().asSequence()
                 .toList()
 
         println(solutions)

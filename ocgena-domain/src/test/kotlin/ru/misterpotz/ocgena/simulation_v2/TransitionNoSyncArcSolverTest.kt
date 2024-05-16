@@ -122,7 +122,7 @@ class TransitionNoSyncArcSolverTest {
 
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            model.transitionBy("test").inputArcsSolutions(tokenSlice, normalShuffler).iterator()
+            model.transitionBy("test").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator).iterator()
                 .asSequence().toList()
 
         // combinatorics check

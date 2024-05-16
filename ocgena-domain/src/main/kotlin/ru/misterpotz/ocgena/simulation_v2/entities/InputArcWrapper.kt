@@ -89,16 +89,33 @@ class InputArcWrapper(
 
     val allAssociatedConditions: SortedSet<MultiArcCondition> by lazy(LazyThreadSafetyMode.NONE) {
         val allAssociated = underConditions.flatMap { it.arcs.ref.flatMap { arc -> arc.underConditions } }.toSortedSet()
-        val nig = 6
         allAssociated
-//
-//
-//        val allAssociatedArcs = underConditions.flatMap { it.arcs.ref }.toSet()
-//        allAssociatedArcs.flatMap {
-//            it.underConditions
-//        }.toSortedSet()
+    }
 
+    fun totallySatisfiedWithTokens(tokens: List<TokenWrapper>?, variableSpace: ResolvedVariablesSpace): Boolean {
+        return if (tokens == null) {
+            false
+        } else {
+            consumptionSpec.strongComplies(
+                tokens.size,
+                variableSpace
+            )
+        }
+    }
 
+    fun canBeSatisfiedWithAdditionalAmount(
+        tokens: List<TokenWrapper>?,
+        potentialAdditionalAmount: Int,
+        resolvedVariablesSpace: ResolvedVariablesSpace
+    ): Boolean {
+        return if (tokens == null) {
+            consumptionSpec.strongComplies(potentialAdditionalAmount, resolvedVariablesSpace)
+        } else {
+            consumptionSpec.strongComplies(
+                tokens.size + potentialAdditionalAmount,
+                resolvedVariablesSpace
+            )
+        }
     }
 
     val independentGroup: IndependentMultiConditionGroup? by lazy {

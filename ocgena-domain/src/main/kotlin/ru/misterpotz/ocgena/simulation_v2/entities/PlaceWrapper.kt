@@ -18,16 +18,16 @@ class PlaceWrapper(
         return placeId.compareTo(other.placeId)
     }
 
-    fun getTokensAmount(tokenBunch: SparseTokenBunch): Int {
-        return tokenBunch.tokenAmountStorage().getTokensAt(placeId)
-    }
-
     fun tokenRangeAt(tokenSlice: TokenSlice): IntRange {
         return tokenSlice.tokensAt(this).indices
     }
 
     fun getTokens(tokenSlice: TokenSlice): SortedTokens {
         return tokenSlice.tokensAt(this)
+    }
+
+    fun tokenAmountAt(tokenSlice: TokenSlice) : Int {
+        return tokenSlice.amountAt(this)
     }
 
     override fun equals(other: Any?): Boolean {

@@ -85,12 +85,13 @@ class TransitionWrapper(
 
     fun inputArcsSolutions(
         tokenSlice: TokenSlice,
-        shuffler: Shuffler
+        shuffler: Shuffler,
+        tokenGenerator: TokenGenerator
     ): Iterable<FullSolution> {
         return when (model.tokensAreEntities()) {
             true -> {
                 TransitionSynchronizationArcSolver(this)
-                    .getSolutionFinderIterable(tokenSlice, shuffler)
+                    .getSolutionFinderIterable(tokenSlice, shuffler, tokenGenerator = tokenGenerator)
                     ?: emptyList()
             }
 

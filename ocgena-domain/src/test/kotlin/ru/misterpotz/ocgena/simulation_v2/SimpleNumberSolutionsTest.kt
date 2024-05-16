@@ -23,9 +23,10 @@ class SimpleNumberSolutionsTest {
         ).toTokenSliceAmounts(model)
 
         val normalShuffler = NormalShuffler(Random(42))
-        val hasSolution = model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler)
-            .iterator()
-            .hasNext()
+        val hasSolution =
+            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator)
+                .iterator()
+                .hasNext()
 
         Assertions.assertEquals(false, hasSolution)
     }
@@ -42,9 +43,10 @@ class SimpleNumberSolutionsTest {
         ).toTokenSliceAmounts(model)
 
         val normalShuffler = NormalShuffler(Random(42))
-        val solution = model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler)
-            .iterator()
-            .next()
+        val solution =
+            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator)
+                .iterator()
+                .next()
 
         Assertions.assertEquals(
             mapOf(

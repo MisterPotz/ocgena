@@ -40,7 +40,13 @@ internal abstract class SimulationV2Module {
             return TokenStore(
                 internalSlice = SimpleTokenSlice(
                     modelAccessor.placesRef.ref.toSortedSet(),
-                ),
+                ).apply {
+                    for ((place, setting) in modelAccessor.simulationInput.places) {
+                        if (setting.initialTokens != null) {
+                            setAmount(modelAccessor.place(place), setting.initialTokens)
+                        }
+                    }
+                },
                 modelAccessor = modelAccessor
             )
         }
@@ -102,7 +108,9 @@ interface SimulationV2Interactor : ShiftTimeSelector, TransitionSelector, Transi
 
 class
 
-internal class SimulationV2InteractorWrapper(
+internal
+
+class SimulationV2InteractorWrapper(
     val shuffler: Shuffler,
     private val externalsimulationV2Interactor: SimulationV2Interactor?
 ) : SimulationV2Interactor {

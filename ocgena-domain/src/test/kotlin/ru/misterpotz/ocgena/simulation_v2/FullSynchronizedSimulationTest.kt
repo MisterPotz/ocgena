@@ -6,6 +6,7 @@ import ru.misterpotz.ocgena.simulation_old.SimulationTaskStepExecutor
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.StepExecutor
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
 import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
+import ru.misterpotz.ocgena.simulation_v2.input.PlaceSetting
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
@@ -22,7 +23,7 @@ class FullSynchronizedSimulationTest {
 
         val logger = StepSequenceLogger()
 
-        val sim= ocnet.toSimComp(
+        val sim = ocnet.toSimComp(
             SimulationInput(
                 loggingEnabled = true,
                 transitions = mapOf(
@@ -33,6 +34,12 @@ class FullSynchronizedSimulationTest {
                             SynchronizedArcGroup("arrange_packages_to_tracks", listOf("p3", "t2"))
                         )
                     )
+                ),
+                places = mapOf(
+                    "bill" to PlaceSetting(initialTokens = 10),
+                    "package" to PlaceSetting(initialTokens = 23),
+                    "order" to PlaceSetting(initialTokens = 4),
+                    "track" to PlaceSetting(initialTokens = 5)
                 )
             ),
             logger

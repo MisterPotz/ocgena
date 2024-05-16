@@ -25,7 +25,7 @@ class OutputArcWrapper(
 
     val objectType = toPlace.objectType
     val arc by lazy {
-        model.ocNet.arcsRegistry.withArrow(transition.id).from(toPlace.placeId)
+        model.ocNet.arcsRegistry.withTail(transition.id).to(toPlace.placeId)
     }
 
     val arcMeta: ArcMeta by lazy {
