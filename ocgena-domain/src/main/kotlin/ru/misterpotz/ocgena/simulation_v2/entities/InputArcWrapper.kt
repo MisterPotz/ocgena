@@ -52,6 +52,10 @@ class InputArcWrapper(
         return consumptionSpec is ConsumptionSpec.AtLeastOne
     }
 
+    fun isExactArc() : Boolean {
+        return consumptionSpec is ConsumptionSpec.Exact
+    }
+
     companion object {
         val ByConditionSizeByArcSpecByTransitionEntries = compareBy<InputArcWrapper>({
             -it.underConditions.size
@@ -90,32 +94,6 @@ class InputArcWrapper(
     val allAssociatedConditions: SortedSet<MultiArcCondition> by lazy(LazyThreadSafetyMode.NONE) {
         val allAssociated = underConditions.flatMap { it.arcs.ref.flatMap { arc -> arc.underConditions } }.toSortedSet()
         allAssociated
-    }
-
-    fun totallySatisfiedWithTokens(tokens: List<TokenWrapper>?, variableSpace: ResolvedVariablesSpace): Boolean {
-        return if (tokens == null) {
-            false
-        } else {
-            consumptionSpec.strongComplies(
-                tokens.size,
-                variableSpace
-            )
-        }
-    }
-
-    fun canBeSatisfiedWithAdditionalAmount(
-        tokens: List<TokenWrapper>?,
-        potentialAdditionalAmount: Int,
-        resolvedVariablesSpace: ResolvedVariablesSpace
-    ): Boolean {
-        return if (tokens == null) {
-            consumptionSpec.strongComplies(potentialAdditionalAmount, resolvedVariablesSpace)
-        } else {
-            consumptionSpec.strongComplies(
-                tokens.size + potentialAdditionalAmount,
-                resolvedVariablesSpace
-            )
-        }
     }
 
     val independentGroup: IndependentMultiConditionGroup? by lazy {
@@ -240,11 +218,11 @@ class InputArcWrapper(
             }
         }
 
-        fun isUnconstrained(): Boolean {
+        fun isVariable(): Boolean {
             return when (this) {
                 is Exact -> false
                 is Variable -> true
-                is DependsOnVariable -> false
+                is DependsOnVariable -> true
                 AtLeastOne -> true
             }
         }

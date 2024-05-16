@@ -10,29 +10,33 @@ import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 
-class StepSequenceLogger() : Logger {
-    enum class Event {
-        PREPARED,
-        FIRED,
-        FINISHED
+class StepSequenceLogger : Logger {
+    sealed interface Event {
+        data object Prepared : Event
+        data class Fired(val transitionId: String) : Event {
+            override fun toString(): String {
+                return "Fired('$transitionId')"
+            }
+        }
+
+        data object Finished : Event
     }
 
-    val events : MutableList<Event> = mutableListOf()
-    val logs : MutableList<SimulationStepLog> = mutableListOf()
+    val events: MutableList<Event> = mutableListOf()
+    val logs: MutableList<SimulationStepLog> = mutableListOf()
 
     override suspend fun simulationPrepared() {
-        events.add(Event.PREPARED)
+        events.add(Event.Prepared)
     }
 
     override suspend fun acceptStepLog(simulationStepLog: SimulationStepLog) {
-        events.add(Event.FIRED)
+        events.add(Event.Fired(simulationStepLog.selectedFiredTransition?.transitionId ?: ""))
         logs.add(simulationStepLog)
     }
 
     override suspend fun simulationFinished() {
-        events.add(Event.FINISHED)
+        events.add(Event.Finished)
     }
-
 }
 
 fun SimpleTokenSlice.copyFromMap(
@@ -123,14 +127,14 @@ fun buildTokenSlice(
     }
 
     val allTokens = placeToTokens.flatMap { (place, ints) ->
-            ints.map {
-                TokenWrapper(
-                    it.toLong(),
-                    model.defaultObjectType()
-                )
-            }
-
+        ints.map {
+            TokenWrapper(
+                it.toLong(),
+                model.defaultObjectType()
+            )
         }
+
+    }
 
     fun List<Int>.selectTokens(): List<TokenWrapper> {
         return map { allTokens.by(it) }

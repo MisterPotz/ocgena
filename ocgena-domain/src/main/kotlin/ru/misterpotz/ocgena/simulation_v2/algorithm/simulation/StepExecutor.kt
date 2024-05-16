@@ -121,6 +121,7 @@ class StepExecutor(
             fireTransition(selectedTransition)
             logBuilder.recordMarking(tokenStore)
 
+            selectedTransition.setNeedCheckCache()
             for (transition in selectedTransition.dependentTransitions) {
                 transition.setNeedCheckCache()
             }

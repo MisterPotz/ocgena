@@ -19,7 +19,7 @@ fun TokenSlice.resolveVariables(inputsArcs: Collection<InputArcWrapper>): Resolv
     return ResolvedVariablesSpace(variables)
 }
 
-fun SortedMap<PlaceWrapper, List<TokenWrapper>>.resolveVariables(inputArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
+fun Map<PlaceWrapper, List<TokenWrapper>>.resolveVariables(inputArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
     val variables = mutableMapOf<String, Int>()
     for (inputArc in inputArcs) {
         val spec = inputArc.consumptionSpec

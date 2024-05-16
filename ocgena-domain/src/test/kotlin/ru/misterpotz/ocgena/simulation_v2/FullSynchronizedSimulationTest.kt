@@ -36,10 +36,10 @@ class FullSynchronizedSimulationTest {
                     )
                 ),
                 places = mapOf(
-                    "bill" to PlaceSetting(initialTokens = 10),
-                    "package" to PlaceSetting(initialTokens = 23),
+                    "bill" to PlaceSetting(initialTokens = 4),
+                    "package" to PlaceSetting(initialTokens = 12),
                     "order" to PlaceSetting(initialTokens = 4),
-                    "track" to PlaceSetting(initialTokens = 5)
+                    "track" to PlaceSetting(initialTokens = 4)
                 )
             ),
             logger
