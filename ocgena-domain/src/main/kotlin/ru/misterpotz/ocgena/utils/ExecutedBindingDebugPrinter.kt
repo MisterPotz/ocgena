@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.ocgena.simulation.binding.ExecutedBinding
+import ru.misterpotz.ocgena.simulation_old.binding.ExecutedBinding
 import javax.inject.Inject
 
 class ExecutedBindingDebugPrinter @Inject constructor(

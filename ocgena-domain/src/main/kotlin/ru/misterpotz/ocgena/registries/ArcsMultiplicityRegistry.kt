@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.registries
 
 import ru.misterpotz.ocgena.ocnet.primitives.*
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation_old.binding.buffer.TokenGroupedInfo
 
 interface ArcsMultiplicityRegistry {
     fun transitionInputMultiplicity(arcId: PetriAtomId): InputArcMultiplicity

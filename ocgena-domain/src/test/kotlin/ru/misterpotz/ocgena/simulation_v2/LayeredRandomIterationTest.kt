@@ -20,6 +20,14 @@ class LayeredRandomIterationTest {
             require(ints.isNotEmpty()) { "cannot select random from an empty list" }
             return ints.first()
         }
+
+        override fun select(longs: LongRange): Long {
+            return iterator.next().first().toLong()
+        }
+
+        override fun select(indices: IntRange): Int {
+            return iterator.next().first()
+        }
     }
 
     @Test

@@ -5,17 +5,14 @@ import com.charleskorn.kaml.SequenceStyle
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.YamlConfiguration
 import dagger.Component
-import dagger.Component.Factory
 import dagger.Module
 import dagger.Provides
-import dagger.Subcomponent
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.*
-import ru.misterpotz.DBLogger
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.simulation_old.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.simulation_old.collections.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
@@ -28,11 +25,9 @@ import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
 import ru.misterpotz.ocgena.serialization.*
-import ru.misterpotz.ocgena.simulation.config.TransitionsSpec
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
+import ru.misterpotz.ocgena.simulation_old.config.TransitionsSpec
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.timepn.TransitionsTimePNSpec
 import javax.inject.Scope
 
 

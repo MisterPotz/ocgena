@@ -1,8 +1,8 @@
 package ru.misterpotz.ocgena.ocnet.primitives
 
-import ru.misterpotz.ocgena.simulation.binding.TokenSet
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
-import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
+import ru.misterpotz.ocgena.simulation_old.binding.TokenSet
+import ru.misterpotz.ocgena.simulation_old.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation_old.interactors.TokenAmountStorage
 
 interface InputArcMultiplicity {
     fun inputPlaceHasEnoughTokens(): Boolean

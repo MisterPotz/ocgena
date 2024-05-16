@@ -1,10 +1,37 @@
 package ru.misterpotz.ocgena.simulation_v2
 
+import ru.misterpotz.Logger
+import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
+
+class StepSequenceLogger() : Logger {
+    enum class Event {
+        PREPARED,
+        FIRED,
+        FINISHED
+    }
+
+    val events : MutableList<Event> = mutableListOf()
+    val logs : MutableList<SimulationStepLog> = mutableListOf()
+
+    override suspend fun simulationPrepared() {
+        events.add(Event.PREPARED)
+    }
+
+    override suspend fun acceptStepLog(simulationStepLog: SimulationStepLog) {
+        events.add(Event.FIRED)
+        logs.add(simulationStepLog)
+    }
+
+    override suspend fun simulationFinished() {
+        events.add(Event.FINISHED)
+    }
+
+}
 
 fun SimpleTokenSlice.copyFromMap(
     model: ModelAccessor,

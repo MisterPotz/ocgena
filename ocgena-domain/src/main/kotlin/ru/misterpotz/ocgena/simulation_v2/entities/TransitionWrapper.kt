@@ -3,8 +3,7 @@ package ru.misterpotz.ocgena.simulation_v2.entities
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
-import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.*
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.*
@@ -36,7 +35,6 @@ fun InputArcWrapper.ConsumptionSpec.castDependent(): InputArcWrapper.Consumption
 class TransitionWrapper(
     val transitionId: PetriAtomId,
     val model: ModelAccessor,
-    val arcLogicsFactory: ArcLogicsFactory = ArcLogicsFactory.Stub,
     val timer: TransitionTimer = TransitionTimer(0),
 ) : Identifiable, Comparable<TransitionWrapper> {
     val checkingCache = CheckingCache()
@@ -185,6 +183,7 @@ class TransitionWrapper(
         val distributedTokens = tokensDistribution.values.flatten().toSet()
         val deletedTokens = snapshot.allTokens.toSet().minus(distributedTokens).toList()
 
+        val generatedTokens = mutableListOf<TokenWrapper>()
         outputArcs.forEach {
             val requiredAmount = requiredAmountPerArc[it]!!
             val alreadyHave = tokensDistribution[it]!!.size
@@ -192,6 +191,7 @@ class TransitionWrapper(
             val tokensToGenerate = (requiredAmount - alreadyHave).coerceAtLeast(0)
             for (i in 0..<tokensToGenerate) {
                 val newToken = tokenGenerator.generateRealToken(it.objectType)
+                generatedTokens.add(newToken)
                 tokensDistribution[it]!!.add(newToken)
             }
         }
@@ -201,12 +201,13 @@ class TransitionWrapper(
                 addTokens(outputArc.toPlace, tokens)
             }
         }
-        return OutputArcsSolution(plusTokens = outputTokens, deletedTokens)
+        return OutputArcsSolution(plusTokens = outputTokens, deletedTokens, generatedTokens)
     }
 
     data class OutputArcsSolution(
         val plusTokens: TokenSlice,
-        val consumedTokens: List<TokenWrapper>
+        val consumedTokens: List<TokenWrapper>,
+        val generatedTokens : List<TokenWrapper>
     ) {
 
     }
@@ -219,7 +220,7 @@ class TransitionWrapper(
         return if (model.tokensAreEntities()) {
             tokenEntitiesOutputArcSolution(tokenSlice, shuffler, tokenGenerator)
         } else {
-            OutputArcsSolution(simpleAmountsSolution(tokenSlice), emptyList())
+            OutputArcsSolution(simpleAmountsSolution(tokenSlice), emptyList(), emptyList())
         }
     }
 
@@ -409,19 +410,6 @@ class TransitionWrapper(
         }
     }
 
-    // 3 modes 3 modes 3 modes
-    val arcChecker by lazy {
-        arcLogicsFactory.getArcChecker(
-            ocNet = model.ocNet,
-            prePlaces = prePlaces,
-            toTransition = this
-        )
-    }
-
-    val arcSolver by lazy {
-        arcLogicsFactory.getArcSolver(model.ocNet, prePlaces, toTransition = this)
-    }
-
     fun logTokensOnFireIfSynchronized(tokenSlice: TokenSlice) {
         if (model.tokensAreEntities() && this in model.loggedTransitions) {
             val newTransitionReference = getNewTransitionReference()
@@ -436,10 +424,6 @@ class TransitionWrapper(
 
     fun getNewTransitionReference(): Long {
         return model.transitionIdIssuer.issueTransitionId()
-    }
-
-    fun enabledByTokens(tokenSlice: TokenSlice): Boolean {
-        return arcChecker.checkEnoughTokens(tokenSlice)
     }
 
     fun checkEnabledByTokensCache(): Boolean {

@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena
 
 import org.junit.jupiter.api.Assertions
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
 import ru.misterpotz.ocgena.testing.ExpectedStepState
 import ru.misterpotz.ocgena.testing.SimConfigToSimComponentFancyBlock
 import ru.misterpotz.ocgena.testing.TestingDBLogger

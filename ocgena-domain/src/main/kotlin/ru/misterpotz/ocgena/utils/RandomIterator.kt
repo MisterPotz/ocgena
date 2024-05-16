@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractorImpl
+import ru.misterpotz.ocgena.simulation_old.interactors.TokenSelectionInteractorImpl
 import java.lang.IllegalStateException
 
 /*

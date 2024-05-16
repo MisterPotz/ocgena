@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import ru.misterpotz.ocgena.*
-import ru.misterpotz.ocgena.simulation.config.*
-import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
+import ru.misterpotz.ocgena.simulation_old.config.*
+import ru.misterpotz.ocgena.simulation_old.logging.fastNoDevSetup
 import ru.misterpotz.ocgena.testing.buildSimplestOCNetNoVar
 import ru.misterpotz.ocgena.testing.simComponentOld
 import ru.misterpotz.ocgena.testing.simTask

@@ -7,9 +7,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.SimulationSequenceHelper
 import ru.misterpotz.ocgena.createArgProvider
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
-import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNTimes
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation_old.config.timepn.TransitionsTimePNSpec
+import ru.misterpotz.ocgena.simulation_old.config.timepn.toTimePNTimes
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.testing.*
 
 class CompleteRunTest {

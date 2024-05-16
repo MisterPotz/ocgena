@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.*
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
 import ru.misterpotz.ocgena.testing.buildOCNet
 import ru.misterpotz.ocgena.testing.defaultSimConfigOriginal
 import ru.misterpotz.ocgena.testing.defaultSimConfigTimePN

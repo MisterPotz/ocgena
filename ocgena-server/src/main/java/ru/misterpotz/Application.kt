@@ -11,8 +11,8 @@ import ru.misterpotz.di.*
 import ru.misterpotz.di.ServerSimulationComponent
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.testing.buildConfig
 import ru.misterpotz.ocgena.testing.buildOCNet
 import ru.misterpotz.ocgena.testing.buildingBlockTwoInTwoOutMiddle

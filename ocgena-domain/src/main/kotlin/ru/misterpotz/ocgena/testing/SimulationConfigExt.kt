@@ -4,15 +4,15 @@ import io.mockk.every
 import io.mockk.mockk
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation.config.MarkingScheme
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation_old.config.MarkingScheme
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.timepn.TransitionsTimePNSpec
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation_old.logging.fastNoDevSetup
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemantics
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
 import kotlin.random.Random
 
 

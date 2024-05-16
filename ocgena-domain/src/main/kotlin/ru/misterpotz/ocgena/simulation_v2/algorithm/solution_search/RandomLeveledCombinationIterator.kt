@@ -55,6 +55,8 @@ interface Shuffler {
     fun makeShuffled(intRange: IntRange): List<Int>
     // select random from the given list
     fun select(ints: List<Int>) : Int
+    fun select(longs: LongRange) : Long
+    fun select(indices : IntRange) : Int
 }
 
 class NormalShuffler(val random: Random) : Shuffler {
@@ -64,6 +66,14 @@ class NormalShuffler(val random: Random) : Shuffler {
 
     override fun select(ints: List<Int>): Int {
         return ints.random(random)
+    }
+
+    override fun select(longs: LongRange): Long {
+        return longs.random(random)
+    }
+
+    override fun select(indices: IntRange): Int {
+        return indices.random(random)
     }
 }
 

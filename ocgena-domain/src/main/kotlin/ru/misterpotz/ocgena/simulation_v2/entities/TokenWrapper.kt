@@ -1,6 +1,6 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import java.util.*
 import kotlin.collections.HashSet
 

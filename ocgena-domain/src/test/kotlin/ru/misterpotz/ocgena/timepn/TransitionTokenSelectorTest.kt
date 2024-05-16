@@ -8,9 +8,9 @@ import ru.misterpotz.ocgena.ocnet.primitives.InputArcMultiplicityDynamic
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityRegistry
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
-import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractor
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionTokenSelector
+import ru.misterpotz.ocgena.simulation_old.interactors.TokenSelectionInteractor
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TransitionTokenSelector
 
 internal class TransitionTokenSelectorTest {
 

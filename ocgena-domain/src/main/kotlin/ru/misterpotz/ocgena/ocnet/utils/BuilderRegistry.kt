@@ -13,7 +13,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.ext.arcArrowId
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcTailId
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder.ArcBlock.Type.*
 import ru.misterpotz.ocgena.registries.*
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import java.lang.IllegalArgumentException
 
 internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean, ocNetType: OcNetType) {

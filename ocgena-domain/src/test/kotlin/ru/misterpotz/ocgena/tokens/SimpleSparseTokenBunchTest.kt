@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.createArgProvider
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
 
 class SimpleSparseTokenBunchTest {
     @ParameterizedTest

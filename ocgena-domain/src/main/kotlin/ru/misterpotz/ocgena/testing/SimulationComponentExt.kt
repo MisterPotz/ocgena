@@ -2,23 +2,23 @@ package ru.misterpotz.ocgena.testing
 
 import io.mockk.every
 import io.mockk.mockk
-import ru.misterpotz.DBLogger
+import ru.misterpotz.Logger
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.ArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
-import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.SimulationTask
-import ru.misterpotz.ocgena.simulation.binding.TokenSet
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
-import ru.misterpotz.ocgena.simulation.stepexecutor.SimpleDeterminedTransitionSequenceProvider
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation_old.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.SimulationTask
+import ru.misterpotz.ocgena.simulation_old.binding.TokenSet
+import ru.misterpotz.ocgena.simulation_old.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation_old.logging.fastNoDevSetup
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SimpleDeterminedTransitionSequenceProvider
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TimePNTransitionMarking
 import simulation.random.RandomUseCase
 import kotlin.random.Random
 
@@ -31,7 +31,7 @@ interface SimConfigToSimComponentFancyBlock {
     fun setTransitionSelectionRandom(transitions: List<Int>)
     fun setTransitionSelectionSequence(transitions: List<String>)
     fun setTokenSelectionRandom(times: List<Int>)
-    fun setDbLogger(dbLogger: DBLogger)
+    fun setDbLogger(dbLogger: Logger)
     var dumpStepEndMarking : Boolean
     var dumpTimePnMarking : Boolean
 }
@@ -39,7 +39,7 @@ interface SimConfigToSimComponentFancyBlock {
 private class SimConfigTOSimComponentFancyBlockImpl : SimConfigToSimComponentFancyBlock {
     val mutableMap = mutableMapOf<RandomUseCase, Random>()
     var transitionSequence: List<String> = listOf()
-    var _dbLogger : DBLogger? = null
+    var _dbLogger : Logger? = null
     override fun setTimeSelectionRandom(times: List<Int>) {
         mutableMap[RandomUseCase.TIME_SELECTION] = createPartiallyPredefinedRandSeq(times)
     }
@@ -56,7 +56,7 @@ private class SimConfigTOSimComponentFancyBlockImpl : SimConfigToSimComponentFan
         mutableMap[RandomUseCase.TOKEN_SELECTION] = createPartiallyPredefinedRandSeq(times)
     }
 
-    override fun setDbLogger(dbLogger: DBLogger) {
+    override fun setDbLogger(dbLogger: Logger) {
         _dbLogger = dbLogger
     }
 

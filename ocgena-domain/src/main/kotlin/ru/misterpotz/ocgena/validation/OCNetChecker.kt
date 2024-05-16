@@ -5,8 +5,8 @@ import ru.misterpotz.ocgena.error.ErrorLevel
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.registries.PetriAtomRegistry
 import ru.misterpotz.ocgena.registries.PlaceTypeRegistry
-import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
+import ru.misterpotz.ocgena.simulation_old.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation_old.logging.fastNoDevSetup
 
 class OCNetChecker(
     /**

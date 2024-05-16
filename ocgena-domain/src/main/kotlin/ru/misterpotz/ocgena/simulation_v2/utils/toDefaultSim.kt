@@ -1,11 +1,16 @@
 package ru.misterpotz.ocgena.simulation_v2.utils
 
+import net.bytebuddy.build.Plugin.NoOp
+import ru.misterpotz.Logger
+import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
+import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
+import kotlin.math.log
 
 fun OCNetStruct.toDefaultSim(simulationInput: SimulationInput = SimulationInput()) =
     ModelAccessor(this, simulationInput).apply {
@@ -15,7 +20,7 @@ fun OCNetStruct.toDefaultSim(simulationInput: SimulationInput = SimulationInput(
 class Ref<T> {
     private var _ref: T? = null
 
-    fun setRef(value : T?) {
+    fun setRef(value: T?) {
         _ref = value
     }
 
@@ -30,6 +35,32 @@ class Ref<T> {
 
 
 }
+
+object NoOpLogger : Logger {
+    override suspend fun simulationPrepared() {
+
+    }
+
+    override suspend fun acceptStepLog(simulationStepLog: SimulationStepLog) {
+
+    }
+
+    override suspend fun simulationFinished() {
+
+    }
+
+}
+
+fun OCNetStruct.toSimComp(
+    simulationInput: SimulationInput = SimulationInput(),
+    logger: Logger?
+) =
+    SimulationV2Component.create(
+        simulationInput,
+        this,
+        simulationV2Interactor = null,
+        logger = logger ?: NoOpLogger
+    )
 
 interface Identifiable {
     val id: String

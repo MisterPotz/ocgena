@@ -1,21 +1,28 @@
 package ru.misterpotz.ocgena.simulation_v2
 
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.simulation.SimulationTaskStepExecutor
+import ru.misterpotz.ocgena.simulation_old.SimulationTaskStepExecutor
 import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.StepExecutor
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
+import ru.misterpotz.ocgena.simulation_v2.utils.toSimComp
+import kotlin.math.log
 import kotlin.random.Random
 
 class FullSynchronizedSimulationTest {
 
     @Test
-    fun fullSimulationTest() {
+    fun fullSimulationTest() = runTest {
         val ocnet = buildSynchronizingLomazovaExampleModel()
-        val model = ocnet.toDefaultSim(
+
+        val logger = StepSequenceLogger()
+
+        val sim= ocnet.toSimComp(
             SimulationInput(
                 loggingEnabled = true,
                 transitions = mapOf(
@@ -27,13 +34,13 @@ class FullSynchronizedSimulationTest {
                         )
                     )
                 )
-            )
+            ),
+            logger
         )
-        val shuffler = NormalShuffler(Random(42))
 
+        sim.simulation().runSimulation()
 
-
-//        SimulationTaskStepExecutor(StepExecutor())
-
+        println(logger.events)
+        println(logger.logs)
     }
 }

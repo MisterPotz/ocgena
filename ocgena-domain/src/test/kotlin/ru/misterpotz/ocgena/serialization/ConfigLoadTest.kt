@@ -1,13 +1,12 @@
 package ru.misterpotz.ocgena.serialization
 
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.DEFAULT_SETTINGS
 import ru.misterpotz.ocgena.ModelPath
 import ru.misterpotz.ocgena.readAndBuildConfig
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.config.original.withUntilNext
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.original.withUntilNext
 import kotlin.io.path.Path
 
 class ConfigLoadTest {

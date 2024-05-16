@@ -22,7 +22,7 @@ class SimulationFinishedNotifierImpl @Inject constructor(
 class DBLoggerImpl @Inject constructor(
     private val simulationLogRepository: SimulationLogRepository,
     private val simulationFinishedNotifier: SimulationFinishedNotifier
-) : DBLogger {
+) : Logger {
     private val maxStoredBatchSize: Int = 10
     private val batch: MutableList<SimulationStepLog> = mutableListOf()
     override suspend fun simulationPrepared() {

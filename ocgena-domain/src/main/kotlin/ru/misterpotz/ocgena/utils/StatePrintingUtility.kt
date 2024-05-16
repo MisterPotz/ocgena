@@ -1,10 +1,9 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType.*
-import ru.misterpotz.ocgena.simulation.state.SemanticsSpecificState
-import ru.misterpotz.ocgena.simulation.state.original.CurrentSimulationStateOriginal
-import ru.misterpotz.ocgena.simulation.structure.State
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType.*
+import ru.misterpotz.ocgena.simulation_old.state.SemanticsSpecificState
+import ru.misterpotz.ocgena.simulation_old.state.original.CurrentSimulationStateOriginal
+import ru.misterpotz.ocgena.simulation_old.structure.State
 import javax.inject.Inject
 
 class StatePrintingUtility @Inject constructor(

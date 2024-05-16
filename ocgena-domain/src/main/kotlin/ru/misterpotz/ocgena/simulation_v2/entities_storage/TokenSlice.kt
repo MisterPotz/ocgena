@@ -1,7 +1,6 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
-import net.bytebuddy.build.Plugin.Factory.Simple
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.utils.PatternIdCreator
@@ -118,6 +117,13 @@ class SimpleTokenSlice(
     private val tokensMap: SortedMap<PlaceWrapper, MutableSortedTokens> = sortedMapOf(),
     private val amountsMap: SortedMap<PlaceWrapper, Int> = sortedMapOf()
 ) : TokenSlice {
+    init {
+        for (i in internalRelatedPlaces) {
+            tokensMap.getOrPut(i) { sortedSetOf() }
+            amountsMap.getOrPut(i) { 0 }
+        }
+    }
+
     override val relatedPlaces: Set<PlaceWrapper>
         get() = internalRelatedPlaces
     override val tokensIterator: Iterator<TokenWrapper>

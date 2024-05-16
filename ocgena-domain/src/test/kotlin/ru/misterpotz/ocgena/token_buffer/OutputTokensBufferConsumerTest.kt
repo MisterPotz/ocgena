@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.config.original.withUntilNext
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.logging.fastFullDev
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.original.withUntilNext
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.logging.fastFullDev
 import ru.misterpotz.ocgena.testing.*
 
 class OutputTokensBufferConsumerTest {

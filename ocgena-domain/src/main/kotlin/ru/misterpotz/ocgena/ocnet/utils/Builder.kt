@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.ocnet.utils
 
-import ru.misterpotz.expression.node.MathNode
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
@@ -9,8 +8,8 @@ import ru.misterpotz.ocgena.ocnet.primitives.PlaceType
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.registries.ObjectTypeRegistryMap
 import ru.misterpotz.ocgena.registries.PetriAtomRegistryStruct
-import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import java.lang.IllegalStateException
 
 const val objTypePrefix = "△"

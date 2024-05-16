@@ -8,9 +8,9 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.descriptors.element
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import ru.misterpotz.ocgena.simulation.config.original.Duration
-import ru.misterpotz.ocgena.simulation.config.Period
-import ru.misterpotz.ocgena.simulation.config.original.TimeUntilNextInstanceIsAllowed
+import ru.misterpotz.ocgena.simulation_old.config.original.Duration
+import ru.misterpotz.ocgena.simulation_old.config.Period
+import ru.misterpotz.ocgena.simulation_old.config.original.TimeUntilNextInstanceIsAllowed
 
 class IntRangeSerializer(private val name : String) : KSerializer<IntRange> {
 

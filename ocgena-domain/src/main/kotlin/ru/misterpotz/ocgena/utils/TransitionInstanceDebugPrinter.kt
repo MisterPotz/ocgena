@@ -1,13 +1,11 @@
 package ru.misterpotz.ocgena.utils
 
-import ru.misterpotz.ocgena.collections.TransitionInstance
-import ru.misterpotz.ocgena.collections.TransitionInstancesList
 import ru.misterpotz.ocgena.registries.original.TransitionToTimeUntilInstanceAllowedRegistryOriginal
+import ru.misterpotz.ocgena.simulation_old.collections.TransitionInstance
+import ru.misterpotz.ocgena.simulation_old.collections.TransitionInstancesList
 import javax.inject.Inject
 
-class TransitionInstanceDebugPrinter @Inject constructor(
-    private val markingPrintingUtility: MarkingPrintingUtility
-) {
+class TransitionInstanceDebugPrinter @Inject constructor() {
 
     fun prettyPrintStarted(transitionInstance: TransitionInstance): String {
         return with(transitionInstance) {

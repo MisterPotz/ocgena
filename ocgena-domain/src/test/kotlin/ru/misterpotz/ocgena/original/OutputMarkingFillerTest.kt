@@ -7,8 +7,8 @@ import ru.misterpotz.ocgena.testing.buildSimplestOCNetNoVar
 import ru.misterpotz.ocgena.testing.simComponentOld
 import ru.misterpotz.ocgena.testing.defaultSimConfigOriginal
 import ru.misterpotz.ocgena.testing.simTask
-import ru.misterpotz.ocgena.simulation.config.MarkingScheme
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.MarkingScheme
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
 
 class OutputMarkingFillerTest {
     @Test

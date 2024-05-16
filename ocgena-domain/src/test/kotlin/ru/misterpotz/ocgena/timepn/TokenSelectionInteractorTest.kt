@@ -11,11 +11,11 @@ import ru.misterpotz.ocgena.createArgProvider
 import ru.misterpotz.ocgena.testing.createPartiallyPredefinedRandSeq
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
-import ru.misterpotz.ocgena.simulation.ObjectToken
-import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.generator.NewTokenGenerationFacade
-import ru.misterpotz.ocgena.simulation.interactors.TokenSelectionInteractorImpl
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.ObjectToken
+import ru.misterpotz.ocgena.simulation_old.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.generator.NewTokenGenerationFacade
+import ru.misterpotz.ocgena.simulation_old.interactors.TokenSelectionInteractorImpl
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
 import simulation.random.RandomSourceImpl
 import kotlin.random.Random
 

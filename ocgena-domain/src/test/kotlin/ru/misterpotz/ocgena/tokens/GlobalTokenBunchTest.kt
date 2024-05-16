@@ -6,15 +6,14 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistry
-import ru.misterpotz.ocgena.collections.ObjectTokenRealAmountRegistryImpl
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.createArgProvider
-import ru.misterpotz.ocgena.simulation.state.PMarkingProvider
-import ru.misterpotz.ocgena.simulation.stepexecutor.GlobalSparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.collections.ObjectTokenRealAmountRegistry
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarking
+import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarkingMap
+import ru.misterpotz.ocgena.simulation_old.state.PMarkingProvider
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.GlobalSparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
 
 class GlobalTokenBunchTest {
 
@@ -75,9 +74,9 @@ class GlobalTokenBunchTest {
 
         fun emptyConcatSome(): TestData {
             return TestData(
-                starter = PlaceToObjectMarkingMap.build {
+                starter = ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarkingMap.build {
                 },
-                amountData = ObjectTokenRealAmountRegistryImpl.build {
+                amountData = ru.misterpotz.ocgena.simulation_old.collections.ObjectTokenRealAmountRegistryImpl.build {
                 },
                 appliedBunch = SparseTokenBunchImpl.makeBuilder {
                     forPlace("p1") {

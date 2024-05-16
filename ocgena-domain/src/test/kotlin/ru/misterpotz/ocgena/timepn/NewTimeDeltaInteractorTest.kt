@@ -6,10 +6,10 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.simulation.SimulationStateProvider
-import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.NewTimeDeltaInteractor
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
-import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledByMarkingChecker
+import ru.misterpotz.ocgena.simulation_old.SimulationStateProvider
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.timepn.NewTimeDeltaInteractor
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TransitionDisabledByMarkingChecker
 
 class NewTimeDeltaInteractorTest {
 

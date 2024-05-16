@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.InputArcWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper

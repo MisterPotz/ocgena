@@ -7,7 +7,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicity
 import ru.misterpotz.ocgena.ocnet.primitives.OutputArcMultiplicityDynamic
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation_old.binding.buffer.TokenGroupedInfo
 
 class CompoundArcsMultiplicityDelegate(
     private val arcMultiplicityDelegates: Map<ArcType, ArcsMultiplicityDelegate>

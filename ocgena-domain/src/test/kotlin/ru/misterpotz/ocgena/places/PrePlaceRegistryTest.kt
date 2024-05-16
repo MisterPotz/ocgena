@@ -13,7 +13,7 @@ import ru.misterpotz.ocgena.ModelPath
 import ru.misterpotz.ocgena.testing.addTokens
 import ru.misterpotz.ocgena.readAndBuildConfig
 import ru.misterpotz.ocgena.testing.simComponentOld
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
 import java.util.stream.Stream
 
 class PrePlaceRegistryTest {

@@ -2,9 +2,9 @@ package ru.misterpotz.ocgena.registries
 
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation.interactors.ArcPrePlaceHasEnoughTokensChecker
-import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.interactors.ArcPrePlaceHasEnoughTokensChecker
+import ru.misterpotz.ocgena.simulation_old.interactors.TokenAmountStorage
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.utils.DefinitionRef
 
 interface PrePlaceSynchronizedRegistry {

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.createExampleModel
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
-import ru.misterpotz.ocgena.simulation.logging.fastConsistencyDevSetup
+import ru.misterpotz.ocgena.simulation_old.logging.fastConsistencyDevSetup
 import ru.misterpotz.ocgena.utils.findInstance
 import ru.misterpotz.ocgena.validation.OCNetChecker
 

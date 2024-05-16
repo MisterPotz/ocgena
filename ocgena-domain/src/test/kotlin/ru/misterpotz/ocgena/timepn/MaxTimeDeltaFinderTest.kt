@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.registries.TransitionsRegistry
-import ru.misterpotz.ocgena.simulation.stepexecutor.timepn.MaxTimeDeltaFinder
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePnTransitionData
-import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledByMarkingChecker
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.timepn.MaxTimeDeltaFinder
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TimePnTransitionData
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TransitionDisabledByMarkingChecker
 
 class MaxTimeDeltaFinderTest {
 

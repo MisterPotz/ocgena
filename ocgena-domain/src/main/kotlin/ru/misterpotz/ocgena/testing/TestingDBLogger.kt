@@ -1,10 +1,10 @@
 package ru.misterpotz.ocgena.testing
 
-import ru.misterpotz.DBLogger
+import ru.misterpotz.Logger
 import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.ocgena.utils.LOG
 
-class TestingDBLogger : DBLogger {
+class TestingDBLogger : Logger {
     val stepLogs: MutableList<SimulationStepLog> = mutableListOf()
     override suspend fun simulationPrepared() {
     }

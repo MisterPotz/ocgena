@@ -2,12 +2,11 @@ package ru.misterpotz.ocgena.original
 
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.*
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.config.original.withUntilNext
-import ru.misterpotz.ocgena.simulation.logging.fastFullDev
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.config.original.withUntilNext
+import ru.misterpotz.ocgena.simulation_old.logging.fastFullDev
 import ru.misterpotz.ocgena.testing.FacadeSim
 import ru.misterpotz.ocgena.testing.facade
 import ru.misterpotz.ocgena.testing.simComponentOld

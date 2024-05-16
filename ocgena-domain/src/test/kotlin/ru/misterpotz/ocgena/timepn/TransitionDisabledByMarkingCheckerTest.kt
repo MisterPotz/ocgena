@@ -5,8 +5,8 @@ import io.mockk.mockk
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.registries.PrePlaceRegistry
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.TransitionDisabledByMarkingChecker
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TransitionDisabledByMarkingChecker
 
 class TransitionDisabledByMarkingCheckerTest {
 

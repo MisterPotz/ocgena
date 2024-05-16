@@ -6,11 +6,11 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.registries.ArcsMultiplicityDelegate
 import ru.misterpotz.ocgena.registries.PlaceToObjectTypeRegistry
-import ru.misterpotz.ocgena.simulation.binding.TokenSet
-import ru.misterpotz.ocgena.simulation.binding.buffer.TokenGroupedInfo
-import ru.misterpotz.ocgena.simulation.di.GlobalTokenBunch
-import ru.misterpotz.ocgena.simulation.interactors.TokenAmountStorage
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.binding.TokenSet
+import ru.misterpotz.ocgena.simulation_old.binding.buffer.TokenGroupedInfo
+import ru.misterpotz.ocgena.simulation_old.di.GlobalTokenBunch
+import ru.misterpotz.ocgena.simulation_old.interactors.TokenAmountStorage
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
 import javax.inject.Inject
 
 class ArcToMultiplicityVariableDelegateTypeA @Inject constructor(

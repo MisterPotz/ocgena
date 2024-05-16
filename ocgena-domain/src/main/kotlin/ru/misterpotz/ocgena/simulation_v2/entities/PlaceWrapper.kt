@@ -1,8 +1,8 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation.ObjectType
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.ObjectType
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.utils.Identifiable

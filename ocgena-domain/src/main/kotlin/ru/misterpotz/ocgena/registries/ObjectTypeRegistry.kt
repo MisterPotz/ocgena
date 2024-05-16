@@ -3,7 +3,7 @@ package ru.misterpotz.ocgena.registries
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ocgena.ocnet.primitives.ObjectTypeId
-import ru.misterpotz.ocgena.simulation.ObjectType
+import ru.misterpotz.ocgena.simulation_old.ObjectType
 
 interface ObjectTypeRegistry {
     val types: List<ObjectType>

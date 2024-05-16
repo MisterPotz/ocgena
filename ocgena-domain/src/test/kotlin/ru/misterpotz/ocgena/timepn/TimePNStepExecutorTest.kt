@@ -8,13 +8,13 @@ import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.createArgProvider
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
-import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNData
-import ru.misterpotz.ocgena.simulation.config.timepn.toTimePNTimes
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarkingImpl
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.config.timepn.TransitionsTimePNSpec
+import ru.misterpotz.ocgena.simulation_old.config.timepn.toTimePNData
+import ru.misterpotz.ocgena.simulation_old.config.timepn.toTimePNTimes
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TimePNTransitionMarkingImpl
 import ru.misterpotz.ocgena.testing.*
 import ru.misterpotz.ocgena.utils.buildMutableMap
 

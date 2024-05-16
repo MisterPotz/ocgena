@@ -8,10 +8,9 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 import ru.misterpotz.ocgena.*
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.serialization.ModelYamlCreator
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunch
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunch
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
 import ru.misterpotz.ocgena.testing.*
 
 class TransitionFiringRuleExecutorTest {

@@ -1,11 +1,12 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.simulation
 
-import ru.misterpotz.ocgena.ocnet.OCNet
+import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.Shuffler
-import ru.misterpotz.ocgena.simulation_v2.entities.*
+import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
+import ru.misterpotz.ocgena.simulation_v2.entities.Transitions
+import ru.misterpotz.ocgena.simulation_v2.entities.wrap
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.SortedTokens
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.utils.sstep
 
@@ -18,60 +19,17 @@ interface TransitionSelector {
 }
 
 interface TransitionSolutionSelector {
-    suspend fun get(solutionMeta: ArcSolver.Meta): Int
-}
-
-interface ArcChecker {
-    fun checkEnoughTokens(
-        tokenSlice: TokenSlice
-    ): Boolean
-}
-
-interface ArcSolver {
-    fun getSolution(index: Int): Solution?
-
+    suspend fun get(solutionMeta: Meta): Int
     data class Meta(val solutionsAmount: Int)
-    data class Solution(
-        val tokensRemoved: TokenSlice,
-        val tokensAppended: TokenSlice,
-        val garbagedTokens: SortedTokens
-    )
-}
-
-interface ArcLogicsFactory {
-
-    fun getArcChecker(
-        ocNet: OCNet,
-        prePlaces: Places,
-        toTransition: TransitionWrapper
-    ): ArcChecker
-
-    fun getArcSolver(
-        ocNet: OCNet,
-        prePlaces: Places,
-        toTransition: TransitionWrapper,
-    ): ArcSolver
-
-    object Stub : ArcLogicsFactory {
-        override fun getArcChecker(ocNet: OCNet, prePlaces: Places, toTransition: TransitionWrapper): ArcChecker {
-            TODO("Not yet implemented")
-        }
-
-        override fun getArcSolver(ocNet: OCNet, prePlaces: Places, toTransition: TransitionWrapper): ArcSolver {
-            TODO("Not yet implemented")
-        }
-    }
 }
 
 class StepExecutor(
     private val transitions: Transitions,
-    private val places: Places,
     private val shiftTimeSelector: ShiftTimeSelector,
     private val transitionSelector: TransitionSelector,
-    private val transitionSolutionSelector: TransitionSolutionSelector,
     private val tokenStore: TokenStore,
     private val model: ModelAccessor,
-    private val shuffler: Shuffler,
+    private val shuffler: Shuffler
 ) {
     enum class EnabledMode {
         DISABLED_BY_MARKING,
@@ -115,7 +73,14 @@ class StepExecutor(
         }
     }
 
-    suspend fun execute() {
+    var logBuilder: LogBuilder = LogBuilder()
+    private var stepNumber: Long = 0
+
+    suspend fun execute(): SimulationStepLog? {
+        logBuilder = LogBuilder()
+        logBuilder.recordStartMarking(tokenStore)
+        logBuilder.recordStepNumber(stepNumber)
+
         sstep("Need to reindex transitions that are not indexed") {
             reindexTransitionSolutions()
         }
@@ -128,15 +93,17 @@ class StepExecutor(
 
             val shiftTime = selectShiftTime(shiftTimes)
             enabledByMarkign.forEach { t -> t.timer.incrementCounter(shiftTime) }
+            logBuilder.recordClockIncrement(shiftTime)
             false
         }
-        if (simulationFinish) return
+        if (simulationFinish) return null
 
         sstep("execute transition if possible") {
             val fireableTransitions = collectTransitions(EnabledMode.CAN_FIRE)
             val selectedTransition = selectTransitionToFire(fireableTransitions)
 
             fireTransition(selectedTransition)
+            logBuilder.recordMarking(tokenStore)
 
             for (transition in selectedTransition.dependentTransitions) {
                 transition.setNeedCheckCache()
@@ -156,6 +123,8 @@ class StepExecutor(
         sstep("clean tokens whose participation is finished") {
             cleanGarbageTokens()
         }
+        stepNumber++
+        return logBuilder.build()
     }
 
     private fun cleanTokenTransitionVisits(token: TokenWrapper) {
@@ -181,6 +150,7 @@ class StepExecutor(
     }
 
     private fun fireTransition(transition: TransitionWrapper) {
+        logBuilder.recordFiredTransition(transition)
         val solution = transition.inputArcsSolutions(tokenStore, shuffler)
             .iterator().also {
                 require(it.hasNext()) {
@@ -189,10 +159,19 @@ class StepExecutor(
             }
             .next()
         val minusTokens = solution.toTokenSlice()
-        val (plusTokens, consumed) = transition.outputArcsSolutions(minusTokens, shuffler, tokenGenerator = tokenStore)
+        val (plusTokens, consumed, generated) = transition.outputArcsSolutions(
+            minusTokens,
+            shuffler,
+            tokenGenerator = tokenStore
+        )
 
         tokenStore.minus(minusTokens)
         tokenStore.plus(plusTokens)
+        logBuilder.recordTokens(
+            minusTokens,
+            plusTokens,
+            generated
+        )
 
         transition.logTokensOnFireIfSynchronized(plusTokens)
         transition.transitionsWithSharedPreplaces.forEach { t ->

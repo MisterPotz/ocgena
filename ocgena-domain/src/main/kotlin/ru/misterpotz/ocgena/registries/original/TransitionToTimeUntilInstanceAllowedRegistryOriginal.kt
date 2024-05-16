@@ -1,7 +1,7 @@
 package ru.misterpotz.ocgena.registries.original
 
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation.Time
+import ru.misterpotz.ocgena.simulation_old.Time
 
 interface TransitionToTimeUntilInstanceAllowedRegistryOriginal {
     val keys : Iterable<PetriAtomId>

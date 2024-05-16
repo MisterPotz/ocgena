@@ -1,14 +1,13 @@
 package ru.misterpotz.ocgena.testing
 
 import com.charleskorn.kaml.Yaml
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import ru.misterpotz.DBLogger
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarking
-import ru.misterpotz.ocgena.collections.ImmutablePlaceToObjectMarkingMap
+import ru.misterpotz.Logger
+import ru.misterpotz.ocgena.simulation_old.collections.ImmutablePlaceToObjectMarking
+import ru.misterpotz.ocgena.simulation_old.collections.ImmutablePlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.ocgena.error.prettyPrint
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
@@ -18,23 +17,24 @@ import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
 import ru.misterpotz.ocgena.ocnet.utils.OCNetBuilder
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
-import ru.misterpotz.ocgena.simulation.ObjectTokenId
-import ru.misterpotz.ocgena.simulation.SimulationTask
-import ru.misterpotz.ocgena.simulation.config.MarkingScheme
-import ru.misterpotz.ocgena.simulation.config.Period
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.config.TokenGenerationConfig
-import ru.misterpotz.ocgena.simulation.config.original.Duration
-import ru.misterpotz.ocgena.simulation.config.original.TimeUntilNextInstanceIsAllowed
-import ru.misterpotz.ocgena.simulation.config.original.TransitionInstanceTimes
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
-import ru.misterpotz.ocgena.simulation.logging.DevelopmentDebugConfig
-import ru.misterpotz.ocgena.simulation.logging.fastNoDevSetup
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.simulation.stepexecutor.SimpleDeterminedTransitionSequenceProvider
+import ru.misterpotz.ocgena.simulation_old.ObjectTokenId
+import ru.misterpotz.ocgena.simulation_old.SimulationTask
+import ru.misterpotz.ocgena.simulation_old.config.MarkingScheme
+import ru.misterpotz.ocgena.simulation_old.config.Period
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.config.TokenGenerationConfig
+import ru.misterpotz.ocgena.simulation_old.config.original.Duration
+import ru.misterpotz.ocgena.simulation_old.config.original.TimeUntilNextInstanceIsAllowed
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionInstanceTimes
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponentDependencies
+import ru.misterpotz.ocgena.simulation_old.logging.DevelopmentDebugConfig
+import ru.misterpotz.ocgena.simulation_old.logging.SimulationDBLogger
+import ru.misterpotz.ocgena.simulation_old.logging.fastNoDevSetup
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemantics
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SimpleDeterminedTransitionSequenceProvider
 import ru.misterpotz.ocgena.validation.OCNetChecker
 import simulation.random.RandomUseCase
 import java.util.*
@@ -130,16 +130,15 @@ fun defaultSimConfigTimePN(
 }
 
 fun simulationComponentDependencies(
-    dbLogger: DBLogger? = null,
+    dbLogger: Logger? = null,
     domainComponent: DomainComponent = domainComponent()
 ): SimulationComponentDependencies {
     return object : SimulationComponentDependencies {
-        val dbLogger: DBLogger = dbLogger ?: mockk(relaxed = true, relaxUnitFun = true)
+        val dbLogger: Logger = dbLogger ?: mockk(relaxed = true, relaxUnitFun = true)
         override val json: Json = domainComponent.json()
         override val yaml: Yaml = domainComponent.yaml()
 
-        override fun dbLogger(): DBLogger = this.dbLogger
-
+        override fun dbLogger(): Logger = this.dbLogger
     }
 }
 
@@ -152,7 +151,7 @@ fun simComponent(
     developmentDebugConfig: DevelopmentDebugConfig = fastNoDevSetup(),
     randomInstances: Map<RandomUseCase, Random> = mutableMapOf(),
     determinedTransitionSequenceProvider: SimpleDeterminedTransitionSequenceProvider = SimpleDeterminedTransitionSequenceProvider(),
-    dbLogger: DBLogger? = null
+    dbLogger: Logger? = null
 ): SimulationComponent {
     return SimulationComponent.defaultCreate(
         simulationConfig = simulationConfig,

@@ -6,7 +6,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
 
 class ArcsDelegatesTest {
     @Test

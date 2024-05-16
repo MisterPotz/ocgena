@@ -10,8 +10,8 @@ import ru.misterpotz.db.DBConnectionSetupper
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.simulation.SimulationLogRepository
 import ru.misterpotz.simulation.SimulationLogSinkRepositoryImpl
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation.di.SimulationComponentDependencies
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponentDependencies
 import ru.misterpotz.simulation.TablesProvider
 import ru.misterpotz.simulation.TablesProviderImpl
 import java.nio.file.Path
@@ -23,7 +23,7 @@ internal abstract class ServerSimulationModule {
 
     @Binds
     @ServerSimulationScope
-    abstract fun bindDBLogger(dbLogger: DBLoggerImpl): DBLogger
+    abstract fun bindDBLogger(dbLogger: DBLoggerImpl): Logger
 
     @Binds
     @ServerSimulationScope

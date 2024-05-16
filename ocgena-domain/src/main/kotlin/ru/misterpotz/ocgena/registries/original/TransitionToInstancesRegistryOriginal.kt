@@ -1,9 +1,9 @@
 package ru.misterpotz.ocgena.registries.original
 
-import ru.misterpotz.ocgena.collections.TransitionInstance
-import ru.misterpotz.ocgena.collections.TransitionInstancesList
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation.Time
+import ru.misterpotz.ocgena.simulation_old.Time
+import ru.misterpotz.ocgena.simulation_old.collections.TransitionInstance
+import ru.misterpotz.ocgena.simulation_old.collections.TransitionInstancesList
 
 class TransitionToInstancesRegistryOriginal {
     private val transitionsToTMarkingValue = mutableMapOf<PetriAtomId, TransitionInstancesList>()

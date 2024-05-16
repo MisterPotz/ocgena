@@ -2,7 +2,6 @@ package ru.misterpotz.ocgena.simulation_v2.entities_selection
 
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.*
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.utils.Ref
@@ -43,7 +42,6 @@ class ModelAccessor(
                 TransitionWrapper(
                     it.id,
                     model = this,
-                    arcLogicsFactory = ArcLogicsFactory.Stub
                 )
             }.wrap()
         )

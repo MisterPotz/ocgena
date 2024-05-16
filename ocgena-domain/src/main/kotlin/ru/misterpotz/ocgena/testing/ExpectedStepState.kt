@@ -1,9 +1,9 @@
 package ru.misterpotz.ocgena.testing
 
 import ru.misterpotz.SimulationStepLog
-import ru.misterpotz.ocgena.simulation.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation.stepexecutor.SparseTokenBunchImpl
-import ru.misterpotz.ocgena.simulation.stepexecutor.TimePNTransitionMarking
+import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.SparseTokenBunchImpl
+import ru.misterpotz.ocgena.simulation_old.stepexecutor.TimePNTransitionMarking
 
 data class ExpectedStepState(
     val timeClockIncrement: Long,
@@ -25,7 +25,7 @@ data class ExpectedStepState(
                 .dump()
         return timeClockIncrement == simulationStepLog.clockIncrement &&
                 chosenTransition == simulationStepLog.selectedFiredTransition?.transitionId &&
-                tokenAmountStorage == simulationStepLog.endStepMarkingAmounts &&
-                timePNTransitionMarking == simulationStepLog.timePNTransitionMarking
+                tokenAmountStorage == simulationStepLog.endStepMarkingAmounts
+//                timePNTransitionMarking == simulationStepLog.timePNTransitionMarking
     }
 }

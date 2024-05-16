@@ -6,7 +6,7 @@ import ru.misterpotz.InAndOutPlacesColumnProducer
 import ru.misterpotz.ObjectTokenMeta
 import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.TokenSerializer
-import ru.misterpotz.ocgena.simulation.config.SimulationConfig
+import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
 
 class SimulationLogSinkRepositoryImpl(
     private val db: Database,

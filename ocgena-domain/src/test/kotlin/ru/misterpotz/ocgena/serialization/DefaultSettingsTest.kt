@@ -2,21 +2,16 @@ package ru.misterpotz.ocgena.serialization
 
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.DEFAULT_SETTINGS
-import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.NodeToLabelRegistry
-import ru.misterpotz.ocgena.resPath
-import ru.misterpotz.ocgena.simulation.config.*
-import ru.misterpotz.ocgena.simulation.config.original.Duration
-import ru.misterpotz.ocgena.simulation.config.original.TimeUntilNextInstanceIsAllowed
-import ru.misterpotz.ocgena.simulation.config.original.TransitionInstanceTimes
-import ru.misterpotz.ocgena.simulation.config.original.TransitionsOriginalSpec
-import ru.misterpotz.ocgena.simulation.config.timepn.TransitionsTimePNSpec
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemantics
-import ru.misterpotz.ocgena.simulation.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.writeOrAssertJson
+import ru.misterpotz.ocgena.simulation_old.config.*
+import ru.misterpotz.ocgena.simulation_old.config.original.Duration
+import ru.misterpotz.ocgena.simulation_old.config.original.TimeUntilNextInstanceIsAllowed
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionInstanceTimes
+import ru.misterpotz.ocgena.simulation_old.config.original.TransitionsOriginalSpec
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemantics
+import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
 import ru.misterpotz.ocgena.writeOrAssertYaml
-import kotlin.io.path.div
 
 class DefaultSettingsTest {
     val defaultSettings = SettingsSimulationConfig(
