@@ -81,22 +81,28 @@ class TransitionWrapper(
         }.let { println(it) }
     }
 
-    val transitionHistory = TransitionHistory()
+    val transitionHistory = TransitionHistory(transitionId)
 
     fun inputArcsSolutions(
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
-        tokenGenerator: TokenGenerator
+        tokenGenerator: TokenGenerator,
+        existenceConfirmationMode: Boolean = false
     ): Iterable<FullSolution> {
         return when (model.tokensAreEntities()) {
             true -> {
                 TransitionSynchronizationArcSolver(this)
-                    .getSolutionFinderIterable(tokenSlice, shuffler, tokenGenerator = tokenGenerator)
+                    .getSolutionFinderIterable(
+                        tokenSlice,
+                        shuffler,
+                        tokenGenerator = tokenGenerator,
+                        existenceConfirmationMode
+                    )
                     ?: emptyList()
             }
 
             false -> {
-                SimpleArcSolver(tokenSlice, this)
+                SimpleArcSolver(tokenSlice, this, existenceConfirmationMode)
             }
         }
     }
@@ -208,7 +214,7 @@ class TransitionWrapper(
     data class OutputArcsSolution(
         val plusTokens: TokenSlice,
         val consumedTokens: List<TokenWrapper>,
-        val generatedTokens : List<TokenWrapper>
+        val generatedTokens: List<TokenWrapper>
     ) {
 
     }
@@ -479,7 +485,7 @@ class TransitionIdIssuer {
     }
 }
 
-class TransitionHistory {
+class TransitionHistory(val transitionId: PetriAtomId) {
     private val logIdToReferenceCounter = mutableMapOf<Long, Long>()
     private val idToAssociations = mutableMapOf<Long, MutableSet<TokenWrapper>>()
     private val _allIds = sortedSetOf<Long>()
@@ -511,6 +517,10 @@ class TransitionHistory {
             logIdToReferenceCounter[transitionIndex] = newReferencesToLog
             idToAssociations[transitionIndex]!!.remove(tokenWrapper)
         }
+    }
+
+    override fun toString(): String {
+        return "TransitionHistory($transitionId, idToAssociations=$idToAssociations)"
     }
 }
 

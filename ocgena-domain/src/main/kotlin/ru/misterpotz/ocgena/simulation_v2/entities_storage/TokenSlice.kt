@@ -2,7 +2,6 @@ package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
 import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.*
-import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.utils.PatternIdCreator
 import ru.misterpotz.ocgena.utils.buildMutableMap
 import java.util.*
@@ -48,24 +47,43 @@ interface TokenSlice {
     fun filterTokensInPlaces(places: Places, predicate: (TokenWrapper, PlaceWrapper) -> Boolean): TokenSlice
     fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>>
     fun print()
+    fun makeBeautifulString(): String
 }
 
 interface TokenGenerator {
     fun generateRealToken(type: ObjectType): TokenWrapper
+    val issuedTokens: Map<Long, TokenWrapper>
 }
 
 class TokenStore(
     private val internalSlice: SimpleTokenSlice,
-    private val modelAccessor: ModelAccessor,
-    private val issuedTokens: MutableMap<Long, TokenWrapper> = mutableMapOf(),
+    override val issuedTokens: MutableMap<Long, TokenWrapper> = mutableMapOf(),
 ) : TokenSlice by internalSlice, TokenGenerator {
     private val tokenCreators = TokenCreators()
 
-    fun removeToken(tokenWrapper: TokenWrapper) {
+    override fun makeBeautifulString(): String {
+        return buildString {
+            appendLine("tokenslice:")
+            append(
+                buildString {
+                    appendLine(internalSlice.makeBeautifulString())
+                }.prependIndent()
+            )
+            appendLine("issued tokens:")
+            append(
+                buildString {
+                    append(issuedTokens.toString())
+                }.prependIndent()
+            )
+        }
+    }
+
+    private fun removeToken(tokenWrapper: TokenWrapper) {
         issuedTokens.remove(tokenWrapper.tokenId)
     }
 
     fun removeTokens(tokens: Collection<TokenWrapper>) {
+        println("token store removing tokens $tokens")
         for (token in tokens) {
             removeToken(token)
         }
@@ -84,22 +102,31 @@ class TokenStore(
     fun plus(tokenSlice: TokenSlice) {
         internalSlice.plusInPlace(tokenSlice)
     }
+
+    override fun toString(): String {
+        return "TokenStore(internalSlice=$internalSlice, " +
+                "issuedTokens=${issuedTokens.map { it.value }})"
+    }
+
+
 }
 
 class TokenCreators() {
     private val creators = mutableMapOf<ObjectType, SingleTypeTokenCreator>()
+    private var index: Long = 0
     fun create(objectType: ObjectType): TokenWrapper {
         return creators.getOrPut(objectType) {
-            SingleTypeTokenCreator(type = objectType)
+            SingleTypeTokenCreator(type = objectType, { index++ })
         }.makeNew()
     }
 }
 
 class SingleTypeTokenCreator(
     val type: ObjectType,
-    private val idIssuer: PatternIdCreator = PatternIdCreator() {
+    private val nextIdProvider: () -> Long,
+    private val idIssuer: PatternIdCreator = PatternIdCreator(nextIdProvider) {
         "${type.id}$it"
-    }
+    },
 ) {
     fun makeNew(): TokenWrapper {
         return TokenWrapper(
@@ -148,8 +175,8 @@ class SimpleTokenSlice(
         )
     }
 
-    override fun print() {
-        buildString {
+    override fun makeBeautifulString(): String {
+        return buildString {
             appendLine("tokensmap:")
 
             appendLine(
@@ -167,9 +194,11 @@ class SimpleTokenSlice(
                     }
                 }.prependIndent()
             )
-        }.let {
-            println(it)
         }
+    }
+
+    override fun print() {
+        println(makeBeautifulString())
     }
 
     override fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>> {

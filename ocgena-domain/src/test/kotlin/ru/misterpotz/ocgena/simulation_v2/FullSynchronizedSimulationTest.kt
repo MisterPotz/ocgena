@@ -1,30 +1,39 @@
 package ru.misterpotz.ocgena.simulation_v2
 
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.simulation_old.SimulationTaskStepExecutor
-import ru.misterpotz.ocgena.simulation_v2.algorithm.simulation.StepExecutor
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
-import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
 import ru.misterpotz.ocgena.simulation_v2.input.PlaceSetting
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
-import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.simulation_v2.utils.toSimComp
-import kotlin.math.log
 import kotlin.random.Random
+import kotlin.time.Duration
 
 class FullSynchronizedSimulationTest {
 
     @Test
-    fun fullSimulationTest() = runTest {
+    fun testShuffling() {
+        val shuffler = NormalShuffler(Random(42))
+
+        println(shuffler.makeShuffled(1..5))
+        println(shuffler.makeShuffled(1..5))
+        println(shuffler.makeShuffled(1..5))
+        println(shuffler.makeShuffled(1..5))
+    }
+
+    @Test
+    fun fullSimulationTest() = runTest(timeout = Duration.INFINITE) {
         val ocnet = buildSynchronizingLomazovaExampleModel()
 
         val logger = StepSequenceLogger()
 
         val sim = ocnet.toSimComp(
             SimulationInput(
+                randomSeed = 42,
                 loggingEnabled = true,
                 transitions = mapOf(
                     "test_all_sync" to TransitionSetting(
@@ -45,9 +54,35 @@ class FullSynchronizedSimulationTest {
             logger
         )
 
-        sim.simulation().runSimulation()
+        launch {
+            sim.simulation().runSimulation()
+        }.join()
 
+        Assertions.assertTrue(logger.events.size > 0)
         println(logger.events)
-        println(logger.logs)
+        Assertions.assertEquals(6, logger.events.size)
+
+        println(sim.model().transitionBy("send_invoices").transitionHistory)
+        println(sim.model().transitionBy("arrange_packages_to_tracks").transitionHistory)
+        println(sim.model().transitionBy("place_order").transitionHistory)
+        println(sim.tokenstore())
+        val tokenStore = sim.tokenstore()
+
+        Assertions.assertEquals(3, tokenStore.amountAt(sim.model().place("order")))
+        Assertions.assertEquals(
+            12,
+            tokenStore.issuedTokens.size,
+            "Token garbage collection does not work / they are not generated properly / or transitions became broken"
+        )
+        Assertions.assertEquals(
+            0,
+            tokenStore.tokensAt(sim.model().place("output")).size,
+            "output place must be empty regarding tokens - cleaning doesn't work properly"
+        )
+        Assertions.assertEquals(
+            1,
+            tokenStore.amountAt(sim.model().place("output")),
+            "output token number must be correct"
+        )
     }
 }

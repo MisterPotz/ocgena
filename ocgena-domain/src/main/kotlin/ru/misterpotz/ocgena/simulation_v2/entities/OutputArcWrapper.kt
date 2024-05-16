@@ -12,7 +12,7 @@ fun List<TokenWrapper>.buildFromIndices(indices: List<Int>): List<TokenWrapper> 
     val thisList = this
     return buildList {
         for (i in indices) {
-            if (i < size) {
+            if (i < thisList.size) {
                 add(thisList[i])
             }
         }

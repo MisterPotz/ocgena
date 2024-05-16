@@ -1,16 +1,14 @@
 package ru.misterpotz.ocgena.utils
 
-class PatternIdCreator(val namer: (Long) -> String) {
+class PatternIdCreator(
+    private val nextIdProvider: (() -> Long)? = null,
+    val namer: (Long) -> String
+) {
     var index: Long = 0
-
-    fun newIdGetLabel() : String {
-        newIntId
-        return lastLabelId
-    }
 
     val newIntId: Long
         get() {
-            return index++
+            return nextIdProvider?.invoke() ?: index++
         }
     val lastLabelId: String
         get() {

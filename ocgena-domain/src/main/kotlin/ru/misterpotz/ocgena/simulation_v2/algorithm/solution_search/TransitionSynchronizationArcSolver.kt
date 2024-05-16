@@ -14,6 +14,8 @@ sealed interface FullSolution {
 
     data class Amounts(val solutionAmounts: SolutionAmounts) : FullSolution
 
+    data object Exists : FullSolution
+
     fun toTokenSlice(): TokenSlice {
         return when (this) {
             is Amounts -> {
@@ -23,6 +25,8 @@ sealed interface FullSolution {
             is Tokens -> {
                 SimpleTokenSlice.of(solutionTokens)
             }
+
+            Exists -> throw IllegalStateException()
         }
     }
 }
@@ -51,35 +55,37 @@ class TransitionSynchronizationArcSolver(
     fun getSolutionFinderIterable(
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
-        tokenGenerator: TokenGenerator
+        tokenGenerator: TokenGenerator,
+        solutionExistenceConfirmationMode: Boolean = false
     ): Iterable<FullSolution>? {
         val filteredTokenSlice = preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return null
 
         val heavySynchronizationSearchCombinator = createGroupSolutionCombinator(
-            filteredTokenSlice,
-            shuffler,
-            transition
+            filteredTokenSlice, shuffler, transition
         )
         val easyArcsSolutionCombinator = createUnconditionalArcsCombinationSolutionSuggester(tokenSlice, shuffler)
 
-        val fullCombinator =
-            IteratorsCombinator(
-                listOfNotNull(
-                    heavySynchronizationSearchCombinator.takeIf { transition.model.isSynchronizedMode() },
-                    easyArcsSolutionCombinator
-                )
+        val fullCombinator = IteratorsCombinator(
+            listOfNotNull(
+                heavySynchronizationSearchCombinator.takeIf { transition.model.isSynchronizedMode() },
+                easyArcsSolutionCombinator
             )
+        )
 
         return IteratorMapper(
             fullCombinator
         ) { independentSolutionCombination ->
             println("combinations for ${transition.transitionId} ${independentSolutionCombination.flatten()}")
-            completeSolutionFromPartials(
-                independentSolutionCombination.flatten(),
-                filteredTokenSlice,
-                shuffler,
-                tokenGenerator = tokenGenerator
-            )
+            if (solutionExistenceConfirmationMode) {
+                FullSolution.Exists
+            } else {
+                completeSolutionFromPartials(
+                    independentSolutionCombination.flatten(),
+                    filteredTokenSlice,
+                    shuffler,
+                    tokenGenerator = tokenGenerator
+                )
+            }
         }
     }
 
@@ -98,8 +104,7 @@ class TransitionSynchronizationArcSolver(
             when (partial) {
                 is PartialSolutionCandidate.MultiConditionGroup -> {
                     require(
-                        fullSolutionMap.keys.intersect(partial.potentiallyUncompleteCombination.keys)
-                            .isEmpty()
+                        fullSolutionMap.keys.intersect(partial.potentiallyUncompleteCombination.keys).isEmpty()
                     ) {
                         "solution place-independence condition broken: each combination concerns only its own place, solutions don't intersect places"
                     }
@@ -131,8 +136,7 @@ class TransitionSynchronizationArcSolver(
     }
 
     private fun createUnconditionalArcsCombinationSolutionSuggester(
-        tokenSlice: TokenSlice,
-        shuffler: Shuffler
+        tokenSlice: TokenSlice, shuffler: Shuffler
     ): Iterable<List<PartialSolutionCandidate.Unconditional>> {
         val allUnconditionalCombinationsIterator = transition.unconditionalInputArcs.map { unconditionalArc ->
             val realTokenAmount = unconditionalArc.fromPlace.tokenAmountAt(tokenSlice)
@@ -157,8 +161,7 @@ class TransitionSynchronizationArcSolver(
             }
 
             val combination = CombinationIterable(
-                shuffling,
-                combinationSize = tokensToTake
+                shuffling, combinationSize = tokensToTake
             )
 
             IteratorMapper(combination) { combination ->
@@ -201,10 +204,9 @@ class TransitionSynchronizationArcSolver(
             }
         }
 
-        val secondPreliminaryDumbCheck =
-            transition.inputArcsSortedByRequiredTokens.all { arc ->
-                arc.consumptionSpec.weakComplies(tokenSlice.amountAt(arc.fromPlace))
-            }
+        val secondPreliminaryDumbCheck = transition.inputArcsSortedByRequiredTokens.all { arc ->
+            arc.consumptionSpec.weakComplies(tokenSlice.amountAt(arc.fromPlace))
+        }
 
         if (!secondPreliminaryDumbCheck) {
             return null
@@ -220,32 +222,22 @@ class TransitionSynchronizationArcSolver(
         val sortedArcs = independentMultiConditionGroup.conditionArcSortedByStrongestDescending()
 
         val (placeToIndex, _, combinationsIterator) = independentMultiConditionGroup.makeRandomCombinationIterator(
-            filteredTokenSlice,
-            shuffler = shuffler
+            filteredTokenSlice, shuffler = shuffler
         )
 
         while (combinationsIterator.hasNext()) {
             val hypotheticCombination = combinationsIterator.next()
 
             val perPlaceSharedEntries = makePerPlaceSharedTransitionEntries(
-                sortedArcs,
-                filteredTokenSlice,
-                placeToIndex,
-                indicesCombination = hypotheticCombination
+                sortedArcs, filteredTokenSlice, placeToIndex, indicesCombination = hypotheticCombination
             )
-            val conditionSatisfactoryEntries =
-                getConditionSatisfactoryEntries(
-                    independentMultiConditionGroup,
-                    sortedArcs,
-                    hypotheticCombination,
-                    perPlaceSharedEntries
-                )
+            val conditionSatisfactoryEntries = getConditionSatisfactoryEntries(
+                independentMultiConditionGroup, sortedArcs, hypotheticCombination, perPlaceSharedEntries
+            )
 
             if (conditionSatisfactoryEntries.isNotEmpty()) {
                 val goodCombination = indicesToTokenLists(
-                    hypotheticCombination,
-                    placeToIndex,
-                    filteredTokenSlice
+                    hypotheticCombination, placeToIndex, filteredTokenSlice
                 )
                 yield(
                     PartialSolutionCandidate.MultiConditionGroup(
@@ -332,11 +324,9 @@ class TransitionSynchronizationArcSolver(
                     for (arcCondition in arc.underConditions) {
                         val requiredConditionEntries = conditionGroupEntries[arcCondition]!!
 
-                        applicableTokens.getOrPut(fromPlace) { mutableListOf() }.addAll(
-                            allPlaceTokens.filter { token ->
-                                token !in alreadySolutionTokens && token.participatedInAll(requiredConditionEntries)
-                            }
-                        )
+                        applicableTokens.getOrPut(fromPlace) { mutableListOf() }.addAll(allPlaceTokens.filter { token ->
+                            token !in alreadySolutionTokens && token.participatedInAll(requiredConditionEntries)
+                        })
                     }
                 }
 
@@ -372,7 +362,7 @@ class TransitionSynchronizationArcSolver(
                     }
                     applicableTokenStorage.recordGenerated(newgeneratedTokens)
                     applicableTokenStorage.updateGenerations(inputArc.fromPlace) {
-                        it - newgeneratedTokens.size
+                        0
                     }
 
                     addAll(currentSolution[inputArc.fromPlace] ?: emptyList())
@@ -427,9 +417,8 @@ class TransitionSynchronizationArcSolver(
         val fromPlace = arc.fromPlace
         val availableThroughTokens = applicableTokenStorage.remainingTokens(fromPlace)
 
-        val selectedFromRemaining = availableThroughTokens
-            .selectTokens(shuffler.makeShuffled(availableThroughTokens.indices))
-            .take(amount)
+        val selectedFromRemaining =
+            availableThroughTokens.selectTokens(shuffler.makeShuffled(availableThroughTokens.indices)).take(amount)
         applicableTokenStorage.remainingTokens(fromPlace).removeAll(selectedFromRemaining)
 
         val leftToMake =
@@ -481,56 +470,18 @@ class TransitionSynchronizationArcSolver(
                 bufferVariablesSpace.setVariable(variableName, initialVariableValue + index + 1)
 
                 val allDependendsArcsSatisfied = dependent.all { dependentArc ->
-                    val totalTokensArcCanRequest = (applicableTokenStorage.totalTokensAvailable(dependentArc.fromPlace))
+                    val totalDependentTokens =
+                        currentSolution[dependentArc.fromPlace]!!.size + applicableTokenStorage.totalTokensAvailable(
+                            dependentArc.fromPlace
+                        )
 
                     dependentArc.consumptionSpec.strongComplies(
-                        totalTokensArcCanRequest,
-                        bufferVariablesSpace
+                        totalDependentTokens, bufferVariablesSpace
                     )
                 }
                 if (allDependendsArcsSatisfied) {
                     newTokensAmountForVarArcSolution = index + 1
-                    continue
-                }
-                val minAdditionalGenerationAmounts: MutableMap<InputArcWrapper, Int> = mutableMapOf()
-                // uncomplied dependent arcs
-                for (dependentArc in dependent) {
-                    val totalCanRequest = applicableTokenStorage.totalTokensAvailable(dependentArc.fromPlace)
-
-                    var minSatisfactoryAmount: Int? = null
-                    for (testTokenAmount in totalCanRequest downTo 1) {
-                        if (dependentArc.consumptionSpec.strongComplies(
-                                testTokenAmount,
-                                bufferVariablesSpace
-                            )
-                        ) {
-                            minSatisfactoryAmount = testTokenAmount
-                        } else {
-                            break
-                        }
-                    }
-                    if (minSatisfactoryAmount != null) {
-                        minAdditionalGenerationAmounts[dependentArc] = minSatisfactoryAmount
-                    }
-                }
-                // all input arcs have amount of tokens that can be generated for their satisfaction
-                if (minAdditionalGenerationAmounts.size == dependent.size) {
-                    // reduce the amount of tokens that can be generated for dependent arcs and generate
-                    for (dependentArc in dependent) {
-                        val satisfactoryAdditionalAmount = minAdditionalGenerationAmounts[dependentArc]!!
-                        val newTokensForDependentArc = selectAndGenerateForLomazovaArcFromRemaining(
-                            satisfactoryAdditionalAmount,
-                            arc = dependentArc,
-                            applicableTokenStorage,
-                            shuffler,
-                            tokenGenerator
-                        )
-                        newSolution.getOrPut(dependentArc.fromPlace) { mutableListOf() }.apply {
-                            addAll(newTokensForDependentArc)
-                        }
-                    }
                 } else {
-                    // even with slight increase of the var arc there are no additional tokens that satisfy dependent amount
                     break;
                 }
             }
@@ -540,16 +491,55 @@ class TransitionSynchronizationArcSolver(
 
             // updating the variable space for this variable
             resolvedVariablesSpace.setVariable(
-                variableName,
-                resolvedVariablesSpace.getVariable(variableName) + newTokensAmountForVarArcSolution
+                variableName, resolvedVariablesSpace.getVariable(variableName) + newTokensAmountForVarArcSolution
             )
             val newTokensForVarArc = selectAndGenerateForLomazovaArcFromRemaining(
-                newTokensAmountForVarArcSolution,
-                varArc,
-                applicableTokenStorage, shuffler, tokenGenerator
+                newTokensAmountForVarArcSolution, varArc, applicableTokenStorage, shuffler, tokenGenerator
             )
             newSolution.getOrPut(fromPlace) { mutableListOf() }.apply {
                 addAll(newTokensForVarArc)
+            }
+
+            val minAdditionalGenerationAmounts: MutableMap<InputArcWrapper, Int> = mutableMapOf()
+            // uncomplied dependent arcs
+            for (dependentArc in dependent) {
+                val totalCanRequest =
+                    currentSolution[dependentArc.fromPlace]!!.size + applicableTokenStorage.totalTokensAvailable(
+                        dependentArc.fromPlace
+                    )
+
+                var minSatisfactoryAmount: Int? = null
+                for (testTokenAmount in totalCanRequest downTo 1) {
+                    if (dependentArc.consumptionSpec.strongComplies(
+                            testTokenAmount, resolvedVariablesSpace
+                        )
+                    ) {
+                        minSatisfactoryAmount = testTokenAmount
+                    } else {
+                        break
+                    }
+                }
+                if (minSatisfactoryAmount != null) {
+                    minAdditionalGenerationAmounts[dependentArc] = minSatisfactoryAmount
+                }
+            }
+            // all input arcs have amount of tokens that can be generated for their satisfaction
+            require(minAdditionalGenerationAmounts.size == dependent.size) {
+                "weird case. Conditions were checked in a loop for determining the variable value. This case shouldn't have happened at all."
+            }
+            for (dependentArc in dependent) {
+                val satisfactoryAdditionalAmount = minAdditionalGenerationAmounts[dependentArc]!!
+                val toGenerateAmount = (satisfactoryAdditionalAmount - currentSolution[dependentArc.fromPlace]!!.size).coerceAtLeast(0)
+                val newTokensForDependentArc = selectAndGenerateForLomazovaArcFromRemaining(
+                    toGenerateAmount,
+                    arc = dependentArc,
+                    applicableTokenStorage,
+                    shuffler,
+                    tokenGenerator
+                )
+                newSolution.getOrPut(dependentArc.fromPlace) { mutableListOf() }.apply {
+                    addAll(newTokensForDependentArc)
+                }
             }
         }
 
@@ -568,9 +558,7 @@ class TransitionSynchronizationArcSolver(
 
         // 1. generate what not generated yet to complete requirements
         val (minSolution) = fillExactArcsMissingTokens(
-            potentiallyUncompleteSolution,
-            applicableTokenStorage,
-            tokenGenerator
+            potentiallyUncompleteSolution, applicableTokenStorage, tokenGenerator
         )
         // 2. all remaining tokens in slice
         recordSliceRemainingApplicableTokens(
@@ -582,8 +570,7 @@ class TransitionSynchronizationArcSolver(
 
         // 3. find candidates for further analysis - for all arcs, they must each be unconstrained or dependent on variables.
         val (solutionStage2) = expandAalstArcs(
-            minSolution,
-            applicableTokenStorage, tokenGenerator
+            minSolution, applicableTokenStorage, tokenGenerator
         )
         // 4. for variable arcs do smart filling based on candidates from step 2
         val (solutionStage3) = expandLomazovaArcs(
@@ -610,9 +597,7 @@ class TransitionSynchronizationArcSolver(
             object : Iterable<PartialSolutionCandidate.MultiConditionGroup> {
                 override fun iterator(): Iterator<PartialSolutionCandidate.MultiConditionGroup> {
                     return getIndependentMultiArcConditionSolutionIterator(
-                        filteredTokenSlice,
-                        shuffler,
-                        it
+                        filteredTokenSlice, shuffler, it
                     )
                 }
             }
@@ -669,8 +654,7 @@ class TransitionSynchronizationArcSolver(
         // for each group of intersecting conditions
         val allSatisfied = independentMultiConditionGroup.conditions.all { condition ->
             val conditionSatisfactoryEntries = findConditionSatisfactoryTransionEntries(
-                multiArcCondition = condition,
-                placesToTokensAndCommonEntries = perPlaceSharedEntries
+                multiArcCondition = condition, placesToTokensAndCommonEntries = perPlaceSharedEntries
             )
 
             conditionToSatisfactoryEntries[condition] = conditionSatisfactoryEntries
@@ -714,13 +698,18 @@ class TransitionSynchronizationArcSolver(
     }
 
     private fun Collection<TokenWrapper>.selectTokens(indices: List<Int>): List<TokenWrapper> {
-        return this.withIndex().mapIndexedNotNull { index, tokenWrapper ->
-            if (index in indices) {
-                tokenWrapper.value
-            } else {
-                null
+        val thisCollection = this
+        if (isEmpty()) return emptyList()
+
+        val list = MutableList(indices.size) { first() }
+
+        forEachIndexed { index, indexedValue ->
+            val place = indices.indexOf(index)
+            if (place > -1) {
+                list[place] = indexedValue
             }
         }
+        return list
     }
 
     private fun List<TokenWrapper>.sharedTransitionEntries(includeEntriesOf: List<TransitionWrapper>): HashSet<Long> {
@@ -776,9 +765,7 @@ class TransitionSynchronizationArcSolver(
         private val iterables: List<Iterable<T>>
     ) : Iterable<List<T>> {
         private suspend fun SequenceScope<List<T>>.generateCombinationsDepthFirst(
-            level: Int,
-            levelIterables: List<Iterable<T>>,
-            current: MutableList<T?>
+            level: Int, levelIterables: List<Iterable<T>>, current: MutableList<T?>
         ) {
             if (level == iterables.size) {
                 yield(current.mapNotNull { it })
@@ -794,11 +781,7 @@ class TransitionSynchronizationArcSolver(
 
         override fun iterator(): Iterator<List<T>> {
             val dumbIterator = iterator {
-                generateCombinationsDepthFirst(
-                    0,
-                    iterables,
-                    MutableList(iterables.size) { null }
-                )
+                generateCombinationsDepthFirst(0, iterables, MutableList(iterables.size) { null })
             }
             return object : Iterator<List<T>> {
                 override fun hasNext(): Boolean {

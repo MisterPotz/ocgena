@@ -9,7 +9,8 @@ typealias SolutionAmounts = Map<PlaceWrapper, Int>
 
 class SimpleArcSolver(
     val tokenSlice: TokenSlice,
-    private val transitionWrapper: TransitionWrapper
+    private val transitionWrapper: TransitionWrapper,
+    private val solutionExistenceConfirmationMode: Boolean
 ) : Iterable<FullSolution> {
     override fun iterator(): Iterator<FullSolution.Amounts> {
         val resolvedVariableSpace = tokenSlice.resolveVariables(transitionWrapper.inputArcs)
@@ -19,7 +20,12 @@ class SimpleArcSolver(
             arc.consumptionSpec.strongComplies(tokenSlice.amountAt(place), resolvedVariableSpace)
         }
 
-        if (!hasEnoughTokens) return iterator { }
+        if (!hasEnoughTokens){
+            return iterator { }
+        }
+        else if (solutionExistenceConfirmationMode) {
+            return iterator { FullSolution.Exists }
+        }
 
         val solution = transitionWrapper.inputArcs.map { arc ->
             val place = arc.fromPlace

@@ -69,6 +69,8 @@ object NoTokenGenerator : TokenGenerator {
     override fun generateRealToken(type: ObjectType): TokenWrapper {
         throw IllegalStateException("not allowed to generate")
     }
+
+    override val issuedTokens: Map<Long, TokenWrapper> = emptyMap()
 }
 
 fun buildTransitionHistory(

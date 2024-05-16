@@ -15,7 +15,6 @@ import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenStore
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
-import javax.inject.Qualifier
 import javax.inject.Singleton
 import kotlin.random.Random
 
@@ -46,8 +45,7 @@ internal abstract class SimulationV2Module {
                             setAmount(modelAccessor.place(place), setting.initialTokens)
                         }
                     }
-                },
-                modelAccessor = modelAccessor
+                }
             )
         }
 
@@ -137,7 +135,7 @@ interface SimulationV2Component {
 
     fun model(): ModelAccessor
     fun ocnet(): OCNetStruct
-
+    fun tokenstore() : TokenStore
 
     @Component.Factory
     interface Factory {

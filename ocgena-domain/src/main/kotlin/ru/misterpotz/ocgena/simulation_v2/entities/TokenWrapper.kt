@@ -53,6 +53,12 @@ class TokenWrapper(
         allParticipatedTransitionEntries.add(transitionIndex)
     }
 
+
+
+    override fun toString(): String {
+        return "${tokenId}[${objectType.id}]"
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -60,16 +66,14 @@ class TokenWrapper(
         other as TokenWrapper
 
         if (tokenId != other.tokenId) return false
+        if (objectType != other.objectType) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = tokenId.hashCode()
+        result = 31 * result + objectType.hashCode()
         return result
-    }
-
-    override fun toString(): String {
-        return tokenId.toString()
     }
 }
