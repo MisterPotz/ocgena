@@ -16,6 +16,8 @@ val processedOpSet = mutableSetOf<String>().apply {
 }
 val closeBrack = ")"
 val openBrack = "("
+val openBrackReg = Regex("""\(""")
+val brackReg = Regex("""\([^()]*\)""")
 val brack = mutableSetOf("(", ")")
 val twoSideOp = mutableSetOf("+", "-", "*")
 val variableMatcher = Regex("""[a-zA-Z]+[\da-zA-Z]*""")

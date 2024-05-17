@@ -1,16 +1,9 @@
 package ru.misterpotz.expression.builder
 
-import ru.misterpotz.expression.NoBrackExprParser
-import ru.misterpotz.expression.NodeSpace
-import ru.misterpotz.expression.brack
-import ru.misterpotz.expression.closeBrack
+import ru.misterpotz.expression.*
 import ru.misterpotz.expression.error.UnrecognizedTokenError
 import ru.misterpotz.expression.node.MathNode
-import ru.misterpotz.expression.openBrack
 import ru.misterpotz.expression.parse.TokenDistinguisher
-import ru.misterpotz.expression.tokenOps
-import ru.misterpotz.expression.unminus
-import ru.misterpotz.expression.variableMatcher
 
 class TokenParseBuilder(tokens: List<String>) {
     private val tokens = mutableListOf<String>().apply { addAll(tokens) }
@@ -53,10 +46,10 @@ class TokenParseBuilder(tokens: List<String>) {
                 }
             }
         }
-        validateBracksClosed()
+        validateBracksAtLeastCancelEachOtherOut()
     }
 
-    private fun validateBracksClosed() {
+    private fun validateBracksAtLeastCancelEachOtherOut() {
         while (brackStack.size > 0) {
             val element = brackStack[0]
             if (element == closeBrack) throw java.lang.IllegalStateException()
@@ -103,12 +96,25 @@ class TokenParseBuilder(tokens: List<String>) {
         return noBrackExprParser.fullTransformAndGetNodeId()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
+    fun List<String>.findItem(item: String, from: Int = 0, lookForward: Boolean = true): Int {
+        val range = if (lookForward) {
+            from..<size
+        } else {
+            from.downTo(0)
+        }
+        for (i in range) {
+            if (this[i] == item) {
+                return i
+            }
+        }
+        return -1
+    }
+
     private fun findNextBrackRange(): IntRange? {
-        val closestOpenBrack = tokens.indexOf(openBrack)
-        val closesCloseBrack = tokens.indexOf(closeBrack)
-        if (closesCloseBrack == -1 || closestOpenBrack == -1) return null
-        return (closestOpenBrack + 1)..<closesCloseBrack
+        val closesCloseBrack = tokens.findItem(closeBrack)
+        val openBrackBefoerClosestCloseBrack = tokens.findItem(openBrack, from = closesCloseBrack, lookForward = false)
+        if (closesCloseBrack == -1 || openBrackBefoerClosestCloseBrack == -1) return null
+        return (openBrackBefoerClosestCloseBrack + 1)..<closesCloseBrack
     }
 
     private fun reduceAllBracks() {

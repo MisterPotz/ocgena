@@ -8,6 +8,10 @@ class VariableNode(val name : String) : MathNode {
         return parameterSpace[unpacked]
     }
 
+    override fun acceptVisitor(mathNodeVisitor: MathNodeVisitor) {
+        mathNodeVisitor.visitVariableNode(this)
+    }
+
     override fun toString(): String {
         return printExpr()
     }

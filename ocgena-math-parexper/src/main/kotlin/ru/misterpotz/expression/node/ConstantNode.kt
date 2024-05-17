@@ -7,6 +7,10 @@ class ConstantNode(val value: Double) : MathNode {
         return value
     }
 
+    override fun acceptVisitor(mathNodeVisitor: MathNodeVisitor) {
+        mathNodeVisitor.visitConstantNode(this)
+    }
+
     override fun toString(): String {
         return printExpr()
     }

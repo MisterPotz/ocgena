@@ -20,10 +20,17 @@ class NoBrackExprParser(
     }
 
     fun fullTransformAndGetNodeId() : String {
+        replaceStringValuesWithNodes()
         for (priority in opPriority.keys.sortedDescending()) {
             transformOpsWithPriority(priority)
         }
         return valueAndNodes.first()
+    }
+
+    private fun replaceStringValuesWithNodes() {
+        for (i in valueAndNodes.indices) {
+            valueAndNodes[i] = getOrCreateNodeAtValueIndex(i)
+        }
     }
 
     fun getValuesPointersForOp(opIndex: Int): Values? {

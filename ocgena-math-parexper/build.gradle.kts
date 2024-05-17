@@ -1,20 +1,17 @@
 plugins {
-    id("java")
-    kotlin("jvm")
+    kotlin("jvm") version "1.9.20"
+    `java-library`
 }
 
 group = "ru.misterpotz"
-version = "1.0-SNAPSHOT"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {
