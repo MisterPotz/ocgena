@@ -13,7 +13,7 @@ class EventsTable : Table("event") {
 class EventObjectsTable : Table("event_object") {
     val ocelEventId = text("ocel_event_id")
     val ocelObjectId = text("ocel_object_id")
-    val ocelObjectQualifier = text("ocel_qualifier")
+    val ocelObjectQualifier = text("ocel_qualifier").default("")
 
     override val primaryKey = PrimaryKey(ocelEventId, ocelObjectId, ocelObjectQualifier)
 }
@@ -63,7 +63,7 @@ class ObjectTypeMapTable : Table("object_map_type") {
 class ConcreteObjectTable(tableName: String) : Table(name = tableName) {
     val ocelObjectId = text("ocel_id")
     val ocelTime = text("ocel_time") // unix timestamp 1970-01-01 00:00:00 ISO 8601
-    val ocelChangedField = text("ocel_changed_field").nullable()
+    val ocelChangedField = text("ocel_changed_field").default("")
     // can be more attributes here
 
     override val primaryKey = PrimaryKey(ocelObjectId)

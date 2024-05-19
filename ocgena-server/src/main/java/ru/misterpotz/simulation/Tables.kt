@@ -29,8 +29,14 @@ object ObjectTypeTable : Table() {
 
 object SimulationStepsTable : LongIdTable(columnName = "stepNumber") {
     val clockIncrement = long("clockIncrement")
+    val totalClock = long("totalClock")
     val chosenTransition = varchar("chosenTransition", 10).nullable().default(null)
     val transitionDuration = long("transitionDuration").nullable()
+}
+
+object PlacesTable : Table() {
+    val placeId = text("placeId")
+    override val primaryKey: PrimaryKey = PrimaryKey(placeId)
 }
 
 object TransitionToLabelTable : Table() {

@@ -33,6 +33,7 @@ internal class SimulationLogSinkRepositoryImpl(
                         stepToFiringAmountsTable,
                         stepToFiringTokensTable,
                         transitionToLabel,
+                        placesTable
                     )
                     with(tablesProvider) {
                         ocNetStruct.objectTypeRegistry.types.forEach { objectType ->
@@ -46,6 +47,11 @@ internal class SimulationLogSinkRepositoryImpl(
                             transitionToLabel.insert {
                                 it[transitionId] = transition.id
                                 it[transitionLabel] = transition.label
+                            }
+                        }
+                        ocNetStruct.placeRegistry.places.forEach { place ->
+                            placesTable.insert {
+                                it[placeId] = place.id
                             }
                         }
                     }
@@ -92,6 +98,7 @@ internal class SimulationLogSinkRepositoryImpl(
             simulationStepsTable.batchInsert(batch) { simulationStepLog ->
                 this[simulationStepsTable.id] = simulationStepLog.stepNumber
                 this[SimulationStepsTable.clockIncrement] = simulationStepLog.clockIncrement
+                this[SimulationStepsTable.totalClock] = simulationStepLog.totalClock
                 val selectedFiredTranstion = simulationStepLog.selectedFiredTransition
                 if (selectedFiredTranstion != null) {
                     this[SimulationStepsTable.chosenTransition] = selectedFiredTranstion.transitionId

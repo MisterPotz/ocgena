@@ -2,18 +2,26 @@ package ru.misterpotz.simulation
 
 import ru.misterpotz.InAndOutPlacesColumnProducer
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
+import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 
 class TablesProvider(
-    ocNetStruct: OCNetStruct,
-    inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer
+    places: List<String> = emptyList(),
 ) {
-    private val placesTotal = ocNetStruct.placeRegistry.places.map { it.id }
+    private val inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer by lazy {
+        InAndOutPlacesColumnProducer(places)
+    }
+    private val placesTotal = places
 
     val stepToMarkingAmountsTable = StepToMarkingAmountsTable(placesTotal)
-    val stepToFiringAmountsTable = StepToFiringAmountsTable(columnNames = inAndOutPlacesColumnProducer.merged)
-    val stepToFiringTokensTable = StepToFiringTokensTable(columnNames = inAndOutPlacesColumnProducer.merged)
+    val stepToFiringAmountsTable by lazy {
+        StepToFiringAmountsTable(columnNames = inAndOutPlacesColumnProducer.merged)
+    }
+    val stepToFiringTokensTable by lazy {
+        StepToFiringTokensTable(columnNames = inAndOutPlacesColumnProducer.merged)
+    }
     val tokensTable = TokensTable
     val objectTypeTable = ObjectTypeTable
     val transitionToLabel: TransitionToLabelTable = TransitionToLabelTable
     val simulationStepsTable = SimulationStepsTable
+    val placesTable = PlacesTable
 }

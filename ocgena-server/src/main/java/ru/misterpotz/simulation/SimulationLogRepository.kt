@@ -9,8 +9,3 @@ interface SimulationLogRepository {
     suspend fun getAllTokens() : List<ObjectTokenMeta>
     suspend fun close()
 }
-
-interface SimulationLogReadRepository{
-    suspend fun readBatch(steps : LongRange) : List<SimulationDBStepLog>
-    suspend fun totalSteps() : Long
-}

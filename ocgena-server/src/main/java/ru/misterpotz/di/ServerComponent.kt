@@ -1,6 +1,5 @@
 package ru.misterpotz.di
 
-import dagger.Binds
 import dagger.Component
 import dagger.Module
 import dagger.Provides
@@ -9,18 +8,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.serialization.modules.SerializersModule
-import ru.misterpotz.db.DBConnectionSetupper
-import ru.misterpotz.db.DBConnectionSetupperImpl
 import ru.misterpotz.ocgena.di.DomainComponent
 import javax.inject.Scope
 import kotlin.coroutines.CoroutineContext
 
 @Module
 abstract class ServerModule {
-    @Binds
-    @ServerScope
-    abstract fun bindDBConnectionSetupper(dbConnectionSetupperImpl: DBConnectionSetupperImpl): DBConnectionSetupper
-
     companion object {
         @Provides
         @ServerScope

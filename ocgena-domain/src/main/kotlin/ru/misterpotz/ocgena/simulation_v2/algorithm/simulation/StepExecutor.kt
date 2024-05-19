@@ -92,6 +92,7 @@ class StepExecutor(
 
     var logBuilder: LogBuilder = LogBuilder()
     private var stepNumber: Long = 0
+    private var totalClock: Long = 0L
 
     suspend fun execute(): SimulationStepLog? {
         logBuilder = LogBuilder()
@@ -109,6 +110,8 @@ class StepExecutor(
             val shiftTimes = determineShiftTimes(enabledByMarkign) ?: return@sstep true
 
             val shiftTime = selectShiftTime(shiftTimes)
+            totalClock += shiftTime
+            logBuilder.recordTotalClock(totalClock)
             enabledByMarkign.forEach { t -> t.timer.incrementCounter(shiftTime) }
             logBuilder.recordClockIncrement(shiftTime)
             false

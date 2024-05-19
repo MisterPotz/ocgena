@@ -54,6 +54,27 @@ class IntegratedSimulationTest {
         }
     }
 
+    val path = Path("testing_output", "integration.db")
+    val simulationRequest = run {
+        val model = build3Tran4InpExample()
+        val simulationinput = SimulationInput(
+            places = mapOf(
+                "input1" to PlaceSetting(initialTokens = 3),
+                "input2" to PlaceSetting(initialTokens = 3),
+                "input3" to PlaceSetting(initialTokens = 3),
+                "input4" to PlaceSetting(initialTokens = 3)
+            ),
+            transitions = mapOf(
+                "t1" to TransitionSetting(
+                    eftLft = Interval(50..100)
+                ),
+            ),
+            randomSeed = 42,
+            loggingEnabled = true
+        )
+        SimulateRequest(outputDatabasePath = path.toString(), simInput = simulationinput, model = model)
+    }
+
     @Test
     fun integrationTestSimulationRun() = testApplication {
         application {
@@ -61,42 +82,15 @@ class IntegratedSimulationTest {
             configureSerialization()
             configureMonitoring()
         }
-        val path = Path("testing_output", "integration.db")
-        path.deleteIfExists()
-
         val client = createClient {
             install(ContentNegotiation) {
-                json(Json {
-                    classDiscriminator = "type"
-                    prettyPrint = true
-                    encodeDefaults = false
-                    isLenient = true
-                    ignoreUnknownKeys = true
-                    this.serializersModule = ServiceProvider.domainComponent.serializersModule()
-                })
+                json(ServiceProvider.serverComponent.json)
             }
         }
-
+        path.deleteIfExists()
         val post = client.post("start_simulate") {
             contentType(ContentType.Application.Json)
-
-            val model = build3Tran4InpExample()
-            val simulationinput = SimulationInput(
-                places = mapOf(
-                    "input1" to PlaceSetting(initialTokens = 3),
-                    "input2" to PlaceSetting(initialTokens = 3),
-                    "input3" to PlaceSetting(initialTokens = 3),
-                    "input4" to PlaceSetting(initialTokens = 3)
-                ),
-                transitions = mapOf(
-                    "t1" to TransitionSetting(
-                        eftLft = Interval(50..100)
-                    ),
-                ),
-                randomSeed = 42,
-                loggingEnabled = true
-            )
-            setBody(SimulateRequest(outputDatabasePath = path.toString(), simInput = simulationinput, model = model))
+            setBody(simulationRequest)
         }
 
         assertEquals(post.status, HttpStatusCode.OK)
@@ -107,5 +101,35 @@ class IntegratedSimulationTest {
         }
 
         assertTrue(path.exists())
+    }
+
+    @Test
+    fun integrationOcelParsingOnGeneratedTable() {
+        testApplication {
+            application {
+                configureRouting()
+                configureSerialization()
+                configureMonitoring()
+            }
+            val client = createClient {
+                install(ContentNegotiation) {
+                    json(ServiceProvider.serverComponent.json)
+                }
+            }
+            path.deleteIfExists()
+            val post = client.post("start_simulate") {
+                contentType(ContentType.Application.Json)
+                setBody(simulationRequest)
+            }
+            assertEquals(post.status, HttpStatusCode.OK)
+            val handle = post.body<SimulateResponse>()
+            while (client.get("simulate_res/${handle.handle}").body<SimulatResResponse>().isInProgress) {
+                delay(200)
+            }
+            assertTrue(path.exists())
+
+            val ocelGeneration = client.post("ocel_generate")
+
+        }
     }
 }

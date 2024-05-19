@@ -39,8 +39,7 @@ internal abstract class ServerSimulationModule {
         @Provides
         @ServerSimulationScope
         fun serverSimulationInteractor(
-            factory: ServerSimulationInteractor.Factory,
-            simulation: SimulationV2Component
+            factory: ServerSimulationInteractor.Factory
         ): ServerSimulationInteractor {
             return factory.created!!
         }
@@ -72,9 +71,8 @@ internal abstract class ServerSimulationModule {
         @StringKey(SIM_DB)
         fun provideConnection(
             serverSimulationConfig: SimulateArguments,
-            dbConnectionSetupper: DBConnectionSetupper
         ): DBConnectionSetupper.Connection {
-            return dbConnectionSetupper.createConnection(serverSimulationConfig.outputPath!!)
+            return DBConnectionSetupper.createConnection(serverSimulationConfig.outputPath!!)
         }
 
         @Provides
@@ -82,18 +80,16 @@ internal abstract class ServerSimulationModule {
         fun provideInAndOutPlaces(
             simulateArguments: SimulateArguments,
         ): InAndOutPlacesColumnProducer {
-            return InAndOutPlacesColumnProducer(simulateArguments.simulateRequest.model)
+            return InAndOutPlacesColumnProducer(simulateArguments.simulateRequest.model.placeRegistry.places.map { it.id })
         }
 
         @Provides
         @ServerSimulationScope
         fun provideTableProvider(
             simulateArguments: SimulateArguments,
-            inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer
         ): TablesProvider {
             return TablesProvider(
-                simulateArguments.simulateRequest.model,
-                inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer
+                simulateArguments.simulateRequest.model.placeRegistry.places.map { it.id },
             )
         }
 
@@ -104,7 +100,6 @@ internal abstract class ServerSimulationModule {
             tablesProvider: TablesProvider,
             simulateArguments: SimulateArguments,
             inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
-            tokenSerializer: TokenSerializer
         ): SimulationLogRepository {
             val connection = dbConnections.getSimDB()
             return SimulationLogSinkRepositoryImpl(
@@ -112,7 +107,7 @@ internal abstract class ServerSimulationModule {
                 tablesProvider = tablesProvider,
                 ocNetStruct = simulateArguments.simulateRequest.model,
                 inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer,
-                tokenSerializer = tokenSerializer
+                tokenSerializer = TokenSerializer
             )
         }
 
@@ -136,8 +131,6 @@ internal abstract class ServerSimulationModule {
 interface ServerSimulationComponentDependencies {
     val json: Json
     val yaml: Yaml
-
-    fun dbConnectionSetupper(): DBConnectionSetupper
 }
 
 class SimulationDestroyer(
