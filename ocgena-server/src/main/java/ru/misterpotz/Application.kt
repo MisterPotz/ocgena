@@ -1,23 +1,14 @@
 package ru.misterpotz
 
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.netty.*
+import ru.misterpotz.di.ServerComponent
+import ru.misterpotz.ocgena.di.DomainComponent
 import ru.misterpotz.plugins.configureMonitoring
 import ru.misterpotz.plugins.configureRouting
 import ru.misterpotz.plugins.configureSerialization
 import ru.misterpotz.plugins.configureSockets
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
-import ru.misterpotz.di.*
-import ru.misterpotz.di.ServerSimulationComponent
-import ru.misterpotz.ocgena.di.DomainComponent
-import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.simulation_old.di.SimulationComponent
-import ru.misterpotz.ocgena.simulation_old.semantics.SimulationSemanticsType
-import ru.misterpotz.ocgena.testing.buildConfig
-import ru.misterpotz.ocgena.testing.buildOCNet
-import ru.misterpotz.ocgena.testing.buildingBlockTwoInTwoOutMiddle
-import ru.misterpotz.ocgena.testing.installOnto
-import kotlin.io.path.Path
 
 object ServiceProvider {
     val domainComponent by lazy {

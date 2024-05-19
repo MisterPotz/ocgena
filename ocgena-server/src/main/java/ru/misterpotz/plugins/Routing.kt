@@ -5,14 +5,9 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ServiceProvider
 import ru.misterpotz.di.ServerSimulationComponent
-import ru.misterpotz.di.SimulationCompletionResult
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import java.nio.file.Path
@@ -58,7 +53,7 @@ suspend fun startSimulation(simulateArguments: SimulateArguments): Long {
             simulateArguments,
             serverComponent
         )
-    return serverComponent.tasksRegistry().launch(serverSimulationComponent)
+    return serverComponent.tasksRegistry().launch(serverSimulationComponent).getOrThrow()
 }
 
 data class SimulateArguments(
@@ -68,7 +63,7 @@ data class SimulateArguments(
 
 @Serializable
 data class SimulatResResponse(
-    val isFinished: Boolean,
+    val isSuccess: Boolean,
     val isError: Boolean,
     val isInProgress: Boolean
 )
@@ -93,7 +88,7 @@ fun Application.configureRouting() {
             return@get call.respond(
                 HttpStatusCode.OK,
                 SimulatResResponse(
-                    isFinished = result?.isOk ?: false,
+                    isSuccess = result?.isOk ?: false,
                     isError = result?.isOk?.not() ?: false,
                     isInProgress = result == null
                 )

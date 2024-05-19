@@ -3,8 +3,6 @@ package ru.misterpotz
 import ru.misterpotz.simulation.SimulationLogRepository
 import javax.inject.Inject
 
-
-
 class DBLoggerImpl @Inject constructor(
     private val simulationLogRepository: SimulationLogRepository,
 ) : Logger {

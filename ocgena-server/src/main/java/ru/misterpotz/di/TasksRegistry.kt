@@ -20,7 +20,20 @@ class TasksRegistry(val scope: CoroutineScope) {
         }
     }
 
-    suspend fun launch(serverSimulationComponent: ServerSimulationComponent): Long {
+    suspend fun launch(serverSimulationComponent: ServerSimulationComponent): Result<Long> {
+        val component = runCatching {
+            serverSimulationComponent.simulationV2Component()
+        }
+        if (component.isFailure) {
+            return component.map { -1 }
+        }
+        val simulation = runCatching {
+            component.getOrThrow().simulation()
+        }
+        if (simulation.isFailure) {
+            return simulation.map { -1 }
+        }
+
         val newIndex = mutex.withLock {
             indexIssuer++
         }
@@ -31,7 +44,7 @@ class TasksRegistry(val scope: CoroutineScope) {
 
         scope.launch {
             flow<Unit> {
-                serverSimulationComponent.simulationV2Component().simulation().runSimulation()
+                simulation.getOrThrow().runSimulation()
             }.onCompletion {
                 mutex.withLock {
                     simulationsRegistry.remove(newIndex)
@@ -40,7 +53,7 @@ class TasksRegistry(val scope: CoroutineScope) {
             }.collect()
         }
 
-        return newIndex
+        return Result.success(newIndex)
     }
 
     suspend fun interruptSimulationAndRemove(handle: Long) {

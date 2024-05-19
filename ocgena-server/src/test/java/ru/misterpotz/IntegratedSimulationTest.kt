@@ -31,10 +31,10 @@ class IntegratedSimulationTest {
         val model = build3Tran4InpExample()
         val simulationinput = SimulationInput(
             places = mapOf(
-                "input1" to PlaceSetting(initialTokens = 10),
-                "input2" to PlaceSetting(initialTokens = 20),
-                "input3" to PlaceSetting(initialTokens = 14),
-                "input4" to PlaceSetting(initialTokens = 16)
+                "input1" to PlaceSetting(initialTokens = 3),
+                "input2" to PlaceSetting(initialTokens = 3),
+                "input3" to PlaceSetting(initialTokens = 3),
+                "input4" to PlaceSetting(initialTokens = 3)
             ),
             transitions = mapOf(
                 "t1" to TransitionSetting(
@@ -47,8 +47,9 @@ class IntegratedSimulationTest {
         val request = SimulateRequest(outputDatabasePath = path.toString(), simInput = simulationinput, model = model)
 
         Json { serializersModule = ServiceProvider.serverComponent.serializersModule() }.encodeToString(
-            simulationinput
+            request
         ).let {
+            println(it)
             assertTrue { it.isNotEmpty() }
         }
     }
