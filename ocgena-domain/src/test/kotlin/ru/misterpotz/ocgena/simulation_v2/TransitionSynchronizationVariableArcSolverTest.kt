@@ -11,6 +11,7 @@ import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
+import ru.misterpotz.ocgena.writeOrAssertYaml
 import kotlin.random.Random
 
 fun buildAalstArcModel() = buildOCNet {

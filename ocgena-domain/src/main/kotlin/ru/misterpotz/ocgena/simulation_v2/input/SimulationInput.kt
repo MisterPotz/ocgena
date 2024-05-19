@@ -16,6 +16,7 @@ data class SimulationInput(
     @SerialName("default_transition_eft_lft")
     val defaultEftLft: Interval? = null,
     @SerialName("default_token_gen_interval")
+    @Deprecated("was used in first version of simulator")
     val defaultTokenGenerationInterval: Interval? = null,
     @SerialName("seed")
     val randomSeed: Int? = null,
@@ -27,7 +28,9 @@ data class SimulationInput(
 data class PlaceSetting(
     val label: String? = null,
     @SerialName("initial_tokens_amount") val initialTokens: Int? = null,
+    @Deprecated("was used in first version of simulator")
     @SerialName("generation_interval") val generationInterval: Interval? = null,
+    @Deprecated("was used in first version")
     @SerialName("generate_tokens_target") val generateTokensTarget: Int? = null
 )
 

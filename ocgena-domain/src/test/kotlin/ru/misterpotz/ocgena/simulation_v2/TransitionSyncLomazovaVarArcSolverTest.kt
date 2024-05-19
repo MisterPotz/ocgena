@@ -2,7 +2,9 @@ package ru.misterpotz.ocgena.simulation_v2
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.SerializationMode
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
+import ru.misterpotz.ocgena.resPath
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
@@ -12,6 +14,9 @@ import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
 import ru.misterpotz.ocgena.simulation_v2.utils.NoOpLogger
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
+import ru.misterpotz.ocgena.writeOrAssertYaml
+import kotlin.io.path.Path
+import kotlin.io.path.div
 import kotlin.random.Random
 
 fun buildSynchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {
@@ -135,6 +140,13 @@ class TransitionSyncLomazovaVarArcSolverTest {
             )
         )
     )
+
+    @Test
+    fun serializationTest() {
+
+        val model = buildSynchronizingLomazovaExampleModel()
+        writeOrAssertYaml(model, path = Path("ocnet_lomazova_1.yaml"), SerializationMode.WRITE)
+    }
 
     @Test
     fun print() {

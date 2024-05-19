@@ -1,0 +1,215 @@
+object_types:
+  per_object_type_id:
+    "△1":
+      label: "△1"
+    "△2":
+      label: "△2"
+    "△3":
+      label: "△3"
+    "△4":
+      label: "△4"
+place_types:
+  per_place:
+    "order": "INPUT"
+    "package": "INPUT"
+    "track": "INPUT"
+    "o2": "NORMAL"
+    "p2": "NORMAL"
+    "p3": "NORMAL"
+    "t2": "NORMAL"
+    "bill": "INPUT"
+    "b2": "NORMAL"
+    "o3": "NORMAL"
+    "output": "OUTPUT"
+place_object_types:
+  default: "△0"
+  per_place:
+    "order": "△1"
+    "package": "△2"
+    "track": "△3"
+    "o2": "△1"
+    "p2": "△2"
+    "p3": "△2"
+    "t2": "△3"
+    "bill": "△4"
+    "b2": "△4"
+    "o3": "△1"
+    "output": "△1"
+petri_atoms:
+  per_id:
+    "order":
+      type: "place"
+      id: "order"
+      label: "order"
+      to_transtns: ["place_order"]
+    "package":
+      type: "place"
+      id: "package"
+      label: "package"
+      to_transtns: ["place_order"]
+    "track":
+      type: "place"
+      id: "track"
+      label: "track"
+      to_transtns: ["arrange_packages_to_tracks"]
+    "place_order":
+      type: "transition"
+      id: "place_order"
+      label: "place_order"
+      from_places: ["order", "package"]
+      to_places: ["o2", "p2"]
+    "order.place_order":
+      type: "arc"
+      id: "order.place_order"
+    "package.place_order":
+      type: "vararc"
+      id: "package.place_order"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "m"
+    "o2":
+      type: "place"
+      id: "o2"
+      label: "o2"
+      from_transtns: ["place_order"]
+      to_transtns: ["send_invoices"]
+    "place_order.o2":
+      type: "arc"
+      id: "place_order.o2"
+    "p2":
+      type: "place"
+      id: "p2"
+      label: "p2"
+      from_transtns: ["place_order"]
+      to_transtns: ["arrange_packages_to_tracks"]
+    "place_order.p2":
+      type: "vararc"
+      id: "place_order.p2"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "m"
+    "arrange_packages_to_tracks":
+      type: "transition"
+      id: "arrange_packages_to_tracks"
+      label: "arrange_packages_to_tracks"
+      from_places: ["p2", "track"]
+      to_places: ["p3", "t2"]
+    "p2.arrange_packages_to_tracks":
+      type: "vararc"
+      id: "p2.arrange_packages_to_tracks"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "2*n"
+    "track.arrange_packages_to_tracks":
+      type: "vararc"
+      id: "track.arrange_packages_to_tracks"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "n"
+    "p3":
+      type: "place"
+      id: "p3"
+      label: "p3"
+      from_transtns: ["arrange_packages_to_tracks"]
+      to_transtns: ["test_all_sync"]
+    "arrange_packages_to_tracks.p3":
+      type: "vararc"
+      id: "arrange_packages_to_tracks.p3"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "2*n"
+    "t2":
+      type: "place"
+      id: "t2"
+      label: "t2"
+      from_transtns: ["arrange_packages_to_tracks"]
+      to_transtns: ["test_all_sync"]
+    "arrange_packages_to_tracks.t2":
+      type: "vararc"
+      id: "arrange_packages_to_tracks.t2"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "n"
+    "bill":
+      type: "place"
+      id: "bill"
+      label: "bill"
+      to_transtns: ["send_invoices"]
+    "send_invoices":
+      type: "transition"
+      id: "send_invoices"
+      label: "send_invoices"
+      from_places: ["bill", "o2"]
+      to_places: ["b2", "o3"]
+    "bill.send_invoices":
+      type: "vararc"
+      id: "bill.send_invoices"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "k"
+    "b2":
+      type: "place"
+      id: "b2"
+      label: "b2"
+      from_transtns: ["send_invoices"]
+      to_transtns: ["test_all_sync"]
+    "send_invoices.b2":
+      type: "vararc"
+      id: "send_invoices.b2"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "k"
+    "o2.send_invoices":
+      type: "arc"
+      id: "o2.send_invoices"
+    "o3":
+      type: "place"
+      id: "o3"
+      label: "o3"
+      from_transtns: ["send_invoices"]
+      to_transtns: ["test_all_sync"]
+    "send_invoices.o3":
+      type: "arc"
+      id: "send_invoices.o3"
+    "test_all_sync":
+      type: "transition"
+      id: "test_all_sync"
+      label: "test_all_sync"
+      from_places: ["o3", "b2", "p3", "t2"]
+      to_places: ["output"]
+    "o3.test_all_sync":
+      type: "vararc"
+      id: "o3.test_all_sync"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "o"
+    "b2.test_all_sync":
+      type: "vararc"
+      id: "b2.test_all_sync"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "2*o"
+    "p3.test_all_sync":
+      type: "vararc"
+      id: "p3.test_all_sync"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "2*o"
+    "t2.test_all_sync":
+      type: "vararc"
+      id: "t2.test_all_sync"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "t"
+    "output":
+      type: "place"
+      id: "output"
+      label: "output"
+      from_transtns: ["test_all_sync"]
+    "test_all_sync.output":
+      type: "vararc"
+      id: "test_all_sync.output"
+      arcMeta:
+        type: "lomazova"
+        math_exp: "o"
+oc_net_type: "lomazova"

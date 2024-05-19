@@ -180,7 +180,7 @@ class ConsistencyCheckPetriAtomVisitorDFS(
                         val outputArc = transition.id.arcTo(outputPlaceId)
                         val arcsOfSameType = inputArc.isSameArcType(outputArc)
 
-                        if (!arcsOfSameType) {
+                        if (!arcsOfSameType && ocNet == OcNetType.AALST) {
                             recInconsistency(
                                 ConsistencyCheckError.InconsistentVariabilityArcs(
                                     transition = transition.id,

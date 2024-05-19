@@ -6,4 +6,3 @@ enum class SerializationMode {
 }
 
 val DEFAULT_SERIALIZATION_TEST_MODE = SerializationMode.READ
-
