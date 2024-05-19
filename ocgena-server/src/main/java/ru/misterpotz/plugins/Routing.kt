@@ -8,6 +8,9 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import ru.misterpotz.ServiceProvider
 import ru.misterpotz.di.ServerSimulationComponent
+import ru.misterpotz.di.SimulationToLogConversionComponent
+import ru.misterpotz.di.SimulationToLogConversionParams
+import ru.misterpotz.di.TasksRegistry
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import java.nio.file.Path
@@ -53,7 +56,51 @@ suspend fun startSimulation(simulateArguments: SimulateArguments): Long {
             simulateArguments,
             serverComponent
         )
-    return serverComponent.tasksRegistry().launch(serverSimulationComponent).getOrThrow()
+
+
+    val task = TasksRegistry.Task(
+        runCatching {
+            serverSimulationComponent.simulationV2Component()
+            serverSimulationComponent
+        }.map {
+            it.simulationV2Component().simulation()
+            it
+        }.map {
+            object : TasksRegistry.Work {
+                override suspend fun run() {
+                    it.simulationV2Component().simulation().runSimulation()
+                }
+
+                override suspend fun destroy() {
+                    it.destroyer().destroy()
+                }
+            }
+        }
+    )
+    return serverComponent.tasksRegistry().launch(task).getOrThrow()
+}
+
+suspend fun startOcelGeneration(ocelRequest: SimulationToLogConversionParams): Long {
+    val simulationToLogConversionComponent = SimulationToLogConversionComponent.create(ocelRequest)
+
+    val task = TasksRegistry.Task(
+        runCatching {
+            simulationToLogConversionComponent.converter()
+            simulationToLogConversionComponent
+        }.map {
+            object : TasksRegistry.Work {
+                override suspend fun run() {
+                    simulationToLogConversionComponent.converter().convert()
+                }
+
+                override suspend fun destroy() {
+                    //
+                }
+            }
+        }
+    )
+    return ServiceProvider.serverComponent.tasksRegistry().launch(task).getOrThrow()
+
 }
 
 data class SimulateArguments(
@@ -62,15 +109,24 @@ data class SimulateArguments(
 )
 
 @Serializable
-data class SimulatResResponse(
+data class ResultResponse(
     val isSuccess: Boolean,
     val isError: Boolean,
     val isInProgress: Boolean
 )
 
+@Serializable
+data class MakeOcelRequest(
+    val simulationPath: String,
+    val ocelPath: String
+) {
+    fun toParams(): SimulationToLogConversionParams {
+        return SimulationToLogConversionParams(Path(simulationPath), Path(ocelPath))
+    }
+}
+
 // simulate use case (the path to db, the sim config (serialized), the model (serialized).
 // generate ocel use case
-//
 fun Application.configureRouting() {
     routing {
         get("/") {
@@ -83,11 +139,25 @@ fun Application.configureRouting() {
         get("simulate_res/{id}") {
             val handle = call.parameters["id"]!!.toLong()
             val server = ServiceProvider.serverComponent
-            val result = server.tasksRegistry().getSimulationResult(handle)
+            val result = server.tasksRegistry().getTaskResult(handle)
 
             return@get call.respond(
                 HttpStatusCode.OK,
-                SimulatResResponse(
+                ResultResponse(
+                    isSuccess = result?.isOk ?: false,
+                    isError = result?.isOk?.not() ?: false,
+                    isInProgress = result == null
+                )
+            )
+        }
+        get("ocel_res/{id}") {
+            val handle = call.parameters["id"]!!.toLong()
+            val server = ServiceProvider.serverComponent
+            val result = server.tasksRegistry().getTaskResult(handle)
+
+            return@get call.respond(
+                HttpStatusCode.OK,
+                ResultResponse(
                     isSuccess = result?.isOk ?: false,
                     isError = result?.isOk?.not() ?: false,
                     isInProgress = result == null
@@ -116,13 +186,21 @@ fun Application.configureRouting() {
 
             return@post call.respond(HttpStatusCode.OK, message = SimulateResponse(handle = handle.getOrThrow()))
         }
-        get("ocel") {
-            val path = Path("data", "data.db")
+        post("make_ocel") {
+            val request = call.receive<MakeOcelRequest>()
+
+            val path = Path(request.simulationPath)
             if (path.notExists()) {
-                call.respond("simulation log does not exist")
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    "simulation log does not exist at given path $path"
+                )
             }
 
-            call.respond("getting at $")
+            val handle = runCatching {
+                startOcelGeneration(request.toParams())
+            }
+            return@post call.respond(HttpStatusCode.OK, message = SimulateResponse(handle = handle.getOrThrow()))
         }
     }
 }

@@ -96,7 +96,7 @@ class IntegratedSimulationTest {
         assertEquals(post.status, HttpStatusCode.OK)
         val handle = post.body<SimulateResponse>()
 
-        while (client.get("simulate_res/${handle.handle}").body<SimulatResResponse>().isInProgress) {
+        while (client.get("simulate_res/${handle.handle}").body<ResultResponse>().isInProgress) {
             delay(200)
         }
 
@@ -123,13 +123,20 @@ class IntegratedSimulationTest {
             }
             assertEquals(post.status, HttpStatusCode.OK)
             val handle = post.body<SimulateResponse>()
-            while (client.get("simulate_res/${handle.handle}").body<SimulatResResponse>().isInProgress) {
+            while (client.get("simulate_res/${handle.handle}").body<ResultResponse>().isInProgress) {
                 delay(200)
             }
             assertTrue(path.exists())
 
-            val ocelGeneration = client.post("ocel_generate")
+            val ocelGeneration = client.post("make_ocel") {
+                contentType(ContentType.Application.Json)
+                setBody(MakeOcelRequest("testing_output/integration.db", "testing_output/ocel_gen_integration.db"))
+            }
+            val ocelHandle = ocelGeneration.body<SimulateResponse>().handle
 
+            while (client.get("ocel_res/${ocelHandle}").body<ResultResponse>().isInProgress) {
+                delay(200)
+            }
         }
     }
 }

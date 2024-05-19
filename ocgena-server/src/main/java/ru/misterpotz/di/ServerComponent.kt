@@ -17,8 +17,8 @@ abstract class ServerModule {
     companion object {
         @Provides
         @ServerScope
-        fun provideTasksRegistry(coroutineScope: CoroutineScope): TasksRegistry {
-            return TasksRegistry(scope = coroutineScope)
+        fun provideTasksRegistry(coroutineScope: CoroutineScope): SimulationTasksRegistry {
+            return SimulationTasksRegistry(scope = coroutineScope)
         }
 
         @Provides
@@ -33,6 +33,12 @@ abstract class ServerModule {
             return object : CoroutineScope {
                 override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
             }
+        }
+
+        @Provides
+        @ServerScope
+        fun provideTaskRegistry(coroutineScope: CoroutineScope) : TasksRegistry {
+            return TasksRegistry(coroutineScope)
         }
     }
 }
