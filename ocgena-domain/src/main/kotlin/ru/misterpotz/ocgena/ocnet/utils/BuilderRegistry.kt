@@ -3,10 +3,7 @@ package ru.misterpotz.ocgena.ocnet.utils
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.registries.ArcsRegistry
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtomId
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.LomazovaVariableArcMeta
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.*
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcArrowId
@@ -166,7 +163,7 @@ internal class BuilderRegistry(useSpecialSymbolsInNaming: Boolean, ocNetType: Oc
                             }
                         )
 
-                        NORMAL -> NormalArc(id = it.id, multiplicity = it.multiplicity)
+                        NORMAL -> NormalArc(id = it.id, NormalArcMeta(multiplicity = it.multiplicity))
                     }
                 }
 

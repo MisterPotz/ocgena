@@ -11,6 +11,7 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.Arc
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 
 @Serializable
+@SerialName("lomazova")
 data class LomazovaVariableArcMeta(
     @SerialName("math_exp")
     val mathExpression: String,
@@ -37,6 +38,7 @@ data class LomazovaVariableArcMeta(
 }
 
 @Serializable
+@SerialName("aalst")
 data object AalstVariableArcMeta : ArcMeta {
     override fun toString(): String {
         return "v/a"

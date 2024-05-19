@@ -83,7 +83,7 @@ petri_atoms:
       type: "vararc"
       id: "o1.t3"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "o2":
       type: "place"
       id: "o2"
@@ -93,9 +93,10 @@ petri_atoms:
       type: "vararc"
       id: "t3.o2"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "t3.p3":
       type: "arc"
       id: "t3.p3"
-      multiplicity: 0
+      arcMeta:
+        multiplicity: 0
 oc_net_type: "aalst"

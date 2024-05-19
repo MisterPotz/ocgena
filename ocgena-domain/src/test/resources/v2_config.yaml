@@ -1,0 +1,9 @@
+places:
+  "p1":
+    initial_tokens_amount: 5
+transitions:
+  "t1":
+    eft_lft: [5, 10]
+    synchronizedArcGroups: [{sync_transition: "t2", arcs_from: ["p1", "p2"]}]
+seed: 42
+logging: true

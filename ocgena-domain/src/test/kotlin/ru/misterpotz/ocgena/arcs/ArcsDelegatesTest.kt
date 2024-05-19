@@ -3,6 +3,7 @@ package ru.misterpotz.ocgena.arcs
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArcMeta
 import ru.misterpotz.ocgena.ocnet.primitives.ext.arcIdTo
 import ru.misterpotz.ocgena.ocnet.utils.makeObjTypeId
 import ru.misterpotz.ocgena.registries.typea.ArcToMultiplicityNormalDelegateTypeA
@@ -33,7 +34,7 @@ class ArcsDelegatesTest {
         )
 
         val multiplicityDynamic = arcToMultiplicityNormalDelegateTypeA.transitionInputMultiplicityDynamic(
-            NormalArc(id = "p1".arcIdTo("t"), multiplicity = 1)
+            NormalArc(id = "p1".arcIdTo("t"), NormalArcMeta(multiplicity = 1))
         )
         Assertions.assertTrue(multiplicityDynamic.inputPlaceHasEnoughTokens(bunch.tokenAmountStorage))
         Assertions.assertTrue(multiplicityDynamic.requiredTokenAmount(bunch.tokenAmountStorage) == 1)

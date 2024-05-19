@@ -11,8 +11,11 @@ import ru.misterpotz.ocgena.ocnet.primitives.atoms.ArcType
 @SerialName("arc")
 data class NormalArc(
     override val id: String,
-    val multiplicity: Int = 1,
+    override val arcMeta: NormalArcMeta = NormalArcMeta(1)
 ) : Arc() {
+    val multiplicity: Int
+        get() = arcMeta.multiplicity
+
     override val arcType: ArcType
         get() = ArcType.NORMAL
 
@@ -20,8 +23,6 @@ data class NormalArc(
         return other is NormalArc
     }
 
-    @Transient
-    override val arcMeta: ArcMeta = NormalArcMeta(multiplicity)
 
     override fun isSameType(other: PetriAtom): Boolean {
         return other is NormalArc
