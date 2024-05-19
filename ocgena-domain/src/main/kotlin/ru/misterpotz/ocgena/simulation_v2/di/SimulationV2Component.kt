@@ -59,7 +59,7 @@ internal abstract class SimulationV2Module {
         @Singleton
         fun providesStepExecutor(
             modelAccessor: ModelAccessor,
-            interactor: SimulationV2InteractorWrapper,
+            interactor: SimulationV2Interactor,
             tokenStore: TokenStore,
             shuffler: Shuffler,
         ): StepExecutor {
@@ -77,8 +77,8 @@ internal abstract class SimulationV2Module {
         @Singleton
         fun providesSimulationV2Interactor(
             shuffler: Shuffler,
-            simulationV2Interactor: SimulationV2Interactor?,
-        ): SimulationV2InteractorWrapper {
+            simulationV2Interactor: SimulationV2Interactor.Factory?,
+        ): SimulationV2Interactor {
             return SimulationV2InteractorWrapper(shuffler = shuffler, simulationV2Interactor)
         }
 
@@ -86,61 +86,83 @@ internal abstract class SimulationV2Module {
         @Singleton
         fun simulation(
             simulationInput: SimulationInput,
-            modelAccessor: ModelAccessor,
-            tokenStore: TokenStore,
             stepExecutor: StepExecutor,
+            finishRequester: SimulationV2Interactor,
             logger: Logger,
         ): Simulation {
             return Simulation(
                 simulationInput = simulationInput,
                 stepExecutor = stepExecutor,
-                logger = logger
+                logger = logger,
+                finishRequestChecker = finishRequester
             )
+        }
+
+        @Provides
+        @Singleton
+        fun provideFinishRequester(simulationV2Interactor: SimulationV2Interactor): FinishRequestChecker {
+            return simulationV2Interactor
         }
     }
 }
 
-interface SimulationV2Interactor : ShiftTimeSelector, TransitionSelector, TransitionSolutionSelector
-
-class
-
-internal
+interface SimulationV2Interactor : ShiftTimeSelector, TransitionSelector, FinishRequestChecker {
+    interface Factory {
+        fun create(defaultBehavior: SimulationV2Interactor): SimulationV2Interactor
+    }
+}
 
 class SimulationV2InteractorWrapper(
     val shuffler: Shuffler,
-    private val externalsimulationV2Interactor: SimulationV2Interactor?
+    externalsimulationV2Interactor: SimulationV2Interactor.Factory?
 ) : SimulationV2Interactor {
+    private val defaultBehavior = object : SimulationV2Interactor {
+        override suspend fun get(timeRange: LongRange): Long {
+            return shuffler.select(timeRange)
+        }
+
+        override suspend fun get(transitions: Transitions): TransitionWrapper {
+            return shuffler.select(transitions.indices).let {
+                transitions[it]
+            }
+        }
+
+        override suspend fun isFinish(): Boolean {
+            return false
+        }
+    }
+    private val simulationV2Interactor = externalsimulationV2Interactor?.create(defaultBehavior)
+
     override suspend fun get(timeRange: LongRange): Long {
-        return externalsimulationV2Interactor?.get(timeRange) ?: shuffler.select(timeRange)
+        return (simulationV2Interactor ?: defaultBehavior).get(timeRange)
     }
 
     override suspend fun get(transitions: Transitions): TransitionWrapper {
-        return externalsimulationV2Interactor?.get(transitions) ?: shuffler.select(transitions.indices).let {
-            transitions[it]
-        }
+        return (simulationV2Interactor ?: defaultBehavior).get(transitions)
     }
 
-    override suspend fun get(solutionMeta: TransitionSolutionSelector.Meta): Int {
-        throw NotImplementedError()
+    override suspend fun isFinish(): Boolean {
+        return (simulationV2Interactor ?: defaultBehavior).isFinish()
     }
 }
 
-@Component(modules = [SimulationV2Module::class])
+@Component(
+    modules = [SimulationV2Module::class]
+)
 @Singleton
 interface SimulationV2Component {
     fun stepExecutor(): StepExecutor
     fun simulation(): Simulation
-
     fun model(): ModelAccessor
     fun ocnet(): OCNetStruct
-    fun tokenstore() : TokenStore
+    fun tokenstore(): TokenStore
 
     @Component.Factory
     interface Factory {
         fun create(
             @BindsInstance simulationInput: SimulationInput,
             @BindsInstance ocNetStruct: OCNetStruct,
-            @BindsInstance simulationV2Interactor: SimulationV2Interactor?,
+            @BindsInstance simulationV2Interactor: SimulationV2Interactor.Factory?,
             @BindsInstance logger: Logger
         ): SimulationV2Component
     }
@@ -149,7 +171,7 @@ interface SimulationV2Component {
         fun create(
             simulationInput: SimulationInput,
             ocNetStruct: OCNetStruct,
-            simulationV2Interactor: SimulationV2Interactor?,
+            simulationV2Interactor: SimulationV2Interactor.Factory?,
             logger: Logger,
         ): SimulationV2Component {
             return DaggerSimulationV2Component.factory()

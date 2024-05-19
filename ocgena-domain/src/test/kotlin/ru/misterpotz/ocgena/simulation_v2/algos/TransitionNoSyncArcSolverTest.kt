@@ -1,8 +1,10 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.algos
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.simulation_v2.buildTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput

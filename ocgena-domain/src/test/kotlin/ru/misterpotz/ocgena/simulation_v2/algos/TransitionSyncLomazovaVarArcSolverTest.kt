@@ -1,22 +1,22 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.algos
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.SerializationMode
 import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
-import ru.misterpotz.ocgena.resPath
+import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
+import ru.misterpotz.ocgena.simulation_v2.buildTransitionHistory
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
-import ru.misterpotz.ocgena.simulation_v2.utils.NoOpLogger
+import ru.misterpotz.ocgena.simulation_v2.toTokenSliceFrom
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
 import ru.misterpotz.ocgena.testing.buildOCNet
 import ru.misterpotz.ocgena.writeOrAssertYaml
 import kotlin.io.path.Path
-import kotlin.io.path.div
 import kotlin.random.Random
 
 fun buildSynchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {

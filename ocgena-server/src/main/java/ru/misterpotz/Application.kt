@@ -19,19 +19,6 @@ import ru.misterpotz.ocgena.testing.buildingBlockTwoInTwoOutMiddle
 import ru.misterpotz.ocgena.testing.installOnto
 import kotlin.io.path.Path
 
-fun serverSimulationConfig() = ServerSimulationConfig(
-    Path("data", "data.db"),
-    simulationConfig = buildConfig {
-        ocNetType = OcNetType.LOMAZOVA
-        ocNetStruct = buildOCNet {
-            buildingBlockTwoInTwoOutMiddle().installOnto(this)
-        }
-        semanticsType = SimulationSemanticsType.SIMPLE_TIME_PN
-    }.withInitialMarking {
-        put("p1", 10)
-    }
-)
-
 object ServiceProvider {
     val domainComponent by lazy {
         DomainComponent.create()
@@ -42,36 +29,19 @@ object ServiceProvider {
     }
 }
 
-suspend fun convertToOcel() {
-    val simulationToLogConversionParams = SimulationToLogConversionParams(
-        simulationLogDBPath = Path("data", "data.db"),
-        ocelDBPath = Path("ocel", "convert.db"),
-        ocNetStruct = TODO("need to provide ocnetstruct at least to infer db structure of the log")
-    )
-    val simulationToLogConversion = SimulationToLogConversionComponent.create(
-        simulationToLogConversionParams
-    )
-
-    val converter = simulationToLogConversion.converter()
-    converter.convert()
-}
-
-suspend fun startSimulation() {
-    val serverComponent = ServiceProvider.serverComponent
-
-    val serverSimulationComponent =
-        ServerSimulationComponent.create(
-            serverSimulationConfig(),
-            serverComponent
-        )
-
-    val simulationComponent =
-        SimulationComponent.defaultCreate(
-            serverSimulationComponent.simulationConfig(),
-            serverSimulationComponent
-        )
-    simulationComponent.simulationTask().prepareAndRunAll()
-}
+//suspend fun convertToOcel() {
+//    val simulationToLogConversionParams = SimulationToLogConversionParams(
+//        simulationLogDBPath = Path("data", "data.db"),
+//        ocelDBPath = Path("ocel", "convert.db"),
+//        ocNetStruct = TODO("need to provide ocnetstruct at least to infer db structure of the log")
+//    )
+//    val simulationToLogConversion = SimulationToLogConversionComponent.create(
+//        simulationToLogConversionParams
+//    )
+//
+//    val converter = simulationToLogConversion.converter()
+//    converter.convert()
+//}
 
 fun main() {
     embeddedServer(Netty, port = 8080, host = "localhost", module = Application::module)

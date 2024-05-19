@@ -10,11 +10,12 @@ import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 class Simulation(
     val simulationInput: SimulationInput,
     private val stepExecutor: StepExecutor,
+    private val finishRequestChecker: FinishRequestChecker,
     private val logger: Logger
 ) {
     suspend fun runSimulation() {
         val flow = flow {
-            while (true) {
+            while (!finishRequestChecker.isFinish()) {
                 val value = stepExecutor.execute()
                 if (value != null) {
                     emit(value)
@@ -27,6 +28,7 @@ class Simulation(
             logger.simulationPrepared()
         }.onCompletion {
             logger.simulationFinished()
+            println("simulationFinished")
         }.collect { log ->
             logger.acceptStepLog(log)
         }

@@ -1,11 +1,40 @@
 package ru.misterpotz
 
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.server.testing.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.convert.BatchIterator
-import java.lang.IllegalStateException
+import ru.misterpotz.plugins.configureRouting
+import ru.misterpotz.plugins.configureSerialization
+import kotlin.test.assertEquals
 
 class BatchIteratorTest {
+    @Test
+    fun kekpLication() = testApplication {
+        application {
+            configureRouting()
+        }
+        client.get("/").apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals("Hello World!", bodyAsText())
+        }
+    }
+
+    @Test
+    fun testRoot() = testApplication {
+        application {
+            configureRouting()
+            configureSerialization()
+        }
+        client.get("/").apply {
+            assertEquals(HttpStatusCode.OK, status)
+            assertEquals("Hello World!", bodyAsText())
+        }
+    }
+
     @Test
     fun `batches work ok`() {
         val batchIterator = BatchIterator(100, 100)

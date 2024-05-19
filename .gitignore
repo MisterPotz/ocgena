@@ -17,3 +17,5 @@ node_modules
 ocgenajs
 
 *.DS_Store
+
+**/testing_output/

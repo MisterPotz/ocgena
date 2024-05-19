@@ -11,7 +11,11 @@ import kotlin.io.path.pathString
 
 interface DBConnectionSetupper {
     fun createConnection(path: Path): Connection
-    class Connection(val hikariDataSource: HikariDataSource, val database: Database)
+    class Connection(private val hikariDataSource: HikariDataSource, val database: Database) {
+        fun close() {
+            hikariDataSource.close()
+        }
+    }
 }
 
 class DBConnectionSetupperImpl @Inject constructor() : DBConnectionSetupper {

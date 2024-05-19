@@ -1,5 +1,6 @@
 package ru.misterpotz.ocgena.ocnet.primitives
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import ru.misterpotz.ocgena.validation.PetriAtomVisitorDFS
 import java.io.Serializable

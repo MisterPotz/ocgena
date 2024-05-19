@@ -19,9 +19,8 @@ interface TransitionSelector {
     suspend fun get(transitions: Transitions): TransitionWrapper
 }
 
-interface TransitionSolutionSelector {
-    suspend fun get(solutionMeta: Meta): Int
-    data class Meta(val solutionsAmount: Int)
+interface FinishRequestChecker {
+    suspend fun isFinish() : Boolean
 }
 
 class StepExecutor(

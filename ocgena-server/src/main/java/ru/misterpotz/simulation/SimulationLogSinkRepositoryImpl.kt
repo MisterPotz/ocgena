@@ -6,16 +6,19 @@ import ru.misterpotz.InAndOutPlacesColumnProducer
 import ru.misterpotz.ObjectTokenMeta
 import ru.misterpotz.SimulationStepLog
 import ru.misterpotz.TokenSerializer
-import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
+import ru.misterpotz.db.DBConnectionSetupper
+import ru.misterpotz.ocgena.ocnet.OCNetStruct
 
-class SimulationLogSinkRepositoryImpl(
-    private val db: Database,
+internal class SimulationLogSinkRepositoryImpl(
+    private val dbConnection: DBConnectionSetupper.Connection,
     private val tablesProvider: TablesProvider,
-    private val simulationConfig: SimulationConfig,
     private val inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
+    private val ocNetStruct: OCNetStruct,
     private val tokenSerializer: TokenSerializer
 ) : SimulationLogRepository {
     private var checkedIfCreated = false
+    private val db: Database = dbConnection.database
+
     private suspend fun initializeTables() {
         if (checkedIfCreated) return
         newSuspendedTransaction(db = db) {
@@ -32,17 +35,17 @@ class SimulationLogSinkRepositoryImpl(
                         transitionToLabel,
                     )
                     with(tablesProvider) {
-                        simulationConfig.ocNet.objectTypeRegistry.types.forEach { objectType ->
+                        ocNetStruct.objectTypeRegistry.types.forEach { objectType ->
                             objectTypeTable.insert {
                                 it[objectTypeId] = objectType.id
                                 it[objectTypeLabel] =
-                                    simulationConfig.nodeToLabelRegistry.getObjectTypeLabel(objectType.id)
+                                    ocNetStruct.objectTypeRegistry[objectType.id].label
                             }
                         }
-                        simulationConfig.nodeToLabelRegistry.transitionsToActivity.forEach { (t, u) ->
+                        ocNetStruct.transitionsRegistry.forEach { transition ->
                             transitionToLabel.insert {
-                                it[transitionId] = t
-                                it[transitionLabel] = u
+                                it[transitionId] = transition.id
+                                it[transitionLabel] = transition.label
                             }
                         }
                     }
@@ -78,6 +81,10 @@ class SimulationLogSinkRepositoryImpl(
                     }
             }
         }
+    }
+
+    override suspend fun close() {
+        dbConnection.close()
     }
 
     private fun insertSteps(batch: List<SimulationStepLog>) {

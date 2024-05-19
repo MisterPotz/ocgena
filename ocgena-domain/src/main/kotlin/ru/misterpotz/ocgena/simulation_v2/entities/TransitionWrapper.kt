@@ -133,11 +133,12 @@ class TransitionWrapper(
         for ((objectType, arcs) in typeToArcs) {
             val objectTypeTokens =
                 snapshot.getGroup(objectType)
-                    .tokens
-                    .let {
+                    ?.tokens
+                    ?.let {
                         it.buildFromIndices(shuffler.makeShuffled(it.indices))
                     }
-                    .toMutableList()
+                    ?.toMutableList()
+                    ?: emptyList()
 
             val stackPerArc = List(arcs.size) { mutableListOf<TokenWrapper>() }
 
@@ -151,6 +152,9 @@ class TransitionWrapper(
                     } else {
                         index
                     }
+                }
+                if (writableArcIndices.isEmpty()) {
+                    break;
                 }
                 val consumer = shuffler.select(writableArcIndices)
                 stackPerArc[consumer].add(iterator.next())

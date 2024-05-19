@@ -37,8 +37,8 @@ class DomainModule {
         @Provides
         @DomainScope
         @JvmSuppressWildcards
-        fun serializersModuleBlock(): SerializersModuleBuilder.() -> Unit {
-            return {
+        fun serializersModule(): SerializersModule {
+            return SerializersModule {
                 contextual(IntRangeSerializer("interval"))
                 contextual(DurationSerializer("duration"))
                 contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
@@ -87,22 +87,20 @@ class DomainModule {
 
         @Provides
         @DomainScope
-        fun json(serializersModuleBlock: @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Json {
+        fun json(serializersModule: SerializersModule): Json {
             return Json {
                 classDiscriminator = "type"
                 prettyPrint = true
                 encodeDefaults = false
                 isLenient = true
                 ignoreUnknownKeys = true
-                serializersModule = SerializersModule {
-                    serializersModuleBlock()
-                }
+                this.serializersModule = serializersModule
             }
         }
 
         @Provides
         @DomainScope
-        fun yaml(serializersModuleBlock: @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Yaml {
+        fun yaml(serializersModule: SerializersModule): Yaml {
             return Yaml(
                 configuration = YamlConfiguration(
                     polymorphismPropertyName = "type",
@@ -111,9 +109,7 @@ class DomainModule {
                     strictMode = false,
                     encodeDefaults = false
                 ),
-                serializersModule = SerializersModule {
-                    serializersModuleBlock()
-                },
+                serializersModule = serializersModule,
             )
         }
     }
@@ -124,6 +120,8 @@ class DomainModule {
 interface DomainComponent {
     fun json(): Json
     fun yaml(): Yaml
+
+    fun serializersModule() : SerializersModule
 
     @Component.Factory
     interface Factory {

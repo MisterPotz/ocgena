@@ -1,46 +1,69 @@
 package ru.misterpotz.di
 
 import com.charleskorn.kaml.Yaml
-import dagger.*
+import dagger.BindsInstance
+import dagger.Component
+import dagger.Module
+import dagger.Provides
 import dagger.multibindings.IntoMap
 import dagger.multibindings.StringKey
 import kotlinx.serialization.json.Json
 import ru.misterpotz.*
 import ru.misterpotz.db.DBConnectionSetupper
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
-import ru.misterpotz.simulation.SimulationLogRepository
+import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
+import ru.misterpotz.plugins.SimulateArguments
+import ru.misterpotz.simulation.*
 import ru.misterpotz.simulation.SimulationLogSinkRepositoryImpl
-import ru.misterpotz.ocgena.simulation_old.config.SimulationConfig
-import ru.misterpotz.ocgena.simulation_old.di.SimulationComponentDependencies
-import ru.misterpotz.simulation.TablesProvider
-import ru.misterpotz.simulation.TablesProviderImpl
-import java.nio.file.Path
+import javax.inject.Provider
 import javax.inject.Scope
-
 
 @Module
 internal abstract class ServerSimulationModule {
-
-    @Binds
-    @ServerSimulationScope
-    abstract fun bindDBLogger(dbLogger: DBLoggerImpl): Logger
-
-    @Binds
-    @ServerSimulationScope
-    abstract fun bindTablesProvider(tablesProviderImpl: TablesProviderImpl): TablesProvider
-
-    @Binds
-    @ServerSimulationScope
-    abstract fun bindSimulationFinishNotifier(
-        simulationFinishedNotifierImpl: SimulationFinishedNotifierImpl
-    ): SimulationFinishedNotifier
-
     companion object {
 
         @Provides
         @ServerSimulationScope
-        fun provideOCNetStruct(serverSimulationConfig: ServerSimulationConfig): OCNetStruct {
-            return serverSimulationConfig.simulationConfig.ocNet
+        fun provideLogger(
+            simulateArguments: SimulateArguments,
+            simulationLogRepository: Provider<SimulationLogRepository>,
+        ): Logger {
+            val dbPath = simulateArguments.simulateRequest.outputDatabasePath
+            if (dbPath == null) {
+                return NoOpLogger
+            } else {
+                return DBLoggerImpl(simulationLogRepository.get())
+            }
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun serverSimulationInteractor(
+            factory: ServerSimulationInteractor.Factory,
+            simulation: SimulationV2Component
+        ): ServerSimulationInteractor {
+            return factory.created!!
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun provideDestroyer(
+            repository: SimulationLogRepository,
+            serverSimulationInteractor: ServerSimulationInteractor
+        ): SimulationDestroyer {
+            return SimulationDestroyer(repository, serverSimulationInteractor)
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun provideServerSimulationInteractorFactory(): ServerSimulationInteractor.Factory {
+            return ServerSimulationInteractor.Factory()
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun provideOCNetStruct(simulateArguments: SimulateArguments): OCNetStruct {
+            return simulateArguments.simulateRequest.model
         }
 
         @Provides
@@ -48,10 +71,30 @@ internal abstract class ServerSimulationModule {
         @IntoMap
         @StringKey(SIM_DB)
         fun provideConnection(
-            serverSimulationConfig: ServerSimulationConfig,
+            serverSimulationConfig: SimulateArguments,
             dbConnectionSetupper: DBConnectionSetupper
         ): DBConnectionSetupper.Connection {
-            return dbConnectionSetupper.createConnection(serverSimulationConfig.dbPath)
+            return dbConnectionSetupper.createConnection(serverSimulationConfig.outputPath!!)
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun provideInAndOutPlaces(
+            simulateArguments: SimulateArguments,
+        ): InAndOutPlacesColumnProducer {
+            return InAndOutPlacesColumnProducer(simulateArguments.simulateRequest.model)
+        }
+
+        @Provides
+        @ServerSimulationScope
+        fun provideTableProvider(
+            simulateArguments: SimulateArguments,
+            inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer
+        ): TablesProvider {
+            return TablesProvider(
+                simulateArguments.simulateRequest.model,
+                inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer
+            )
         }
 
         @Provides
@@ -59,15 +102,15 @@ internal abstract class ServerSimulationModule {
         fun provideSimulationLogRepository(
             dbConnections: Map<@JvmSuppressWildcards String, @JvmSuppressWildcards DBConnectionSetupper.Connection>,
             tablesProvider: TablesProvider,
-            simulationConfig: SimulationConfig,
+            simulateArguments: SimulateArguments,
             inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
             tokenSerializer: TokenSerializer
         ): SimulationLogRepository {
             val connection = dbConnections.getSimDB()
             return SimulationLogSinkRepositoryImpl(
-                db = connection.database,
+                dbConnection = connection,
                 tablesProvider = tablesProvider,
-                simulationConfig = simulationConfig,
+                ocNetStruct = simulateArguments.simulateRequest.model,
                 inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer,
                 tokenSerializer = tokenSerializer
             )
@@ -75,14 +118,20 @@ internal abstract class ServerSimulationModule {
 
         @Provides
         @ServerSimulationScope
-        fun simulationConfig(serverSimulationConfig: ServerSimulationConfig) = serverSimulationConfig.simulationConfig
+        fun provideSimulation(
+            arguments: SimulateArguments,
+            logger: Logger,
+            serverSimulationInteractor: ServerSimulationInteractor.Factory
+        ): SimulationV2Component {
+            return SimulationV2Component.create(
+                simulationInput = arguments.simulateRequest.simInput,
+                ocNetStruct = arguments.simulateRequest.model,
+                simulationV2Interactor = serverSimulationInteractor,
+                logger = logger
+            )
+        }
     }
 }
-
-data class ServerSimulationConfig(
-    val dbPath: Path,
-    val simulationConfig: SimulationConfig
-)
 
 interface ServerSimulationComponentDependencies {
     val json: Json
@@ -91,32 +140,41 @@ interface ServerSimulationComponentDependencies {
     fun dbConnectionSetupper(): DBConnectionSetupper
 }
 
+class SimulationDestroyer(
+    private val repository: SimulationLogRepository,
+    private val simulation: ServerSimulationInteractor
+) {
+    suspend fun destroy() {
+        simulation.finish()
+        repository.close()
+    }
+}
+
 @Component(
     modules = [ServerSimulationModule::class],
     dependencies = [ServerSimulationComponentDependencies::class]
 )
 @ServerSimulationScope
-internal interface ServerSimulationComponent : SimulationComponentDependencies {
-
-    fun simulationLogRepository(): SimulationLogRepository
-    fun simulationConfig(): SimulationConfig
+interface ServerSimulationComponent {
+    fun simulationV2Component(): SimulationV2Component
+    fun destroyer(): SimulationDestroyer
 
     @Component.Factory
     interface Factory {
         fun create(
-            @BindsInstance serverSimulationConfig: ServerSimulationConfig,
+            @BindsInstance arguments: SimulateArguments,
             serverSimulationComponentDependencies: ServerSimulationComponentDependencies
         ): ServerSimulationComponent
     }
 
     companion object {
         fun create(
-            serverSimulationConfig: ServerSimulationConfig,
+            simulateArguments: SimulateArguments,
             serverSimulationComponentDependencies: ServerSimulationComponentDependencies
         ): ServerSimulationComponent {
             return DaggerServerSimulationComponent.factory()
                 .create(
-                    serverSimulationConfig,
+                    simulateArguments,
                     serverSimulationComponentDependencies
                 )
         }

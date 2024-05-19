@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.serialization
 
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.SerializationMode
@@ -27,7 +27,7 @@ class SerializationExamples {
         }
 
         println(model.toDot())
-        writeOrAssertYaml(model, Path("ocnet_example_lomazova_1.yaml"), SerializationMode.WRITE)
+        writeOrAssertYaml(model, Path("ocnet_example_lomazova_1.yaml"))
     }
 
     @Test
@@ -46,6 +46,6 @@ class SerializationExamples {
             loggingEnabled = true
         )
 
-        writeOrAssertYaml<SimulationInput>(simulationinput, Path("siminput_example_sync_1.yaml"), SerializationMode.WRITE)
+        writeOrAssertYaml<SimulationInput>(simulationinput, Path("siminput_example_sync_1.yaml"))
     }
 }

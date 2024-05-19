@@ -7,6 +7,7 @@ import ru.misterpotz.models.SimulationDBStepLog
 interface SimulationLogRepository {
     suspend fun push(batch: List<SimulationStepLog>)
     suspend fun getAllTokens() : List<ObjectTokenMeta>
+    suspend fun close()
 }
 
 interface SimulationLogReadRepository{

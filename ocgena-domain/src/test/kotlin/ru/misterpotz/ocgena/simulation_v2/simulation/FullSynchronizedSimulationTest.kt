@@ -1,13 +1,14 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.simulation
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.simulation_v2.StepSequenceLogger
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.simulation_v2.algos.buildSynchronizingLomazovaExampleModel
 import ru.misterpotz.ocgena.simulation_v2.input.*
 import ru.misterpotz.ocgena.simulation_v2.utils.toSimComp
-import kotlin.math.log
 import kotlin.random.Random
 import kotlin.time.Duration
 

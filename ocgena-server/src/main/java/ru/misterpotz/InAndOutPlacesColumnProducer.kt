@@ -1,9 +1,8 @@
 package ru.misterpotz
 
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
-import javax.inject.Inject
 
-class InAndOutPlacesColumnProducer @Inject constructor(
+class InAndOutPlacesColumnProducer(
     ocNetStruct: OCNetStruct
 ) {
     val IN_PREFIX = "in_"
