@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.StepSequenceLogger
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
-import ru.misterpotz.ocgena.simulation_v2.algos.buildSynchronizingLomazovaExampleModel
+import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
 import ru.misterpotz.ocgena.simulation_v2.input.*
 import ru.misterpotz.ocgena.simulation_v2.utils.toSimComp
 import kotlin.random.Random
@@ -128,7 +128,5 @@ class FullSynchronizedSimulationTest {
         println(sim.model().transitionBy("arrange_packages_to_tracks").transitionHistory)
         println(sim.model().transitionBy("place_order").transitionHistory)
         println(sim.tokenstore())
-        val tokenStore = sim.tokenstore()
-
     }
 }

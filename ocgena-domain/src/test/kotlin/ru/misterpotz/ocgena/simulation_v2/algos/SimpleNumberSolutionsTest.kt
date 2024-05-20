@@ -7,6 +7,7 @@ import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffl
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import ru.misterpotz.ocgena.simulation_v2.toTokenSliceAmounts
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
+import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
 import kotlin.random.Random
 
 class SimpleNumberSolutionsTest {

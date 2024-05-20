@@ -32,10 +32,12 @@ class TasksRegistry(private val scope: CoroutineScope) {
         scope.launch {
             flow<Unit> {
                 work.run()
-            }.onCompletion {
+                println("work ended successfully")
+            }.onCompletion { exception ->
+                exception?.printStackTrace()
                 mutex.withLock {
                     tasksRegistry.remove(newIndex)
-                    resultsRegistry[newIndex] = TaskResult(it)
+                    resultsRegistry[newIndex] = TaskResult(exception)
                 }
             }.collect()
         }

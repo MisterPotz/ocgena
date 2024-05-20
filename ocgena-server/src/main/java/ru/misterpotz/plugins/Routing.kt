@@ -20,9 +20,7 @@ import ru.misterpotz.di.TasksRegistry
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import java.nio.file.Path
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
@@ -123,7 +121,8 @@ data class SimulateArguments(
 data class ResultResponse(
     val isSuccess: Boolean,
     val isError: Boolean,
-    val isInProgress: Boolean
+    val isInProgress: Boolean,
+    val message: String? = null
 )
 
 @Serializer(forClass = LocalDateTime::class)
@@ -181,7 +180,8 @@ fun Application.configureRouting() {
                 ResultResponse(
                     isSuccess = result?.isOk ?: false,
                     isError = result?.isOk?.not() ?: false,
-                    isInProgress = result == null
+                    isInProgress = result == null,
+                    message = result?.exception?.message
                 )
             )
         }
@@ -195,7 +195,8 @@ fun Application.configureRouting() {
                 ResultResponse(
                     isSuccess = result?.isOk ?: false,
                     isError = result?.isOk?.not() ?: false,
-                    isInProgress = result == null
+                    isInProgress = result == null,
+                    message = result?.exception?.message
                 )
             )
         }

@@ -3,10 +3,7 @@ package ru.misterpotz.di
 import dagger.Component
 import dagger.Module
 import dagger.Provides
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.*
 import kotlinx.serialization.modules.SerializersModule
 import ru.misterpotz.ocgena.di.DomainComponent
 import javax.inject.Scope
@@ -15,11 +12,6 @@ import kotlin.coroutines.CoroutineContext
 @Module
 abstract class ServerModule {
     companion object {
-        @Provides
-        @ServerScope
-        fun provideTasksRegistry(coroutineScope: CoroutineScope): SimulationTasksRegistry {
-            return SimulationTasksRegistry(scope = coroutineScope)
-        }
 
         @Provides
         @ServerScope
@@ -31,7 +23,9 @@ abstract class ServerModule {
         @ServerScope
         fun jobCoroutineScope(): CoroutineScope {
             return object : CoroutineScope {
-                override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob()
+                override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob() + CoroutineExceptionHandler { coroutineContext, throwable ->
+                    throwable.printStackTrace()
+                }
             }
         }
 

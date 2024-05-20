@@ -22,7 +22,7 @@ object TokensTable : Table() {
 }
 
 object ObjectTypeTable : Table() {
-    val objectTypeId = varchar("objectTypeId", length = 10)
+    val objectTypeId = text("objectTypeId")
     val objectTypeLabel = text("label")
     override val primaryKey = PrimaryKey(objectTypeId)
 }
@@ -30,7 +30,7 @@ object ObjectTypeTable : Table() {
 object SimulationStepsTable : LongIdTable(columnName = "stepNumber") {
     val clockIncrement = long("clockIncrement")
     val totalClock = long("totalClock")
-    val chosenTransition = varchar("chosenTransition", 10).nullable().default(null)
+    val chosenTransition = text("chosenTransition").nullable().default(null)
     val transitionDuration = long("transitionDuration").nullable()
 }
 
@@ -40,7 +40,7 @@ object PlacesTable : Table() {
 }
 
 object TransitionToLabelTable : Table() {
-    val transitionId = varchar("transitionId", 10)
+    val transitionId = text("transitionId")
     val transitionLabel = text("label")
 
     override val primaryKey = PrimaryKey(transitionId)

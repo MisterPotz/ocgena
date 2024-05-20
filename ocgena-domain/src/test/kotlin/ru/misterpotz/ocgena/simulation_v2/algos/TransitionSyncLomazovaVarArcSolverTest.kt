@@ -3,7 +3,6 @@ package ru.misterpotz.ocgena.simulation_v2.algos
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.SerializationMode
-import ru.misterpotz.ocgena.ocnet.primitives.OcNetType
 import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
@@ -14,45 +13,10 @@ import ru.misterpotz.ocgena.simulation_v2.input.SynchronizedArcGroup
 import ru.misterpotz.ocgena.simulation_v2.input.TransitionSetting
 import ru.misterpotz.ocgena.simulation_v2.toTokenSliceFrom
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
-import ru.misterpotz.ocgena.testing.buildOCNet
+import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
 import ru.misterpotz.ocgena.writeOrAssertYaml
 import kotlin.io.path.Path
 import kotlin.random.Random
-
-fun buildSynchronizingLomazovaExampleModel() = buildOCNet(OcNetType.LOMAZOVA) {
-    "order".p { input; objectTypeId = "1" }
-    "package".p { input; objectTypeId = "2" }
-    "track".p { input; objectTypeId = "3" }
-
-    "place order".t
-    "order".arc("place order")
-    "package".arc("place order") { vari; mathExpr = "m" }
-
-    "place order".arc("o2".p { objectTypeId = "1" })
-    "place order".arc("p2".p { objectTypeId = "2" }) { vari; mathExpr = "m" }
-
-    "p2".arc("arrange packages to tracks".t) { vari; mathExpr = "2*n" }
-    "track".arc("arrange packages to tracks") { vari; mathExpr = "n" }
-    "arrange packages to tracks".apply {
-        arc("p3".p { objectTypeId = "2" }) { vari; mathExpr = "2*n" }
-        arc("t2".p { objectTypeId = "3" }) { vari; mathExpr = "n" }
-    }
-
-    "bill".p { input; objectTypeId = "4" }
-        .arc("send invoices".t) { vari; mathExpr = "k" }
-        .arc("b2".p { objectTypeId = "4" }) { vari; mathExpr = "k" }
-    "o2".p.arc("send invoices".t)
-    "send invoices".arc("o3".p { objectTypeId = "1" })
-
-    "test all sync".t
-
-    "o3".arc("test all sync") { vari; mathExpr = "o" }
-    "b2".arc("test all sync") { vari; mathExpr = "2*o" }
-    "p3".arc("test all sync") { vari; mathExpr = "2*o" }
-    "t2".arc("test all sync") { vari; mathExpr = "t" }
-
-    "test all sync".arc("output".p { objectTypeId = "1"; output }) { vari; mathExpr = "o" }
-}
 
 
 class TransitionSyncLomazovaVarArcSolverTest {
