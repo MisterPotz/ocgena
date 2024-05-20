@@ -11,7 +11,10 @@ import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
 import ru.misterpotz.plugins.SimulateArguments
 import ru.misterpotz.simulation.*
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 import javax.inject.Scope
+import kotlin.time.DurationUnit
 
 @Module
 internal abstract class SimulationToLogConversionModule {
@@ -53,23 +56,25 @@ internal abstract class SimulationToLogConversionModule {
         }
 
 
-
         @Provides
         @SimulationToLogConversionScope
         fun provideConverter(
-            map: Map<String, DBConnectionSetupper.Connection>
+            map: Map<String, DBConnectionSetupper.Connection>,
+            simulationToLogConversionParams: SimulationToLogConversionParams
         ): OCNetToOCELConverter {
             return OCNetToOCELConverter(
-                databases = map
+                databases = map,
+                conversionParams = simulationToLogConversionParams
             )
         }
     }
 }
 
-@Serializable
 data class SimulationToLogConversionParams(
     val simulationLogDBPath: Path,
     val ocelDBPath: Path,
+    val startingTime: LocalDateTime,
+    val unit: DurationUnit
 )
 
 @SimulationToLogConversionScope

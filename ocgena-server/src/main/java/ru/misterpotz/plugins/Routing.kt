@@ -5,7 +5,13 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import ru.misterpotz.ServiceProvider
 import ru.misterpotz.di.ServerSimulationComponent
 import ru.misterpotz.di.SimulationToLogConversionComponent
@@ -14,9 +20,14 @@ import ru.misterpotz.di.TasksRegistry
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
 import java.nio.file.Path
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.notExists
+import kotlin.time.DurationUnit
 
 enum class RequestProblems(val message: String) {
     MISSING_OUTPUT_LOGGING_PATH("to enable logging, the output database path must be specified")
@@ -115,13 +126,37 @@ data class ResultResponse(
     val isInProgress: Boolean
 )
 
+@Serializer(forClass = LocalDateTime::class)
+object LocalDateTimeSerializer : KSerializer<LocalDateTime> {
+    val longSerializer = Long.serializer()
+    override val descriptor: SerialDescriptor = longSerializer.descriptor
+
+    override fun deserialize(decoder: Decoder): LocalDateTime {
+        val long = longSerializer.deserialize(decoder)
+        return LocalDateTime.ofEpochSecond(long, 0, ZoneOffset.UTC)
+    }
+
+    override fun serialize(encoder: Encoder, value: LocalDateTime) {
+        longSerializer.serialize(encoder, value.toEpochSecond(ZoneOffset.UTC))
+    }
+
+}
+
 @Serializable
 data class MakeOcelRequest(
     val simulationPath: String,
-    val ocelPath: String
+    val ocelPath: String,
+    val timeUnit: DurationUnit = DurationUnit.MINUTES,
+    @Serializable(LocalDateTimeSerializer::class)
+    val startingDate: LocalDateTime = LocalDateTime.of(2024, 5, 5, 17, 15, 0)
 ) {
     fun toParams(): SimulationToLogConversionParams {
-        return SimulationToLogConversionParams(Path(simulationPath), Path(ocelPath))
+        return SimulationToLogConversionParams(
+            Path(simulationPath),
+            Path(ocelPath),
+            startingTime = startingDate,
+            unit = timeUnit
+        )
     }
 }
 

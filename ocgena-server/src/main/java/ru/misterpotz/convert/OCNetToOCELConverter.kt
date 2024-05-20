@@ -1,22 +1,37 @@
 package ru.misterpotz.convert
 
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toKotlinInstant
+import kotlinx.datetime.toKotlinLocalDateTime
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import ru.misterpotz.InAndOutPlacesColumnProducer
 import ru.misterpotz.SimulationLabellingData
 import ru.misterpotz.TokenSerializer
 import ru.misterpotz.db.DBConnectionSetupper
+import ru.misterpotz.di.SimulationToLogConversionParams
 import ru.misterpotz.di.getOcelDB
 import ru.misterpotz.di.getSimDB
 import ru.misterpotz.models.SimulationDBStepLog
 import ru.misterpotz.simulation.TablesProvider
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.concurrent.TimeUnit
 import kotlin.sequences.Sequence
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.toDuration
 
 internal class OCNetToOCELConverter(
     private val ocelTablesProvider: OcelTablesProvider = OcelTablesProvider,
     private val databases: Map<
             @JvmSuppressWildcards String,
-            @JvmSuppressWildcards DBConnectionSetupper.Connection>
+            @JvmSuppressWildcards DBConnectionSetupper.Connection>,
+    private val conversionParams: SimulationToLogConversionParams
 
 ) {
 
@@ -67,11 +82,11 @@ internal class OCNetToOCELConverter(
                 SchemaUtils.create(
                     *tables.toTypedArray()
                 )
-                objectTypeMap.batchInsert(labellingData.objectTypeIdToLabel.toList()) {pair: Pair<String, String> ->
+                objectTypeMap.batchInsert(labellingData.objectTypeIdToLabel.toList()) { pair: Pair<String, String> ->
                     this[objectTypeMap.ocelType] = pair.first
                     this[objectTypeMap.ocelTypeMap] = labelConverter.ocelObjectTableNameNoPrefix(pair.first)
                 }
-                eventTypeMap.batchInsert(labellingData.transitionIdToLabel.toList()) {pair: Pair<String, String> ->
+                eventTypeMap.batchInsert(labellingData.transitionIdToLabel.toList()) { pair: Pair<String, String> ->
                     this[eventTypeMap.ocelType] = pair.first
                     this[eventTypeMap.ocelTypeMap] = labelConverter.ocelEventTableNameNoPrefix(pair.first)
                 }
@@ -93,7 +108,9 @@ internal class OCNetToOCELConverter(
         val insertExtension = InsertExtension(
             labelConverter = labelConverter,
             ocelDb = databases.getOcelDB().database,
-            ocelTablesProvider = ocelTablesProvider
+            ocelTablesProvider = ocelTablesProvider,
+            startingTime = conversionParams.startingTime,
+            timeUnit = conversionParams.unit
         )
 
         initializeTables(labelConverter, simulationLabellingData)
@@ -108,10 +125,22 @@ internal class OCNetToOCELConverter(
 }
 
 internal class InsertExtension(
+    val startingTime: LocalDateTime,
+    val timeUnit: DurationUnit,
     val labelConverter: LabelConverter,
     val ocelDb: Database,
     val ocelTablesProvider: OcelTablesProvider,
 ) {
+    val formatter = DateTimeFormatter.ISO_DATE_TIME
+
+    @OptIn(ExperimentalTime::class)
+    fun totalClockToString(totalClock: Long): Instant {
+        val duration = Duration.convert(totalClock.toDouble(), timeUnit, DurationUnit.MILLISECONDS)
+            .toDuration(DurationUnit.MILLISECONDS)
+        return startingTime.toInstant(ZoneOffset.UTC).toKotlinInstant().plus(duration)
+    }
+
+    @OptIn(ExperimentalTime::class)
     fun insertLog(log: SimulationDBStepLog) {
         if (log.selectedFiredTransition == null) return
 
@@ -123,7 +152,7 @@ internal class InsertExtension(
             concreteEventTable(eventTableName).let { table ->
                 table.insert {
                     it[table.ocelEventId] = eventOcelId
-                    it[table.ocelTime] = log.totalClock.toString()
+                    it[table.ocelTime] = totalClockToString(log.totalClock)
                 }
             }
             // inserting general event table / duplicates not possible
@@ -143,7 +172,7 @@ internal class InsertExtension(
                 concreteObjectTable(objectTableName).let { table ->
                     table.insert {
                         it[table.ocelObjectId] = objectOcelId
-                        it[table.ocelTime] = log.totalClock.toString()
+                        it[table.ocelTime] = totalClockToString(log.totalClock)
                     }
                 }
             }
@@ -219,6 +248,7 @@ class LabelConverter(private val simulationLabellingData: SimulationLabellingDat
         val ocelEventType = simulationLabellingData.transitionIdToLabel[transitionId]!!
         return "event_${ocelEventType.toMapType()}"
     }
+
     fun ocelEventTableNameNoPrefix(transitionId: String): String {
         val ocelEventType = simulationLabellingData.transitionIdToLabel[transitionId]!!
         return ocelEventType.toMapType()

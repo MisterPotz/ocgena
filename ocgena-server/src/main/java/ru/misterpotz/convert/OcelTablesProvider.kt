@@ -1,10 +1,10 @@
 package ru.misterpotz.convert
 
 object OcelTablesProvider {
-    val eventsTable: EventsTable = EventsTable()
-    val eventObjectsTable: EventObjectsTable = EventObjectsTable()
-    val objectsTable: ObjectsTable = ObjectsTable()
-    val objectObjectsTable: ObjectObjectsTable = ObjectObjectsTable()
+    val eventsTable: EventsTable = EventsTable
+    val eventObjectsTable: EventObjectsTable = EventObjectsTable
+    val objectsTable: ObjectsTable = ObjectsTable
+    val objectObjectsTable: ObjectObjectsTable = ObjectObjectsTable
 
     private val eventTables: MutableMap<String, ConcreteEventTable> = mutableMapOf()
     private val objectTables: MutableMap<String, ConcreteObjectTable> = mutableMapOf()
@@ -21,6 +21,6 @@ object OcelTablesProvider {
         }
     }
 
-    val eventTypeMap: EventTypeMapTable = EventTypeMapTable()
-    val objectTypeMap: ObjectTypeMapTable = ObjectTypeMapTable()
+    val eventTypeMap: EventTypeMapTable = EventTypeMapTable
+    val objectTypeMap: ObjectTypeMapTable = ObjectTypeMapTable
 }
