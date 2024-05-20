@@ -1,9 +1,6 @@
 package ru.misterpotz.convert
 
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import ru.misterpotz.InAndOutPlacesColumnProducer
 import ru.misterpotz.SimulationLabellingData
@@ -12,8 +9,8 @@ import ru.misterpotz.db.DBConnectionSetupper
 import ru.misterpotz.di.getOcelDB
 import ru.misterpotz.di.getSimDB
 import ru.misterpotz.models.SimulationDBStepLog
-import ru.misterpotz.simulation.SimulationLogRepository
 import ru.misterpotz.simulation.TablesProvider
+import kotlin.sequences.Sequence
 
 internal class OCNetToOCELConverter(
     private val ocelTablesProvider: OcelTablesProvider = OcelTablesProvider,
@@ -44,9 +41,32 @@ internal class OCNetToOCELConverter(
         }
     }
 
-    private suspend fun createBatchIterator(simulationLogRepository : SimulationLogReadRepository): Iterator<LongRange> {
+    private suspend fun createBatchIterator(simulationLogRepository: SimulationLogReadRepository): Iterator<LongRange> {
         val totalCounts = simulationLogRepository.totalSteps()
         return BatchIterator(stride = 100L, totalCounts)
+    }
+
+    private suspend fun initializeTables(labelConverter: LabelConverter, labellingData: SimulationLabellingData) {
+        newSuspendedTransaction(db = databases.getOcelDB().database) {
+            addLogger(StdOutSqlLogger)
+            with(ocelTablesProvider) {
+                val tables = buildList {
+                    add(eventsTable)
+                    add(eventObjectsTable)
+                    add(objectsTable)
+                    add(objectObjectsTable)
+                    addAll(labellingData.transitionIdToLabel.keys.map {
+                        ocelTablesProvider.concreteEventTable(labelConverter.ocelEventTableName(it))
+                    })
+                    addAll(labellingData.objectTypeIdToLabel.keys.map {
+                        ocelTablesProvider.concreteObjectTable(labelConverter.ocelObjectTableName(it))
+                    })
+                }
+                SchemaUtils.create(
+                    *tables.toTypedArray()
+                )
+            }
+        }
     }
 
     suspend fun convert() {
@@ -66,14 +86,13 @@ internal class OCNetToOCELConverter(
             ocelTablesProvider = ocelTablesProvider
         )
 
+        initializeTables(labelConverter, simulationLabellingData)
+
         val iterator = createBatchIterator(simulationLogReadRepository)
         while (iterator.hasNext()) {
             val range = iterator.next()
             val items = simulationLogReadRepository.readBatch(range)
             insertExtension.insertAllLogs(items)
-            items.forEach {
-                insertExtension.insertLog(it)
-            }
         }
     }
 }
@@ -90,19 +109,19 @@ internal class InsertExtension(
             val eventOcelId = labelConverter.ocelEventId(log)
             val eventTableName = labelConverter.ocelEventTableName(log)
 
-            // concrete event
+            // concrete event / duplicates not possible
             concreteEventTable(eventTableName).let { table ->
                 table.insert {
                     it[table.ocelEventId] = eventOcelId
                     it[table.ocelTime] = log.totalClock.toString()
                 }
             }
-            // inserting general event table
+            // inserting general event table / duplicates not possible
             eventsTable.insert {
                 it[eventsTable.ocelEventId] = eventOcelId
                 it[eventsTable.ocelEventType] = labelConverter.ocelEventType(log)
             }
-            // event to object association
+            // event to object association duplicates are not possible (each event has unique id)
             eventObjectsTable.batchInsert(data = log.transitionAllItems) { item ->
                 this[eventObjectsTable.ocelEventId] = eventOcelId
                 this[eventObjectsTable.ocelObjectId] = labelConverter.ocelObjectId(log, item)
@@ -117,18 +136,37 @@ internal class InsertExtension(
                         it[table.ocelTime] = log.totalClock.toString()
                     }
                 }
-                // object to object table
-//                val objectToObjectTable =
-//                concreteObjectTable(objectTableName).batchInsert()
             }
-            // general object table
-            objectsTable.batchInsert(data = log.transitionAllItems) { item ->
+
+            // object to object table, duplicates are prevented if qualifier same
+            // make all associations
+            val pairIterator = makeBubblePairCombinator(log.transitionAllItems)
+            objectObjectsTable.batchInsert(data = pairIterator, ignore = true) { pair ->
+                this[objectObjectsTable.ocelSourceObjectId] = labelConverter.ocelObjectId(log, pair.first)
+                this[objectObjectsTable.ocelTargetObjectId] = labelConverter.ocelObjectId(log, pair.second)
+            }
+
+            // general object table, duplicates are prevented if time same
+            objectsTable.batchInsert(data = log.transitionAllItems, ignore = true) { item ->
                 val id = labelConverter.ocelObjectId(log, item)
 
                 this[objectsTable.ocelObjectId] = id
                 this[objectsTable.ocelObjectType] = labelConverter.ocelObjectType(log, item)
             }
         }
+    }
+
+    private fun makeBubblePairCombinator(tokens: List<Long>): Sequence<Pair<Long, Long>> {
+        return iterator {
+            val size = tokens.size
+            if (size < 2) return@iterator
+
+            for (i in 0..<tokens.lastIndex) {
+                for (g in ((i + 1)..tokens.lastIndex)) {
+                    yield(Pair(tokens[i], tokens[g]))
+                }
+            }
+        }.asSequence()
     }
 
     suspend fun insertAllLogs(items: List<SimulationDBStepLog>) {
@@ -164,7 +202,17 @@ class LabelConverter(private val simulationLabellingData: SimulationLabellingDat
 
     fun ocelEventTableName(simulationDBStepLog: SimulationDBStepLog): String {
         val oceleventType = ocelEventType(simulationDBStepLog)
-        return oceleventType.toMapType()
+        return "event_${oceleventType.toMapType()}"
+    }
+
+    fun ocelEventTableName(transitionId: String): String {
+        val ocelEventType = simulationLabellingData.transitionIdToLabel[transitionId]!!
+        return "event_${ocelEventType.toMapType()}"
+    }
+
+    fun ocelObjectTableName(objectTypeId: String): String {
+        val ocelEventType = simulationLabellingData.objectTypeIdToLabel[objectTypeId]!!
+        return "object_${ocelEventType.toMapType()}"
     }
 
     fun ocelObjectId(simulationDBStepLog: SimulationDBStepLog, tokenId: Long): String {
@@ -175,11 +223,14 @@ class LabelConverter(private val simulationLabellingData: SimulationLabellingDat
 
     fun ocelObjectTableName(simulationDBStepLog: SimulationDBStepLog, tokenId: Long): String {
         val objectTypeLabel = ocelObjectType(simulationDBStepLog, tokenId)
-        return objectTypeLabel.toMapType()
+        return "object_${objectTypeLabel.toMapType()}"
     }
 
     private fun String.toId(): String {
-        return split(" ").joinToString(separator = "") { it.first().lowercase() }
+        return this.split(" ")
+            .takeIf { it.size >= 2 }
+            ?.joinToString(separator = "") { it.first().lowercase() }
+            ?: this
     }
 
     private fun String.toMapType(): String {

@@ -28,16 +28,17 @@ class ObjectsTable : Table("object") {
 class ObjectObjectsTable : Table("object_object") {
     val ocelSourceObjectId = text("ocel_source_id")
     val ocelTargetObjectId = text("ocel_target_id")
-    val ocelObjectQualifier = text("ocel_qualifier")
+    val ocelObjectQualifier = text("ocel_qualifier").default("")
 
     override val primaryKey = PrimaryKey(ocelSourceObjectId, ocelTargetObjectId, ocelObjectQualifier)
 }
 
 class ConcreteEventTable(tableName: String) : Table(name = tableName) {
+    val id = long("id").autoIncrement()
     val ocelEventId = text("ocel_id")
     val ocelTime = text("ocel_time")
 
-    override val primaryKey = PrimaryKey(ocelEventId)
+    override val primaryKey = PrimaryKey(id)
     //  can be more attributes here like  val totalItems = text("total_items")
     companion object {
         fun createTableName(eventMapType: String): String {
@@ -61,12 +62,13 @@ class ObjectTypeMapTable : Table("object_map_type") {
 }
 
 class ConcreteObjectTable(tableName: String) : Table(name = tableName) {
+    val id = long("id").autoIncrement()
     val ocelObjectId = text("ocel_id")
     val ocelTime = text("ocel_time") // unix timestamp 1970-01-01 00:00:00 ISO 8601
     val ocelChangedField = text("ocel_changed_field").default("")
     // can be more attributes here
 
-    override val primaryKey = PrimaryKey(ocelObjectId)
+    override val primaryKey = PrimaryKey(id)
 
     companion object {
         fun createTableName(eventMapType: String): String {

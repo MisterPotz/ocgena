@@ -55,6 +55,7 @@ class IntegratedSimulationTest {
     }
 
     val path = Path("testing_output", "integration.db")
+    val ocelPath = Path("testing_output", "ocel_gen_integration.db")
     val simulationRequest = run {
         val model = build3Tran4InpExample()
         val simulationinput = SimulationInput(
@@ -127,7 +128,9 @@ class IntegratedSimulationTest {
                 delay(200)
             }
             assertTrue(path.exists())
+            assertTrue(client.get("simulate_res/${handle.handle}").body<ResultResponse>().isSuccess)
 
+            ocelPath.deleteIfExists()
             val ocelGeneration = client.post("make_ocel") {
                 contentType(ContentType.Application.Json)
                 setBody(MakeOcelRequest("testing_output/integration.db", "testing_output/ocel_gen_integration.db"))
@@ -137,6 +140,8 @@ class IntegratedSimulationTest {
             while (client.get("ocel_res/${ocelHandle}").body<ResultResponse>().isInProgress) {
                 delay(200)
             }
+            assertTrue(client.get("ocel_res/${ocelHandle}").body<ResultResponse>().isSuccess)
+            assertTrue(ocelPath.exists())
         }
     }
 }

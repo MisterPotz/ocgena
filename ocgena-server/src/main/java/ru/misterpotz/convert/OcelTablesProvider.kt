@@ -9,15 +9,15 @@ object OcelTablesProvider {
     private val eventTables: MutableMap<String, ConcreteEventTable> = mutableMapOf()
     private val objectTables: MutableMap<String, ConcreteObjectTable> = mutableMapOf()
 
-    fun concreteEventTable(eventMapType: String): ConcreteEventTable {
-        return eventTables.getOrPut(eventMapType) {
-            ConcreteEventTable(ConcreteEventTable.createTableName(eventMapType))
+    fun concreteEventTable(tableName: String): ConcreteEventTable {
+        return eventTables.getOrPut(tableName) {
+            ConcreteEventTable(tableName)
         }
     }
 
-    fun concreteObjectTable(objectMapType: String): ConcreteObjectTable {
-        return objectTables.getOrPut(objectMapType) {
-            ConcreteObjectTable(ConcreteObjectTable.createTableName(objectMapType))
+    fun concreteObjectTable(tableName : String): ConcreteObjectTable {
+        return objectTables.getOrPut(tableName) {
+            ConcreteObjectTable(tableName)
         }
     }
 

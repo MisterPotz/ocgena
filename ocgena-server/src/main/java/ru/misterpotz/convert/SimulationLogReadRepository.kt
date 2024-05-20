@@ -109,7 +109,6 @@ class SimulationLogReadRepository(
                         stepToMarkingAmountsTable.columns,
                         stepToFiringAmountsTable.columns,
                         stepToFiringTokensTable.columns,
-                        objectTypeTable.columns
                     ).flatten()
                 ).where {
                     simulationStepsTable.id.inList(stepIndeces)
