@@ -1,18 +1,8 @@
-import builtins
-
 import pm4py
-import itertools
 import yaml
 
 from pm4py.objects.petri_net.obj import PetriNet
 
-
-# place_types:
-#     per_place:
-#         "p1": "INPUT"
-#         "p2": "OUTPUT"
-#         "o1": "INPUT"
-#         "o2": "OUTPUT"
 
 def sink_name(type: str):
     return '{}-sink'.format(type)
@@ -50,14 +40,33 @@ def make_arc_name(type: str, arc: PetriNet.Arc):
     else:
         raise Exception("unsupported source exception {}".format(source))
 
-    return "{}_{}".format(source_name, target_name)
+    return "{}.{}".format(source_name, target_name)
 
 
-def map_arc(type: str, arc: PetriNet.Arc):
-    return {
-        "type": "arc",
-        "id": make_arc_name(type, arc)
-    }
+def map_arc(type: str, arc: PetriNet.Arc, ocpn):
+    # Use getattr with default value None to safely access label attributes
+    target_label = getattr(arc.target, 'label', None)
+    source_label = getattr(arc.source, 'label', None)
+
+    # Check if the labels exist in the dictionary
+    is_var = (target_label in ocpn["double_arcs_on_activity"][type] and ocpn["double_arcs_on_activity"][type][target_label]) or (
+            source_label in ocpn["double_arcs_on_activity"][type] and ocpn["double_arcs_on_activity"][type][source_label])
+
+    id = make_arc_name(type, arc)
+
+    if is_var:
+        return {
+            "type": "vararc",
+            "id": id,
+            "arcMeta": {
+                "type": "aalst"
+            }
+        }
+    else:
+        return {
+            "type": "arc",
+            "id": id,
+        }
 
 
 def make_place_name_place(type: str, place: PetriNet.Place):
@@ -119,7 +128,7 @@ def update_transition_with(obj, type: str, other_subnet_transition: PetriNet.Tra
 
 
 def main():
-    ocel = pm4py.read.read_ocel2_json("order-management.json")
+    ocel = pm4py.read.read_ocel2_sqlite("../ocgena-server/testing_output/ocel_gen_integration.sqlite")
 
     # Get the list of object types in the OCEL
     object_types = pm4py.ocel_get_object_types(ocel)
@@ -142,7 +151,7 @@ def main():
     per_object_type_id = {}
 
     for obj_type in list(ocpn["object_types"]):
-        per_object_type_id[obj_type] = { "label" : obj_type}
+        per_object_type_id[obj_type] = {"label": obj_type}
 
     per_place = {}
     for type in ocpn['petri_nets']:
@@ -214,7 +223,7 @@ def main():
 
         for arc in list(petri_net[0].arcs):
             arc_name = make_arc_name(type, arc)
-            total_arcs[arc_name] = map_arc(type, arc)
+            total_arcs[arc_name] = map_arc(type, arc, ocpn)
 
     per_id_petri_atoms = {}
 
@@ -229,12 +238,12 @@ def main():
         "place_object_types": place_object_types,
         "place_types": place_types,
         "object_types": {"per_object_type_id": per_object_type_id},
-        "petri_atoms": per_id_petri_atoms
+        "petri_atoms": {"per_id": per_id_petri_atoms},
+        "oc_net_type": "aalst"
     }
 
-
     with open('ocnet.yaml', 'w') as file:
-        yaml.dump(ocnet, file,)
+        yaml.dump(ocnet, file)
 
     debugging = True
 

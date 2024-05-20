@@ -57,17 +57,17 @@ data class OCNetStruct(
             val inputPlaces = placeTypeRegistry.getInputPlaces(placeRegistry).places
 
             for (inputPlace in inputPlaces) {
-                appendLine("${inputPlace.id} [shape=\"ellipse\", label=\"${inputPlace.id} ${placeToObjectTypeRegistry[inputPlace.id]}\"]")
+                appendLine("\"${inputPlace.id}\" [shape=\"ellipse\", label=\"${inputPlace.id} ${placeToObjectTypeRegistry[inputPlace.id]}\"]")
             }
 
-            appendLine("{rank=same; ${inputPlaces.joinToString("; ") { it.id }}}")
+            appendLine("{rank=same; ${inputPlaces.joinToString("; ") { "\"${it.id}\"" }}}")
 
             for (place in placeRegistry.places.filter { it !in inputPlaces }) {
-                appendLine("${place.id} [shape=\"ellipse\", label=\"${place.id} ${placeToObjectTypeRegistry[place.id]}\"]")
+                appendLine("\"${place.id}\" [shape=\"ellipse\", label=\"${place.id} ${placeToObjectTypeRegistry[place.id]}\"]")
             }
 
             for (transition in transitionsRegistry) {
-                appendLine("${transition.id} [shape=\"box\"]")
+                appendLine("\"${transition.id}\" [shape=\"box\"]")
             }
 
             for (arc in arcsRegistry.iterable) {
@@ -76,7 +76,7 @@ data class OCNetStruct(
                     is NormalArcMeta -> ""
                 }
                 val space = if (arc.arcMeta.isVar()) " " else ""
-                appendLine("${arc.tailNodeId} -> ${arc.arrowNodeId} [label=\"$space${arc.arcMeta}\", $color]")
+                appendLine("\"${arc.tailNodeId}\" -> \"${arc.arrowNodeId}\" [label=\"$space${arc.arcMeta}\", $color]")
             }
         }
     }
