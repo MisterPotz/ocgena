@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 class IntegratedSimulationTest {
 
     @Test
-    fun serializationWorks() {
+    fun `serialization works`() {
         val path = Path("testing_output", "integration.db")
 
         val model = build3Tran4InpExample()
@@ -77,7 +77,7 @@ class IntegratedSimulationTest {
     }
 
     @Test
-    fun integrationTestSimulationRun() = testApplication {
+    fun `integrated simulation run`() = testApplication {
         application {
             configureRouting()
             configureSerialization()
@@ -105,7 +105,7 @@ class IntegratedSimulationTest {
     }
 
     @Test
-    fun integrationOcelParsingOnGeneratedTable() {
+    fun `integrated simulation and ocel generation run`() {
         testApplication {
             application {
                 configureRouting()

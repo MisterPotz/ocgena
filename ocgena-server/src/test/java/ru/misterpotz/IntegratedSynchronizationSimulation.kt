@@ -44,7 +44,7 @@ class IntegratedSynchronizationSimulation {
     val simulationRequest = SimulateRequest(outputDatabasePath = path.toString(), simulationInput, ocnet)
 
     @Test
-    fun test() = testApplication {
+    fun `integrated synchronization simulation and ocel generation test`() = testApplication {
         application {
             configureRouting()
             configureSerialization()

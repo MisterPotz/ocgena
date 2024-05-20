@@ -13,7 +13,7 @@ import kotlin.test.assertEquals
 
 class BatchIteratorTest {
     @Test
-    fun kekpLication() = testApplication {
+    fun `test application launches`() = testApplication {
         application {
             configureRouting()
         }
@@ -24,7 +24,7 @@ class BatchIteratorTest {
     }
 
     @Test
-    fun testRoot() = testApplication {
+    fun `test application accepts requests`() = testApplication {
         application {
             configureRouting()
             configureSerialization()
@@ -36,7 +36,7 @@ class BatchIteratorTest {
     }
 
     @Test
-    fun `batches work ok`() {
+    fun `test batch iterator works correctly`() {
         val batchIterator = BatchIterator(100, 100)
         Assertions.assertTrue(batchIterator.hasNext())
         Assertions.assertTrue(batchIterator.next() == 0..99L)
@@ -44,13 +44,13 @@ class BatchIteratorTest {
     }
 
     @Test
-    fun `batches work on empty`() {
+    fun `test batch iterator works for empty edge case`() {
         val batchIterator = BatchIterator(100, 0)
         Assertions.assertTrue(batchIterator.hasNext().not())
     }
 
     @Test
-    fun `batch coerces size`() {
+    fun `test batch considers range correctly`() {
         val batchIterator = BatchIterator(20, 4)
         Assertions.assertTrue(batchIterator.hasNext())
         Assertions.assertEquals(0..3L, batchIterator.next())
@@ -58,7 +58,7 @@ class BatchIteratorTest {
     }
 
     @Test
-    fun `double take`() {
+    fun `test exception thrown on repeated access`() {
         val batchIterator = BatchIterator(5, 20)
         Assertions.assertTrue(batchIterator.hasNext())
         Assertions.assertEquals(0..4L, batchIterator.next())
