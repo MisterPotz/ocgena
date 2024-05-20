@@ -61,10 +61,20 @@ internal class OCNetToOCELConverter(
                     addAll(labellingData.objectTypeIdToLabel.keys.map {
                         ocelTablesProvider.concreteObjectTable(labelConverter.ocelObjectTableName(it))
                     })
+                    add(eventTypeMap)
+                    add(objectTypeMap)
                 }
                 SchemaUtils.create(
                     *tables.toTypedArray()
                 )
+                objectTypeMap.batchInsert(labellingData.objectTypeIdToLabel.toList()) {pair: Pair<String, String> ->
+                    this[objectTypeMap.ocelType] = pair.first
+                    this[objectTypeMap.ocelTypeMap] = labelConverter.ocelObjectTableNameNoPrefix(pair.first)
+                }
+                eventTypeMap.batchInsert(labellingData.transitionIdToLabel.toList()) {pair: Pair<String, String> ->
+                    this[eventTypeMap.ocelType] = pair.first
+                    this[eventTypeMap.ocelTypeMap] = labelConverter.ocelEventTableNameNoPrefix(pair.first)
+                }
             }
         }
     }
@@ -209,10 +219,19 @@ class LabelConverter(private val simulationLabellingData: SimulationLabellingDat
         val ocelEventType = simulationLabellingData.transitionIdToLabel[transitionId]!!
         return "event_${ocelEventType.toMapType()}"
     }
+    fun ocelEventTableNameNoPrefix(transitionId: String): String {
+        val ocelEventType = simulationLabellingData.transitionIdToLabel[transitionId]!!
+        return ocelEventType.toMapType()
+    }
 
     fun ocelObjectTableName(objectTypeId: String): String {
         val ocelEventType = simulationLabellingData.objectTypeIdToLabel[objectTypeId]!!
         return "object_${ocelEventType.toMapType()}"
+    }
+
+    fun ocelObjectTableNameNoPrefix(objectTypeId: String): String {
+        val ocelEventType = simulationLabellingData.objectTypeIdToLabel[objectTypeId]!!
+        return ocelEventType.toMapType()
     }
 
     fun ocelObjectId(simulationDBStepLog: SimulationDBStepLog, tokenId: Long): String {
