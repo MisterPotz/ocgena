@@ -77,7 +77,12 @@ suspend fun startSimulation(simulateArguments: SimulateArguments): Long {
         }.map {
             object : TasksRegistry.Work {
                 override suspend fun run() {
-                    it.simulationV2Component().simulation().runSimulation()
+                    val res = kotlin.runCatching {
+                        it.simulationV2Component().simulation().runSimulation()
+                    }
+                    if (res.isFailure) {
+                        throw res.exceptionOrNull()!!
+                    }
                 }
 
                 override suspend fun destroy() {

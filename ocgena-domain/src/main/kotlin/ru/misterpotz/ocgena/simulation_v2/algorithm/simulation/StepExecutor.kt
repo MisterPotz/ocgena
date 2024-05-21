@@ -32,7 +32,7 @@ class StepExecutor(
     private val shuffler: Shuffler
 ) {
     companion object {
-        private const val DEBUG = false
+        private const val DEBUG = true
     }
     enum class EnabledMode {
         DISABLED_BY_MARKING,
@@ -95,6 +95,7 @@ class StepExecutor(
     private var totalClock: Long = 0L
 
     suspend fun execute(): SimulationStepLog? {
+        println("program invoked")
         logBuilder = LogBuilder()
         logBuilder.recordStartMarking(tokenStore)
         logBuilder.recordStepNumber(stepNumber)
@@ -145,6 +146,7 @@ class StepExecutor(
             garbageTokensAtEndPlace()
         }
         stepNumber++
+        println("building log")
         return logBuilder.build()
     }
 
@@ -202,6 +204,7 @@ class StepExecutor(
 
     private fun garbageTokensAtEndPlace() {
         model.outPlaces.forEach { endPlace ->
+            println("cleaning out place $endPlace")
             cleanTokenTransitionVisits(tokenStore.tokensAt(endPlace))
             tokenStore.modifyTokensAt(endPlace) { tokens ->
                 tokenStore.removeTokens(tokens)

@@ -128,7 +128,7 @@ def update_transition_with(obj, type: str, other_subnet_transition: PetriNet.Tra
 
 
 def main():
-    ocel = pm4py.read.read_ocel2_sqlite("../ocgena-server/testing_output/ocel_gen_integration.sqlite")
+    ocel = pm4py.read.read_ocel2_sqlite("../ocgena-server/testing_output/sync_ocel_gen_integration.sqlite")
 
     # Get the list of object types in the OCEL
     object_types = pm4py.ocel_get_object_types(ocel)

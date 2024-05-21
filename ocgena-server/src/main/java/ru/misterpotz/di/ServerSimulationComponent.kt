@@ -138,8 +138,12 @@ class SimulationDestroyer(
     private val simulation: ServerSimulationInteractor
 ) {
     suspend fun destroy() {
-        simulation.finish()
-        repository.close()
+        simulation.finish().let {
+            println("simulation.finish()")
+        }
+        repository.close().let {
+            println("repository.close()")
+        }
     }
 }
 

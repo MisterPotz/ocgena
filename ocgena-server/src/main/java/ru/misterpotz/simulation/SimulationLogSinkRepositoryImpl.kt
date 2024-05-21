@@ -58,6 +58,7 @@ internal class SimulationLogSinkRepositoryImpl(
                 }
                 checkedIfCreated = true
             }
+            commit()
         }
     }
 
@@ -71,6 +72,7 @@ internal class SimulationLogSinkRepositoryImpl(
             insertStepToFiringAmounts(batch)
             insertSteptoFiringTokens(batch)
             insertTokens(batch)
+            commit()
         }
     }
 
@@ -93,7 +95,7 @@ internal class SimulationLogSinkRepositoryImpl(
         dbConnection.close()
     }
 
-    private fun insertSteps(batch: List<SimulationStepLog>) {
+    private suspend fun insertSteps(batch: List<SimulationStepLog>) {
         with(tablesProvider) {
             simulationStepsTable.batchInsert(batch) { simulationStepLog ->
                 this[simulationStepsTable.id] = simulationStepLog.stepNumber

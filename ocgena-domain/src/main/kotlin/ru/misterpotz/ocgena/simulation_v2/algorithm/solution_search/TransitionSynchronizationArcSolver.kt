@@ -71,10 +71,13 @@ class TransitionSynchronizationArcSolver(
                 easyArcsSolutionCombinator
             )
         )
-
+        var counter = 0
         return IteratorMapper(
             fullCombinator
         ) { independentSolutionCombination ->
+            if (counter % 100 == 0) {
+                println("combinating over $counter combination")
+            }
             if (solutionExistenceConfirmationMode) {
                 FullSolution.Exists
             } else {

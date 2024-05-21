@@ -1,5 +1,7 @@
 package ru.misterpotz
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.misterpotz.simulation.SimulationLogRepository
 import javax.inject.Inject
 
@@ -13,12 +15,17 @@ class DBLoggerImpl @Inject constructor(
 
     override suspend fun acceptStepLog(simulationStepLog: SimulationStepLog) {
         batch.add(simulationStepLog)
-        saveIfBatchMaxSize(forceSave = false)
+        withContext(Dispatchers.IO) {
+            saveIfBatchMaxSize(forceSave = false)
+
+        }
     }
 
     override suspend fun simulationFinished() {
-        saveIfBatchMaxSize(forceSave = true)
-        simulationLogRepository.close()
+        withContext(Dispatchers.IO) {
+            saveIfBatchMaxSize(forceSave = true)
+            simulationLogRepository.close()
+        }
     }
 
     private fun batchMaxSizeCondition(): Boolean {
@@ -27,6 +34,7 @@ class DBLoggerImpl @Inject constructor(
 
     private suspend fun saveIfBatchMaxSize(forceSave: Boolean = false) {
         if (batchMaxSizeCondition() || forceSave) {
+            println("saving batch")
             simulationLogRepository.push(batch)
             batch.clear()
         }

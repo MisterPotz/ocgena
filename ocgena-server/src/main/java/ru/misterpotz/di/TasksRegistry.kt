@@ -34,6 +34,7 @@ class TasksRegistry(private val scope: CoroutineScope) {
                 work.run()
                 println("work ended successfully")
             }.onCompletion { exception ->
+                println("work completed $exception")
                 exception?.printStackTrace()
                 mutex.withLock {
                     tasksRegistry.remove(newIndex)

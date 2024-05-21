@@ -7,9 +7,10 @@ import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.testing.*
 import kotlinx.coroutines.delay
+import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.input.*
-import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
+import ru.misterpotz.ocgena.testing.buildAdvancedSynchronizingLomazovaExampleModel
 import ru.misterpotz.plugins.*
 import kotlin.io.path.Path
 import kotlin.io.path.deleteIfExists
@@ -18,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class IntegratedSynchronizationSimulation {
-    val ocnet = buildSynchronizingLomazovaExampleModel()
+    val ocnet = buildAdvancedSynchronizingLomazovaExampleModel()
     val simulationInput = SimulationInput(
         randomSeed = 42,
         loggingEnabled = true,
@@ -33,15 +34,33 @@ class IntegratedSynchronizationSimulation {
             )
         ),
         places = mapOf(
-            "bill" to PlaceSetting(initialTokens = 4),
-            "package" to PlaceSetting(initialTokens = 12),
-            "order" to PlaceSetting(initialTokens = 4),
-            "track" to PlaceSetting(initialTokens = 4)
+            "bill-source" to PlaceSetting(initialTokens = 10),
+            "package-source" to PlaceSetting(initialTokens = 10),
+            "order-source" to PlaceSetting(initialTokens = 10),
+            "track-source" to PlaceSetting(initialTokens = 10)
         )
     )
     val path = Path("testing_output", "sync_integration.sqlite")
     val ocelPath = Path("testing_output", "sync_ocel_gen_integration.sqlite")
     val simulationRequest = SimulateRequest(outputDatabasePath = path.toString(), simulationInput, ocnet)
+
+    @Test
+    fun `print out sim input`() {
+        val yaml = ServiceProvider.serverComponent.yaml
+        println(yaml.encodeToString(simulationInput))
+    }
+
+    @Test
+    fun `print out full simulation request`() {
+        val json = ServiceProvider.serverComponent.json
+        println(json.encodeToString(simulationRequest))
+    }
+
+
+    @Test
+    fun `print out sim model`() {
+        println(ocnet.toDot())
+    }
 
     @Test
     fun `integrated synchronization simulation and ocel generation test`() = testApplication {
@@ -85,6 +104,5 @@ class IntegratedSynchronizationSimulation {
         }
         assertTrue(client.get("ocel_res/${ocelHandle}").body<ResultResponse>().isSuccess)
         assertTrue(ocelPath.exists())
-
     }
 }

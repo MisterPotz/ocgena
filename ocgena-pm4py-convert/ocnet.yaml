@@ -1,190 +1,156 @@
 object_types:
   per_object_type_id:
-    "\u25B30":
-      label: "\u25B30"
     "\u25B31":
       label: "\u25B31"
+    "\u25B32":
+      label: "\u25B32"
+    "\u25B33":
+      label: "\u25B33"
+    "\u25B34":
+      label: "\u25B34"
 oc_net_type: aalst
 petri_atoms:
   per_id:
-    skip-3:
+    arrange-packages-to-tracks:
       from_places:
-      - "\u25B30-p-3"
-      id: skip-3
-      label: skip-3
+      - "\u25B32-p-3"
+      - "\u25B33-source"
+      id: arrange-packages-to-tracks
+      label: arrange-packages-to-tracks
       to_places:
-      - "\u25B30-p-5"
+      - "\u25B32-p-4"
+      - "\u25B33-p-3"
       type: transition
-    "skip-3.\u25B30-p-5":
-      id: "skip-3.\u25B30-p-5"
-      type: arc
-    skip-4:
-      from_places:
-      - "\u25B30-p-5"
-      id: skip-4
-      label: skip-4
-      to_places:
-      - "\u25B30-p-4"
-      type: transition
-    "skip-4.\u25B30-p-4":
-      id: "skip-4.\u25B30-p-4"
-      type: arc
-    t1:
-      from_places:
-      - "\u25B31-p-3"
-      - "\u25B30-p-5"
-      id: t1
-      label: t1
-      to_places:
-      - "\u25B31-sink"
-      - "\u25B30-p-4"
-      type: transition
-    "t1.\u25B30-p-4":
+    "arrange-packages-to-tracks.\u25B32-p-4":
       arcMeta:
         type: aalst
-      id: "t1.\u25B30-p-4"
+      id: "arrange-packages-to-tracks.\u25B32-p-4"
       type: vararc
-    "t1.\u25B31-sink":
+    "arrange-packages-to-tracks.\u25B33-p-3":
       arcMeta:
         type: aalst
-      id: "t1.\u25B31-sink"
+      id: "arrange-packages-to-tracks.\u25B33-p-3"
       type: vararc
-    t2:
+    place-order:
       from_places:
+      - "\u25B32-source"
       - "\u25B31-source"
-      - "\u25B30-p-3"
-      id: t2
-      label: t2
+      id: place-order
+      label: place-order
       to_places:
+      - "\u25B32-p-3"
       - "\u25B31-p-3"
-      - "\u25B30-p-4"
       type: transition
-    "t2.\u25B30-p-4":
+    "place-order.\u25B31-p-3":
+      id: "place-order.\u25B31-p-3"
+      type: arc
+    "place-order.\u25B32-p-3":
       arcMeta:
         type: aalst
-      id: "t2.\u25B30-p-4"
+      id: "place-order.\u25B32-p-3"
       type: vararc
-    "t2.\u25B31-p-3":
-      id: "t2.\u25B31-p-3"
-      type: arc
-    t3:
+    send-invoices:
       from_places:
-      - "\u25B30-p-3"
-      id: t3
-      label: t3
+      - "\u25B31-p-3"
+      - "\u25B34-source"
+      id: send-invoices
+      label: send-invoices
       to_places:
-      - "\u25B30-p-5"
+      - "\u25B31-p-4"
+      - "\u25B34-p-3"
       type: transition
-    "t3.\u25B30-p-5":
-      id: "t3.\u25B30-p-5"
+    "send-invoices.\u25B31-p-4":
+      id: "send-invoices.\u25B31-p-4"
       type: arc
-    tau-1:
-      from_places:
-      - "\u25B30-source"
-      id: tau-1
-      label: tau-1
-      to_places:
-      - "\u25B30-p-3"
-      type: transition
-    "tau-1.\u25B30-p-3":
-      id: "tau-1.\u25B30-p-3"
-      type: arc
-    tau-2:
-      from_places:
-      - "\u25B30-p-4"
-      id: tau-2
-      label: tau-2
-      to_places:
-      - "\u25B30-sink"
-      type: transition
-    "tau-2.\u25B30-sink":
-      id: "tau-2.\u25B30-sink"
-      type: arc
-    "\u25B30-p-3":
-      from_transtns:
-      - tau-1
-      id: "\u25B30-p-3"
-      label: "\u25B30-p-3"
-      to_transtns:
-      - t2
-      - t3
-      - skip-3
-      type: place
-    "\u25B30-p-3.skip-3":
-      id: "\u25B30-p-3.skip-3"
-      type: arc
-    "\u25B30-p-3.t2":
+    "send-invoices.\u25B34-p-3":
       arcMeta:
         type: aalst
-      id: "\u25B30-p-3.t2"
+      id: "send-invoices.\u25B34-p-3"
       type: vararc
-    "\u25B30-p-3.t3":
-      id: "\u25B30-p-3.t3"
+    skip-1:
+      from_places:
+      - "\u25B32-p-3"
+      - "\u25B34-p-3"
+      id: skip-1
+      label: skip-1
+      to_places:
+      - "\u25B32-p-4"
+      - "\u25B34-sink"
+      type: transition
+    "skip-1.\u25B32-p-4":
+      id: "skip-1.\u25B32-p-4"
       type: arc
-    "\u25B30-p-4":
-      from_transtns:
-      - t2
-      - skip-4
-      - t1
-      id: "\u25B30-p-4"
-      label: "\u25B30-p-4"
-      to_transtns:
-      - tau-2
-      type: place
-    "\u25B30-p-4.tau-2":
-      id: "\u25B30-p-4.tau-2"
+    "skip-1.\u25B34-sink":
+      id: "skip-1.\u25B34-sink"
       type: arc
-    "\u25B30-p-5":
-      from_transtns:
-      - skip-3
-      - t3
-      id: "\u25B30-p-5"
-      label: "\u25B30-p-5"
-      to_transtns:
-      - skip-4
-      - t1
-      type: place
-    "\u25B30-p-5.skip-4":
-      id: "\u25B30-p-5.skip-4"
+    skip-2:
+      from_places:
+      - "\u25B32-p-4"
+      id: skip-2
+      label: skip-2
+      to_places:
+      - "\u25B32-sink"
+      type: transition
+    "skip-2.\u25B32-sink":
+      id: "skip-2.\u25B32-sink"
       type: arc
-    "\u25B30-p-5.t1":
+    test-all-sync:
+      from_places:
+      - "\u25B32-p-4"
+      - "\u25B31-p-4"
+      - "\u25B33-p-3"
+      - "\u25B34-p-3"
+      id: test-all-sync
+      label: test-all-sync
+      to_places:
+      - "\u25B32-sink"
+      - "\u25B31-sink"
+      - "\u25B33-sink"
+      - "\u25B34-sink"
+      type: transition
+    "test-all-sync.\u25B31-sink":
+      id: "test-all-sync.\u25B31-sink"
+      type: arc
+    "test-all-sync.\u25B32-sink":
       arcMeta:
         type: aalst
-      id: "\u25B30-p-5.t1"
+      id: "test-all-sync.\u25B32-sink"
       type: vararc
-    "\u25B30-sink":
-      from_transtns:
-      - tau-2
-      id: "\u25B30-sink"
-      label: "\u25B30-sink"
-      to_transtns: []
-      type: place
-    "\u25B30-source":
-      from_transtns: []
-      id: "\u25B30-source"
-      label: "\u25B30-source"
-      to_transtns:
-      - tau-1
-      type: place
-    "\u25B30-source.tau-1":
-      id: "\u25B30-source.tau-1"
-      type: arc
+    "test-all-sync.\u25B33-sink":
+      arcMeta:
+        type: aalst
+      id: "test-all-sync.\u25B33-sink"
+      type: vararc
+    "test-all-sync.\u25B34-sink":
+      arcMeta:
+        type: aalst
+      id: "test-all-sync.\u25B34-sink"
+      type: vararc
     "\u25B31-p-3":
       from_transtns:
-      - t2
+      - place-order
       id: "\u25B31-p-3"
       label: "\u25B31-p-3"
       to_transtns:
-      - t1
+      - send-invoices
       type: place
-    "\u25B31-p-3.t1":
-      arcMeta:
-        type: aalst
-      id: "\u25B31-p-3.t1"
-      type: vararc
+    "\u25B31-p-3.send-invoices":
+      id: "\u25B31-p-3.send-invoices"
+      type: arc
+    "\u25B31-p-4":
+      from_transtns:
+      - send-invoices
+      id: "\u25B31-p-4"
+      label: "\u25B31-p-4"
+      to_transtns:
+      - test-all-sync
+      type: place
+    "\u25B31-p-4.test-all-sync":
+      id: "\u25B31-p-4.test-all-sync"
+      type: arc
     "\u25B31-sink":
       from_transtns:
-      - t1
+      - test-all-sync
       id: "\u25B31-sink"
       label: "\u25B31-sink"
       to_transtns: []
@@ -194,24 +160,158 @@ petri_atoms:
       id: "\u25B31-source"
       label: "\u25B31-source"
       to_transtns:
-      - t2
+      - place-order
       type: place
-    "\u25B31-source.t2":
-      id: "\u25B31-source.t2"
+    "\u25B31-source.place-order":
+      id: "\u25B31-source.place-order"
       type: arc
+    "\u25B32-p-3":
+      from_transtns:
+      - place-order
+      id: "\u25B32-p-3"
+      label: "\u25B32-p-3"
+      to_transtns:
+      - skip-1
+      - arrange-packages-to-tracks
+      type: place
+    "\u25B32-p-3.arrange-packages-to-tracks":
+      arcMeta:
+        type: aalst
+      id: "\u25B32-p-3.arrange-packages-to-tracks"
+      type: vararc
+    "\u25B32-p-3.skip-1":
+      id: "\u25B32-p-3.skip-1"
+      type: arc
+    "\u25B32-p-4":
+      from_transtns:
+      - skip-1
+      - arrange-packages-to-tracks
+      id: "\u25B32-p-4"
+      label: "\u25B32-p-4"
+      to_transtns:
+      - skip-2
+      - test-all-sync
+      type: place
+    "\u25B32-p-4.skip-2":
+      id: "\u25B32-p-4.skip-2"
+      type: arc
+    "\u25B32-p-4.test-all-sync":
+      arcMeta:
+        type: aalst
+      id: "\u25B32-p-4.test-all-sync"
+      type: vararc
+    "\u25B32-sink":
+      from_transtns:
+      - skip-2
+      - test-all-sync
+      id: "\u25B32-sink"
+      label: "\u25B32-sink"
+      to_transtns: []
+      type: place
+    "\u25B32-source":
+      from_transtns: []
+      id: "\u25B32-source"
+      label: "\u25B32-source"
+      to_transtns:
+      - place-order
+      type: place
+    "\u25B32-source.place-order":
+      arcMeta:
+        type: aalst
+      id: "\u25B32-source.place-order"
+      type: vararc
+    "\u25B33-p-3":
+      from_transtns:
+      - arrange-packages-to-tracks
+      id: "\u25B33-p-3"
+      label: "\u25B33-p-3"
+      to_transtns:
+      - test-all-sync
+      type: place
+    "\u25B33-p-3.test-all-sync":
+      arcMeta:
+        type: aalst
+      id: "\u25B33-p-3.test-all-sync"
+      type: vararc
+    "\u25B33-sink":
+      from_transtns:
+      - test-all-sync
+      id: "\u25B33-sink"
+      label: "\u25B33-sink"
+      to_transtns: []
+      type: place
+    "\u25B33-source":
+      from_transtns: []
+      id: "\u25B33-source"
+      label: "\u25B33-source"
+      to_transtns:
+      - arrange-packages-to-tracks
+      type: place
+    "\u25B33-source.arrange-packages-to-tracks":
+      arcMeta:
+        type: aalst
+      id: "\u25B33-source.arrange-packages-to-tracks"
+      type: vararc
+    "\u25B34-p-3":
+      from_transtns:
+      - send-invoices
+      id: "\u25B34-p-3"
+      label: "\u25B34-p-3"
+      to_transtns:
+      - skip-1
+      - test-all-sync
+      type: place
+    "\u25B34-p-3.skip-1":
+      id: "\u25B34-p-3.skip-1"
+      type: arc
+    "\u25B34-p-3.test-all-sync":
+      arcMeta:
+        type: aalst
+      id: "\u25B34-p-3.test-all-sync"
+      type: vararc
+    "\u25B34-sink":
+      from_transtns:
+      - skip-1
+      - test-all-sync
+      id: "\u25B34-sink"
+      label: "\u25B34-sink"
+      to_transtns: []
+      type: place
+    "\u25B34-source":
+      from_transtns: []
+      id: "\u25B34-source"
+      label: "\u25B34-source"
+      to_transtns:
+      - send-invoices
+      type: place
+    "\u25B34-source.send-invoices":
+      arcMeta:
+        type: aalst
+      id: "\u25B34-source.send-invoices"
+      type: vararc
 place_object_types:
   per_place:
-    "\u25B30-p-3": "\u25B30"
-    "\u25B30-p-4": "\u25B30"
-    "\u25B30-p-5": "\u25B30"
-    "\u25B30-sink": "\u25B30"
-    "\u25B30-source": "\u25B30"
     "\u25B31-p-3": "\u25B31"
+    "\u25B31-p-4": "\u25B31"
     "\u25B31-sink": "\u25B31"
     "\u25B31-source": "\u25B31"
+    "\u25B32-p-3": "\u25B32"
+    "\u25B32-p-4": "\u25B32"
+    "\u25B32-sink": "\u25B32"
+    "\u25B32-source": "\u25B32"
+    "\u25B33-p-3": "\u25B33"
+    "\u25B33-sink": "\u25B33"
+    "\u25B33-source": "\u25B33"
+    "\u25B34-p-3": "\u25B34"
+    "\u25B34-sink": "\u25B34"
+    "\u25B34-source": "\u25B34"
 place_types:
   per_place:
-    "\u25B30-sink": OUTPUT
-    "\u25B30-source": INPUT
     "\u25B31-sink": OUTPUT
     "\u25B31-source": INPUT
+    "\u25B32-sink": OUTPUT
+    "\u25B32-source": INPUT
+    "\u25B33-sink": OUTPUT
+    "\u25B33-source": INPUT
+    "\u25B34-sink": OUTPUT
+    "\u25B34-source": INPUT
