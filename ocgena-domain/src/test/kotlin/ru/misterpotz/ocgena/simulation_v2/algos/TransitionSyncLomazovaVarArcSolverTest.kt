@@ -60,7 +60,13 @@ class TransitionSyncLomazovaVarArcSolverTest {
             "t2" to listOf(
                 21, 22, 23
             )
-        )
+        ),
+ mapOf(
+     "b2" to 4,
+     "o3" to 1,
+     "p3" to 2,
+     "t2" to 3
+ )
     )
 
     fun ModelAccessor.buildTransitionHistoryWorking() = buildTransitionHistory(
@@ -102,6 +108,12 @@ class TransitionSyncLomazovaVarArcSolverTest {
             "t2" to listOf(
                 21, 22, 23, 24 // <------ DIFF
             )
+        ),
+        placeToTypes = mapOf(
+            "b2" to 4,
+            "o3" to 1,
+            "p3" to 2,
+            "t2" to 3
         )
     )
 
@@ -228,5 +240,42 @@ class TransitionSyncLomazovaVarArcSolverTest {
             ).toTokenSliceFrom(tokenSlice, model),
             solutions.first().toTokenSlice()
         )
+    }
+
+    @Test
+    fun `v2 token solution works`() {
+        val model = ocnet().toDefaultSim(
+            SimulationInput(
+                loggingEnabled = true,
+                transitions = mapOf(
+                    "test_all_sync" to TransitionSetting(
+                        synchronizedArcGroups = listOf(
+                            SynchronizedArcGroup(syncTransition = "send_invoices", listOf("b2", "o3")),
+                            SynchronizedArcGroup("place_order", listOf("o3", "p3")),
+                            SynchronizedArcGroup("arrange_packages_to_tracks", listOf("p3", "t2"))
+                        )
+                    )
+                )
+            )
+        )
+
+        val tokenSlice = model.buildTransitionHistoryWorking()
+        val normalShuffler = NormalShuffler(random = Random(42))
+        val solutions =
+            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator, v2Solver = true)
+                .iterator()
+                .asSequence()
+                .toList()
+
+        assertEquals(
+            mapOf(
+                "b2" to listOf(33, 34),
+                "o3" to listOf(2),
+                "p3" to listOf(16, 17),
+                "t2" to listOf(24)
+            ).toTokenSliceFrom(tokenSlice, model),
+            solutions.first().toTokenSlice()
+        )
+        println(solutions)
     }
 }

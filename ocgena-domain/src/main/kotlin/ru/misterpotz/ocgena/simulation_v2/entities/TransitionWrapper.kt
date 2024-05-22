@@ -32,6 +32,8 @@ fun InputArcWrapper.ConsumptionSpec.castDependent(): InputArcWrapper.Consumption
     return this as? InputArcWrapper.ConsumptionSpec.DependsOnVariable?
 }
 
+var EXPERIMENT_V2_SOLVER = true
+
 class TransitionWrapper(
     val transitionId: PetriAtomId,
     val model: ModelAccessor,
@@ -94,18 +96,23 @@ class TransitionWrapper(
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
         tokenGenerator: TokenGenerator,
-        existenceConfirmationMode: Boolean = false
+        existenceConfirmationMode: Boolean = false,
+        v2Solver : Boolean = false
     ): Iterable<FullSolution> {
         return when (model.tokensAreEntities()) {
             true -> {
-                TransitionSynchronizationArcSolver(this)
-                    .getSolutionFinderIterable(
-                        tokenSlice,
-                        shuffler,
-                        tokenGenerator = tokenGenerator,
-                        existenceConfirmationMode
-                    )
-                    ?: emptyList()
+                if (v2Solver) {
+                    TransitionSyncV2FullSolutionFinder(this, shuffler, tokenGenerator).asIterable(tokenSlice)
+                } else {
+                    TransitionSynchronizationArcSolver(this)
+                        .getSolutionFinderIterable(
+                            tokenSlice,
+                            shuffler,
+                            tokenGenerator = tokenGenerator,
+                            existenceConfirmationMode
+                        )
+                        ?: emptyList()
+                }
             }
 
             false -> {

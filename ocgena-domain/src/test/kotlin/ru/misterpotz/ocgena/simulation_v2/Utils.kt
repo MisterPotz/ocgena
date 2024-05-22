@@ -2,6 +2,8 @@ package ru.misterpotz.ocgena.simulation_v2
 
 import ru.misterpotz.Logger
 import ru.misterpotz.SimulationStepLog
+import ru.misterpotz.ocgena.ocnet.utils.defaultObjType
+import ru.misterpotz.ocgena.ocnet.utils.defaultObjTypeId
 import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.TokenWrapper
 import ru.misterpotz.ocgena.simulation_v2.entities.TransitionWrapper
@@ -78,16 +80,22 @@ object NoTokenGenerator : TokenGenerator {
 fun buildTransitionHistory(
     model: ModelAccessor,
     transitionToHistoryEntries: Map<String, List<List<Int>>>,
-    placeToTokens: Map<String, List<Int>>
+    placeToTokens: Map<String, List<Int>>,
+    placeToTypes: Map<String, Int> = mapOf()
 ): SimpleTokenSlice {
     val tokenEntries = mutableMapOf<String, TokenWrapper>()
+    val objectTypes = mutableMapOf<String, ObjectType>()
     fun List<List<Int>>.recordTokensToHistory(transitionWrapper: TransitionWrapper): List<TokenWrapper> {
         return flatMap { it ->
             val tokens = it.map { tokenIndex ->
                 tokenEntries.getOrPut(tokenIndex.toString()) {
                     TokenWrapper(
                         tokenIndex.toLong(),
-                        model.defaultObjectType()
+                        (placeToTokens.map { Pair(it.key, it.value) }
+                            .find { it.second.contains(tokenIndex) }!!.first).let {
+                                val type = placeToTypes[it]
+                                objectTypes.computeIfAbsent(it) { ObjectType(type?.toString() ?: defaultObjTypeId) }
+                            }
                     )
                 }
             }

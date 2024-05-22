@@ -1,17 +1,31 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
+import kotlinx.coroutines.yield
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.resolveVariables
 
+fun makePlaceTokensIteratorByArcRequirement(
+    tokenSlice: TokenSlice,
+    inputArcWrapper: InputArcWrapper,
+    shuffler: Shuffler
+): CombinationIterable<TokenWrapper> {
+    val requirement = inputArcWrapper.consumptionSpec.tokenRequirement()
+    val tokens = tokenSlice.tokensAt(inputArcWrapper.fromPlace)
+
+    val shuffled = tokens.buildFromIndices(shuffler.makeShuffled(tokens.indices))
+    return CombinationIterable(shuffled, requirement)
+}
+
+
 class TransitionSyncV2MinimalIndepdendentsSolutionFinder(val transition: TransitionWrapper, val shuffler: Shuffler) {
 
     fun List<InputArcWrapper>.makeIndicesOfPlacesForCondition(condition: MultiArcCondition): List<Int> {
         val arcs = condition.arcs.ref
-        val combinationIndices = fold(mutableListOf<Int>()) { acc, arc ->
-            arcs.indexOfFirst { it == arc }.takeIf { it >= 0 }?.let {
+        val combinationIndices = arcs.fold(mutableListOf<Int>()) { acc, arc ->
+            indexOfFirst { it == arc }.takeIf { it >= 0 }?.let {
                 acc.add(it)
             }
             acc
@@ -92,46 +106,58 @@ class TransitionSyncV2MinimalIndepdendentsSolutionFinder(val transition: Transit
         val sharedEntries: Map<MultiArcCondition, Set<TokenWrapper>>
     )
 
-    fun findFirstSolution(tokenSlice: TokenSlice):
-            Map<IndependentMultiConditionGroup, IndependentGroupSolution>? {
+    fun presolutionIterator(tokenSlice: TokenSlice):
+            Iterator<Map<IndependentMultiConditionGroup, IndependentGroupSolution>> = iterator {
         if (!transition.model.isSynchronizedMode()) {
-            return emptyMap()
+            return@iterator
         }
         val independentCombinationIterator =
             transition.independentMultiArcConditions.map {
                 val sortedArcs = it.conditionArcSortedByStrongestDescending()
-                Triple(it, sortedArcs, makeIndependentGroupTokensIterator(tokenSlice, sortedArcs, shuffler = shuffler))
+                Triple(
+                    it,
+                    sortedArcs,
+                    makeIndependentGroupTokensIterator(tokenSlice, sortedArcs, shuffler = shuffler).iterator()
+                )
             }
 
         val combinationPerIndependentGroup = mutableMapOf<IndependentMultiConditionGroup, List<List<TokenWrapper>>>()
 
-        for ((independentGroup, sortedArcs, iterator) in independentCombinationIterator) {
-            for (combination in iterator) {
-                val allConditionsSatisfied = independentGroup.conditions.all { condition ->
-                    val combinationIndices = sortedArcs.makeIndicesOfPlacesForCondition(condition)
-                    haveCommonEntryForAll(
-                        FilteredIterator(combinationIndices, combination),
-                        transitions = listOf(condition.syncTarget)
-                    )
+        while (independentCombinationIterator.any { it.third.hasNext() }) {
+            for ((independentGroup, sortedArcs, iterator) in independentCombinationIterator) {
+                for (combination in iterator) {
+                    val allConditionsSatisfied = independentGroup.conditions.all { condition ->
+                        val combinationIndices = sortedArcs.makeIndicesOfPlacesForCondition(condition)
+                        haveCommonEntryForAll(
+                            FilteredIterator(combinationIndices, combination),
+                            transitions = listOf(condition.syncTarget)
+                        )
+                    }
+                    if (allConditionsSatisfied) {
+                        println("saving combination $combination")
+                        // if we came here it means found shared entries for given places for all conditions
+                        // adding the combinations
+                        combinationPerIndependentGroup[independentGroup] = combination
+                        break;
+                    }
                 }
-                if (allConditionsSatisfied) {
-                    // if we came here it means found shared entries for given places for all conditions
-                    // adding the combinations
-                    combinationPerIndependentGroup[independentGroup] = combination
-                    break;
+                // not found such token combination that independent group is satisfied
+                if (!combinationPerIndependentGroup.contains(independentGroup)) {
+                    return@iterator
                 }
             }
-            // not found such token combination that independent group is satisfied
-            if (!combinationPerIndependentGroup.contains(independentGroup)) {
-                return null
+            val newPresolution = combinationPerIndependentGroup.mapValues {
+                IndependentGroupSolution(
+                    combination = it.value,
+                    sharedEntries = findCommonEntriesForIndependent(it.key, it.value)
+                )
             }
+            combinationPerIndependentGroup.clear()
+
+            yield(newPresolution)
         }
-        return combinationPerIndependentGroup.mapValues {
-            IndependentGroupSolution(
-                combination = it.value,
-                sharedEntries = findCommonEntriesForIndependent(it.key, it.value)
-            )
-        }
+
+        return@iterator
     }
 
     private fun makeIndependentGroupTokensIterator(
@@ -143,18 +169,6 @@ class TransitionSyncV2MinimalIndepdendentsSolutionFinder(val transition: Transit
             sortedArcs.map { makePlaceTokensIteratorByArcRequirement(tokenSlice, it, shuffler = shuffler) }
         )
         return combination
-    }
-
-    private fun makePlaceTokensIteratorByArcRequirement(
-        tokenSlice: TokenSlice,
-        inputArcWrapper: InputArcWrapper,
-        shuffler: Shuffler
-    ): CombinationIterable<TokenWrapper> {
-        val requirement = inputArcWrapper.consumptionSpec.tokenRequirement()
-        val tokens = tokenSlice.tokensAt(inputArcWrapper.fromPlace)
-
-        val shuffled = tokens.buildFromIndices(shuffler.makeShuffled(tokens.indices))
-        return CombinationIterable(shuffled, requirement)
     }
 
 

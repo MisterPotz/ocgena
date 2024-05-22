@@ -4,7 +4,7 @@ class CombinationIterable<T>(
     private val items: List<T>,
     private val combinationSize: Int,
 ) : Iterable<List<T>> {
-    private val buffer = ArrayList<T>(combinationSize)
+    private val buffer = MutableList(combinationSize) { null as T }
 
     private suspend fun SequenceScope<List<T>>.generateCombination(
         level: Int,
@@ -12,8 +12,9 @@ class CombinationIterable<T>(
         current: MutableList<T>
     ) {
         if (level == combinationSize) {
-            buffer.clear()
-            buffer.addAll(current)
+            for (i in current.indices) {
+                buffer[i] = current[i]
+            }
             yield(buffer)
             return
         }
@@ -24,7 +25,7 @@ class CombinationIterable<T>(
     }
 
     private fun makeDumbIteraton() = iterator {
-        generateCombination(0, 0, ArrayList(combinationSize))
+        generateCombination(0, 0, MutableList(combinationSize) { null as T })
     }
 
     override fun iterator(): Iterator<List<T>> {

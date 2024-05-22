@@ -131,7 +131,30 @@ class TransitionNoSyncArcSolverTest {
         assertEquals(
             tokenSlice.byPlaceIterator().asSequence().fold(1) { acc, (place, tokens) ->
                 acc * tokens.size
-            },
+            }.also { println(it) },
+            solutions.size
+        )
+    }
+
+    @Test
+    fun testMultiSearchTokenSolver2() {
+        val model = ocnet().toDefaultSim(
+            SimulationInput(
+                loggingEnabled = true,
+            )
+        )
+        val tokenSlice = buildTokens(model)
+
+        val normalShuffler = NormalShuffler(random = Random(42))
+        val solutions =
+            model.transitionBy("test").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator, v2Solver = true).iterator()
+                .asSequence().toList()
+
+        // combinatorics check
+        assertEquals(
+            tokenSlice.byPlaceIterator().asSequence().fold(1) { acc, (place, tokens) ->
+                acc * tokens.size
+            }.also { println(it) },
             solutions.size
         )
     }

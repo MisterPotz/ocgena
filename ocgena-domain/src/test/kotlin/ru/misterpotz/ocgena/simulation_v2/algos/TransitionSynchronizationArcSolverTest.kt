@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSynchronizationArcSolver
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.TransitionSyncV2FullSolutionFinder
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
@@ -113,6 +114,12 @@ class TransitionSynchronizationArcSolverTest {
                     // t3
                     30, 31, 32, 33
                 ),
+            ),
+            placeToTypes = mapOf(
+                "b2" to 4,
+                "o3" to 1,
+                "p3" to 2,
+                "t2" to 3
             )
         )
 
@@ -184,6 +191,34 @@ class TransitionSynchronizationArcSolverTest {
                 .iterator()
                 .asSequence().toList()
 
+        println(solutions)
         assertEquals(24, solutions.size)
+    }
+
+    @Test
+    fun testMultiSearchTokenSolver2() {
+        val model = ocnet().toDefaultSim(
+            SimulationInput(
+                transitions = mapOf(
+                    "test" to TransitionSetting(
+                        synchronizedArcGroups = listOf(
+                            SynchronizedArcGroup(syncTransition = "t1", listOf("p1", "p2")),
+                            SynchronizedArcGroup("t2", listOf("p3", "p2")),
+                            SynchronizedArcGroup("t0", listOf("p4"))
+                        )
+                    )
+                )
+            )
+        )
+        val tokenSlice = buildTransitionHistory(model)
+        val normalShuffler = NormalShuffler(random = Random(42))
+        val solutions = TransitionSyncV2FullSolutionFinder(model.transitionBy("test"), shuffler = normalShuffler, NoTokenGenerator)
+                .findSolution(tokenSlice)
+            .asSequence()
+            .toList()
+
+        println(solutions.size)
+        println(solutions)
+//        assertEquals(24, solutions.size)
     }
 }
