@@ -85,7 +85,7 @@ class TokenStore(
     }
 
     fun removeTokens(tokens: Collection<TokenWrapper>) {
-        println("token store removing tokens $tokens")
+//        println("token store removing tokens $tokens")
         for (token in tokens) {
             removeToken(token)
         }

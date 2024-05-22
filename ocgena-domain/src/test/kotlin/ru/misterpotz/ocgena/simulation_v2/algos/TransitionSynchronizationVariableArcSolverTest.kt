@@ -1,6 +1,7 @@
 package ru.misterpotz.ocgena.simulation_v2.algos
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
@@ -183,6 +184,7 @@ class TransitionSynchronizationVariableArcSolverTest {
     }
 
     @Test
+    @Disabled("first iteration of arc solver is superseded with the second")
     fun testMultiSearchTokenSolver() {
         val model = buildAalstArcModel().toDefaultSim(
             SimulationInput(
@@ -212,34 +214,31 @@ class TransitionSynchronizationVariableArcSolverTest {
         assertEquals(24, solutions.size)
     }
 
-//    @Test
-//    fun testMultiSearchTokenSolver2() {
-//        val model = buildAalstArcModel().toDefaultSim(
-//            SimulationInput(
-//                transitions = mapOf(
-//                    "test" to TransitionSetting(
-//                        synchronizedArcGroups = listOf(
-//                            SynchronizedArcGroup(syncTransition = "t1", listOf("p1", "p2")),
-//                            SynchronizedArcGroup("t2", listOf("p3", "p2")),
-//                            SynchronizedArcGroup("t0", listOf("p4"))
-//                        )
-//                    )
-//                ),
-//                loggingEnabled = true
-//            )
-//        )
-//        val tokenSlice = buildTransitionHistory(model)
-//
-////        val transitionSynchronizationArcSolver = TransitionSynchronizationArcSolver(model.transitionBy("test"))
-//
-//        val normalShuffler = NormalShuffler(random = Random(42))
-//        val solutions =
-//            model.transitionBy("test").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator, v2Solver = true)
-//                .iterator()
-//                .asSequence().toList()
-//
-//        println(solutions)
-//
-////        assertEquals(24, solutions.size)
-//    }
+    @Test
+    fun testMultiSearchTokenSolver2() {
+        val model = buildAalstArcModel().toDefaultSim(
+            SimulationInput(
+                transitions = mapOf(
+                    "test" to TransitionSetting(
+                        synchronizedArcGroups = listOf(
+                            SynchronizedArcGroup(syncTransition = "t1", listOf("p1", "p2")),
+                            SynchronizedArcGroup("t2", listOf("p3", "p2")),
+                            SynchronizedArcGroup("t0", listOf("p4"))
+                        )
+                    )
+                ),
+                loggingEnabled = true
+            )
+        )
+        val tokenSlice = buildTransitionHistory(model)
+
+        val normalShuffler = NormalShuffler(random = Random(42))
+        val solutions =
+            model.transitionBy("test").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator, v2Solver = true)
+                .iterator()
+                .asSequence().toList()
+
+        println(solutions)
+        assertEquals(6, solutions.size)
+    }
 }

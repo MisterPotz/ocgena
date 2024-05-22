@@ -30,7 +30,7 @@ class TransitionSyncV2FullSolutionFinder(
             minimalSolutionFinder.presolutionIterator(filtered)
 
         for (presolution in synchronizationPresolutionIterator) {
-            println(presolution)
+//            println(presolution)
             val currentSolution = SimpleTokenSlice.build { transition.prePlaces.forEach { addRelatedPlace(it) } }
             val minimalSolution = minimalSolutionFinder.usePresolutionForMinimal(presolution)
             currentSolution.plusInPlace(minimalSolution)
@@ -75,7 +75,9 @@ class TransitionSyncV2FullSolutionFinder(
             transition.inputArcs.map { makePlaceTokensIteratorByArcRequirement(filtered, it, shuffler) }
         )
 
-        for (combination in combinationIterable) {
+        val iterable = combinationIterable.takeIf { it.iterator().hasNext() } ?: 0..<1
+
+        for (combination in iterable) {
             val currentSolution = SimpleTokenSlice.build { transition.prePlaces.forEach { addRelatedPlace(it) } }
             val tokenRealizer = TokenRealizer(tokenGenerator)
 
@@ -112,7 +114,7 @@ class TransitionSyncV2FullSolutionFinder(
     }
 
     fun findSolution(tokenSlice: TokenSlice): Iterator<FullSolution.Tokens> {
-        return if (transition.model.isSynchronizedMode()) {
+        return if (transition.model.isSynchronizedMode() && transition.inputArcConditions.isNotEmpty()) {
             findSolutionForSynchronizedMode(tokenSlice)
         } else {
             findSolutionSimpleMode(tokenSlice)
@@ -219,6 +221,8 @@ class TransitionSyncV2FullSolutionFinder(
         // initial initialization pass
         if (resolvedVariablesSpace.getVariable(varName) == 0) {
             val token = arcToApplicableTokens.forArc(inputArc).next()
+            resolvedVariablesSpace.setVariable(varName, 1)
+            bufferVariablesSpace.copyFrom(resolvedVariablesSpace)
             consumedTokens.computeIfAbsent(inputArc) { mutableListOf() }.add(token)
         }
         for (depArc in dependent) {
@@ -241,6 +245,7 @@ class TransitionSyncV2FullSolutionFinder(
             val hypothesisTokens by lazy(LazyThreadSafetyMode.NONE) {
                 mutableMapOf<InputArcWrapper, MutableList<Token>>()
             }
+            hypothesisTokens.computeIfAbsent(inputArc) { mutableListOf() }.add(varToken)
             var successfulHypothesis = true
             for (depArc in dependent) {
                 // try consume the tokens for dependent arc until it is satisfied
@@ -270,8 +275,8 @@ class TransitionSyncV2FullSolutionFinder(
                 // the increment of tokens of main var arc made dependents not comply with their conditions
             }
             if (successfulHypothesis) {
-                consumedTokens.forEach { (arc, tokens) ->
-                    hypothesisTokens.computeIfAbsent(arc) { mutableListOf() }.addAll(tokens)
+                hypothesisTokens.forEach { (arc, tokens) ->
+                    consumedTokens.computeIfAbsent(arc) { mutableListOf() }.addAll(tokens)
                 }
             }
         }

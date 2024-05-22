@@ -43,6 +43,33 @@ class StepSequenceLogger : Logger {
     }
 }
 
+class SizeLogger : Logger {
+    sealed interface Event {
+        data object Prepared : Event
+        data class Fired(val transitionId: String) : Event {
+            override fun toString(): String {
+                return "Fired('$transitionId')"
+            }
+        }
+
+        data object Finished : Event
+    }
+
+    val events: MutableList<Event> = mutableListOf()
+
+    override suspend fun simulationPrepared() {
+        events.add(Event.Prepared)
+    }
+
+    override suspend fun acceptStepLog(simulationStepLog: SimulationStepLog) {
+        events.add(Event.Fired(simulationStepLog.selectedFiredTransition?.transitionId ?: ""))
+    }
+
+    override suspend fun simulationFinished() {
+        events.add(Event.Finished)
+    }
+}
+
 fun SimpleTokenSlice.copyFromMap(
     model: ModelAccessor,
     map: Map<String, List<Int>>

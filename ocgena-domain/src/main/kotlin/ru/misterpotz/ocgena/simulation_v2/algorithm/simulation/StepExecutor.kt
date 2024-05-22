@@ -32,7 +32,7 @@ class StepExecutor(
     private val shuffler: Shuffler
 ) {
     companion object {
-        private const val DEBUG = true
+        private const val DEBUG = false
     }
     enum class EnabledMode {
         DISABLED_BY_MARKING,
@@ -70,22 +70,16 @@ class StepExecutor(
                     tokenStore,
                     shuffler = shuffler,
                     tokenGenerator = tokenStore,
-                    existenceConfirmationMode = true
+                    v2Solver = true
                 ).iterator()
 
                 val hasSolution = solutionIterator.hasNext()
                 if (hasSolution) {
                     val solution = solutionIterator.next()
                     // need to create additional logics to only calculate availability, where additional tokens are not generated...
-                    when (solution) {
-                        is FullSolution.Exists -> {
-                            // ok
-                        }
 
-                        else -> throw IllegalStateException()
-                    }
+                    transition.cacheSolution(solution)
                 }
-                transition.setEnabledByMarkingCache(hasSolution)
             }
         }
     }
@@ -95,7 +89,7 @@ class StepExecutor(
     private var totalClock: Long = 0L
 
     suspend fun execute(): SimulationStepLog? {
-        println("program invoked")
+//        println("program invoked")
         logBuilder = LogBuilder()
         logBuilder.recordStartMarking(tokenStore)
         logBuilder.recordStepNumber(stepNumber)
@@ -126,9 +120,8 @@ class StepExecutor(
             fireTransition(selectedTransition)
             logBuilder.recordMarking(tokenStore)
 
-            selectedTransition.setNeedCheckCache()
             for (transition in selectedTransition.dependentTransitions) {
-                transition.setNeedCheckCache()
+                transition.solutionCache.undoSolution(tokenStore)
             }
         }
 
@@ -146,7 +139,7 @@ class StepExecutor(
             garbageTokensAtEndPlace()
         }
         stepNumber++
-        println("building log")
+//        println("building log")
         return logBuilder.build()
     }
 
@@ -160,13 +153,9 @@ class StepExecutor(
 
     private fun fireTransition(transition: TransitionWrapper) {
         logBuilder.recordFiredTransition(transition)
-        val solution = transition.inputArcsSolutions(tokenStore, shuffler, tokenGenerator = tokenStore)
-            .iterator().also {
-                require(it.hasNext()) {
-                    "during transition fire there must already exist solution that was checked before"
-                }
-            }
-            .next()
+        val solution = transition.solutionCache.solution!!
+        transition.solutionCache.solution = null
+
         val generatedAtInputSolution = (solution as? FullSolution.Tokens)?.generatedTokens ?: emptyList()
 
         val minusTokens = solution.toTokenSlice()
@@ -204,7 +193,7 @@ class StepExecutor(
 
     private fun garbageTokensAtEndPlace() {
         model.outPlaces.forEach { endPlace ->
-            println("cleaning out place $endPlace")
+//            println("cleaning out place $endPlace")
             cleanTokenTransitionVisits(tokenStore.tokensAt(endPlace))
             tokenStore.modifyTokensAt(endPlace) { tokens ->
                 tokenStore.removeTokens(tokens)

@@ -24,6 +24,22 @@ class CombinatorTest {
     }
 
     @Test
+    fun combinatorTest2() {
+        val first = CombinationIterable<Int>((0..<3).toList(), combinationSize = 1)
+        val second = CombinationIterable<Int>((0..<7).toList(), combinationSize = 1)
+        val third = CombinationIterable<Int>((0..<7).toList(), combinationSize = 1)
+
+        val combination = IteratorsCombinator(
+            listOf(first, second, third)
+        )
+
+        for (i in combination) {
+            println(i)
+        }
+        Assertions.assertEquals(3 * 7 * 7, combination.count())
+    }
+
+    @Test
     fun filteredIterableTest() {
         val filtered =
             FilteredIterator(listOf(0, 2), listOf(listOf(1, 2, 3), listOf(1000, 1001, 1002), listOf(4, 5, 6)))
@@ -79,14 +95,23 @@ class CombinatorTest {
 
         val iterator = combinator.iterator()
 
-        iterator.next()
+        val first = iterator.next()
 
-        combinator.advanceIndex()
+        combinator.advanceIndex(1)
+        val second = iterator.next()
+        combinator.advanceIndex(2)
+        val third = iterator.next()
+        combinator.advanceIndex(0)
+        val fourth = iterator.next()
+        val fifth = iterator.next()
+        println(first)
+        println(second)
+        println(third)
+        println(fourth)
+        println(fifth)
 
         val solutions = iterator.asSequence().toList()
         println(solutions)
-
-        Assertions.assertEquals(3 * 2 * 2 * 2, solutions.size)
-
+        Assertions.assertEquals(14, solutions.size)
     }
 }

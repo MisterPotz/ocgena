@@ -13,15 +13,20 @@ import ru.misterpotz.ocgena.simulation_v2.utils.selectIn
 import ru.misterpotz.ocgena.utils.TimePNRef
 import ru.misterpotz.ocgena.utils.cast
 
-class CheckingCache {
-    var isEnabledByMarking: Boolean = false
-    var needCheckCache: Boolean = true
-        set(value) {
-            if (value) {
-                isEnabledByMarking = false
-            }
-            field = value
+class SolutionCache {
+    var solution: FullSolution? = null
+
+    val needCheckCache: Boolean
+        get() = solution == null
+
+    fun undoSolution(tokenStore: TokenStore) {
+        val solution = solution
+        when (solution) {
+            is FullSolution.Amounts, null -> Unit
+            is FullSolution.Tokens -> tokenStore.removeTokens(solution.generatedTokens)
         }
+        this.solution = null
+    }
 }
 
 fun InputArcWrapper.ConsumptionSpec.castVar(): InputArcWrapper.ConsumptionSpec.Variable {
@@ -38,7 +43,7 @@ class TransitionWrapper(
     val transitionId: PetriAtomId,
     val model: ModelAccessor,
 ) : Identifiable, Comparable<TransitionWrapper> {
-    val checkingCache = CheckingCache()
+    val solutionCache = SolutionCache()
 
     val timer: TransitionTimer by lazy {
         val eftLft =
@@ -48,17 +53,12 @@ class TransitionWrapper(
         TransitionTimer(0, eft = eftLft.first.toLong(), lft = eftLft.last.toLong())
     }
 
-    fun setNeedCheckCache() {
-        checkingCache.needCheckCache = true
-    }
-
-    fun setEnabledByMarkingCache(enabledByMarking: Boolean) {
-        checkingCache.needCheckCache = false
-        checkingCache.isEnabledByMarking = enabledByMarking
+    fun cacheSolution(solution: FullSolution) {
+        solutionCache.solution = solution
     }
 
     fun needCheckCache(): Boolean {
-        return checkingCache.needCheckCache
+        return solutionCache.needCheckCache
     }
 
     companion object {
@@ -96,8 +96,7 @@ class TransitionWrapper(
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
         tokenGenerator: TokenGenerator,
-        existenceConfirmationMode: Boolean = false,
-        v2Solver : Boolean = false
+        v2Solver: Boolean = true
     ): Iterable<FullSolution> {
         return when (model.tokensAreEntities()) {
             true -> {
@@ -109,14 +108,13 @@ class TransitionWrapper(
                             tokenSlice,
                             shuffler,
                             tokenGenerator = tokenGenerator,
-                            existenceConfirmationMode
                         )
                         ?: emptyList()
                 }
             }
 
             false -> {
-                SimpleArcSolver(tokenSlice, this, existenceConfirmationMode)
+                SimpleArcSolver(tokenSlice, this)
             }
         }
     }
@@ -453,7 +451,7 @@ class TransitionWrapper(
     }
 
     fun checkEnabledByTokensCache(): Boolean {
-        return checkingCache.isEnabledByMarking
+        return solutionCache.solution != null
     }
 
     fun addTokenVisit(transitionIndex: Long, tokenWrapper: TokenWrapper) {
@@ -462,12 +460,9 @@ class TransitionWrapper(
     }
 
     fun removeTokenVisit(tokenWrapper: TokenWrapper) {
-        val intersectedIndices = tokenWrapper.participatedTransitionIndices[this]
-            ?.intersect(transitionHistory.allLogIndices) ?: emptySet()
-
-        for (i in intersectedIndices) {
-            transitionHistory.decrementReference(i, tokenWrapper)
-        }
+//        for (i in tokenWrapper.visitedTransitions) {
+//            i.transitionHistory.decrementReference(tokenWrapper)
+//        }
     }
 
 
@@ -519,26 +514,39 @@ class TransitionHistory(val transitionId: PetriAtomId) {
     }
 
     fun recordReference(transitionLogIndex: Long, tokenWrapper: TokenWrapper) {
-        val current = logIdToReferenceCounter.getOrPut(transitionLogIndex) {
-            _allIds.add(transitionLogIndex)
-            0
-        }
+//        val current = logIdToReferenceCounter.getOrPut(transitionLogIndex) {
+//            _allIds.add(transitionLogIndex)
+//            0
+//        }
         idToAssociations.getOrPut(transitionLogIndex) {
             mutableSetOf()
         }.add(tokenWrapper)
-        logIdToReferenceCounter[transitionLogIndex] = current + 1
+//        logIdToReferenceCounter[transitionLogIndex] = current + 1
     }
 
-    fun decrementReference(transitionIndex: Long, tokenWrapper: TokenWrapper) {
-        val newReferencesToLog = (logIdToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
-        if (newReferencesToLog == 0L) {
-            logIdToReferenceCounter.remove(transitionIndex)
-            idToAssociations.remove(transitionIndex)
-            _allIds.remove(transitionIndex)
-        } else {
-            logIdToReferenceCounter[transitionIndex] = newReferencesToLog
-            idToAssociations[transitionIndex]!!.remove(tokenWrapper)
+    fun decrementReference(tokenWrapper: TokenWrapper) {
+        var removed = false
+        val emptySets by lazy(LazyThreadSafetyMode.NONE) { removed =true; mutableListOf<Long>() }
+        for ((key, set) in idToAssociations) {
+            set.remove(tokenWrapper)
+            if (set.isEmpty()) {
+                emptySets.add(key)
+            }
         }
+        if (removed) {
+            for (set in emptySets) {
+                idToAssociations.remove(set)
+            }
+        }
+//        val newReferencesToLog = (logIdToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
+//        if (newReferencesToLog == 0L) {
+//            logIdToReferenceCounter.remove(transitionIndex)
+//            idToAssociations.remove(transitionIndex)
+//            _allIds.remove(transitionIndex)
+//        } else {
+//            logIdToReferenceCounter[transitionIndex] = newReferencesToLog
+//            idToAssociations[transitionIndex]!!.remove(tokenWrapper)
+//        }
     }
 
     override fun toString(): String {

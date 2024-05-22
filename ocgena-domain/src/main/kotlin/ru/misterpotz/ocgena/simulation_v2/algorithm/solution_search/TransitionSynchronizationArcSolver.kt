@@ -14,8 +14,6 @@ sealed interface FullSolution {
 
     data class Amounts(val solutionAmounts: SolutionAmounts) : FullSolution
 
-    data object Exists : FullSolution
-
     fun toTokenSlice(): TokenSlice {
         return when (this) {
             is Amounts -> {
@@ -25,8 +23,6 @@ sealed interface FullSolution {
             is Tokens -> {
                 SimpleTokenSlice.of(solutionTokens)
             }
-
-            Exists -> throw IllegalStateException()
         }
     }
 }
@@ -56,7 +52,6 @@ class TransitionSynchronizationArcSolver(
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
         tokenGenerator: TokenGenerator,
-        solutionExistenceConfirmationMode: Boolean = false
     ): Iterable<FullSolution>? {
         val filteredTokenSlice = preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return null
 
@@ -75,19 +70,15 @@ class TransitionSynchronizationArcSolver(
         return IteratorMapper(
             fullCombinator
         ) { independentSolutionCombination ->
-            if (counter % 100 == 0) {
-                println("combinating over $counter combination")
-            }
-            if (solutionExistenceConfirmationMode) {
-                FullSolution.Exists
-            } else {
-                completeSolutionFromPartials(
-                    independentSolutionCombination.flatten(),
-                    filteredTokenSlice,
-                    shuffler,
-                    tokenGenerator = tokenGenerator
-                )
-            }
+//            if (counter % 100 == 0) {
+//                println("combinating over $counter combination")
+//            }
+            completeSolutionFromPartials(
+                independentSolutionCombination.flatten(),
+                filteredTokenSlice,
+                shuffler,
+                tokenGenerator = tokenGenerator
+            )
         }
     }
 
@@ -327,7 +318,7 @@ class TransitionSynchronizationArcSolver(
                         val requiredConditionEntries = conditionGroupEntries[arcCondition]!!
 
                         applicableTokens.getOrPut(fromPlace) { mutableListOf() }.addAll(allPlaceTokens.filter { token ->
-                            token !in alreadySolutionTokens && token.participatedInAll(requiredConditionEntries)
+                            token !in alreadySolutionTokens // && token.participatedInAll(requiredConditionEntries)
                         })
                     }
                 }
@@ -715,20 +706,20 @@ class TransitionSynchronizationArcSolver(
     }
 
     private fun List<TokenWrapper>.sharedTransitionEntries(includeEntriesOf: List<TransitionWrapper>): HashSet<Long> {
-        val sharedTransitionEntries = hashSetOf<Long>().apply {
-            addAll(get(0).allParticipatedTransitionEntries)
-        }
-
-        for (i in 1..<size) {
-            val tokenI = get(i)
-            if (sharedTransitionEntries.isEmpty()) {
-                return sharedTransitionEntries
-            }
-            sharedTransitionEntries.retailAllShared(tokenI)
-        }
-
-        sharedTransitionEntries.filterContainedInAny(includeEntriesOf)
-        return sharedTransitionEntries
+//        val sharedTransitionEntries = hashSetOf<Long>().apply {
+//            addAll(get(0).allParticipatedTransitionEntries)
+//        }
+//
+//        for (i in 1..<size) {
+//            val tokenI = get(i)
+//            if (sharedTransitionEntries.isEmpty()) {
+//                return sharedTransitionEntries
+//            }
+//            sharedTransitionEntries.retailAllShared(tokenI)
+//        }
+//
+//        sharedTransitionEntries.filterContainedInAny(includeEntriesOf)
+        return hashSetOf()
     }
 
     private fun HashSet<Long>.filterContainedInAny(transitionHistories: List<TransitionWrapper>) {
@@ -743,9 +734,9 @@ class TransitionSynchronizationArcSolver(
         }
     }
 
-    private fun HashSet<Long>.retailAllShared(tokenWrapper: TokenWrapper) {
-        this.retainAll(tokenWrapper.allParticipatedTransitionEntries)
-    }
+//    private fun HashSet<Long>.retailAllShared(tokenWrapper: TokenWrapper) {
+//        this.retainAll(tokenWrapper.allParticipatedTransitionEntries)
+//    }
 
     class IteratorMapper<T, R>(
         val iterable: Iterable<T>, val mapper: (T) -> R

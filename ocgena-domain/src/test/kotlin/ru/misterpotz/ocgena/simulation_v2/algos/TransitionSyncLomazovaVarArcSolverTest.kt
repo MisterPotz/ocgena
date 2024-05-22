@@ -262,7 +262,12 @@ class TransitionSyncLomazovaVarArcSolverTest {
         val tokenSlice = model.buildTransitionHistoryWorking()
         val normalShuffler = NormalShuffler(random = Random(42))
         val solutions =
-            model.transitionBy("test_all_sync").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator, v2Solver = true)
+            model.transitionBy("test_all_sync").inputArcsSolutions(
+                tokenSlice,
+                normalShuffler,
+                NoTokenGenerator,
+                v2Solver = true
+            )
                 .iterator()
                 .asSequence()
                 .toList()

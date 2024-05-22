@@ -1,6 +1,5 @@
 package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
-import kotlinx.coroutines.yield
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.IndependentMultiConditionGroup
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
@@ -117,45 +116,97 @@ class TransitionSyncV2MinimalIndepdendentsSolutionFinder(val transition: Transit
                 Triple(
                     it,
                     sortedArcs,
-                    makeIndependentGroupTokensIterator(tokenSlice, sortedArcs, shuffler = shuffler).iterator()
+                    makeIndependentGroupTokensIterator(tokenSlice, sortedArcs, shuffler = shuffler)
                 )
             }
+
+        val controlledIteration = IteratorsCombinator(independentCombinationIterator.map { it.third })
+        val iterator = controlledIteration.iterator()
 
         val combinationPerIndependentGroup = mutableMapOf<IndependentMultiConditionGroup, List<List<TokenWrapper>>>()
 
-        while (independentCombinationIterator.any { it.third.hasNext() }) {
-            for ((independentGroup, sortedArcs, iterator) in independentCombinationIterator) {
-                for (combination in iterator) {
-                    val allConditionsSatisfied = independentGroup.conditions.all { condition ->
-                        val combinationIndices = sortedArcs.makeIndicesOfPlacesForCondition(condition)
-                        haveCommonEntryForAll(
-                            FilteredIterator(combinationIndices, combination),
-                            transitions = listOf(condition.syncTarget)
-                        )
-                    }
-                    if (allConditionsSatisfied) {
-                        println("saving combination $combination")
-                        // if we came here it means found shared entries for given places for all conditions
-                        // adding the combinations
-                        combinationPerIndependentGroup[independentGroup] = combination
-                        break;
-                    }
-                }
-                // not found such token combination that independent group is satisfied
-                if (!combinationPerIndependentGroup.contains(independentGroup)) {
-                    return@iterator
-                }
-            }
-            val newPresolution = combinationPerIndependentGroup.mapValues {
-                IndependentGroupSolution(
-                    combination = it.value,
-                    sharedEntries = findCommonEntriesForIndependent(it.key, it.value)
-                )
-            }
-            combinationPerIndependentGroup.clear()
+        while (iterator.hasNext()) {
+            val combination = iterator.next()
 
-            yield(newPresolution)
+            var notFound = false
+
+            for (i in independentCombinationIterator.indices) {
+                val independentCombination = combination[i]
+//                println(independentCombination)
+                val (independentGroup, sortedArcs, _) = independentCombinationIterator[i]
+
+                if (combinationPerIndependentGroup[independentGroup] == independentCombination) {
+                    continue
+                }
+
+                val allConditionsSatisfied = independentGroup.conditions.all { condition ->
+                    val combinationIndices = sortedArcs.makeIndicesOfPlacesForCondition(condition)
+                    haveCommonEntryForAll(
+                        FilteredIterator(combinationIndices, independentCombination),
+                        transitions = listOf(condition.syncTarget)
+                    )
+                }
+                if (allConditionsSatisfied) {
+//                    println("saving combination $combination")
+                    // if we came here it means found shared entries for given places for all conditions
+                    // adding the combinations
+                    combinationPerIndependentGroup[independentGroup] = independentCombination
+                    continue
+                }
+
+                if (!combinationPerIndependentGroup.contains(independentGroup)) {
+                    notFound = true
+                    break;
+                }
+            }
+            if (notFound) {
+                continue
+            }
+            if (combinationPerIndependentGroup.size == independentCombinationIterator.size) {
+                val newPresolution = combinationPerIndependentGroup.mapValues {
+                    IndependentGroupSolution(
+                        combination = it.value,
+                        sharedEntries = findCommonEntriesForIndependent(it.key, it.value)
+                    )
+                }
+                combinationPerIndependentGroup.clear()
+                yield(newPresolution)
+            }
         }
+
+//        while (independentCombinationIterator.any { it.third.hasNext() }) {
+//            for ((independentGroup, sortedArcs, iterator) in independentCombinationIterator) {
+//                for (combination in iterator) {
+//                    val allConditionsSatisfied = independentGroup.conditions.all { condition ->
+//                        val combinationIndices = sortedArcs.makeIndicesOfPlacesForCondition(condition)
+//                        haveCommonEntryForAll(
+//                            FilteredIterator(combinationIndices, combination),
+//                            transitions = listOf(condition.syncTarget)
+//                        )
+//                    }
+//                    if (allConditionsSatisfied) {
+//                        println("saving combination $combination")
+//                        // if we came here it means found shared entries for given places for all conditions
+//                        // adding the combinations
+//                        combinationPerIndependentGroup[independentGroup] = combination
+//                        break;
+//                    }
+//                }
+//                // not found such token combination that independent group is satisfied
+//                if (!combinationPerIndependentGroup.contains(independentGroup)) {
+//                    return@iterator
+//                }
+//            }
+//            val newPresolution = combinationPerIndependentGroup.mapValues {
+//                IndependentGroupSolution(
+//                    combination = it.value,
+//                    sharedEntries = findCommonEntriesForIndependent(it.key, it.value)
+//                )
+//            }
+//            combinationPerIndependentGroup.clear()
+//
+//            yield(newPresolution)
+//        }
 
         return@iterator
     }
