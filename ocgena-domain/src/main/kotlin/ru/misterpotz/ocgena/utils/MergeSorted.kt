@@ -1,5 +1,7 @@
 package ru.misterpotz.ocgena.utils
 
+import java.util.Collections.binarySearch
+
 fun <T : Comparable<T>> mergeSortedCollections(coll1: Iterable<T>, coll2: Iterable<T>): List<T> {
     val result = mutableListOf<T>()
     val iter1 = coll1.iterator()
@@ -45,4 +47,20 @@ fun <T : Comparable<T>> MutableList<T>.sortedInsert(item : T)  {
         i--
     }
     add(0, item)
+}
+
+fun <T : Comparable<T>> sortedInsert(sortedList: MutableList<T>, unsortedList: Collection<T>) {
+    for (element in unsortedList) {
+        val position = findInsertPosition(sortedList, element)
+        sortedList.add(position, element)
+    }
+}
+
+fun <T : Comparable<T>> findInsertPosition(sortedList: List<T>, element: T): Int {
+    val position = binarySearch(sortedList, element)
+    return if (position >= 0) {
+        position
+    } else {
+        -position - 1
+    }
 }

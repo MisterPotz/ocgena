@@ -498,13 +498,17 @@ class TransitionIdIssuer {
 
 class TransitionHistory(val transitionId: PetriAtomId) {
     private val logIdToReferenceCounter = mutableMapOf<Long, Long>()
-    private val idToAssociations = mutableMapOf<Long, MutableSet<TokenWrapper>>()
+    private val idToAssociations = sortedMapOf<Long, MutableSet<TokenWrapper>>()
     private val _allIds = sortedSetOf<Long>()
 
     val allLogIndices: Set<Long> = _allIds
 
     fun size(): Int {
         return allLogIndices.size
+    }
+
+    fun entries() : Collection<Set<TokenWrapper>> {
+        return idToAssociations.values
     }
 
     fun recordReference(transitionLogIndex: Long, tokenWrapper: TokenWrapper) {

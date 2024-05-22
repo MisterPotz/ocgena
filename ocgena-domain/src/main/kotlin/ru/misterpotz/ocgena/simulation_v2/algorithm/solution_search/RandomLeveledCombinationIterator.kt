@@ -2,7 +2,7 @@ package ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search
 
 import kotlin.random.Random
 
-class CombinationIterable(
+class CombinationIterableInt(
     private val indicesToVisit: List<Int>,
     private val combinationSize: Int,
 ) : MutableIterable<List<Int>> {
@@ -98,7 +98,7 @@ class RandomLeveledCombinationIterator(
     }
 
     private val levelIterables = List(ranges.size) { index ->
-        CombinationIterable(combinationFuel[index]!!, nodesAtLevel[index])
+        CombinationIterableInt(combinationFuel[index]!!, nodesAtLevel[index])
     }
 
     private val dumbIterator = iterator {
@@ -115,7 +115,7 @@ class RandomLeveledCombinationIterator(
 
     private suspend fun SequenceScope<List<List<Int>>>.generateCombinationsDepthFirst(
         level: Int,
-        levelIterables: List<CombinationIterable>,
+        levelIterables: List<CombinationIterableInt>,
         current: MutableList<List<Int>>
     ) {
         if (level == combinationSize) {

@@ -1,13 +1,22 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.simulation_old.ObjectType
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenGenerator
 import java.util.*
 import kotlin.collections.HashSet
+
+sealed interface Token
+
+class UngeneratedToken(val objectType: ObjectType): Token {
+    fun generate(tokenGenerator: TokenGenerator): TokenWrapper {
+        return tokenGenerator.generateRealToken(objectType)
+    }
+}
 
 class TokenWrapper(
     val tokenId: Long,
     val objectType: ObjectType
-): Comparable<TokenWrapper> {
+): Comparable<TokenWrapper>, Token {
 
     override fun compareTo(other: TokenWrapper): Int {
         return tokenId.compareTo(other.tokenId)
