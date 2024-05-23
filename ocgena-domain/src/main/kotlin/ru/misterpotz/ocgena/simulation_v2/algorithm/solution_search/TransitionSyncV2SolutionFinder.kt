@@ -14,21 +14,74 @@ class TransitionSyncV2FullSolutionFinder(
 ) {
     private val minimalSolutionFinder = TransitionSyncV2MinimalIndepdendentsSolutionFinder(transition, shuffler)
 
-    fun asIterable(tokenSlice: TokenSlice): Iterable<FullSolution> {
+    fun asIterable(tokenSlice: TokenSlice, lastTokenSet: Set<TokenWrapper>? = null): Iterable<FullSolution> {
         return object : Iterable<FullSolution> {
             override fun iterator(): Iterator<FullSolution> {
-                return findSolution(tokenSlice)
+                return findSolution(tokenSlice, lastTokenSet)
             }
         }
     }
 
-    fun findSolutionForSynchronizedMode(tokenSlice: TokenSlice): Iterator<FullSolution.Tokens> = iterator {
 
+    fun findSolutionForSynchronizedModeSingle(tokenSlice: TokenSlice): FullSolution.Tokens? {
+        val filtered = minimalSolutionFinder.preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return null
+
+        val presolution: Map<IndependentMultiConditionGroup, TransitionSyncV2MinimalIndepdendentsSolutionFinder.IndependentGroupSolution> =
+            minimalSolutionFinder.presolutionSingle(filtered) ?: return null
+
+        val currentSolution = SimpleTokenSlice.build { transition.prePlaces.forEach { addRelatedPlace(it) } }
+        val minimalSolution = minimalSolutionFinder.usePresolutionForMinimal(presolution)
+        currentSolution.plusInPlace(minimalSolution)
+
+        val tokenRealizer = TokenRealizer(tokenGenerator)
+        val arcToIterable by lazy(LazyThreadSafetyMode.NONE) {
+            makeHeteregenousArcTokensIterator(
+                transition,
+                presolution,
+                filtered,
+                minimalSolution
+            )
+        }
+
+        expandLomazovaArcs(arcToIterable, minimalSolution, tokenRealizer)?.let {
+            currentSolution.plusInPlace(it)
+        }
+        expandAalstArcs(arcToIterable, minimalSolution, tokenRealizer)?.let {
+            currentSolution.plusInPlace(it)
+        }
+        expandExactArcs(arcToIterable, minimalSolution, tokenRealizer)?.let {
+            currentSolution.plusInPlace(it)
+        }
+
+        val fullSolution = FullSolution.Tokens(
+            solutionTokens = buildMap {
+                for (i in currentSolution.relatedPlaces) {
+                    put(i, currentSolution.tokensAt(i))
+                }
+            },
+            generatedTokens = tokenRealizer.generatedTokens
+        )
+
+        return fullSolution
+    }
+
+    fun findSolutionForSynchronizedMode(
+        tokenSlice: TokenSlice,
+        lastTokenSet: Set<TokenWrapper>?
+    ): Iterator<FullSolution> = iterator {
         val filtered = minimalSolutionFinder.preCheckSynchronizationHeuristicFiltering(tokenSlice) ?: return@iterator
-
+        val checkingSet = tokenSliceToSet(filtered)
+        println("checking set ${checkingSet.size}")
+        if (lastTokenSet != null &&
+            lastTokenSet.containsAll(checkingSet) &&
+            checkingSet.size <= lastTokenSet.size
+        ) {
+            yield(FullSolution.DoesNotExistSynchronized(checkingSet))
+        }
         val synchronizationPresolutionIterator: Iterator<Map<IndependentMultiConditionGroup, TransitionSyncV2MinimalIndepdendentsSolutionFinder.IndependentGroupSolution>> =
             minimalSolutionFinder.presolutionIterator(filtered)
 
+        var hadAtLeastOneSolution = false
         for (presolution in synchronizationPresolutionIterator) {
 //            println(presolution)
             val currentSolution = SimpleTokenSlice.build { transition.prePlaces.forEach { addRelatedPlace(it) } }
@@ -64,7 +117,23 @@ class TransitionSyncV2FullSolutionFinder(
                 generatedTokens = tokenRealizer.generatedTokens
             )
 
+            hadAtLeastOneSolution = true
             yield(fullSolution)
+        }
+        if (!hadAtLeastOneSolution) {
+            yield(
+                FullSolution.DoesNotExistSynchronized(
+                    tokenSliceToSet(filtered)
+                )
+            )
+        }
+    }
+
+    private fun tokenSliceToSet(tokenSlice: TokenSlice): Set<TokenWrapper> {
+        return buildSet {
+            for ((place, tokens) in tokenSlice.byPlaceIterator()) {
+                addAll(tokens)
+            }
         }
     }
 
@@ -113,10 +182,24 @@ class TransitionSyncV2FullSolutionFinder(
         }
     }
 
-    fun findSolution(tokenSlice: TokenSlice): Iterator<FullSolution.Tokens> {
+    fun findSolutionSingle(tokenSlice: TokenSlice): Iterator<FullSolution.Tokens> {
         return if (transition.model.isSynchronizedMode() && transition.inputArcConditions.isNotEmpty()) {
-            findSolutionForSynchronizedMode(tokenSlice)
+            println("synchronized mode")
+            listOfNotNull(findSolutionForSynchronizedModeSingle(tokenSlice)).iterator()
         } else {
+            println("normal mode")
+            findSolutionSimpleMode(tokenSlice)
+        }
+    }
+
+    fun findSolution(tokenSlice: TokenSlice, lastTokenSet: Set<TokenWrapper>? = null): Iterator<FullSolution> {
+        return if (transition.model.isSynchronizedMode() &&
+            transition.inputArcConditions.isNotEmpty()
+        ) {
+            println("synchronized mode $this")
+            findSolutionForSynchronizedMode(tokenSlice, lastTokenSet)
+        } else {
+            println("normal mode $this")
             findSolutionSimpleMode(tokenSlice)
         }
     }

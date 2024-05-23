@@ -30,10 +30,10 @@ class FullHugeSynchronizedSimulationTest {
             )
         ),
         places = mapOf(
-            "bill-source" to PlaceSetting(initialTokens = 20),
-            "package-source" to PlaceSetting(initialTokens = 20),
-            "order-source" to PlaceSetting(initialTokens = 20),
-            "track-source" to PlaceSetting(initialTokens = 20)
+            "bill-source" to PlaceSetting(initialTokens =       30),
+            "package-source" to PlaceSetting(initialTokens =    30),
+            "order-source" to PlaceSetting(initialTokens =      30),
+            "track-source" to PlaceSetting(initialTokens =      30)
         )
     )
 
@@ -53,6 +53,7 @@ class FullHugeSynchronizedSimulationTest {
                     sim.simulation().runSimulation()
                 }.catch {
                     println("bad error $it")
+                    it.printStackTrace()
                 }.collect()
             }
         }.join()
@@ -60,12 +61,15 @@ class FullHugeSynchronizedSimulationTest {
 //        Assertions.assertTrue(logger.events.size > 0)
 //        println(logger.logs.joinToString("\n") { it.prettyString() })
         println(logger.events)
+        println(logger.events.size)
 //        println(logger.logs.size)
 //        Assertions.assertEquals(6, logger.events.size)
 
-//        println(sim.model().transitionBy("send_invoices").transitionHistory)
-//        println(sim.model().transitionBy("arrange_packages_to_tracks").transitionHistory)
-//        println(sim.model().transitionBy("place_order").transitionHistory)
+        println(sim.model().transitionBy("send_invoices").transitionHistory)
+        println(sim.model().transitionBy("arrange_packages_to_tracks").transitionHistory)
+        println(sim.model().transitionBy("place_order").transitionHistory)
+        println(sim.model().transitionBy("os-skip").transitionHistory)
+        println(sim.model().transitionBy("place_order").transitionHistory)
 //        println(sim.tokenstore())
     }
 

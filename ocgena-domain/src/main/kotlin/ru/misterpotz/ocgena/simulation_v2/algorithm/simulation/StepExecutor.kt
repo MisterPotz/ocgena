@@ -65,7 +65,7 @@ class StepExecutor(
     private fun reindexTransitionSolutions() {
         for (transition in transitions) {
             if (transition.needCheckCache()) {
-
+                println("reindexing $transition")
                 val solutionIterator = transition.inputArcsSolutions(
                     tokenStore,
                     shuffler = shuffler,
@@ -77,7 +77,6 @@ class StepExecutor(
                 if (hasSolution) {
                     val solution = solutionIterator.next()
                     // need to create additional logics to only calculate availability, where additional tokens are not generated...
-
                     transition.cacheSolution(solution)
                 }
             }
@@ -117,10 +116,12 @@ class StepExecutor(
             val fireableTransitions = collectTransitions(EnabledMode.CAN_FIRE)
             val selectedTransition = selectTransitionToFire(fireableTransitions)
 
+            println("firing $selectedTransition")
             fireTransition(selectedTransition)
             logBuilder.recordMarking(tokenStore)
 
             for (transition in selectedTransition.dependentTransitions) {
+                println("resetting solution for $transition")
                 transition.solutionCache.undoSolution(tokenStore)
             }
         }

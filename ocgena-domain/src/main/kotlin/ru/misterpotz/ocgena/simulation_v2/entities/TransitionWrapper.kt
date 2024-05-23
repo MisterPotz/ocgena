@@ -17,13 +17,14 @@ class SolutionCache {
     var solution: FullSolution? = null
 
     val needCheckCache: Boolean
-        get() = solution == null
+        get() = solution == null || solution is FullSolution.DoesNotExistSynchronized
 
     fun undoSolution(tokenStore: TokenStore) {
         val solution = solution
         when (solution) {
             is FullSolution.Amounts, null -> Unit
             is FullSolution.Tokens -> tokenStore.removeTokens(solution.generatedTokens)
+            is FullSolution.DoesNotExistSynchronized -> Unit
         }
         this.solution = null
     }
@@ -54,7 +55,12 @@ class TransitionWrapper(
     }
 
     fun cacheSolution(solution: FullSolution) {
+        println("$this has solution ${solution.nice()}")
         solutionCache.solution = solution
+    }
+
+    fun FullSolution.nice(): String {
+        return if (this is FullSolution.DoesNotExistSynchronized) "NONE" else ""
     }
 
     fun needCheckCache(): Boolean {
@@ -101,7 +107,11 @@ class TransitionWrapper(
         return when (model.tokensAreEntities()) {
             true -> {
                 if (v2Solver) {
-                    TransitionSyncV2FullSolutionFinder(this, shuffler, tokenGenerator).asIterable(tokenSlice)
+                    TransitionSyncV2FullSolutionFinder(this, shuffler, tokenGenerator)
+                        .asIterable(
+                            tokenSlice,
+                            (solutionCache.solution as? FullSolution.DoesNotExistSynchronized)?.tokenSet
+                        )
                 } else {
                     TransitionSynchronizationArcSolver(this)
                         .getSolutionFinderIterable(
@@ -451,7 +461,7 @@ class TransitionWrapper(
     }
 
     fun checkEnabledByTokensCache(): Boolean {
-        return solutionCache.solution != null
+        return solutionCache.solution != null && solutionCache.solution !is FullSolution.DoesNotExistSynchronized
     }
 
     fun addTokenVisit(transitionIndex: Long, tokenWrapper: TokenWrapper) {
@@ -460,9 +470,9 @@ class TransitionWrapper(
     }
 
     fun removeTokenVisit(tokenWrapper: TokenWrapper) {
-//        for (i in tokenWrapper.visitedTransitions) {
-//            i.transitionHistory.decrementReference(tokenWrapper)
-//        }
+        for (i in tokenWrapper.visitedTransitions) {
+            i.transitionHistory.decrementReference(tokenWrapper)
+        }
     }
 
 
@@ -509,7 +519,7 @@ class TransitionHistory(val transitionId: PetriAtomId) {
         return allLogIndices.size
     }
 
-    fun entries() : Collection<Set<TokenWrapper>> {
+    fun entries(): Collection<Set<TokenWrapper>> {
         return idToAssociations.values
     }
 
@@ -526,7 +536,7 @@ class TransitionHistory(val transitionId: PetriAtomId) {
 
     fun decrementReference(tokenWrapper: TokenWrapper) {
         var removed = false
-        val emptySets by lazy(LazyThreadSafetyMode.NONE) { removed =true; mutableListOf<Long>() }
+        val emptySets by lazy(LazyThreadSafetyMode.NONE) { removed = true; mutableListOf<Long>() }
         for ((key, set) in idToAssociations) {
             set.remove(tokenWrapper)
             if (set.isEmpty()) {

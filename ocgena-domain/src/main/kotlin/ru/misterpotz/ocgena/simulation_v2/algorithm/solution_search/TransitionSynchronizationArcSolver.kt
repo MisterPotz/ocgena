@@ -14,6 +14,8 @@ sealed interface FullSolution {
 
     data class Amounts(val solutionAmounts: SolutionAmounts) : FullSolution
 
+    data class DoesNotExistSynchronized(val tokenSet: Set<TokenWrapper>): FullSolution
+
     fun toTokenSlice(): TokenSlice {
         return when (this) {
             is Amounts -> {
@@ -23,6 +25,8 @@ sealed interface FullSolution {
             is Tokens -> {
                 SimpleTokenSlice.of(solutionTokens)
             }
+
+            is DoesNotExistSynchronized -> throw IllegalStateException()
         }
     }
 }

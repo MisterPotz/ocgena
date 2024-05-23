@@ -2,6 +2,7 @@ package ru.misterpotz.ocgena.simulation_v2.simulation
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.StepSequenceLogger
@@ -10,6 +11,8 @@ import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
 import ru.misterpotz.ocgena.simulation_v2.input.*
 import ru.misterpotz.ocgena.simulation_v2.prettyString
 import ru.misterpotz.ocgena.simulation_v2.utils.toSimComp
+import ru.misterpotz.ocgena.testing.domainComponent
+import ru.misterpotz.ocgena.testing.simComponent
 import kotlin.random.Random
 import kotlin.time.Duration
 
@@ -58,6 +61,7 @@ class FullSynchronizedSimulationTest {
             ),
             logger
         )
+        println(domainComponent().yaml().encodeToString(sim.simulationInput()))
 
         launch {
             sim.simulation().runSimulation()

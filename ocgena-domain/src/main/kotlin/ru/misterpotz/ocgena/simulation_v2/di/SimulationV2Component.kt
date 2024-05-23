@@ -156,7 +156,7 @@ interface SimulationV2Component {
     fun model(): ModelAccessor
     fun ocnet(): OCNetStruct
     fun tokenstore(): TokenStore
-
+    fun simulationInput() : SimulationInput
     @Component.Factory
     interface Factory {
         fun create(
