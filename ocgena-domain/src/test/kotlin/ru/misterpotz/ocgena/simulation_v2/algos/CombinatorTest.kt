@@ -3,6 +3,9 @@ package ru.misterpotz.ocgena.simulation_v2.algos
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.*
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStack
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStackChat
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStackChatV2
 
 class CombinatorTest {
     @Test
@@ -113,5 +116,53 @@ class CombinatorTest {
         val solutions = iterator.asSequence().toList()
         println(solutions)
         Assertions.assertEquals(14, solutions.size)
+    }
+
+    @Test
+    fun parallelAndMinIterator() {
+        val stack = ParallelIteratorStackChatV2(
+            listOf(
+                listOf(1, 2, 5, 10), // 4 elements total
+                listOf(2, 5, 9), // 3 elements total
+                listOf(3, 4, 5, 9, 10) // 5 elements total
+            )
+        )
+        val results = stack.asSequence().map { it.asSequence().toList() }.toList()
+        println(results)
+        Assertions.assertEquals(
+            listOf(
+                listOf(0),
+                listOf(1, 4),
+                listOf(7),
+                listOf(8),
+                listOf(2, 5, 9),
+                listOf(6, 10),
+                listOf(3, 11)
+            ),
+            results
+        )
+    }
+
+    @Test
+    fun parallelAndMinIterator2() {
+        val stack = ParallelIteratorStackChatV2(
+            listOf(
+                listOf(), // 4 elements total
+                listOf(2, 5, 9), // 3 elements total
+                listOf(3, 4, 5, 9, 10) // 5 elements total
+            )
+        )
+        val results = stack.asSequence().map { it.asSequence().toList() }.toList()
+        Assertions.assertEquals(
+            listOf(
+                listOf(0),
+                listOf(3),
+                listOf(4),
+                listOf(1, 5),
+                listOf(2, 6),
+                listOf(7)
+            ),
+            results
+        )
     }
 }

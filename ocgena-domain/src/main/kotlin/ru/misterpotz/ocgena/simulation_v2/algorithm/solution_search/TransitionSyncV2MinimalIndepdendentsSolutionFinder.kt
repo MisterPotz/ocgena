@@ -37,9 +37,9 @@ class TransitionSyncV2MinimalIndepdendentsSolutionFinder(val transition: Transit
         condition: MultiArcCondition
     ): Set<TokenWrapper>? {
         for (entry in condition.syncTarget.transitionHistory.entries()) {
-            if (tokens.all { it in entry }) {
-                return entry
-            }
+//            if (tokens.all { it in entry }) {
+//                return entry
+//            }
         }
 
         return null
@@ -71,10 +71,10 @@ class TransitionSyncV2MinimalIndepdendentsSolutionFinder(val transition: Transit
         for (transition in transitions) {
             var hasCommonEntryForTransition = false
             for (entry in transition.transitionHistory.entries()) {
-                if (tokens.all { it in entry }) {
-                    hasCommonEntryForTransition = true
-                    break;
-                }
+//                if (tokens.all { it in entry }) {
+//                    hasCommonEntryForTransition = true
+//                    break;
+//                }
             }
             if (!hasCommonEntryForTransition) {
                 return false

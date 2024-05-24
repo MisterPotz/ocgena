@@ -192,14 +192,15 @@ class TransitionSynchronizationArcSolver(
         }
 
 
-        val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
-            val inputArc = transition.inputArcBy(place.placeId)
-            if (inputArc.syncTransitions.isNotEmpty()) {
-                token.visitedTransitions.containsAll(inputArc.syncTransitions)
-            } else {
-                true
-            }
-        }
+        val filteredTokenSlice = SimpleTokenSlice.build {  }
+//        val filteredTokenSlice = tokenSlice.filterTokensInPlaces(transition.prePlaces) { token, place ->
+//            val inputArc = transition.inputArcBy(place.placeId)
+//            if (inputArc.syncTransitions.isNotEmpty()) {
+//                token.visitedTransitions.containsAll(inputArc.syncTransitions)
+//            } else {
+//                true
+//            }
+//        }
 
         val secondPreliminaryDumbCheck = transition.inputArcsSortedByRequiredTokens.all { arc ->
             arc.consumptionSpec.weakComplies(tokenSlice.amountAt(arc.fromPlace))

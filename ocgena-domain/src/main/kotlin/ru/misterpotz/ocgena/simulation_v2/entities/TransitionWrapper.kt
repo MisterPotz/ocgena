@@ -96,7 +96,7 @@ class TransitionWrapper(
         }.let { println(it) }
     }
 
-    val transitionHistory = TransitionHistory(transitionId)
+    val transitionHistory = TransitionHistory(transitionId, this, model.transitionIdIssuer)
 
     fun inputArcsSolutions(
         tokenSlice: TokenSlice,
@@ -446,27 +446,14 @@ class TransitionWrapper(
 
     fun logTokensOnFireIfSynchronized(tokenSlice: TokenSlice) {
         if (model.tokensAreEntities() && this in model.loggedTransitions) {
-            val newTransitionReference = getNewTransitionReference()
-
             for ((_, tokens) in tokenSlice.byPlaceIterator()) {
-                for (token in tokens) {
-                    addTokenVisit(newTransitionReference, token)
-                }
+                transitionHistory.recordVisits(tokens)
             }
         }
     }
 
-    fun getNewTransitionReference(): Long {
-        return model.transitionIdIssuer.issueTransitionId()
-    }
-
     fun checkEnabledByTokensCache(): Boolean {
         return solutionCache.solution != null && solutionCache.solution !is FullSolution.DoesNotExistSynchronized
-    }
-
-    fun addTokenVisit(transitionIndex: Long, tokenWrapper: TokenWrapper) {
-        tokenWrapper.recordTransitionVisit(transitionIndex, this)
-        transitionHistory.recordReference(transitionIndex, tokenWrapper)
     }
 
     fun removeTokenVisit(tokenWrapper: TokenWrapper) {
@@ -508,9 +495,13 @@ class TransitionIdIssuer {
     }
 }
 
-class TransitionHistory(val transitionId: PetriAtomId) {
-    private val logIdToReferenceCounter = mutableMapOf<Long, Long>()
-    private val idToAssociations = sortedMapOf<Long, MutableSet<TokenWrapper>>()
+class TransitionHistory(
+    val transitionId: PetriAtomId,
+    private val transition: TransitionWrapper,
+    private val transitionIdIssuer: TransitionIdIssuer
+) {
+//    private val logIdToReferenceCounter = mutableMapOf<Long, Long>()
+    private val idToAssociations = sortedMapOf<Long, TokensEntry>()
     private val _allIds = sortedSetOf<Long>()
 
     val allLogIndices: Set<Long> = _allIds
@@ -519,35 +510,31 @@ class TransitionHistory(val transitionId: PetriAtomId) {
         return allLogIndices.size
     }
 
-    fun entries(): Collection<Set<TokenWrapper>> {
+    fun entries(): Collection<TokensEntry> {
         return idToAssociations.values
     }
 
-    fun recordReference(transitionLogIndex: Long, tokenWrapper: TokenWrapper) {
-//        val current = logIdToReferenceCounter.getOrPut(transitionLogIndex) {
-//            _allIds.add(transitionLogIndex)
-//            0
-//        }
-        idToAssociations.getOrPut(transitionLogIndex) {
-            mutableSetOf()
-        }.add(tokenWrapper)
-//        logIdToReferenceCounter[transitionLogIndex] = current + 1
+    fun recordVisits(tokens: Collection<TokenWrapper>) {
+        val id = transitionIdIssuer.issueTransitionId()
+        idToAssociations[id] = TokensEntry(id, tokens.toSet())
+        for (token in tokens) {
+            token.recordTransitionVisit(id, transition)
+        }
     }
 
     fun decrementReference(tokenWrapper: TokenWrapper) {
-        var removed = false
-        val emptySets by lazy(LazyThreadSafetyMode.NONE) { removed = true; mutableListOf<Long>() }
-        for ((key, set) in idToAssociations) {
-            set.remove(tokenWrapper)
-            if (set.isEmpty()) {
-                emptySets.add(key)
-            }
-        }
-        if (removed) {
-            for (set in emptySets) {
-                idToAssociations.remove(set)
-            }
-        }
+
+//        for ((key, set) in idToAssociations) {
+//            set.remove(tokenWrapper)
+//            if (set.isEmpty()) {
+//                emptySets.add(key)
+//            }
+//        }
+//        if (removed) {
+//            for (set in emptySets) {
+//                idToAssociations.remove(set)
+//            }
+//        }
 //        val newReferencesToLog = (logIdToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
 //        if (newReferencesToLog == 0L) {
 //            logIdToReferenceCounter.remove(transitionIndex)
@@ -560,7 +547,7 @@ class TransitionHistory(val transitionId: PetriAtomId) {
     }
 
     override fun toString(): String {
-        return "TransitionHistory($transitionId, idToAssociations=$idToAssociations)"
+        return "TransitionHistory($transitionId)" /*idToAssociations=$idToAssociations*/
     }
 }
 
