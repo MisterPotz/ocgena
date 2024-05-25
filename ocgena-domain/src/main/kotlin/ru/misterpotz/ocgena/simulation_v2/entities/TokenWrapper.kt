@@ -61,8 +61,9 @@ class TokenHistory(
 class TokenWrapper(
     val tokenId: Long,
     val objectType: ObjectType,
+    tokenEntries : MutableSet<Long> = mutableSetOf()
 ) : Comparable<TokenWrapper>, Token {
-    val tokenHistory = TokenHistory(mutableSetOf())
+    val tokenHistory = TokenHistory(tokenEntries)
 
     override fun compareTo(other: TokenWrapper): Int {
         return comparator.compare(this, other)
@@ -80,42 +81,9 @@ class TokenWrapper(
     private val _visited = mutableSetOf<TransitionWrapper>()
     val visitedTransitions: Set<TransitionWrapper> = _visited
 
-//    private val _participatedTransitionIndices = mutableMapOf<TransitionWrapper, SortedSet<Long>>()
-//    val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
-//    val allParticipatedTransitionEntries: HashSet<Long> = hashSetOf()
-
-//    fun participatedInAll(entries: HashSet<Long>) : Boolean {
-//        return entries.all { allParticipatedTransitionEntries.contains(it) }
-//    }
-
-//    fun hasSharedTransitionEntry(otherToken: TokenWrapper): Boolean {
-//        val haveSharedTransition = visitedTransitions.any { otherToken.visitedTransitions.contains(it) }
-//        if (!haveSharedTransition) return false
-//
-//        val haveSharedTransitionEntry = participatedTransitionIndices.any { transitionEntries ->
-//            if (transitionEntries.key in otherToken.participatedTransitionIndices.keys) {
-//                val otherTokenEntries = otherToken.participatedTransitionIndices[transitionEntries.key]!!
-//                val thisEntry = transitionEntries.value
-//                val smallestEntryLog = if (otherTokenEntries.size < thisEntry.size) otherTokenEntries else thisEntry
-//                val biggestEntryLog = if (otherTokenEntries.size < thisEntry.size) thisEntry else otherTokenEntries
-//
-//                smallestEntryLog.any {
-//                    biggestEntryLog.contains(it)
-//                }
-//            } else {
-//                false
-//            }
-//        }
-//        return haveSharedTransitionEntry
-//    }
-
     fun recordTransitionVisit(transitionIndex: Long, transitionWrapper: TransitionWrapper) {
         _visited.add(transitionWrapper)
         tokenHistory.add(transitionIndex)
-//        _participatedTransitionIndices.getOrPut(transitionWrapper) {
-//            sortedSetOf()
-//        }.add(transitionIndex)
-//        allParticipatedTransitionEntries.add(transitionIndex)
     }
 
     override fun toString(): String {

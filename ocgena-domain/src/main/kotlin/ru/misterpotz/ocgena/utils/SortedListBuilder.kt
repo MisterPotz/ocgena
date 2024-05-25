@@ -8,7 +8,7 @@ fun <T> buildSortedList(list: MutableList<T>.() -> Unit): List<T> {
 
 class Block<T : Comparable<T>>(val list: MutableList<T> = mutableListOf()) : MutableList<T> by list {
     override fun add(element: T): Boolean {
-        sortedInsert(element)
+        sortedInsert(this, element)
         return true
     }
 

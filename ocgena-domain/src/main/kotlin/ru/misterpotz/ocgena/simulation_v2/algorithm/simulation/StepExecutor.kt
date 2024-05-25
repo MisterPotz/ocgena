@@ -170,8 +170,8 @@ class StepExecutor(
         tokenStore.minus(minusTokens)
         tokenStore.plus(plusTokens)
         if (DEBUG) {
-            println("minusTokens ${minusTokens.makeBeautifulString()}")
-            println("plusTokens ${plusTokens.makeBeautifulString()}")
+            println("minusTokens ${minusTokens.takeSnapshot()}")
+            println("plusTokens ${plusTokens.takeSnapshot()}")
             println("removed tokens $consumed")
             println("generated tokens ${generatedAtInputSolution + generatedAtOutput}")
         }

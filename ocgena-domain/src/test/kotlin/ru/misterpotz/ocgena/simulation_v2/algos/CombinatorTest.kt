@@ -2,10 +2,12 @@ package ru.misterpotz.ocgena.simulation_v2.algos
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.*
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStack
-import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStackChat
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.CombinationIterable
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.ControlledIteratorsCombinator
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.FilteredIterator
+import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.IteratorsCombinator
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStackChatV2
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.ParallelIteratorStackChatV3
 
 class CombinatorTest {
     @Test
@@ -161,6 +163,29 @@ class CombinatorTest {
                 listOf(1, 5),
                 listOf(2, 6),
                 listOf(7)
+            ),
+            results
+        )
+    }
+
+    @Test
+    fun parallelAndMinIterator3() {
+        val stack = ParallelIteratorStackChatV3(
+            listOf(
+                listOf(), // 4 elements total
+                listOf(2, 5, 9), // 3 elements total
+                listOf(3, 4, 5, 9, 10) // 5 elements total
+            )
+        )
+        val results = stack.asSequence().map { it.iterator.asSequence().toList() }.toList()
+        Assertions.assertEquals(
+            listOf(
+                listOf(1),
+                listOf(2),
+                listOf(2),
+                listOf(1, 2),
+                listOf(1, 2),
+                listOf(2)
             ),
             results
         )

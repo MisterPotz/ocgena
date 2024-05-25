@@ -1,7 +1,5 @@
 package ru.misterpotz.ocgena.simulation_v2.entities_storage
 
-import kotlin.math.min
-
 class ParallelIteratorStack<T : Comparable<T>>(
     iterables: List<Iterable<T>>,
 ) : Iterator<Iterator<Int>> {
@@ -109,7 +107,6 @@ class ParallelIteratorStack<T : Comparable<T>>(
         if (!hasNext()) throw NoSuchElementException()
 
         if (minIterator.hasNext()) return minIterator
-
         else if (nextMin != null) {
             this.lastMin = nextMin
             this.nextMin = null
@@ -128,7 +125,7 @@ class ParallelIteratorStack<T : Comparable<T>>(
 }
 
 class ParallelIteratorStackChat<T : Comparable<T>>(
-    private val iterables: List<Iterable<T>>
+    private val iterables: List<Iterable<T>>,
 ) : Iterator<Iterator<Int>> {
 
     private val iterators = iterables.map { it.iterator() }
@@ -191,14 +188,15 @@ class ParallelIteratorStackChat<T : Comparable<T>>(
 }
 
 class ParallelIteratorStackChatV2<T : Comparable<T>>(
-    private val iterables: List<Iterable<T>>
+    iterables: List<Iterable<T>>,
 ) : Iterator<Iterator<Int>> {
 
     private val iterators = iterables.map { it.iterator() }
     private val currentValues = MutableList<T?>(iterables.size) { null }
     private var isInitialized = false
     private val indicesOffset = MutableList(iterables.size) { 0 }
-    private val minIndicesBuffer=  mutableListOf<Int>()
+    private val minIndicesBuffer = mutableListOf<Int>()
+
     init {
         var offset = 0
         for ((index, iterable) in iterables.withIndex()) {
@@ -257,5 +255,79 @@ class ParallelIteratorStackChatV2<T : Comparable<T>>(
         }
 
         return minIndicesBuffer.iterator()
+    }
+}
+
+data class HistoricalIndices<T>(
+    val historyEntry: T,
+    val iterator: Iterator<Int>,
+)
+
+class ParallelIteratorStackChatV3<T : Comparable<T>>(
+    iterables: List<Iterable<T>>,
+    private val exclusion: Set<T> = emptySet(),
+) : Iterator<HistoricalIndices<T>> {
+
+    private val iterators = iterables.map { it.iterator() }
+    private val currentValues = MutableList<T?>(iterables.size) { null }
+    private var isInitialized = false
+    private val minIndicesBuffer = mutableListOf<Int>()
+
+    init {
+        initialize()
+    }
+
+    private fun initialize() {
+        for (i in iterators.indices) {
+            findNotExcludedForIndex(i)
+        }
+        isInitialized = true
+    }
+
+    private fun findCurrentMin(): T? {
+        var min: T? = null
+        for (value in currentValues) {
+            if (value != null) {
+                if (min == null || value < min) {
+                    min = value
+                }
+            }
+        }
+        return min
+    }
+
+    private fun findNotExcludedForIndex(index: Int) {
+        currentValues[index] = null
+        while (iterators[index].hasNext()) {
+            val nextValue = iterators[index].next()
+            if (nextValue !in exclusion) {
+                currentValues[index] = nextValue
+                break
+            }
+        }
+    }
+
+    override fun hasNext(): Boolean {
+        if (!isInitialized) {
+            initialize()
+        }
+        return currentValues.any { it != null }
+    }
+
+    override fun next(): HistoricalIndices<T> {
+        if (!hasNext()) {
+            throw NoSuchElementException()
+        }
+
+        val currentMin = findCurrentMin() ?: throw IllegalStateException("Current minimum not found")
+
+        minIndicesBuffer.clear()
+        for (i in currentValues.indices) {
+            if (currentValues[i] == currentMin) {
+                minIndicesBuffer.add(i)
+                findNotExcludedForIndex(i)
+            }
+        }
+        return HistoricalIndices(currentMin, minIndicesBuffer.iterator())
     }
 }

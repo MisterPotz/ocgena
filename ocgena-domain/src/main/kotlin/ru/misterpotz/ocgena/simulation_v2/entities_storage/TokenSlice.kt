@@ -56,8 +56,13 @@ interface TokenSlice {
     //    fun filterTokensInPlaces(places: Places, predicate: (TokenWrapper, PlaceWrapper) -> Boolean): TokenSlice
     fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>>
     fun print()
-    fun makeBeautifulString(): String
-    fun iterateByHistory(): Iterator<TokenSlice>
+    fun takeSnapshot(): String
+    fun iterateByCommonHistoryEntries(exclude: Set<Long>, deepCopy: Boolean = false): Iterator<TokenSlice>
+    fun deepCopy(): TokenSlice
+}
+
+interface HistoricalTokenSlice : TokenSlice {
+    val historyEntry: Long
 }
 
 interface TokenGenerator {
@@ -71,12 +76,12 @@ class TokenStore(
 ) : TokenSlice by internalSlice, TokenGenerator {
     private val tokenCreators = TokenCreators()
 
-    override fun makeBeautifulString(): String {
+    override fun takeSnapshot(): String {
         return buildString {
             appendLine("tokenslice:")
             append(
                 buildString {
-                    appendLine(internalSlice.makeBeautifulString())
+                    appendLine(internalSlice.takeSnapshot())
                 }.prependIndent()
             )
             appendLine("issued tokens:")
@@ -159,6 +164,15 @@ data class HistoryEntriesData(
         }
     }
 
+    fun probablyIntersectsWith(historyEntriesData: HistoryEntriesData): Boolean {
+        val min = min
+        val max = max
+        val otherMin = historyEntriesData.min
+        val otherMax = historyEntriesData.max
+        if (min == null || max == null || otherMin == null || otherMax == null) return false
+        return (otherMin <= min && min <= otherMax) || (otherMin <= max && max <= otherMax)
+    }
+
     private fun compareAndSetMin(token: TokenWrapper) {
         min.let {
             val thisMin = it
@@ -181,6 +195,7 @@ class SimpleTokenSlice(
     private val amountsMap: SortedMap<PlaceWrapper, Int> = sortedMapOf(),
 ) : TokenSlice {
     private val historyEntriesData = HistoryEntriesData()
+
     init {
         for (i in internalRelatedPlaces) {
             tokensMap.getOrPut(i) { mutableListOf() }
@@ -215,14 +230,15 @@ class SimpleTokenSlice(
         )
     }
 
-    override fun makeBeautifulString(): String {
+    override fun takeSnapshot(): String {
         return buildString {
             appendLine("tokensmap:")
-
-            appendLine(
+            append(
                 buildString {
-                    for ((place, tokens) in tokensMap) {
-                        appendLine(
+                    val iterator = tokensMap.iterator()
+                    while (iterator.hasNext()) {
+                        val (place, tokens) = iterator.next()
+                        append(
                             "${place.placeId} (size:${tokens.size}) ->  ${
                                 tokens.joinToString(
                                     ",",
@@ -231,6 +247,9 @@ class SimpleTokenSlice(
                                 )
                             }"
                         )
+                        if (iterator.hasNext()) {
+                            appendLine()
+                        }
                     }
                 }.prependIndent()
             )
@@ -238,20 +257,34 @@ class SimpleTokenSlice(
     }
 
     private val bufferSlice by lazy(LazyThreadSafetyMode.NONE) {
-        build {
-            for (i in relatedPlaces) addRelatedPlace(i)
-        }
+        SimpleHistoricalTokenSlice(
+            build {
+                for (i in relatedPlaces) addRelatedPlace(i)
+            },
+            buffHistoryEntry = null
+        )
     }
 
-    private fun clearTokens() {
+    fun clearTokens() {
         for ((_, tokens) in tokensMap) {
             tokens.clear()
         }
     }
 
-    override fun iterateByHistory(): Iterator<TokenSlice> {
+    override fun deepCopy(): TokenSlice {
+        return SimpleTokenSlice(
+            internalRelatedPlaces.toSortedSet(),
+            tokensMap.mapValues { it.value.toMutableList() }.toSortedMap(),
+            amountsMap.mapValues { it.value }.toSortedMap()
+        )
+    }
+
+    override fun iterateByCommonHistoryEntries(
+        exclude: Set<Long>,
+        deepCopy: Boolean,
+    ): Iterator<TokenSlice> {
         return iterator {
-            bufferSlice.clearTokens()
+            bufferSlice.clear()
 
             val placeToSize = tokensMap.iterator().asSequence().fold(mutableListOf<Int>()) { acc, (place, tokens) ->
                 acc.add((acc.lastOrNull() ?: 0) + tokens.size)
@@ -260,8 +293,8 @@ class SimpleTokenSlice(
             val allTokens = tokensMap.values.flatten()
 
             fun placeForIndex(index: Int): PlaceWrapper {
-                val placeIndex = placeToSize.indexOfFirst { it -> index < it }
-                for ((index, place) in tokensMap.keys.withIndex()){
+                val placeIndex = placeToSize.indexOfFirst { index < it }
+                for ((index, place) in tokensMap.keys.withIndex()) {
                     if (index == placeIndex) {
                         return place
                     }
@@ -276,12 +309,21 @@ class SimpleTokenSlice(
                     }
                 }
             }
-            val parallelIteratorStack = ParallelIteratorStackChatV2(tokensHistoryIterators)
+            val parallelIteratorStack = ParallelIteratorStackChatV3(tokensHistoryIterators, exclusion = exclude)
             parallelIteratorStack.forEach { tokenEntriesCombination ->
-                for (index in tokenEntriesCombination) {
+                val historyEntry = tokenEntriesCombination.historyEntry
+                bufferSlice.clear()
+
+                bufferSlice.buffHistoryEntry = historyEntry
+                for (index in tokenEntriesCombination.iterator) {
                     bufferSlice.addTokenAt(placeForIndex(index), allTokens[index])
                 }
-                yield(bufferSlice)
+                val resulting = if (deepCopy) {
+                    bufferSlice.copy()
+                } else {
+                    bufferSlice
+                }
+                yield(resulting)
             }
         }
     }
@@ -291,7 +333,7 @@ class SimpleTokenSlice(
     }
 
     override fun print() {
-        println(makeBeautifulString())
+        println(takeSnapshot())
     }
 
     override fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>> {
@@ -307,40 +349,6 @@ class SimpleTokenSlice(
             }
         }
     }
-
-//    override fun filterTokensInPlaces(
-//        places: Places,
-//        predicate: (TokenWrapper, PlaceWrapper) -> Boolean,
-//    ): SimpleTokenSlice {
-//        val filteredRelatedPlaces = internalRelatedPlaces.intersect(places)
-//
-//        val tokensMap: MutableMap<PlaceWrapper, MutableSortedTokens> = buildMutableMap {
-//            for (place in filteredRelatedPlaces) {
-//                val tokens = tokensAt(place).toMutableSet()
-//                put(place, mutableListOf<TokenWrapper>().apply {
-//                    addAll(tokens.filter { token -> predicate(token, place) }.sorted())
-//                })
-//            }
-//        }
-//        val newAmountMap: MutableMap<PlaceWrapper, Int> = buildMutableMap {
-//            for (place in filteredRelatedPlaces) {
-//                val original = amountAt(place)
-//                val originalTokenSize = tokensAt(place).size
-//                val newTokenSize = tokensMap[place]!!.size
-//                val tokenDiff = originalTokenSize - newTokenSize
-//                require(tokenDiff >= 0)
-//                val newamount = original - tokenDiff
-//                require(newamount >= 0)
-//                put(place, newamount)
-//            }
-//        }
-//
-//        return SimpleTokenSlice(
-//            filteredRelatedPlaces.toSortedSet(),
-//            tokensMap.toSortedMap(),
-//            newAmountMap.toSortedMap()
-//        )
-//    }
 
     override fun setAmount(placeWrapper: PlaceWrapper, new: Int) {
         if (placeWrapper !in relatedPlaces) return
@@ -509,6 +517,41 @@ class SimpleTokenSlice(
             }
         }
     }
+}
+
+class SimpleHistoricalTokenSlice(
+    val simpleTokenSlice: SimpleTokenSlice,
+    var buffHistoryEntry: Long? = null,
+) :
+    TokenSlice by simpleTokenSlice,
+    HistoricalTokenSlice {
+    override val historyEntry: Long
+        get() = buffHistoryEntry!!
+
+    override fun takeSnapshot(): String {
+        return buildString {
+            appendLine("historical token slice, entry: $historyEntry")
+            appendLine(
+                simpleTokenSlice.takeSnapshot().prependIndent()
+            )
+        }
+    }
+
+    fun clear() {
+        simpleTokenSlice.clearTokens()
+        buffHistoryEntry = null
+    }
+
+    fun copy(): SimpleHistoricalTokenSlice {
+        return SimpleHistoricalTokenSlice(
+            simpleTokenSlice = simpleTokenSlice.deepCopy() as SimpleTokenSlice,
+            buffHistoryEntry = historyEntry
+        )
+    }
+}
+
+fun Collection<TokenSlice>.toStringSnapshot(): String {
+    return joinToString("-------------\n") { it.takeSnapshot() }
 }
 
 interface ConstructionBlock {
