@@ -202,12 +202,12 @@ petri_atoms:
       type: "vararc"
       id: "i1.place_order"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "place_order.i2":
       type: "vararc"
       id: "place_order.i2"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "i2.pick_item":
       type: "arc"
       id: "i2.pick_item"
@@ -218,32 +218,32 @@ petri_atoms:
       type: "vararc"
       id: "i3.start_route"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "start_route.i4":
       type: "vararc"
       id: "start_route.i4"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "i4.end_route":
       type: "vararc"
       id: "i4.end_route"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "end_route.i5":
       type: "vararc"
       id: "end_route.i5"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "i5.mark_as_completed":
       type: "vararc"
       id: "i5.mark_as_completed"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "mark_as_completed.i6":
       type: "vararc"
       id: "mark_as_completed.i6"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "r1.start_route":
       type: "arc"
       id: "r1.start_route"

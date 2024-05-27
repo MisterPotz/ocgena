@@ -1,17 +1,40 @@
 package ru.misterpotz.di
 
-import dagger.Binds
 import dagger.Component
 import dagger.Module
-import ru.misterpotz.db.DBConnectionSetupper
-import ru.misterpotz.db.DBConnectionSetupperImpl
+import dagger.Provides
+import kotlinx.coroutines.*
+import kotlinx.serialization.modules.SerializersModule
 import ru.misterpotz.ocgena.di.DomainComponent
 import javax.inject.Scope
+import kotlin.coroutines.CoroutineContext
 
 @Module
 abstract class ServerModule {
-    @Binds
-    abstract fun bindDBConnectionSetupper(dbConnectionSetupperImpl: DBConnectionSetupperImpl): DBConnectionSetupper
+    companion object {
+
+        @Provides
+        @ServerScope
+        fun provideSimulationJobDispatcher(): CoroutineDispatcher {
+            return Dispatchers.Default
+        }
+
+        @Provides
+        @ServerScope
+        fun jobCoroutineScope(): CoroutineScope {
+            return object : CoroutineScope {
+                override val coroutineContext: CoroutineContext = Dispatchers.Default + SupervisorJob() + CoroutineExceptionHandler { coroutineContext, throwable ->
+                    throwable.printStackTrace()
+                }
+            }
+        }
+
+        @Provides
+        @ServerScope
+        fun provideTaskRegistry(coroutineScope: CoroutineScope) : TasksRegistry {
+            return TasksRegistry(coroutineScope)
+        }
+    }
 }
 
 @ServerScope
@@ -20,6 +43,10 @@ abstract class ServerModule {
     dependencies = [DomainComponent::class]
 )
 interface ServerComponent : ServerSimulationComponentDependencies {
+    fun tasksRegistry(): TasksRegistry
+    fun jobDispatcher(): CoroutineDispatcher
+    fun jobScope(): CoroutineScope
+    fun serializersModule(): SerializersModule
 
     @Component.Factory
     interface Factory {

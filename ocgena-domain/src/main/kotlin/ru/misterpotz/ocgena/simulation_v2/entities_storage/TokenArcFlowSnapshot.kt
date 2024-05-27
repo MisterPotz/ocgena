@@ -25,7 +25,7 @@ class TokenArcFlowSnapshotFactory(
 
         consumed.relatedPlaces.forEach { it ->
             objTypeToToken.getOrPut(it.objectType) { mutableListOf() }
-            objTypeToAmount.getOrPut(it.objectType) { consumed.amountAt(it) }
+            objTypeToAmount[it.objectType] = objTypeToAmount.getOrPut(it.objectType) { 0 } + consumed.amountAt(it)
         }
 
         consumed.byPlaceIterator().forEach { (place, tokens) ->
@@ -69,7 +69,7 @@ class TokenArcFlowSnapshotFactory(
 
     interface Snapshot {
         fun getVariableValue(value: String): Int
-        fun getGroup(type: ObjectType): TokenData
+        fun getGroup(type: ObjectType): TokenData?
         val allTokens: Iterable<TokenWrapper>
     }
 
@@ -97,8 +97,8 @@ class TokenArcFlowSnapshotFactory(
             return variablesValues[value]!!
         }
 
-        override fun getGroup(type: ObjectType): TokenData {
-            return groupedRecords[type]!!
+        override fun getGroup(type: ObjectType): TokenData? {
+            return groupedRecords[type]
         }
 
         override val allTokens: Iterable<TokenWrapper> = groupedRecords.values.flatMap {

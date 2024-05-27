@@ -315,6 +315,7 @@ class SimulationStepLogBuilder @Inject constructor(
 
         return SimulationStepLog(
             stepNumber = stepNumber,
+            totalClock = 0,
             clockIncrement = clockIncrement,
             selectedFiredTransition = selectedFiredTransition,
             starterMarkingAmounts = starterMarkingAmounts,

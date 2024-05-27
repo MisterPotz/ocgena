@@ -1,13 +1,18 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.simulation
 
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.simulation_v2.StepSequenceLogger
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
 import ru.misterpotz.ocgena.simulation_v2.input.*
+import ru.misterpotz.ocgena.simulation_v2.prettyString
 import ru.misterpotz.ocgena.simulation_v2.utils.toSimComp
-import kotlin.math.log
+import ru.misterpotz.ocgena.testing.domainComponent
+import ru.misterpotz.ocgena.testing.simComponent
 import kotlin.random.Random
 import kotlin.time.Duration
 
@@ -21,6 +26,11 @@ class FullSynchronizedSimulationTest {
         println(shuffler.makeShuffled(1..5))
         println(shuffler.makeShuffled(1..5))
         println(shuffler.makeShuffled(1..5))
+    }
+
+    @Test
+    fun printModel() {
+        buildSynchronizingLomazovaExampleModel().let { println(it.toDot()) }
     }
 
     @Test
@@ -51,6 +61,7 @@ class FullSynchronizedSimulationTest {
             ),
             logger
         )
+        println(domainComponent().yaml().encodeToString(sim.simulationInput()))
 
         launch {
             sim.simulation().runSimulation()
@@ -58,6 +69,7 @@ class FullSynchronizedSimulationTest {
 
         Assertions.assertTrue(logger.events.size > 0)
         println(logger.events)
+        println(logger.logs.prettyString())
         Assertions.assertEquals(6, logger.events.size)
 
         println(sim.model().transitionBy("send_invoices").transitionHistory)
@@ -127,7 +139,5 @@ class FullSynchronizedSimulationTest {
         println(sim.model().transitionBy("arrange_packages_to_tracks").transitionHistory)
         println(sim.model().transitionBy("place_order").transitionHistory)
         println(sim.tokenstore())
-        val tokenStore = sim.tokenstore()
-
     }
 }

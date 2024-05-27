@@ -1,421 +1,317 @@
 object_types:
   per_object_type_id:
-    items:
-      label: items
-    orders:
-      label: orders
-    packages:
-      label: packages
+    "\u25B31":
+      label: "\u25B31"
+    "\u25B32":
+      label: "\u25B32"
+    "\u25B33":
+      label: "\u25B33"
+    "\u25B34":
+      label: "\u25B34"
+oc_net_type: aalst
 petri_atoms:
-  confirm order:
-    from_places:
-    - items-p-5
-    - orders-p-3
-    id: confirm order
-    label: confirm order
-    to_places:
-    - items-p-6
-    - orders-p-4
-    type: transition
-  confirm order_items-p-6:
-    id: confirm order_items-p-6
-    type: arc
-  confirm order_orders-p-4:
-    id: confirm order_orders-p-4
-    type: arc
-  create package:
-    from_places:
-    - items-p-5
-    - packages-source
-    id: create package
-    label: create package
-    to_places:
-    - items-p-6
-    - packages-p-3
-    type: transition
-  create package_items-p-6:
-    id: create package_items-p-6
-    type: arc
-  create package_packages-p-3:
-    id: create package_packages-p-3
-    type: arc
-  failed delivery:
-    from_places:
-    - items-p-5
-    - packages-p-4
-    id: failed delivery
-    label: failed delivery
-    to_places:
-    - items-p-6
-    - packages-p-5
-    type: transition
-  failed delivery_items-p-6:
-    id: failed delivery_items-p-6
-    type: arc
-  failed delivery_packages-p-5:
-    id: failed delivery_packages-p-5
-    type: arc
-  item out of stock:
-    from_places:
-    - items-p-5
-    id: item out of stock
-    label: item out of stock
-    to_places:
-    - items-p-6
-    type: transition
-  item out of stock_items-p-6:
-    id: item out of stock_items-p-6
-    type: arc
-  items-p-5:
-    from_transtns:
-    - place order
-    - skip-4
-    id: items-p-5
-    label: items-p-5
-    to_transtns:
-    - reorder item
-    - payment reminder
-    - send package
-    - package delivered
-    - confirm order
-    - failed delivery
-    - create package
-    - pick item
-    - item out of stock
-    - pay order
-    type: place
-  items-p-5_confirm order:
-    id: items-p-5_confirm order
-    type: arc
-  items-p-5_create package:
-    id: items-p-5_create package
-    type: arc
-  items-p-5_failed delivery:
-    id: items-p-5_failed delivery
-    type: arc
-  items-p-5_item out of stock:
-    id: items-p-5_item out of stock
-    type: arc
-  items-p-5_package delivered:
-    id: items-p-5_package delivered
-    type: arc
-  items-p-5_pay order:
-    id: items-p-5_pay order
-    type: arc
-  items-p-5_payment reminder:
-    id: items-p-5_payment reminder
-    type: arc
-  items-p-5_pick item:
-    id: items-p-5_pick item
-    type: arc
-  items-p-5_reorder item:
-    id: items-p-5_reorder item
-    type: arc
-  items-p-5_send package:
-    id: items-p-5_send package
-    type: arc
-  items-p-6:
-    from_transtns:
-    - package delivered
-    - payment reminder
-    - item out of stock
-    - failed delivery
-    - reorder item
-    - send package
-    - create package
-    - confirm order
-    - pick item
-    - pay order
-    id: items-p-6
-    label: items-p-6
-    to_transtns:
-    - skip-4
-    - skip-5
-    type: place
-  items-p-6_skip-4:
-    id: items-p-6_skip-4
-    type: arc
-  items-p-6_skip-5:
-    id: items-p-6_skip-5
-    type: arc
-  items-sink:
-    from_transtns:
-    - skip-5
-    id: items-sink
-    label: items-sink
-    to_transtns: []
-    type: place
-  items-source:
-    from_transtns: []
-    id: items-source
-    label: items-source
-    to_transtns:
-    - place order
-    type: place
-  items-source_place order:
-    id: items-source_place order
-    type: arc
-  orders-p-3:
-    from_transtns:
-    - place order
-    id: orders-p-3
-    label: orders-p-3
-    to_transtns:
-    - confirm order
-    type: place
-  orders-p-3_confirm order:
-    id: orders-p-3_confirm order
-    type: arc
-  orders-p-4:
-    from_transtns:
-    - confirm order
-    id: orders-p-4
-    label: orders-p-4
-    to_transtns:
-    - skip-1
-    - payment reminder
-    type: place
-  orders-p-4_payment reminder:
-    id: orders-p-4_payment reminder
-    type: arc
-  orders-p-4_skip-1:
-    id: orders-p-4_skip-1
-    type: arc
-  orders-p-5:
-    from_transtns:
-    - skip-1
-    - payment reminder
-    id: orders-p-5
-    label: orders-p-5
-    to_transtns:
-    - pay order
-    type: place
-  orders-p-5_pay order:
-    id: orders-p-5_pay order
-    type: arc
-  orders-sink:
-    from_transtns:
-    - pay order
-    id: orders-sink
-    label: orders-sink
-    to_transtns: []
-    type: place
-  orders-source:
-    from_transtns: []
-    id: orders-source
-    label: orders-source
-    to_transtns:
-    - place order
-    type: place
-  orders-source_place order:
-    id: orders-source_place order
-    type: arc
-  package delivered:
-    from_places:
-    - items-p-5
-    - packages-p-5
-    id: package delivered
-    label: package delivered
-    to_places:
-    - items-p-6
-    - packages-sink
-    type: transition
-  package delivered_items-p-6:
-    id: package delivered_items-p-6
-    type: arc
-  package delivered_packages-sink:
-    id: package delivered_packages-sink
-    type: arc
-  packages-p-3:
-    from_transtns:
-    - create package
-    id: packages-p-3
-    label: packages-p-3
-    to_transtns:
-    - send package
-    type: place
-  packages-p-3_send package:
-    id: packages-p-3_send package
-    type: arc
-  packages-p-4:
-    from_transtns:
-    - send package
-    id: packages-p-4
-    label: packages-p-4
-    to_transtns:
-    - failed delivery
-    type: place
-  packages-p-4_failed delivery:
-    id: packages-p-4_failed delivery
-    type: arc
-  packages-p-5:
-    from_transtns:
-    - failed delivery
-    id: packages-p-5
-    label: packages-p-5
-    to_transtns:
-    - package delivered
-    type: place
-  packages-p-5_package delivered:
-    id: packages-p-5_package delivered
-    type: arc
-  packages-sink:
-    from_transtns:
-    - package delivered
-    id: packages-sink
-    label: packages-sink
-    to_transtns: []
-    type: place
-  packages-source:
-    from_transtns: []
-    id: packages-source
-    label: packages-source
-    to_transtns:
-    - create package
-    type: place
-  packages-source_create package:
-    id: packages-source_create package
-    type: arc
-  pay order:
-    from_places:
-    - items-p-5
-    - orders-p-5
-    id: pay order
-    label: pay order
-    to_places:
-    - items-p-6
-    - orders-sink
-    type: transition
-  pay order_items-p-6:
-    id: pay order_items-p-6
-    type: arc
-  pay order_orders-sink:
-    id: pay order_orders-sink
-    type: arc
-  payment reminder:
-    from_places:
-    - items-p-5
-    - orders-p-4
-    id: payment reminder
-    label: payment reminder
-    to_places:
-    - items-p-6
-    - orders-p-5
-    type: transition
-  payment reminder_items-p-6:
-    id: payment reminder_items-p-6
-    type: arc
-  payment reminder_orders-p-5:
-    id: payment reminder_orders-p-5
-    type: arc
-  pick item:
-    from_places:
-    - items-p-5
-    id: pick item
-    label: pick item
-    to_places:
-    - items-p-6
-    type: transition
-  pick item_items-p-6:
-    id: pick item_items-p-6
-    type: arc
-  place order:
-    from_places:
-    - items-source
-    - orders-source
-    id: place order
-    label: place order
-    to_places:
-    - items-p-5
-    - orders-p-3
-    type: transition
-  place order_items-p-5:
-    id: place order_items-p-5
-    type: arc
-  place order_orders-p-3:
-    id: place order_orders-p-3
-    type: arc
-  reorder item:
-    from_places:
-    - items-p-5
-    id: reorder item
-    label: reorder item
-    to_places:
-    - items-p-6
-    type: transition
-  reorder item_items-p-6:
-    id: reorder item_items-p-6
-    type: arc
-  send package:
-    from_places:
-    - items-p-5
-    - packages-p-3
-    id: send package
-    label: send package
-    to_places:
-    - items-p-6
-    - packages-p-4
-    type: transition
-  send package_items-p-6:
-    id: send package_items-p-6
-    type: arc
-  send package_packages-p-4:
-    id: send package_packages-p-4
-    type: arc
-  skip-1:
-    from_places:
-    - orders-p-4
-    id: skip-1
-    label: skip-1
-    to_places:
-    - orders-p-5
-    type: transition
-  skip-1_orders-p-5:
-    id: skip-1_orders-p-5
-    type: arc
-  skip-4:
-    from_places:
-    - items-p-6
-    id: skip-4
-    label: skip-4
-    to_places:
-    - items-p-5
-    type: transition
-  skip-4_items-p-5:
-    id: skip-4_items-p-5
-    type: arc
-  skip-5:
-    from_places:
-    - items-p-6
-    id: skip-5
-    label: skip-5
-    to_places:
-    - items-sink
-    type: transition
-  skip-5_items-sink:
-    id: skip-5_items-sink
-    type: arc
+  per_id:
+    arrange-packages-to-tracks:
+      from_places:
+      - "\u25B32-p-3"
+      - "\u25B33-source"
+      id: arrange-packages-to-tracks
+      label: arrange-packages-to-tracks
+      to_places:
+      - "\u25B32-p-4"
+      - "\u25B33-p-3"
+      type: transition
+    "arrange-packages-to-tracks.\u25B32-p-4":
+      arcMeta:
+        type: aalst
+      id: "arrange-packages-to-tracks.\u25B32-p-4"
+      type: vararc
+    "arrange-packages-to-tracks.\u25B33-p-3":
+      arcMeta:
+        type: aalst
+      id: "arrange-packages-to-tracks.\u25B33-p-3"
+      type: vararc
+    place-order:
+      from_places:
+      - "\u25B32-source"
+      - "\u25B31-source"
+      id: place-order
+      label: place-order
+      to_places:
+      - "\u25B32-p-3"
+      - "\u25B31-p-3"
+      type: transition
+    "place-order.\u25B31-p-3":
+      id: "place-order.\u25B31-p-3"
+      type: arc
+    "place-order.\u25B32-p-3":
+      arcMeta:
+        type: aalst
+      id: "place-order.\u25B32-p-3"
+      type: vararc
+    send-invoices:
+      from_places:
+      - "\u25B31-p-3"
+      - "\u25B34-source"
+      id: send-invoices
+      label: send-invoices
+      to_places:
+      - "\u25B31-p-4"
+      - "\u25B34-p-3"
+      type: transition
+    "send-invoices.\u25B31-p-4":
+      id: "send-invoices.\u25B31-p-4"
+      type: arc
+    "send-invoices.\u25B34-p-3":
+      arcMeta:
+        type: aalst
+      id: "send-invoices.\u25B34-p-3"
+      type: vararc
+    skip-1:
+      from_places:
+      - "\u25B32-p-3"
+      - "\u25B34-p-3"
+      id: skip-1
+      label: skip-1
+      to_places:
+      - "\u25B32-p-4"
+      - "\u25B34-sink"
+      type: transition
+    "skip-1.\u25B32-p-4":
+      id: "skip-1.\u25B32-p-4"
+      type: arc
+    "skip-1.\u25B34-sink":
+      id: "skip-1.\u25B34-sink"
+      type: arc
+    skip-2:
+      from_places:
+      - "\u25B32-p-4"
+      id: skip-2
+      label: skip-2
+      to_places:
+      - "\u25B32-sink"
+      type: transition
+    "skip-2.\u25B32-sink":
+      id: "skip-2.\u25B32-sink"
+      type: arc
+    test-all-sync:
+      from_places:
+      - "\u25B32-p-4"
+      - "\u25B31-p-4"
+      - "\u25B33-p-3"
+      - "\u25B34-p-3"
+      id: test-all-sync
+      label: test-all-sync
+      to_places:
+      - "\u25B32-sink"
+      - "\u25B31-sink"
+      - "\u25B33-sink"
+      - "\u25B34-sink"
+      type: transition
+    "test-all-sync.\u25B31-sink":
+      id: "test-all-sync.\u25B31-sink"
+      type: arc
+    "test-all-sync.\u25B32-sink":
+      arcMeta:
+        type: aalst
+      id: "test-all-sync.\u25B32-sink"
+      type: vararc
+    "test-all-sync.\u25B33-sink":
+      arcMeta:
+        type: aalst
+      id: "test-all-sync.\u25B33-sink"
+      type: vararc
+    "test-all-sync.\u25B34-sink":
+      arcMeta:
+        type: aalst
+      id: "test-all-sync.\u25B34-sink"
+      type: vararc
+    "\u25B31-p-3":
+      from_transtns:
+      - place-order
+      id: "\u25B31-p-3"
+      label: "\u25B31-p-3"
+      to_transtns:
+      - send-invoices
+      type: place
+    "\u25B31-p-3.send-invoices":
+      id: "\u25B31-p-3.send-invoices"
+      type: arc
+    "\u25B31-p-4":
+      from_transtns:
+      - send-invoices
+      id: "\u25B31-p-4"
+      label: "\u25B31-p-4"
+      to_transtns:
+      - test-all-sync
+      type: place
+    "\u25B31-p-4.test-all-sync":
+      id: "\u25B31-p-4.test-all-sync"
+      type: arc
+    "\u25B31-sink":
+      from_transtns:
+      - test-all-sync
+      id: "\u25B31-sink"
+      label: "\u25B31-sink"
+      to_transtns: []
+      type: place
+    "\u25B31-source":
+      from_transtns: []
+      id: "\u25B31-source"
+      label: "\u25B31-source"
+      to_transtns:
+      - place-order
+      type: place
+    "\u25B31-source.place-order":
+      id: "\u25B31-source.place-order"
+      type: arc
+    "\u25B32-p-3":
+      from_transtns:
+      - place-order
+      id: "\u25B32-p-3"
+      label: "\u25B32-p-3"
+      to_transtns:
+      - skip-1
+      - arrange-packages-to-tracks
+      type: place
+    "\u25B32-p-3.arrange-packages-to-tracks":
+      arcMeta:
+        type: aalst
+      id: "\u25B32-p-3.arrange-packages-to-tracks"
+      type: vararc
+    "\u25B32-p-3.skip-1":
+      id: "\u25B32-p-3.skip-1"
+      type: arc
+    "\u25B32-p-4":
+      from_transtns:
+      - skip-1
+      - arrange-packages-to-tracks
+      id: "\u25B32-p-4"
+      label: "\u25B32-p-4"
+      to_transtns:
+      - skip-2
+      - test-all-sync
+      type: place
+    "\u25B32-p-4.skip-2":
+      id: "\u25B32-p-4.skip-2"
+      type: arc
+    "\u25B32-p-4.test-all-sync":
+      arcMeta:
+        type: aalst
+      id: "\u25B32-p-4.test-all-sync"
+      type: vararc
+    "\u25B32-sink":
+      from_transtns:
+      - skip-2
+      - test-all-sync
+      id: "\u25B32-sink"
+      label: "\u25B32-sink"
+      to_transtns: []
+      type: place
+    "\u25B32-source":
+      from_transtns: []
+      id: "\u25B32-source"
+      label: "\u25B32-source"
+      to_transtns:
+      - place-order
+      type: place
+    "\u25B32-source.place-order":
+      arcMeta:
+        type: aalst
+      id: "\u25B32-source.place-order"
+      type: vararc
+    "\u25B33-p-3":
+      from_transtns:
+      - arrange-packages-to-tracks
+      id: "\u25B33-p-3"
+      label: "\u25B33-p-3"
+      to_transtns:
+      - test-all-sync
+      type: place
+    "\u25B33-p-3.test-all-sync":
+      arcMeta:
+        type: aalst
+      id: "\u25B33-p-3.test-all-sync"
+      type: vararc
+    "\u25B33-sink":
+      from_transtns:
+      - test-all-sync
+      id: "\u25B33-sink"
+      label: "\u25B33-sink"
+      to_transtns: []
+      type: place
+    "\u25B33-source":
+      from_transtns: []
+      id: "\u25B33-source"
+      label: "\u25B33-source"
+      to_transtns:
+      - arrange-packages-to-tracks
+      type: place
+    "\u25B33-source.arrange-packages-to-tracks":
+      arcMeta:
+        type: aalst
+      id: "\u25B33-source.arrange-packages-to-tracks"
+      type: vararc
+    "\u25B34-p-3":
+      from_transtns:
+      - send-invoices
+      id: "\u25B34-p-3"
+      label: "\u25B34-p-3"
+      to_transtns:
+      - skip-1
+      - test-all-sync
+      type: place
+    "\u25B34-p-3.skip-1":
+      id: "\u25B34-p-3.skip-1"
+      type: arc
+    "\u25B34-p-3.test-all-sync":
+      arcMeta:
+        type: aalst
+      id: "\u25B34-p-3.test-all-sync"
+      type: vararc
+    "\u25B34-sink":
+      from_transtns:
+      - skip-1
+      - test-all-sync
+      id: "\u25B34-sink"
+      label: "\u25B34-sink"
+      to_transtns: []
+      type: place
+    "\u25B34-source":
+      from_transtns: []
+      id: "\u25B34-source"
+      label: "\u25B34-source"
+      to_transtns:
+      - send-invoices
+      type: place
+    "\u25B34-source.send-invoices":
+      arcMeta:
+        type: aalst
+      id: "\u25B34-source.send-invoices"
+      type: vararc
 place_object_types:
   per_place:
-    items-p-5: items
-    items-p-6: items
-    items-sink: items
-    items-source: items
-    orders-p-3: orders
-    orders-p-4: orders
-    orders-p-5: orders
-    orders-sink: orders
-    orders-source: orders
-    packages-p-3: packages
-    packages-p-4: packages
-    packages-p-5: packages
-    packages-sink: packages
-    packages-source: packages
+    "\u25B31-p-3": "\u25B31"
+    "\u25B31-p-4": "\u25B31"
+    "\u25B31-sink": "\u25B31"
+    "\u25B31-source": "\u25B31"
+    "\u25B32-p-3": "\u25B32"
+    "\u25B32-p-4": "\u25B32"
+    "\u25B32-sink": "\u25B32"
+    "\u25B32-source": "\u25B32"
+    "\u25B33-p-3": "\u25B33"
+    "\u25B33-sink": "\u25B33"
+    "\u25B33-source": "\u25B33"
+    "\u25B34-p-3": "\u25B34"
+    "\u25B34-sink": "\u25B34"
+    "\u25B34-source": "\u25B34"
 place_types:
   per_place:
-    items-sink: OUTPUT
-    items-source: INPUT
-    orders-sink: OUTPUT
-    orders-source: INPUT
-    packages-sink: OUTPUT
-    packages-source: INPUT
+    "\u25B31-sink": OUTPUT
+    "\u25B31-source": INPUT
+    "\u25B32-sink": OUTPUT
+    "\u25B32-source": INPUT
+    "\u25B33-sink": OUTPUT
+    "\u25B33-source": INPUT
+    "\u25B34-sink": OUTPUT
+    "\u25B34-source": INPUT

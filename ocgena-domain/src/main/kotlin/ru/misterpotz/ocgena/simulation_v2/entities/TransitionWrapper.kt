@@ -13,15 +13,21 @@ import ru.misterpotz.ocgena.simulation_v2.utils.selectIn
 import ru.misterpotz.ocgena.utils.TimePNRef
 import ru.misterpotz.ocgena.utils.cast
 
-class CheckingCache {
-    var isEnabledByMarking: Boolean = false
-    var needCheckCache: Boolean = true
-        set(value) {
-            if (value) {
-                isEnabledByMarking = false
-            }
-            field = value
+class SolutionCache {
+    var solution: FullSolution? = null
+
+    val needCheckCache: Boolean
+        get() = solution == null || solution is FullSolution.DoesNotExistSynchronized
+
+    fun undoSolution(tokenStore: TokenStore) {
+        val solution = solution
+        when (solution) {
+            is FullSolution.Amounts, null -> Unit
+            is FullSolution.Tokens -> tokenStore.removeTokens(solution.generatedTokens)
+            is FullSolution.DoesNotExistSynchronized -> Unit
         }
+        this.solution = null
+    }
 }
 
 fun InputArcWrapper.ConsumptionSpec.castVar(): InputArcWrapper.ConsumptionSpec.Variable {
@@ -32,11 +38,13 @@ fun InputArcWrapper.ConsumptionSpec.castDependent(): InputArcWrapper.Consumption
     return this as? InputArcWrapper.ConsumptionSpec.DependsOnVariable?
 }
 
+var EXPERIMENT_V2_SOLVER = true
+
 class TransitionWrapper(
     val transitionId: PetriAtomId,
     val model: ModelAccessor,
 ) : Identifiable, Comparable<TransitionWrapper> {
-    val checkingCache = CheckingCache()
+    val solutionCache = SolutionCache()
 
     val timer: TransitionTimer by lazy {
         val eftLft =
@@ -46,17 +54,17 @@ class TransitionWrapper(
         TransitionTimer(0, eft = eftLft.first.toLong(), lft = eftLft.last.toLong())
     }
 
-    fun setNeedCheckCache() {
-        checkingCache.needCheckCache = true
+    fun cacheSolution(solution: FullSolution) {
+        println("$this has solution ${solution.nice()}")
+        solutionCache.solution = solution
     }
 
-    fun setEnabledByMarkingCache(enabledByMarking: Boolean) {
-        checkingCache.needCheckCache = false
-        checkingCache.isEnabledByMarking = enabledByMarking
+    fun FullSolution.nice(): String {
+        return if (this is FullSolution.DoesNotExistSynchronized) "NONE" else ""
     }
 
     fun needCheckCache(): Boolean {
-        return checkingCache.needCheckCache
+        return solutionCache.needCheckCache
     }
 
     companion object {
@@ -94,22 +102,29 @@ class TransitionWrapper(
         tokenSlice: TokenSlice,
         shuffler: Shuffler,
         tokenGenerator: TokenGenerator,
-        existenceConfirmationMode: Boolean = false
+        v2Solver: Boolean = true
     ): Iterable<FullSolution> {
         return when (model.tokensAreEntities()) {
             true -> {
-                TransitionSynchronizationArcSolver(this)
-                    .getSolutionFinderIterable(
-                        tokenSlice,
-                        shuffler,
-                        tokenGenerator = tokenGenerator,
-                        existenceConfirmationMode
-                    )
-                    ?: emptyList()
+                if (v2Solver) {
+                    TransitionSyncV2FullSolutionFinder(this, shuffler, tokenGenerator)
+                        .asIterable(
+                            tokenSlice,
+                            (solutionCache.solution as? FullSolution.DoesNotExistSynchronized)?.tokenSet
+                        )
+                } else {
+                    TransitionSynchronizationArcSolver(this)
+                        .getSolutionFinderIterable(
+                            tokenSlice,
+                            shuffler,
+                            tokenGenerator = tokenGenerator,
+                        )
+                        ?: emptyList()
+                }
             }
 
             false -> {
-                SimpleArcSolver(tokenSlice, this, existenceConfirmationMode)
+                SimpleArcSolver(tokenSlice, this)
             }
         }
     }
@@ -133,11 +148,12 @@ class TransitionWrapper(
         for ((objectType, arcs) in typeToArcs) {
             val objectTypeTokens =
                 snapshot.getGroup(objectType)
-                    .tokens
-                    .let {
+                    ?.tokens
+                    ?.let {
                         it.buildFromIndices(shuffler.makeShuffled(it.indices))
                     }
-                    .toMutableList()
+                    ?.toMutableList()
+                    ?: emptyList()
 
             val stackPerArc = List(arcs.size) { mutableListOf<TokenWrapper>() }
 
@@ -151,6 +167,9 @@ class TransitionWrapper(
                     } else {
                         index
                     }
+                }
+                if (writableArcIndices.isEmpty()) {
+                    break;
                 }
                 val consumer = shuffler.select(writableArcIndices)
                 stackPerArc[consumer].add(iterator.next())
@@ -442,7 +461,7 @@ class TransitionWrapper(
     }
 
     fun checkEnabledByTokensCache(): Boolean {
-        return checkingCache.isEnabledByMarking
+        return solutionCache.solution != null && solutionCache.solution !is FullSolution.DoesNotExistSynchronized
     }
 
     fun addTokenVisit(transitionIndex: Long, tokenWrapper: TokenWrapper) {
@@ -451,11 +470,8 @@ class TransitionWrapper(
     }
 
     fun removeTokenVisit(tokenWrapper: TokenWrapper) {
-        val intersectedIndices = tokenWrapper.participatedTransitionIndices[this]
-            ?.intersect(transitionHistory.allLogIndices) ?: emptySet()
-
-        for (i in intersectedIndices) {
-            transitionHistory.decrementReference(i, tokenWrapper)
+        for (i in tokenWrapper.visitedTransitions) {
+            i.transitionHistory.decrementReference(tokenWrapper)
         }
     }
 
@@ -494,7 +510,7 @@ class TransitionIdIssuer {
 
 class TransitionHistory(val transitionId: PetriAtomId) {
     private val logIdToReferenceCounter = mutableMapOf<Long, Long>()
-    private val idToAssociations = mutableMapOf<Long, MutableSet<TokenWrapper>>()
+    private val idToAssociations = sortedMapOf<Long, MutableSet<TokenWrapper>>()
     private val _allIds = sortedSetOf<Long>()
 
     val allLogIndices: Set<Long> = _allIds
@@ -503,27 +519,44 @@ class TransitionHistory(val transitionId: PetriAtomId) {
         return allLogIndices.size
     }
 
+    fun entries(): Collection<Set<TokenWrapper>> {
+        return idToAssociations.values
+    }
+
     fun recordReference(transitionLogIndex: Long, tokenWrapper: TokenWrapper) {
-        val current = logIdToReferenceCounter.getOrPut(transitionLogIndex) {
-            _allIds.add(transitionLogIndex)
-            0
-        }
+//        val current = logIdToReferenceCounter.getOrPut(transitionLogIndex) {
+//            _allIds.add(transitionLogIndex)
+//            0
+//        }
         idToAssociations.getOrPut(transitionLogIndex) {
             mutableSetOf()
         }.add(tokenWrapper)
-        logIdToReferenceCounter[transitionLogIndex] = current + 1
+//        logIdToReferenceCounter[transitionLogIndex] = current + 1
     }
 
-    fun decrementReference(transitionIndex: Long, tokenWrapper: TokenWrapper) {
-        val newReferencesToLog = (logIdToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
-        if (newReferencesToLog == 0L) {
-            logIdToReferenceCounter.remove(transitionIndex)
-            idToAssociations.remove(transitionIndex)
-            _allIds.remove(transitionIndex)
-        } else {
-            logIdToReferenceCounter[transitionIndex] = newReferencesToLog
-            idToAssociations[transitionIndex]!!.remove(tokenWrapper)
+    fun decrementReference(tokenWrapper: TokenWrapper) {
+        var removed = false
+        val emptySets by lazy(LazyThreadSafetyMode.NONE) { removed = true; mutableListOf<Long>() }
+        for ((key, set) in idToAssociations) {
+            set.remove(tokenWrapper)
+            if (set.isEmpty()) {
+                emptySets.add(key)
+            }
         }
+        if (removed) {
+            for (set in emptySets) {
+                idToAssociations.remove(set)
+            }
+        }
+//        val newReferencesToLog = (logIdToReferenceCounter[transitionIndex]!! - 1).coerceAtLeast(0)
+//        if (newReferencesToLog == 0L) {
+//            logIdToReferenceCounter.remove(transitionIndex)
+//            idToAssociations.remove(transitionIndex)
+//            _allIds.remove(transitionIndex)
+//        } else {
+//            logIdToReferenceCounter[transitionIndex] = newReferencesToLog
+//            idToAssociations[transitionIndex]!!.remove(tokenWrapper)
+//        }
     }
 
     override fun toString(): String {

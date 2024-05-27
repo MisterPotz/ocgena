@@ -20,7 +20,7 @@ val res = File(resPathString)
 val resPath = Path(resPathString)
 
 
-inline fun <reified T> writeOrAssertYaml(
+inline fun <reified T>  writeOrAssertYaml(
     expected: T,
     path: Path,
     mode: SerializationMode? = null

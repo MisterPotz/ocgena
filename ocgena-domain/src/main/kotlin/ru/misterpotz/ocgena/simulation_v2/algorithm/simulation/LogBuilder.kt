@@ -11,6 +11,7 @@ import kotlin.properties.Delegates
 
 class LogBuilder {
     private var stepNumber: Long by Delegates.notNull()
+    private var totalClock: Long by Delegates.notNull()
     private var clockIncrement: Long by Delegates.notNull()
 
     private var selectedFiredTransition: SimulationLogTransition? = null
@@ -82,6 +83,10 @@ class LogBuilder {
     fun recordStepNumber(stepNumber: Long) {
         this.stepNumber = stepNumber
     }
+    fun recordTotalClock(totalClock: Long) {
+        this.totalClock = totalClock
+
+    }
 
     fun recordFiredTransition(transitionWrapper: TransitionWrapper) {
         selectedFiredTransition = SimulationLogTransition(
@@ -105,6 +110,7 @@ class LogBuilder {
             firingInMarkingTokens = firingInMarkingTokens,
             firingOutMarkingTokens = firingOutMarkingTokens,
             tokensInitializedAtStep = tokensInitializedAtStep,
+            totalClock = totalClock
         ).also { alreadyBuilt = true }
     }
 }

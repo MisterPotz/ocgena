@@ -52,7 +52,7 @@ petri_atoms:
       type: "vararc"
       id: "o1.t1"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "o2":
       type: "place"
       id: "o2"
@@ -62,7 +62,7 @@ petri_atoms:
       type: "vararc"
       id: "t1.o2"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "p3":
       type: "place"
       id: "p3"
@@ -71,5 +71,6 @@ petri_atoms:
     "p3.t1":
       type: "arc"
       id: "p3.t1"
-      multiplicity: 3
+      arcMeta:
+        multiplicity: 3
 oc_net_type: "aalst"

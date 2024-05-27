@@ -1,0 +1,12 @@
+places:
+  "input1":
+    initial_tokens_amount: 5
+  "input3":
+    initial_tokens_amount: 10
+transitions:
+  "t1":
+    eft_lft: [5, 10]
+    synchronizedArcGroups: [{sync_transition: "t2", arcs_from: ["p1", "p2"]}]
+default_transition_eft_lft: [10, 10]
+seed: 42
+logging: true

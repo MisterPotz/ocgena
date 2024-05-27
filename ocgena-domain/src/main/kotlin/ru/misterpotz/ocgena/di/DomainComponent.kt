@@ -16,8 +16,7 @@ import ru.misterpotz.ocgena.simulation_old.collections.PlaceToObjectMarkingMap
 import ru.misterpotz.ocgena.ocnet.OCNet
 import ru.misterpotz.ocgena.ocnet.OCNetStruct
 import ru.misterpotz.ocgena.ocnet.primitives.PetriAtom
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.NormalArc
-import ru.misterpotz.ocgena.ocnet.primitives.arcs.VariableArc
+import ru.misterpotz.ocgena.ocnet.primitives.arcs.*
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Place
 import ru.misterpotz.ocgena.ocnet.primitives.atoms.Transition
 import ru.misterpotz.ocgena.registries.ObjectTypeRegistry
@@ -38,8 +37,8 @@ class DomainModule {
         @Provides
         @DomainScope
         @JvmSuppressWildcards
-        fun serializersModuleBlock(): SerializersModuleBuilder.() -> Unit {
-            return {
+        fun serializersModule(): SerializersModule {
+            return SerializersModule {
                 contextual(IntRangeSerializer("interval"))
                 contextual(DurationSerializer("duration"))
                 contextual(TimeUntilNextInstanceIsAllowedSerializer("timeUntilNextInstanceIsAllowed"))
@@ -68,6 +67,11 @@ class DomainModule {
                     subclass(VariableArc.serializer())
                     subclass(Transition.serializer())
                 }
+                polymorphic(ArcMeta::class) {
+                    subclass(AalstVariableArcMeta.serializer())
+                    subclass(LomazovaVariableArcMeta.serializer())
+                    subclass(NormalArcMeta.serializer())
+                }
                 polymorphic(ImmutablePlaceToObjectMarking::class) {
                     subclass(ImmutablePlaceToObjectMarkingMap.serializer())
                 }
@@ -83,22 +87,20 @@ class DomainModule {
 
         @Provides
         @DomainScope
-        fun json(serializersModuleBlock: @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Json {
+        fun json(serializersModule: SerializersModule): Json {
             return Json {
                 classDiscriminator = "type"
                 prettyPrint = true
                 encodeDefaults = false
                 isLenient = true
                 ignoreUnknownKeys = true
-                serializersModule = SerializersModule {
-                    serializersModuleBlock()
-                }
+                this.serializersModule = serializersModule
             }
         }
 
         @Provides
         @DomainScope
-        fun yaml(serializersModuleBlock: @JvmSuppressWildcards SerializersModuleBuilder.() -> Unit): Yaml {
+        fun yaml(serializersModule: SerializersModule): Yaml {
             return Yaml(
                 configuration = YamlConfiguration(
                     polymorphismPropertyName = "type",
@@ -107,9 +109,7 @@ class DomainModule {
                     strictMode = false,
                     encodeDefaults = false
                 ),
-                serializersModule = SerializersModule {
-                    serializersModuleBlock()
-                },
+                serializersModule = serializersModule,
             )
         }
     }
@@ -120,6 +120,8 @@ class DomainModule {
 interface DomainComponent {
     fun json(): Json
     fun yaml(): Yaml
+
+    fun serializersModule() : SerializersModule
 
     @Component.Factory
     interface Factory {

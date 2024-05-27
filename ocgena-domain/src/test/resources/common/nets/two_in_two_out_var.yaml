@@ -50,7 +50,7 @@ petri_atoms:
       type: "vararc"
       id: "o1.t1"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
     "o2":
       type: "place"
       id: "o2"
@@ -60,5 +60,5 @@ petri_atoms:
       type: "vararc"
       id: "t1.o2"
       arcMeta:
-        type: "ru.misterpotz.ocgena.ocnet.primitives.arcs.AalstVariableArcMeta"
+        type: "aalst"
 oc_net_type: "aalst"

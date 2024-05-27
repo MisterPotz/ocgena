@@ -1,8 +1,6 @@
 package ru.misterpotz
 
-import javax.inject.Inject
-
-class TokenSerializer @Inject constructor() {
+object TokenSerializer {
     fun serializeTokens(tokens: List<Long>): String {
         return tokens.joinToString(separator = ",") { it.toString() }
     }

@@ -4,6 +4,7 @@ import ru.misterpotz.ocgena.simulation_old.ObjectType
 import ru.misterpotz.ocgena.simulation_v2.entities.*
 import ru.misterpotz.ocgena.utils.PatternIdCreator
 import ru.misterpotz.ocgena.utils.buildMutableMap
+import ru.misterpotz.ocgena.utils.sortedInsert
 import java.util.*
 
 fun TokenSlice.resolveVariables(inputsArcs: Collection<InputArcWrapper>): ResolvedVariablesSpace {
@@ -44,6 +45,7 @@ interface TokenSlice {
     fun tokensAt(placeWrapper: PlaceWrapper): SortedTokens
     fun minusInPlace(tokenSlice: TokenSlice)
     fun plusInPlace(tokenSlice: TokenSlice)
+    fun addTokensAt(place: PlaceWrapper, tokens: Collection<TokenWrapper>)
     fun filterTokensInPlaces(places: Places, predicate: (TokenWrapper, PlaceWrapper) -> Boolean): TokenSlice
     fun byPlaceIterator(): Iterator<Pair<PlaceWrapper, SortedTokens>>
     fun print()
@@ -83,7 +85,7 @@ class TokenStore(
     }
 
     fun removeTokens(tokens: Collection<TokenWrapper>) {
-        println("token store removing tokens $tokens")
+//        println("token store removing tokens $tokens")
         for (token in tokens) {
             removeToken(token)
         }
@@ -136,8 +138,8 @@ class SingleTypeTokenCreator(
     }
 }
 
-typealias MutableSortedTokens = SortedSet<TokenWrapper>
-typealias SortedTokens = Set<TokenWrapper>
+typealias MutableSortedTokens = MutableList<TokenWrapper>
+typealias SortedTokens = List<TokenWrapper>
 
 class SimpleTokenSlice(
     private val internalRelatedPlaces: SortedSet<PlaceWrapper>,
@@ -146,7 +148,7 @@ class SimpleTokenSlice(
 ) : TokenSlice {
     init {
         for (i in internalRelatedPlaces) {
-            tokensMap.getOrPut(i) { sortedSetOf() }
+            tokensMap.getOrPut(i) { mutableListOf() }
             amountsMap.getOrPut(i) { 0 }
         }
     }
@@ -224,8 +226,8 @@ class SimpleTokenSlice(
         val tokensMap: MutableMap<PlaceWrapper, MutableSortedTokens> = buildMutableMap {
             for (place in filteredRelatedPlaces) {
                 val tokens = tokensAt(place).toMutableSet()
-                put(place, sortedSetOf<TokenWrapper>().apply {
-                    addAll(tokens.filter { token -> predicate(token, place) })
+                put(place, mutableListOf<TokenWrapper>().apply {
+                    addAll(tokens.filter { token -> predicate(token, place) }.sorted())
                 })
             }
         }
@@ -256,7 +258,7 @@ class SimpleTokenSlice(
 
     private fun addPlaceIfNeed(placeWrapper: PlaceWrapper) {
         tokensMap.getOrPut(placeWrapper) {
-            sortedSetOf<TokenWrapper>()
+            mutableListOf()
         }
         amountsMap.getOrPut(placeWrapper) {
             0
@@ -276,7 +278,7 @@ class SimpleTokenSlice(
     }
 
     override fun tokensAt(placeWrapper: PlaceWrapper): SortedTokens {
-        if (placeWrapper !in relatedPlaces) return sortedSetOf()
+        if (placeWrapper !in relatedPlaces) return mutableListOf()
 
         return tokensMap[placeWrapper]!!
     }
@@ -302,13 +304,27 @@ class SimpleTokenSlice(
         for (place in tokenSlice.relatedPlaces) {
             addPlaceIfNeed(place)
 
-            modifyTokensAt(place) {
-                it.addAll(tokenSlice.tokensAt(place))
+            modifyTokensAt(place) { arr ->
+                for (token in tokenSlice.tokensAt(place)) {
+                    val indexOfInsertion = arr.indexOfFirst { it > token }
+                    if (indexOfInsertion < 0) {
+                        arr.add(token)
+                    } else {
+                        arr.add(indexOfInsertion, token)
+                    }
+                }
             }
             setAmount(place, amountAt(place) + tokenSlice.amountAt(place))
         }
     }
 
+    override fun addTokensAt(place: PlaceWrapper, tokens: Collection<TokenWrapper>) {
+        if (place !in relatedPlaces) return
+        val placeTokens = tokensMap[place]!!
+
+        sortedInsert(placeTokens, tokens)
+        amountsMap[place] = amountsMap[place]!! + tokens.size
+    }
 
     override fun toString(): String {
         return buildString {
@@ -339,11 +355,15 @@ class SimpleTokenSlice(
 
     companion object {
         fun build(block: ConstructionBlock.() -> Unit): SimpleTokenSlice {
-            val mutableMap = mutableMapOf<PlaceWrapper, MutableSortedTokens>()
-
+            val mutableMap = mutableMapOf<PlaceWrapper, SortedSet<TokenWrapper>>()
+            val relatedPlaces = mutableListOf<PlaceWrapper>()
             val amounts = mutableMapOf<PlaceWrapper, Int>()
 
             val constructionBlock = object : ConstructionBlock {
+                override fun addRelatedPlace(relatedPLace: PlaceWrapper) {
+                    relatedPlaces.add(relatedPLace)
+                }
+
                 override fun addTokens(placeWrapper: PlaceWrapper, tokens: Collection<TokenWrapper>) {
                     mutableMap.getOrPut(placeWrapper) {
                         sortedSetOf()
@@ -356,8 +376,9 @@ class SimpleTokenSlice(
             }
             constructionBlock.block()
             return SimpleTokenSlice(
-                internalRelatedPlaces = mutableMap.keys.toMutableSet().union(amounts.keys).toSortedSet(),
-                tokensMap = mutableMap.toSortedMap(),
+                internalRelatedPlaces = mutableMap.keys.toMutableSet().union(amounts.keys).union(relatedPlaces)
+                    .toSortedSet(),
+                tokensMap = mutableMap.mapValues { it.value.toMutableList() }.toSortedMap(),
                 amountsMap = (if (amounts.isEmpty()) {
                     mutableMap.mapValues { it.value.size }
                         .let { mutableMapOf<PlaceWrapper, Int>().apply { putAll(it) } }
@@ -385,6 +406,7 @@ class SimpleTokenSlice(
 }
 
 interface ConstructionBlock {
+    fun addRelatedPlace(relatedPLace: PlaceWrapper)
     fun addTokens(placeWrapper: PlaceWrapper, tokens: Collection<TokenWrapper>)
     fun addAmount(placeWrapper: PlaceWrapper, amount: Int)
 }

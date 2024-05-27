@@ -1,4 +1,4 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.struct
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test

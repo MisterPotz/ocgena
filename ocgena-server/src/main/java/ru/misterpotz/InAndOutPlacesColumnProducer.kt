@@ -1,19 +1,16 @@
 package ru.misterpotz
 
-import ru.misterpotz.ocgena.ocnet.OCNetStruct
-import javax.inject.Inject
-
-class InAndOutPlacesColumnProducer @Inject constructor(
-    ocNetStruct: OCNetStruct
+class InAndOutPlacesColumnProducer(
+    placeIds : List<String>,
 ) {
     val IN_PREFIX = "in_"
     val OUT_PREFIX = "out_"
 
-    val inPlaces = ocNetStruct.placeRegistry.places.map {
-        "$IN_PREFIX${it.id}"
+    val inPlaces = placeIds.map {
+        "$IN_PREFIX${it}"
     }
-    val outPlaces = ocNetStruct.placeRegistry.places.map {
-        "$OUT_PREFIX${it.id}"
+    val outPlaces = placeIds.map {
+        "$OUT_PREFIX${it}"
     }
 
     val merged = inPlaces.toMutableList().apply {

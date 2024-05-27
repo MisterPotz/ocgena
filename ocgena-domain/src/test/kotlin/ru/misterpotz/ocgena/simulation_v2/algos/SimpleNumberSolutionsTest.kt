@@ -1,10 +1,13 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.algos
 
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
+import ru.misterpotz.ocgena.simulation_v2.toTokenSliceAmounts
 import ru.misterpotz.ocgena.simulation_v2.utils.toDefaultSim
+import ru.misterpotz.ocgena.testing.buildSynchronizingLomazovaExampleModel
 import kotlin.random.Random
 
 class SimpleNumberSolutionsTest {

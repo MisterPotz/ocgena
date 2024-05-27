@@ -1,22 +1,24 @@
 package ru.misterpotz.convert
 
-import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.ResultRow
 import org.jetbrains.exposed.sql.count
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import ru.misterpotz.InAndOutPlacesColumnProducer
 import ru.misterpotz.SimulationLogTransition
 import ru.misterpotz.TokenSerializer
+import ru.misterpotz.db.DBConnectionSetupper
 import ru.misterpotz.models.SimulationDBStepLog
 import ru.misterpotz.simulation.*
 
-class SimulationLogReadRepositoryImpl(
+class SimulationLogReadRepository(
     private val inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
-    private val db: Database,
+    private val connection: DBConnectionSetupper.Connection,
     private val tablesProvider: TablesProvider,
     private val tokenSerializer: TokenSerializer
-) : SimulationLogReadRepository {
-    override suspend fun totalSteps(): Long {
+) {
+    private val db = connection.database
+
+    suspend fun totalSteps(): Long {
         return newSuspendedTransaction(db = db) {
             with(tablesProvider) {
                 (simulationStepsTable).select(simulationStepsTable.id.count())
@@ -28,7 +30,7 @@ class SimulationLogReadRepositoryImpl(
         }
     }
 
-    override suspend fun readBatch(steps: LongRange): List<SimulationDBStepLog> {
+    suspend fun readBatch(steps: LongRange): List<SimulationDBStepLog> {
         return newSuspendedTransaction(db = db) {
             getSteps(steps.toList())
         }
@@ -57,6 +59,9 @@ class SimulationLogReadRepositoryImpl(
             val firingInMarkingTokens = detransformInPlacesString(stepToFiringTokens)
             val firingOutMarkingTokens = deTransformOutPlacesString(stepToFiringTokens)
 
+            val totalTokens = firingInMarkingTokens.values.flatten().toMutableSet().apply {
+                addAll(firingOutMarkingTokens.values.toMutableList().flatten())
+            }
             val lookUpObjectIds =
                 firingInMarkingTokens.values
                     .toMutableList()
@@ -81,11 +86,16 @@ class SimulationLogReadRepositoryImpl(
                 firingOutMarkingAmounts = firingOutMarkingAmounts,
                 firingInMarkingTokens = firingInMarkingTokens,
                 firingOutMarkingTokens = firingOutMarkingTokens,
-                tokenIdToObjectTypeId = tokenIdToObjectTypeId
+                tokenIdToObjectTypeId = tokenIdToObjectTypeId,
+                transitionAllItems = totalTokens.toList(),
+                totalClock = resultRow[SimulationStepsTable.totalClock]
             )
         }
     }
 
+    suspend fun close() {
+        connection.close()
+    }
     private suspend fun getSteps(stepIndeces: List<Long>): List<SimulationDBStepLog> {
         return with(tablesProvider) {
 
@@ -99,7 +109,6 @@ class SimulationLogReadRepositoryImpl(
                         stepToMarkingAmountsTable.columns,
                         stepToFiringAmountsTable.columns,
                         stepToFiringTokensTable.columns,
-                        objectTypeTable.columns
                     ).flatten()
                 ).where {
                     simulationStepsTable.id.inList(stepIndeces)

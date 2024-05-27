@@ -1,8 +1,10 @@
-package ru.misterpotz.ocgena.simulation_v2
+package ru.misterpotz.ocgena.simulation_v2.algos
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import ru.misterpotz.ocgena.simulation_v2.NoTokenGenerator
 import ru.misterpotz.ocgena.simulation_v2.algorithm.solution_search.NormalShuffler
+import ru.misterpotz.ocgena.simulation_v2.buildTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.entities_selection.ModelAccessor
 import ru.misterpotz.ocgena.simulation_v2.entities_storage.SimpleTokenSlice
 import ru.misterpotz.ocgena.simulation_v2.input.SimulationInput
@@ -129,7 +131,30 @@ class TransitionNoSyncArcSolverTest {
         assertEquals(
             tokenSlice.byPlaceIterator().asSequence().fold(1) { acc, (place, tokens) ->
                 acc * tokens.size
-            },
+            }.also { println(it) },
+            solutions.size
+        )
+    }
+
+    @Test
+    fun testMultiSearchTokenSolver2() {
+        val model = ocnet().toDefaultSim(
+            SimulationInput(
+                loggingEnabled = true,
+            )
+        )
+        val tokenSlice = buildTokens(model)
+
+        val normalShuffler = NormalShuffler(random = Random(42))
+        val solutions =
+            model.transitionBy("test").inputArcsSolutions(tokenSlice, normalShuffler, NoTokenGenerator, v2Solver = true).iterator()
+                .asSequence().toList()
+
+        // combinatorics check
+        assertEquals(
+            tokenSlice.byPlaceIterator().asSequence().fold(1) { acc, (place, tokens) ->
+                acc * tokens.size
+            }.also { println(it) },
             solutions.size
         )
     }

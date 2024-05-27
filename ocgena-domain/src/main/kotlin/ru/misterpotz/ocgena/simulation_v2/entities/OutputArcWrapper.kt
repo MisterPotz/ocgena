@@ -40,7 +40,7 @@ class OutputArcWrapper(
         val arcMeta = arcMeta
         return when (arcMeta) {
             AalstVariableArcMeta -> {
-                snapshot.getGroup(toPlace.objectType).amount
+                snapshot.getGroup(toPlace.objectType)?.amount ?: 0
             }
 
             is LomazovaVariableArcMeta -> {

@@ -1,13 +1,22 @@
 package ru.misterpotz.ocgena.simulation_v2.entities
 
 import ru.misterpotz.ocgena.simulation_old.ObjectType
+import ru.misterpotz.ocgena.simulation_v2.entities_storage.TokenGenerator
 import java.util.*
 import kotlin.collections.HashSet
+
+sealed interface Token
+
+class UngeneratedToken(val objectType: ObjectType): Token {
+    fun generate(tokenGenerator: TokenGenerator): TokenWrapper {
+        return tokenGenerator.generateRealToken(objectType)
+    }
+}
 
 class TokenWrapper(
     val tokenId: Long,
     val objectType: ObjectType
-): Comparable<TokenWrapper> {
+): Comparable<TokenWrapper>, Token {
 
     override fun compareTo(other: TokenWrapper): Int {
         return tokenId.compareTo(other.tokenId)
@@ -16,41 +25,41 @@ class TokenWrapper(
     private val _visited = mutableSetOf<TransitionWrapper>()
     val visitedTransitions: Set<TransitionWrapper> = _visited
 
-    private val _participatedTransitionIndices = mutableMapOf<TransitionWrapper, SortedSet<Long>>()
-    val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
-    val allParticipatedTransitionEntries: HashSet<Long> = hashSetOf()
+//    private val _participatedTransitionIndices = mutableMapOf<TransitionWrapper, SortedSet<Long>>()
+//    val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
+//    val allParticipatedTransitionEntries: HashSet<Long> = hashSetOf()
 
-    fun participatedInAll(entries: HashSet<Long>) : Boolean {
-        return entries.all { allParticipatedTransitionEntries.contains(it) }
-    }
+//    fun participatedInAll(entries: HashSet<Long>) : Boolean {
+//        return entries.all { allParticipatedTransitionEntries.contains(it) }
+//    }
 
-    fun hasSharedTransitionEntry(otherToken: TokenWrapper): Boolean {
-        val haveSharedTransition = visitedTransitions.any { otherToken.visitedTransitions.contains(it) }
-        if (!haveSharedTransition) return false
-
-        val haveSharedTransitionEntry = participatedTransitionIndices.any { transitionEntries ->
-            if (transitionEntries.key in otherToken.participatedTransitionIndices.keys) {
-                val otherTokenEntries = otherToken.participatedTransitionIndices[transitionEntries.key]!!
-                val thisEntry = transitionEntries.value
-                val smallestEntryLog = if (otherTokenEntries.size < thisEntry.size) otherTokenEntries else thisEntry
-                val biggestEntryLog = if (otherTokenEntries.size < thisEntry.size) thisEntry else otherTokenEntries
-
-                smallestEntryLog.any {
-                    biggestEntryLog.contains(it)
-                }
-            } else {
-                false
-            }
-        }
-        return haveSharedTransitionEntry
-    }
+//    fun hasSharedTransitionEntry(otherToken: TokenWrapper): Boolean {
+//        val haveSharedTransition = visitedTransitions.any { otherToken.visitedTransitions.contains(it) }
+//        if (!haveSharedTransition) return false
+//
+//        val haveSharedTransitionEntry = participatedTransitionIndices.any { transitionEntries ->
+//            if (transitionEntries.key in otherToken.participatedTransitionIndices.keys) {
+//                val otherTokenEntries = otherToken.participatedTransitionIndices[transitionEntries.key]!!
+//                val thisEntry = transitionEntries.value
+//                val smallestEntryLog = if (otherTokenEntries.size < thisEntry.size) otherTokenEntries else thisEntry
+//                val biggestEntryLog = if (otherTokenEntries.size < thisEntry.size) thisEntry else otherTokenEntries
+//
+//                smallestEntryLog.any {
+//                    biggestEntryLog.contains(it)
+//                }
+//            } else {
+//                false
+//            }
+//        }
+//        return haveSharedTransitionEntry
+//    }
 
     fun recordTransitionVisit(transitionIndex: Long, transitionWrapper: TransitionWrapper) {
         _visited.add(transitionWrapper)
-        _participatedTransitionIndices.getOrPut(transitionWrapper) {
-            sortedSetOf()
-        }.add(transitionIndex)
-        allParticipatedTransitionEntries.add(transitionIndex)
+//        _participatedTransitionIndices.getOrPut(transitionWrapper) {
+//            sortedSetOf()
+//        }.add(transitionIndex)
+//        allParticipatedTransitionEntries.add(transitionIndex)
     }
 
 

@@ -3,55 +3,36 @@ package ru.misterpotz.di
 import dagger.*
 import dagger.multibindings.IntoMap
 import dagger.multibindings.StringKey
-import ru.misterpotz.InAndOutPlacesColumnProducer
-import ru.misterpotz.TokenSerializer
+import kotlinx.serialization.Serializable
+import ru.misterpotz.Logger
 import ru.misterpotz.convert.OCNetToOCELConverter
-import ru.misterpotz.convert.OcelTablesProvider
-import ru.misterpotz.convert.OcelTablesProviderImpl
-import ru.misterpotz.convert.SimulationLogReadRepositoryImpl
 import ru.misterpotz.db.DBConnectionSetupper
-import ru.misterpotz.db.DBConnectionSetupperImpl
-import ru.misterpotz.ocgena.ocnet.OCNetStruct
+import ru.misterpotz.ocgena.simulation_v2.di.SimulationV2Component
+import ru.misterpotz.plugins.SimulateArguments
 import ru.misterpotz.simulation.*
-import ru.misterpotz.simulation.TablesProviderImpl
 import java.nio.file.Path
+import java.time.LocalDateTime
+import java.util.concurrent.TimeUnit
 import javax.inject.Scope
+import kotlin.time.DurationUnit
 
 @Module
 internal abstract class SimulationToLogConversionModule {
-    @Binds
-    @SimulationToLogConversionScope
-    abstract fun bindTablesProvider(tablesProviderImpl: TablesProviderImpl): TablesProvider
-
-    @Binds
-    @SimulationToLogConversionScope
-    abstract fun bindOcelTablesProvider(ocelTablesProviderImpl: OcelTablesProviderImpl): OcelTablesProvider
-
-    @Binds
-    @SimulationToLogConversionScope
-    abstract fun bindDBConnectionSetupper(dbConnectionSetupper: DBConnectionSetupperImpl): DBConnectionSetupper
 
     companion object {
         @Provides
-        @SimulationToLogConversionScope
-        fun provideSimulationLogReadRepository(
-            map: Map<String, DBConnectionSetupper.Connection>,
-            tablesProviderImpl: TablesProvider,
-            inAndOutPlacesColumnProducer: InAndOutPlacesColumnProducer,
-            tokenSerializer: TokenSerializer
-        ): SimulationLogReadRepository {
-            return SimulationLogReadRepositoryImpl(
-                db = map.getSimDB().database,
-                tablesProvider = tablesProviderImpl,
-                inAndOutPlacesColumnProducer = inAndOutPlacesColumnProducer,
-                tokenSerializer = tokenSerializer,
+        @ServerSimulationScope
+        fun provideSimulation(
+            arguments: SimulateArguments,
+            logger: Logger,
+            serverSimulationInteractor: ServerSimulationInteractor.Factory
+        ): SimulationV2Component {
+            return SimulationV2Component.create(
+                simulationInput = arguments.simulateRequest.simInput,
+                ocNetStruct = arguments.simulateRequest.model,
+                simulationV2Interactor = serverSimulationInteractor,
+                logger = logger
             )
-        }
-
-        @Provides
-        @SimulationToLogConversionScope
-        fun provideOCNetStruct(simulationToLogConversionParams: SimulationToLogConversionParams): OCNetStruct {
-            return simulationToLogConversionParams.ocNetStruct
         }
 
         @Provides
@@ -59,10 +40,9 @@ internal abstract class SimulationToLogConversionModule {
         @IntoMap
         @StringKey(SIM_DB)
         fun provideSimulationLogDBConnection(
-            simulationToLogConversionParams: SimulationToLogConversionParams,
-            dbConnectionSetupper: DBConnectionSetupper
+            simulationToLogConversionParams: SimulationToLogConversionParams
         ): DBConnectionSetupper.Connection {
-            return dbConnectionSetupper.createConnection(simulationToLogConversionParams.simulationLogDBPath)
+            return DBConnectionSetupper.createConnection(simulationToLogConversionParams.simulationLogDBPath)
         }
 
         @Provides
@@ -71,21 +51,30 @@ internal abstract class SimulationToLogConversionModule {
         @StringKey(OCEL_DB)
         fun provideOcelDBConnection(
             simulationToLogConversionParams: SimulationToLogConversionParams,
-            dbConnectionSetupper: DBConnectionSetupper
         ): DBConnectionSetupper.Connection {
-            return dbConnectionSetupper.createConnection(simulationToLogConversionParams.ocelDBPath)
+            return DBConnectionSetupper.createConnection(simulationToLogConversionParams.ocelDBPath)
         }
 
+
         @Provides
-        @ServerSimulationScope
-        fun simulationConfig(serverSimulationConfig: ServerSimulationConfig) = serverSimulationConfig.simulationConfig
+        @SimulationToLogConversionScope
+        fun provideConverter(
+            map: Map<String, DBConnectionSetupper.Connection>,
+            simulationToLogConversionParams: SimulationToLogConversionParams
+        ): OCNetToOCELConverter {
+            return OCNetToOCELConverter(
+                databases = map,
+                conversionParams = simulationToLogConversionParams
+            )
+        }
     }
 }
 
 data class SimulationToLogConversionParams(
     val simulationLogDBPath: Path,
     val ocelDBPath: Path,
-    val ocNetStruct: OCNetStruct
+    val startingTime: LocalDateTime,
+    val unit: DurationUnit
 )
 
 @SimulationToLogConversionScope

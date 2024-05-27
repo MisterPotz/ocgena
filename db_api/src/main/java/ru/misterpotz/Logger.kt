@@ -25,6 +25,7 @@ data class SimulationLogTransition(
 data class SimulationStepLog(
     val stepNumber: Long,
     val clockIncrement: Long,
+    val totalClock: Long,
     val selectedFiredTransition: SimulationLogTransition? = null,
     val starterMarkingAmounts: Map<String, Int> = mutableMapOf(),
     val endStepMarkingAmounts: Map<String, Int>? = null,
@@ -75,7 +76,8 @@ data class SimulationStepLog(
     }
 }
 
-data class SimulationGeneralData(
+data class SimulationLabellingData(
     val transitionIdToLabel: Map<String, String>,
     val objectTypeIdToLabel: Map<String, String>,
+    val places: List<String>
 )
