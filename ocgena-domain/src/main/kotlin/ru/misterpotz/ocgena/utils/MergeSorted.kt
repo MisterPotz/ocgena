@@ -37,23 +37,16 @@ fun <T : Comparable<T>> mergeSortedCollections(coll1: Iterable<T>, coll2: Iterab
     return result
 }
 
-fun <T : Comparable<T>> MutableList<T>.sortedInsert(item : T)  {
-    var i = size - 1
-    while (i >= 0) {
-        if (this[i] < item) {
-            add(i + 1, item)
-            return
-        }
-        i--
-    }
-    add(0, item)
-}
-
 fun <T : Comparable<T>> sortedInsert(sortedList: MutableList<T>, unsortedList: Collection<T>) {
     for (element in unsortedList) {
         val position = findInsertPosition(sortedList, element)
         sortedList.add(position, element)
     }
+}
+
+fun <T : Comparable<T>> sortedInsert(sortedList: MutableList<T>, item: T) {
+    val position = findInsertPosition(sortedList, item)
+    sortedList.add(position, item)
 }
 
 fun <T : Comparable<T>> findInsertPosition(sortedList: List<T>, element: T): Int {
