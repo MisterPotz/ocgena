@@ -20,7 +20,7 @@ interface TransitionSelector {
 }
 
 interface FinishRequestChecker {
-    suspend fun isFinish() : Boolean
+    suspend fun isFinish(): Boolean
 }
 
 class StepExecutor(
@@ -29,11 +29,12 @@ class StepExecutor(
     private val transitionSelector: TransitionSelector,
     private val tokenStore: TokenStore,
     private val model: ModelAccessor,
-    private val shuffler: Shuffler
+    private val shuffler: Shuffler,
 ) {
     companion object {
         private const val DEBUG = false
     }
+
     enum class EnabledMode {
         DISABLED_BY_MARKING,
         ENABLED_BY_MARKING,
@@ -42,7 +43,7 @@ class StepExecutor(
 
     private fun collectTransitions(
         filter: EnabledMode,
-        sourceTransitions: Transitions? = null
+        sourceTransitions: Transitions? = null,
     ): Transitions {
         return (sourceTransitions ?: transitions).filter {
             when (filter) {
@@ -169,8 +170,8 @@ class StepExecutor(
         tokenStore.minus(minusTokens)
         tokenStore.plus(plusTokens)
         if (DEBUG) {
-            println("minusTokens ${minusTokens.makeBeautifulString()}")
-            println("plusTokens ${plusTokens.makeBeautifulString()}")
+            println("minusTokens ${minusTokens.takeSnapshot()}")
+            println("plusTokens ${plusTokens.takeSnapshot()}")
             println("removed tokens $consumed")
             println("generated tokens ${generatedAtInputSolution + generatedAtOutput}")
         }
@@ -196,10 +197,8 @@ class StepExecutor(
         model.outPlaces.forEach { endPlace ->
 //            println("cleaning out place $endPlace")
             cleanTokenTransitionVisits(tokenStore.tokensAt(endPlace))
-            tokenStore.modifyTokensAt(endPlace) { tokens ->
-                tokenStore.removeTokens(tokens)
-                tokens.clear()
-            }
+            val tokens = tokenStore.cleanTokensInPlace(endPlace)
+            tokenStore.removeTokens(tokens)
         }
     }
 

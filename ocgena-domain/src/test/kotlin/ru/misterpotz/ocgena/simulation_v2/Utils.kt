@@ -126,10 +126,7 @@ fun buildTransitionHistory(
                     )
                 }
             }
-            val newLogReference = transitionWrapper.getNewTransitionReference()
-            for (token in tokens) {
-                transitionWrapper.addTokenVisit(newLogReference, token)
-            }
+            transitionWrapper.transitionHistory.recordVisits(tokens)
             tokens
         }
     }

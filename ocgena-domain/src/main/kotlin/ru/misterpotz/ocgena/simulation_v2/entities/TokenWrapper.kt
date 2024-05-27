@@ -7,62 +7,84 @@ import kotlin.collections.HashSet
 
 sealed interface Token
 
-class UngeneratedToken(val objectType: ObjectType): Token {
+class UngeneratedToken(val objectType: ObjectType) : Token {
     fun generate(tokenGenerator: TokenGenerator): TokenWrapper {
         return tokenGenerator.generateRealToken(objectType)
     }
 }
 
+class TokensEntry(val id: Long, val tokens: Set<TokenWrapper>)
+
+class TokenHistory(
+    private val entriesIds: MutableSet<Long>,
+) : Comparable<TokenHistory>, Iterable<Long> {
+
+    companion object {
+        val comparator = compareBy<TokenHistory>(
+            {
+                -it.size()
+            },
+            {
+                it.min
+            }
+        )
+    }
+
+    var min: Long? = null
+        private set
+    var max: Long? = null
+        private set
+
+    fun add(entry: Long) {
+        entriesIds.add(entry)
+        min.let {
+            if (it != null && entry < it) min = entry
+            if (it == null) min = entry
+        }
+        max.let {
+            if (it != null && entry > it) max = entry
+            if (it == null) max = entry
+        }
+    }
+
+    fun size(): Int = entriesIds.size
+
+    override fun compareTo(other: TokenHistory): Int {
+        return comparator.compare(this, other)
+    }
+
+    override fun iterator(): Iterator<Long> {
+        return entriesIds.iterator()
+    }
+}
+
 class TokenWrapper(
     val tokenId: Long,
-    val objectType: ObjectType
-): Comparable<TokenWrapper>, Token {
+    val objectType: ObjectType,
+    tokenEntries : MutableSet<Long> = mutableSetOf()
+) : Comparable<TokenWrapper>, Token {
+    val tokenHistory = TokenHistory(tokenEntries)
 
     override fun compareTo(other: TokenWrapper): Int {
-        return tokenId.compareTo(other.tokenId)
+        return comparator.compare(this, other)
     }
+
+    companion object {
+        val comparator = compareBy<TokenWrapper>({
+            it.tokenHistory
+        }, {
+            it.tokenId
+        })
+    }
+
 
     private val _visited = mutableSetOf<TransitionWrapper>()
     val visitedTransitions: Set<TransitionWrapper> = _visited
 
-//    private val _participatedTransitionIndices = mutableMapOf<TransitionWrapper, SortedSet<Long>>()
-//    val participatedTransitionIndices: Map<TransitionWrapper, SortedSet<Long>> = _participatedTransitionIndices
-//    val allParticipatedTransitionEntries: HashSet<Long> = hashSetOf()
-
-//    fun participatedInAll(entries: HashSet<Long>) : Boolean {
-//        return entries.all { allParticipatedTransitionEntries.contains(it) }
-//    }
-
-//    fun hasSharedTransitionEntry(otherToken: TokenWrapper): Boolean {
-//        val haveSharedTransition = visitedTransitions.any { otherToken.visitedTransitions.contains(it) }
-//        if (!haveSharedTransition) return false
-//
-//        val haveSharedTransitionEntry = participatedTransitionIndices.any { transitionEntries ->
-//            if (transitionEntries.key in otherToken.participatedTransitionIndices.keys) {
-//                val otherTokenEntries = otherToken.participatedTransitionIndices[transitionEntries.key]!!
-//                val thisEntry = transitionEntries.value
-//                val smallestEntryLog = if (otherTokenEntries.size < thisEntry.size) otherTokenEntries else thisEntry
-//                val biggestEntryLog = if (otherTokenEntries.size < thisEntry.size) thisEntry else otherTokenEntries
-//
-//                smallestEntryLog.any {
-//                    biggestEntryLog.contains(it)
-//                }
-//            } else {
-//                false
-//            }
-//        }
-//        return haveSharedTransitionEntry
-//    }
-
     fun recordTransitionVisit(transitionIndex: Long, transitionWrapper: TransitionWrapper) {
         _visited.add(transitionWrapper)
-//        _participatedTransitionIndices.getOrPut(transitionWrapper) {
-//            sortedSetOf()
-//        }.add(transitionIndex)
-//        allParticipatedTransitionEntries.add(transitionIndex)
+        tokenHistory.add(transitionIndex)
     }
-
-
 
     override fun toString(): String {
         return "${tokenId}[${objectType.id}]"
