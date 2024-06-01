@@ -38,6 +38,11 @@ class FullHugeSynchronizedSimulationTest {
     )
 
     @Test
+    fun displayModel() {
+        println(ocnet.toDot())
+    }
+
+    @Test
     fun fullSimulationTestWithTime() = runTest(timeout = Duration.INFINITE) {
         val logger = SizeLogger()
 

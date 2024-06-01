@@ -4,77 +4,74 @@ import {
   Middleware,
   PayloadAction,
   ReducerCreators,
-} from "@reduxjs/toolkit/react"
-import { Epic, ofType } from "redux-observable"
-import { Observable, OperatorFunction, filter, map } from "rxjs"
-import { every, exists } from "fp-ts/Array"
+} from "@reduxjs/toolkit/react";
+import { Epic, ofType } from "redux-observable";
+import { Observable, OperatorFunction, filter, map } from "rxjs";
 
 export function ofTypeAndMap<P, R extends PayloadAction<P>>(
-  actionCreator: ActionCreatorWithPayload<P, string>,
+  actionCreator: ActionCreatorWithPayload<P, string>
 ): OperatorFunction<Action, ReturnType<typeof actionCreator>> {
   return function (action$: Observable<Action>) {
     return action$.pipe(
       ofType(actionCreator.type),
-      map(action => action as R),
-    )
-  }
+      map((action) => action as R)
+    );
+  };
 }
 
 export function createEpic(
-  actionPipeCreator: (action$: Observable<Action>) => Observable<Action>,
+  actionPipeCreator: (action$: Observable<Action>) => Observable<Action>
 ): Epic<
   Action,
   Action,
   void,
   any
 > /* (action$: Observable<Action>) => Observable<Action> */ {
-  return actionPipeCreator
+  return actionPipeCreator;
 }
 
 function isActionWithTypes(action: any): action is Action {
-  return typeof action === "object" && action !== null && "type" in action
+  return typeof action === "object" && action !== null && "type" in action;
 }
 
 export function createFilteringMiddleware(
   ...actionFilters: ActionFilter[]
 ): Middleware {
-  return store => next => action => {
+  return (store) => (next) => (action) => {
     if (isActionWithTypes(action)) {
-      if (
-        !exists<ActionFilter>(el => el.shouldFilterAction(action))(
-          actionFilters,
-        )
-      ) {
-        return next(action)
+      if (!actionFilters.find((el) => el.shouldFilterAction(action))) {
+        return next(action);
       }
     } else {
-      return next(action)
+      return next(action);
     }
-  }
+  };
 }
 
 export interface ActionFilter {
-  shouldFilterAction(action: Action): boolean
+  shouldFilterAction(action: Action): boolean;
 }
 
 export function createActionFilter(
   ...actionCreators: ActionCreatorWithPayload<any, any>[]
 ): ActionFilter {
-  const filteredValues = actionCreators.map(actionCreator => actionCreator.type)
+  const filteredValues = actionCreators.map(
+    (actionCreator) => actionCreator.type
+  );
 
   return {
     shouldFilterAction: (action: Action) => {
-      return exists(e => e == action.type)(filteredValues)
+      return filteredValues.find((e) => e == action.type);
     },
-  }
+  };
 }
 
 export function createEmptyPayloadReducer<Payload, State = any>(
-  create: ReducerCreators<State>,
+  create: ReducerCreators<State>
 ) {
-  return create.reducer((state, action: PayloadAction<Payload>) => {})
+  return create.reducer((state, action: PayloadAction<Payload>) => undefined);
 }
 
 export function createEmptyReducer<State>(create: ReducerCreators<State>) {
-  return create.reducer((state, action: Action) => {})
+  return create.reducer((state, action: Action) => undefined);
 }

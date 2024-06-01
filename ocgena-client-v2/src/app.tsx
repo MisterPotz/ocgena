@@ -2,7 +2,6 @@ import { Allotment } from "allotment";
 import { createRoot } from "react-dom/client";
 import "allotment/dist/style.css";
 import styles from './app.module.css';
-import "allotment/dist/style.css";
 
 const root = createRoot(document.body);
 
