@@ -41,7 +41,7 @@ const createNewProject = createAsyncThunk(
   "domain/newproject",
   async (_, thunkApi): Promise<Project> => {
     // need to add sql interaction here with the node
-    const defaultNames = countDefaultNames(dbStore.store);
+    const defaultNames = countDefaultNames({} /* dbStore.store */);
 
     const newProj: Project = {
       id: uuidv4(),
@@ -54,7 +54,7 @@ const createNewProject = createAsyncThunk(
       userName: makeDefaultName(defaultNames + 1),
     };
 
-    dbStore.set(newProj.id, newProj);
+    // dbStore.set(newProj.id, newProj);
 
     return newProj;
   }
