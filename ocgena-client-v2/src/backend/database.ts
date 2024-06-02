@@ -1,6 +1,6 @@
 import { current } from "@reduxjs/toolkit";
 import { Sequelize, DataTypes, Model } from "sequelize";
-import { RunsToPaths, Project as IProject, SimulationRun } from "src/app/redux";
+import { RunsToPaths, Project as IProject, SimulationRun } from "../app/redux.ts";
 
 class DBProject extends Model implements IProject {
   declare id: string;

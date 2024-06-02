@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2020",
+    "module": "NodeNext",
+    "allowJs": true,
+    "rootDir": ".",
+    "noEmit": true,
+    "outDir": "../dist/src",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+  
+    // "outDir": "./dist",
+    "resolveJsonModule": true
+  },
+  // "include": ["./src/**/*"],
+}

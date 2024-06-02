@@ -9,12 +9,19 @@ export default defineConfig((env) => {
   const { root, mode, forgeConfigSelf } = forgeEnv;
   const name = forgeConfigSelf.name ?? '';
 
+  console.log("renderer name", name)
   return {
     root,
     mode,
     base: './',
     build: {
       outDir: `.vite/renderer/${name}`,
+      // rollupOptions: {
+      //   output: {
+      //     format: 'es',
+      //     entryFileNames: `[name].js`
+      //   }
+      // }
     },
     plugins: [pluginExposeRenderer(name), react()],
     resolve: {

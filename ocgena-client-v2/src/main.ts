@@ -1,21 +1,24 @@
 import { app, BrowserWindow, ipcMain, session } from "electron";
 import path from "path";
-import { dbStore } from "./db.js";
+import { StoreHolder } from "./db.js";
 import {
   installExtension,
   REACT_DEVELOPER_TOOLS,
   REDUX_DEVTOOLS,
 } from "@tomjs/electron-devtools-installer";
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require("electron-squirrel-startup")) {
-  app.quit();
+async function checkStartup() {
+  const electronSquirrelStartup = await import("electron-squirrel-startup");
+  if (electronSquirrelStartup.default) {
+    app.quit();
+  }
 }
+checkStartup();
 
 const isDev = process.env.NODE_ENV === "development";
 
 const createWindow = () => {
-  const preloadPath = path.resolve(app.getAppPath(), '.vite/build/preload.js')
+  const preloadPath = path.resolve(app.getAppPath(), ".vite/build/preload.js");
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -32,7 +35,7 @@ const createWindow = () => {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(
-      path.join( `.vite/renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+      path.join(`.vite/renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     );
   }
 
@@ -43,6 +46,10 @@ const createWindow = () => {
   }
 
   mainWindow.webContents.once("dom-ready", async () => {
+    StoreHolder.getInstance().store.set("launched", true)
+
+    // dbStore.clear()
+    // dbStore.set("k", { kek: "lol arbidol" });
     if (isDev) {
       await installExtension([REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS])
         .then((name) => console.log(`Added Extension ${name}`))

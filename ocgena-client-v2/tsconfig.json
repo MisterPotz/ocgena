@@ -1,16 +1,28 @@
 {
   "compilerOptions": {
+    "rootDir": ".",
+    "composite": true,
     "target": "ESNext",
-    "module": "commonjs",
+    "module": "CommonJS",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "noEmit": true,
     "noImplicitAny": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "outDir": "dist",
+    "outDir": "../dist/vite",
     "jsx": "react-jsx",
     "moduleResolution": "node",
     "resolveJsonModule": true
-  }
+  },
+  "files": [],
+  "include": [
+    "vite.*",
+    "forge.config.cts",
+    "forge.env.d.ts",
+    "package.json",
+    "../package.json"
+  ],
+  "references": [{ "path": "./src" }]
 }
