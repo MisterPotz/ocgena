@@ -3,7 +3,7 @@
   "productName": "ocgena-client-v2",
   "version": "1.0.0",
   "description": "My Electron application description",
-  "main": ".vite/build/main.js",
+  "exports": "./.vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -27,10 +27,12 @@
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
+    "@types/uuid": "^9.0.8",
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "@vitejs/plugin-react": "^4.3.0",
     "electron": "30.0.8",
+    "electron-devtools-installer": "^3.2.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-config-react-app": "^7.0.1",
@@ -40,6 +42,7 @@
     "ts-node": "^10.9.2",
     "typescript": "~4.5.4",
     "vite": "^5.2.11",
+    "vite-plugin-require": "^1.2.14",
     "yarn": "^1.22.22"
   },
   "keywords": [],
@@ -50,12 +53,18 @@
   "license": "MIT",
   "dependencies": {
     "@reduxjs/toolkit": "^2.2.5",
+    "@tomjs/electron-devtools-installer": "^2.2.1",
+    "@types/sequelize": "^4.28.20",
     "allotment": "^1.20.2",
     "electron-squirrel-startup": "^1.0.1",
+    "electron-store": "^9.0.0",
     "konva": "^9.3.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-konva": "^18.2.10",
-    "redux-observable": "^3.0.0-rc.2"
+    "redux-observable": "^3.0.0-rc.2",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.1"
   }
 }

@@ -17,7 +17,7 @@ import {
   selectionUpdated,
   selectionWindowElementsSelector,
   selectedElementIdsSelector,
-} from "./editorSlice"
+} from "./redux"
 import { PrimitiveTextShape } from "./TextShape"
 import Konva from "konva"
 import styles from "./Editor.module.css"

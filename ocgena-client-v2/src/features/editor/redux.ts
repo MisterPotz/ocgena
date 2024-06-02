@@ -1,5 +1,5 @@
 import { Action, PayloadAction, createSelector } from "@reduxjs/toolkit"
-import { createAppSlice } from "../../app/createAppSlice"
+import { createAppSlice } from "../../app/createAppSlice.js"
 import { combineEpics } from "redux-observable"
 import {
   EMPTY,
@@ -17,12 +17,12 @@ import {
   createEmptyPayloadReducer,
   createEpic,
   ofTypeAndMap,
-} from "../../utils/redux_utils"
+} from "../../utils/redux_utils.js"
 // import "fp-ts/lib/Array"
 // import { map } from "fp-ts/lib/Array"
 // import { pipe } from "fp-ts/lib/function"
 import "./CoordinatesExt"
-import { ELEMENT_PREFIX } from "./Keywords"
+import { ELEMENT_PREFIX } from "./Keywords.js"
 import {
   AnyElement,
   CircleShape,
@@ -32,14 +32,14 @@ import {
   RectangleShape,
   SelectionWindow,
   SelectionWindowPayload,
-} from "./Models"
+} from "./Models.js"
 import {
   bottomBound,
   elementInSelectionWindow,
   getUpdatedShape,
   rightBound,
-} from "./primitiveShapeUtils"
-import { dots } from "./DotField"
+} from "./primitiveShapeUtils.js"
+import { dots } from "./DotField.js"
 
 export interface ContextMenu {
   x: number

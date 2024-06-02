@@ -3,7 +3,7 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import { setupListeners } from "@reduxjs/toolkit/query"
 import { combineEpics, createEpicMiddleware } from "redux-observable"
 import { createFilteringMiddleware } from "src/utils/redux_utils"
-import { editorActionFilter, editorHandleDragEpic, editorSlice } from "src/features/editor/editorSlice"
+import { editorActionFilter, editorHandleDragEpic, editorSlice } from "src/features/editor/redux"
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
