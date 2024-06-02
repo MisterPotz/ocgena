@@ -1,12 +1,9 @@
-import { Action, PayloadAction, createSelector } from "@reduxjs/toolkit"
+import { PayloadAction, createSelector } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice.js"
 import { combineEpics } from "redux-observable"
 import {
   EMPTY,
-  Observable,
-  empty,
   interval,
-  mergeMap,
   map as rxMap,
   sample,
   sampleTime,
@@ -17,10 +14,7 @@ import {
   createEmptyPayloadReducer,
   createEpic,
   ofTypeAndMap,
-} from "../../utils/redux_utils.js"
-// import "fp-ts/lib/Array"
-// import { map } from "fp-ts/lib/Array"
-// import { pipe } from "fp-ts/lib/function"
+} from "../../utils/redux_utils.ts"
 import "./CoordinatesExt"
 import { ELEMENT_PREFIX } from "./Keywords.js"
 import {
@@ -39,7 +33,6 @@ import {
   getUpdatedShape,
   rightBound,
 } from "./primitiveShapeUtils.js"
-import { dots } from "./DotField.js"
 
 export interface ContextMenu {
   x: number

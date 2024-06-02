@@ -1,47 +1,25 @@
 import { PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { createAppSlice } from "./createAppSlice.ts";
 import { v4 as uuidv4 } from "uuid";
-import { RootState } from "./store.ts";
 import { DEFAULT_PROJECT_NAME, makeDefaultName } from "../utils/defaults.tsx";
-import { StoreHolder } from "../db.ts";
+import { AppDomainState, Project } from "../../../shared/domain.ts";
+import { App, ipcRenderer } from "electron";
+import { event } from "../../../shared/events.ts";
+import { RootState } from "./store.ts";
 
-export interface SimulationRun {
-  id: string;
-  name: string;
-  simulationConfigPath: string;
-  modelPath: string;
-}
-
-export interface RunsToPaths {
-  [id: string]: string;
-}
-
-export interface Project {
-  id: string;
-  userName: String;
-  simulationRuns: SimulationRun[];
-  simulationConfigPaths: string[];
-  modelPaths: string[];
-  runToSimulationDB: RunsToPaths;
-  runToOcel: RunsToPaths;
-  current: boolean;
-}
-
-export interface AppDomainState {
-  currentProject: Project | null;
-  recentProjects: Project[];
-}
-
-const initialState: AppDomainState = {
+const initialState: AppDomainState & { loaded: boolean } = {
   currentProject: null,
   recentProjects: [],
+  loaded: false,
 };
 
 export const createNewProject = createAsyncThunk(
   "domain/newproject",
   async (_, thunkApi): Promise<Project> => {
     // need to add sql interaction here with the node
-    const defaultNames = countDefaultNames(StoreHolder.getInstance().store.store);
+    const defaultNames = countDefaultNames(
+      await ipcRenderer.invoke(event("getStoreAll"))
+    );
 
     const newProj: Project = {
       id: uuidv4(),
@@ -57,6 +35,25 @@ export const createNewProject = createAsyncThunk(
     // dbStore.set(newProj.id, newProj);
 
     return newProj;
+  }
+);
+
+export const load = createAsyncThunk<AppDomainState, void, { rejectValue : string }>(
+  "domain/load",
+  async (_, api) => {
+    if ((api.getState() as RootState).domain.loaded) {
+      return api.rejectWithValue("already loaded");
+    }
+    const allProjects = (await ipcRenderer.invoke(
+      event("getStoreAll")
+    )) as Project[];
+
+    const current = allProjects.find((el) => el.current);
+
+    return {
+      currentProject: current,
+      recentProjects: allProjects,
+    };
   }
 );
 
@@ -85,6 +82,12 @@ export const appSlice = createAppSlice({
       const newProject = action.payload;
       state.currentProject = newProject;
       state.recentProjects = [newProject, ...state.recentProjects];
+    });
+    builder.addCase(load.fulfilled, (state, action) => {
+      console.log("load fulfilled")
+      state.loaded = true;
+      state.currentProject = action.payload.currentProject;
+      state.recentProjects = action.payload.recentProjects;
     });
   },
   selectors: {},

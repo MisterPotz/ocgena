@@ -1,4 +1,4 @@
-import { createAppSlice } from "src/app/createAppSlice.js";
+import { createAppSlice } from "../../app/createAppSlice.ts";
 
 enum EditorTab {
   OCDOT_EDITOR,

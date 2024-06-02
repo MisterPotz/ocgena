@@ -1,5 +1,4 @@
 import type { Action, ThunkAction } from "@reduxjs/toolkit";
-import "@reduxjs/toolkit/dist/combineSlices.ts";
 import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { combineEpics, createEpicMiddleware } from "redux-observable";
@@ -9,11 +8,13 @@ import {
   editorHandleDragEpic,
   editorSlice,
 } from "../features/editor/redux.ts";
+import { appSlice } from "./redux.ts";
+import { layoutSlice } from "../features/layout/redux.ts";
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
-const rootReducer = combineSlices(editorSlice);
-const epicMiddleware = createEpicMiddleware<Action, Action, void, any>();
+const rootReducer = combineSlices(editorSlice, appSlice, layoutSlice);
+const epicMiddleware = createEpicMiddleware();
 const rootEpic = combineEpics(editorHandleDragEpic);
 const filteringMiddleware = createFilteringMiddleware(editorActionFilter);
 
