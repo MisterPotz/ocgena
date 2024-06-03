@@ -1,4 +1,3 @@
-import { current } from "@reduxjs/toolkit";
 import { Sequelize, DataTypes, Model } from "sequelize";
 import { SimulationRun, RunsToPaths, Project as IProject } from "../../shared/domain.ts";
 

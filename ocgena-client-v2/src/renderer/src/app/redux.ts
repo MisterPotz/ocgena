@@ -1,11 +1,12 @@
 import { PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
-import { createAppSlice } from "./createAppSlice.ts";
+import { createAppSlice } from "./createAppSlice";
 import { v4 as uuidv4 } from "uuid";
-import { DEFAULT_PROJECT_NAME, makeDefaultName } from "../utils/defaults.tsx";
-import { AppDomainState, Project } from "../../../shared/domain.ts";
-import { App, ipcRenderer } from "electron";
-import { event } from "../../../shared/events.ts";
-import { RootState } from "./store.ts";
+import { DEFAULT_PROJECT_NAME, makeDefaultName } from "../utils/defaults";
+import { AppDomainState, Project } from "../../../shared/domain";
+import { event } from "../../../shared/events";
+import { RootState } from "./store";
+import "redux-observable";
+import { loadFulfilled } from "../features/epicsTypes";
 
 const initialState: AppDomainState & { loaded: boolean } = {
   currentProject: null,
@@ -18,7 +19,7 @@ export const createNewProject = createAsyncThunk(
   async (_, thunkApi): Promise<Project> => {
     // need to add sql interaction here with the node
     const defaultNames = countDefaultNames(
-      await ipcRenderer.invoke(event("getStoreAll"))
+      (thunkApi.getState() as RootState).domain.recentProjects
     );
 
     const newProj: Project = {
@@ -38,24 +39,25 @@ export const createNewProject = createAsyncThunk(
   }
 );
 
-export const load = createAsyncThunk<AppDomainState, void, { rejectValue : string }>(
-  "domain/load",
-  async (_, api) => {
-    if ((api.getState() as RootState).domain.loaded) {
-      return api.rejectWithValue("already loaded");
-    }
-    const allProjects = (await ipcRenderer.invoke(
-      event("getStoreAll")
-    )) as Project[];
-
-    const current = allProjects.find((el) => el.current);
-
-    return {
-      currentProject: current,
-      recentProjects: allProjects,
-    };
+export const load = createAsyncThunk<
+  AppDomainState,
+  void,
+  { rejectValue: string }
+>("domain/load", async (_, api) => {
+  if ((api.getState() as RootState).domain.loaded) {
+    return api.rejectWithValue("already loaded");
   }
-);
+  const allProjects = (await window.api.request(
+    event("getStoreAll")
+  )) as Project[];
+
+  const current = allProjects.find((el) => el.current);
+
+  return {
+    currentProject: current,
+    recentProjects: allProjects,
+  };
+});
 
 function countDefaultNames(any: any) {
   let count = 0;
@@ -78,17 +80,14 @@ export const appSlice = createAppSlice({
     ),
   }),
   extraReducers: (builder) => {
-    builder.addCase(createNewProject.fulfilled, (state, action) => {
-      const newProject = action.payload;
-      state.currentProject = newProject;
-      state.recentProjects = [newProject, ...state.recentProjects];
-    });
-    builder.addCase(load.fulfilled, (state, action) => {
-      console.log("load fulfilled")
-      state.loaded = true;
-      state.currentProject = action.payload.currentProject;
-      state.recentProjects = action.payload.recentProjects;
-    });
+    builder.addCase(
+      loadFulfilled,
+      (state, action: PayloadAction<AppDomainState>) => {
+        state.currentProject = !action.payload.currentProject ? null : action.payload.currentProject;
+        state.recentProjects = action.payload.recentProjects;
+        state.loaded = true;
+      }
+    );
   },
   selectors: {},
 });

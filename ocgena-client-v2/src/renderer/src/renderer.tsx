@@ -26,13 +26,24 @@
  * ```
  */
 
-import './index.css';
-import { createRoot } from 'react-dom/client';
-import { App } from './app.tsx';
+import "../index.css";
+import { createRoot } from "react-dom/client";
+import { App } from "./app";
+import React from "react";
+import { Provider } from "react-redux";
+import { store } from "./app/store";
 
-console.log('👋 This message is being logged by "renderer.ts", included via Vite');
+console.log(
+  '👋 This message is being logged by "renderer.ts", included via Vite'
+);
 
-const appElement = document.getElementById("app");
-console.log('App element:', appElement!); // Check if this is null
+// const appElement = document.getElementById("app");
+// console.log('App element:', appElement!); // Check if this is null
 const root = createRoot(document.getElementById("app"));
-root.render(App());
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App></App>
+    </Provider>
+  </React.StrictMode>
+);

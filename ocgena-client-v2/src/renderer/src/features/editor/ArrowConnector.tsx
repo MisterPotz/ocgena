@@ -1,6 +1,5 @@
 import Konva from "konva"
-import { KonvaEventObject } from "konva/lib/Node.js"
-import React, { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState } from "react"
 import { Stage, Layer, Rect, Arrow } from "react-konva"
 
 // can help in building infinite canvas

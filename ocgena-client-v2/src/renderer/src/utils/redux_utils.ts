@@ -19,17 +19,6 @@ export function ofTypeAndMap<P, R extends PayloadAction<P>>(
   };
 }
 
-export function createEpic(
-  actionPipeCreator: (action$: Observable<Action>) => Observable<Action>
-): Epic<
-  Action,
-  Action,
-  void,
-  any
-> /* (action$: Observable<Action>) => Observable<Action> */ {
-  return actionPipeCreator;
-}
-
 function isActionWithTypes(action: any): action is Action {
   return typeof action === "object" && action !== null && "type" in action;
 }

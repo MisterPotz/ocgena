@@ -6,6 +6,7 @@ import {
   REACT_DEVELOPER_TOOLS,
   REDUX_DEVTOOLS,
 } from "@tomjs/electron-devtools-installer";
+import { event } from "../../shared/events.ts";
 
 async function checkStartup() {
   const electronSquirrelStartup = await import("electron-squirrel-startup");
@@ -30,13 +31,13 @@ const createWindow = () => {
     show: !isDev,
   });
 
-  console.log(MAIN_WINDOW_VITE_DEV_SERVER_URL)
+  console.log(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(
-      path.join(`.vite/renderer/${MAIN_WINDOW_VITE_NAME}/src/renderer/index.html`)
+      path.join(`.vite/renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     );
   }
 
@@ -94,14 +95,17 @@ app.on("activate", () => {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and import them here.
 
-ipcMain.handle("getStoreValue", (event, key) => {
+ipcMain.handle(event("getStoreValue"), (event, key) => {
+  console.log("getStoreValue");
   return StoreHolder.getInstance().get(key);
 });
 
-ipcMain.handle("getStoreAll", (event, key) => {
-  return StoreHolder.getInstance().store.projects
+ipcMain.handle(event("getStoreAll"), (event, key) => {
+  console.log("getStoreAll");
+  return StoreHolder.getInstance().store.projects;
 });
 
-ipcMain.handle('setStoreValue', (event, key, value) => {
-  StoreHolder.getInstance().set(key, value)
-})
+ipcMain.handle(event("setStoreValue"), (event, key, value) => {
+  console.log("setStoreValue");
+  StoreHolder.getInstance().set(key, value);
+});

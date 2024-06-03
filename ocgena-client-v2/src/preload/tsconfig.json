@@ -5,14 +5,14 @@
     "allowJs": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "noImplicitAny": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "jsx": "react-jsx",
-    "moduleResolution": "node",
+    "jsx": "preserve",
+    "moduleResolution": "Node",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true
   },
-  "include": ["./src/", "../shared", "index.html", "./src/typings.d.ts"],
+  "include": ["./src/", "../shared", "src/preload.ts"],
 }

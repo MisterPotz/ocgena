@@ -16,6 +16,9 @@ export default defineConfig((env) => {
     build: {
       outDir: `.vite/renderer/${name}`,
       rollupOptions: {
+        output: {
+          format: "es"
+        },
         input: "./src/renderer/index.html", // Explicitly define the entry point
       },
     },

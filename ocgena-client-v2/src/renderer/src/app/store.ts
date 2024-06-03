@@ -2,24 +2,29 @@ import type { Action, ThunkAction } from "@reduxjs/toolkit";
 import { combineSlices, configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
 import { combineEpics, createEpicMiddleware } from "redux-observable";
-import { createFilteringMiddleware } from "../utils/redux_utils.ts";
+import { createFilteringMiddleware } from "../utils/redux_utils";
 import {
   editorActionFilter,
   editorHandleDragEpic,
   editorSlice,
-} from "../features/editor/redux.ts";
-import { appSlice } from "./redux.ts";
-import { layoutSlice } from "../features/layout/redux.ts";
+} from "../features/editor/redux";
+import { appSlice } from "./redux";
+import { layoutSlice } from "../features/layout/redux";
+import { allEpics } from "../features/epics";
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
 const rootReducer = combineSlices(editorSlice, appSlice, layoutSlice);
 const epicMiddleware = createEpicMiddleware();
-const rootEpic = combineEpics(editorHandleDragEpic);
+const rootEpic = combineEpics(editorHandleDragEpic, allEpics);
 const filteringMiddleware = createFilteringMiddleware(editorActionFilter);
 
 // Infer the `RootState` type from the root reducer
 export type RootState = ReturnType<typeof rootReducer>;
+
+export function convertState(state : any) : RootState {
+  return state as RootState
+}
 
 // The store setup is wrapped in `makeStore` to allow reuse
 // when setting up tests that need the same store config

@@ -1,6 +1,6 @@
-import { PayloadAction, createSelector } from "@reduxjs/toolkit"
-import { createAppSlice } from "../../app/createAppSlice.js"
-import { combineEpics } from "redux-observable"
+import { PayloadAction, createSelector } from "@reduxjs/toolkit";
+import { createAppSlice } from "../../app/createAppSlice";
+import { combineEpics } from "redux-observable";
 import {
   EMPTY,
   interval,
@@ -8,15 +8,14 @@ import {
   sample,
   sampleTime,
   switchMap,
-} from "rxjs"
+} from "rxjs";
 import {
   createActionFilter,
   createEmptyPayloadReducer,
-  createEpic,
   ofTypeAndMap,
-} from "../../utils/redux_utils.ts"
-import "./CoordinatesExt"
-import { ELEMENT_PREFIX } from "./Keywords.js"
+} from "../../utils/redux_utils";
+import "./CoordinatesExt";
+import { ELEMENT_PREFIX } from "./Keywords";
 import {
   AnyElement,
   CircleShape,
@@ -26,68 +25,68 @@ import {
   RectangleShape,
   SelectionWindow,
   SelectionWindowPayload,
-} from "./Models.js"
+} from "./Models";
 import {
   bottomBound,
   elementInSelectionWindow,
   getUpdatedShape,
   rightBound,
-} from "./primitiveShapeUtils.js"
+} from "./primitiveShapeUtils";
 
 export interface ContextMenu {
-  x: number
-  y: number
-  targetElement: string
+  x: number;
+  y: number;
+  targetElement: string;
 }
 
 export interface EditorSliceState {
-  elements: Elements
+  elements: Elements;
   // selected: string[]
-  contextMenu?: ContextMenu | null
-  selectionWindow?: SelectionWindow | null
+  contextMenu?: ContextMenu | null;
+  selectionWindow?: SelectionWindow | null;
   // contextMenuElement: string | null
 }
 
 class Counter {
-  i: number
+  i: number;
 
   constructor() {
-    this.i = 0
+    this.i = 0;
   }
 
   next(): number {
-    return ++this.i
+    return ++this.i;
   }
 }
 
-const keyWord: string = ELEMENT_PREFIX
+const keyWord: string = ELEMENT_PREFIX;
 
 class IdFactory {
-  counter: Counter
+  counter: Counter;
 
   constructor() {
-    this.counter = new Counter()
+    this.counter = new Counter();
   }
 
   next(): string {
-    return `${keyWord}${this.counter.next().toString()}`
+    return `${keyWord}${this.counter.next().toString()}`;
   }
 
   isNumber(str: string) {
-    return Number.isFinite(+str)
+    return Number.isFinite(+str);
   }
 
   getNumber(id: string): number | null {
-    const substring = id.substring(keyWord.length)
+    const substring = id.substring(keyWord.length);
     if (this.isNumber(substring)) {
-      return Number.parseInt(substring)
+      return Number.parseInt(substring);
     } else {
-      return null
+      return null;
     }
   }
 }
 
-const idFactory = new IdFactory()
+const idFactory = new IdFactory();
 
 const initialState: EditorSliceState = {
   elements: [
@@ -107,7 +106,7 @@ const initialState: EditorSliceState = {
       selectedAtClick: false,
       fill: "white",
       stroke: "black",
-      text: "ITEMS" //"ITEMS ARE SORTeD",
+      text: "ITEMS", //"ITEMS ARE SORTeD",
     },
     // {
     //   id: idFactory.next(),
@@ -186,59 +185,56 @@ const initialState: EditorSliceState = {
   ],
   // selected: [],
   // contextMenuElement: null,
-}
+};
 
 function heightFromStart(element: Element): number {
   switch (element.shape.type) {
     case "circle":
-      return element.shape.radius
+      return element.shape.radius;
     case "rect":
-      return element.shape.height
+      return element.shape.height;
   }
 }
 
 export type MouseMovePayload = {
-  clientX: number
-  clientY: number
-  stageX: number
-  stageY: number
-}
+  clientX: number;
+  clientY: number;
+  stageX: number;
+  stageY: number;
+};
 
 export type SizeUpdatePayload = {
-  id: string
-  x: number
-  y: number
-  width: number
-  height: number
-}
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export type ClickPayload = {
-  id?: string
-}
+  id?: string;
+};
 
 export const editorHandleDragEpic = combineEpics(
-  createEpic(action$ =>
+  (action$) =>
     action$.pipe(ofTypeAndMap(elementDragEpicTrigger), sample(interval(500))),
-  ),
-  createEpic(action$ =>
+  (action$) =>
     action$.pipe(
       ofTypeAndMap(elementDragEndEpicTrigger),
-      rxMap(action => {
-        return elementPositionUpdate(action.payload)
-      }),
+      rxMap((action) => {
+        return elementPositionUpdate(action.payload);
+      })
     ),
-  ),
-  createEpic(action$ =>
+  (action$) =>
     action$.pipe(
       ofTypeAndMap(mouseMoveEpicTrigger),
       sampleTime(1000),
-      switchMap(action => {
-        console.log("mousemove", action.payload)
-        return EMPTY
-      }),
-    ),
-  ),
-)
+      switchMap((action) => {
+        console.log("mousemove", action.payload);
+        return EMPTY;
+      })
+    )
+);
 
 function defaultRect(x: number, y: number): Element<RectangleShape> {
   return {
@@ -257,7 +253,7 @@ function defaultRect(x: number, y: number): Element<RectangleShape> {
     text: "transition",
     stroke: "black",
     fill: "white",
-  }
+  };
 }
 
 function defaultCircle(x: number, y: number): Element<CircleShape> {
@@ -276,37 +272,36 @@ function defaultCircle(x: number, y: number): Element<CircleShape> {
     text: "transition",
     stroke: "black",
     fill: "white",
-  }
+  };
 }
 
 function deselectElements(elements: Elements): Elements {
-  return elements.map(el =>
+  return elements.map((el) =>
     el.selectedAtClick || el.selectedWithWindow
       ? { ...el, selectedAtClick: false, selectedWithWindow: false }
-      : el,
-  )
+      : el
+  );
 }
 
-function recalculateSelectionWindow(state : EditorSliceState) {
-  if (state.elements.length == 0 || !state.elements.find((el => el.selectedWithWindow))) {
-    state.selectionWindow = null
+function recalculateSelectionWindow(state: EditorSliceState) {
+  if (
+    state.elements.length == 0 ||
+    !state.elements.find((el) => el.selectedWithWindow)
+  ) {
+    state.selectionWindow = null;
   } else {
     const selLeftBound = state.elements.reduce((prev, curr) => {
-      return curr.selectedWithWindow ? Math.min(curr.x, prev) : prev
-    }, Number.MAX_VALUE)
+      return curr.selectedWithWindow ? Math.min(curr.x, prev) : prev;
+    }, Number.MAX_VALUE);
     const selTopBound = state.elements.reduce((prev, curr) => {
-      return curr.selectedWithWindow ? Math.min(curr.y, prev) : prev
-    }, Number.MAX_VALUE)
+      return curr.selectedWithWindow ? Math.min(curr.y, prev) : prev;
+    }, Number.MAX_VALUE);
     const selRightBound = state.elements.reduce((prev, curr) => {
-      return curr.selectedWithWindow
-        ? Math.max(rightBound(curr), prev)
-        : prev
-    }, Number.MIN_VALUE)
+      return curr.selectedWithWindow ? Math.max(rightBound(curr), prev) : prev;
+    }, Number.MIN_VALUE);
     const selBottomBound = state.elements.reduce((prev, curr) => {
-      return curr.selectedWithWindow
-        ? Math.max(bottomBound(curr), prev)
-        : prev
-    }, Number.MIN_VALUE)
+      return curr.selectedWithWindow ? Math.max(bottomBound(curr), prev) : prev;
+    }, Number.MIN_VALUE);
 
     state.selectionWindow = {
       x: Math.max(selLeftBound - SELECTION_WINDOW_PADDING, 0),
@@ -317,21 +312,23 @@ function recalculateSelectionWindow(state : EditorSliceState) {
       width:
         Math.max(0, selRightBound - selLeftBound) +
         SELECTION_WINDOW_PADDING * 2,
-      selectedElementIds: state.elements.filter((el) => !!el.selectedWithWindow).map((el) => el.id)
-    }
+      selectedElementIds: state.elements
+        .filter((el) => !!el.selectedWithWindow)
+        .map((el) => el.id),
+    };
   }
 }
 
-const NEW_PLACEMENT_PADDING = 20
+const NEW_PLACEMENT_PADDING = 20;
 
-const SELECTION_WINDOW_PADDING = 10
+const SELECTION_WINDOW_PADDING = 10;
 
 export const editorSlice = createAppSlice({
   name: "editor",
   initialState,
-  reducers: create => ({
+  reducers: (create) => ({
     elementSelected: create.reducer((state, action: PayloadAction<string>) => {
-      state.elements = state.elements.map(el =>
+      state.elements = state.elements.map((el) =>
         el.id === action.payload
           ? {
               ...el,
@@ -339,8 +336,8 @@ export const editorSlice = createAppSlice({
             }
           : el.selectedAtClick
             ? { ...el, selectedAtClick: false }
-            : el,
-      )
+            : el
+      );
     }),
     selectionUpdated: create.reducer(
       (state, action: PayloadAction<SelectionWindowPayload>) => {
@@ -349,18 +346,18 @@ export const editorSlice = createAppSlice({
             ? { ...el, selectedWithWindow: true, selectedAtClick: false }
             : el.selectedAtClick || el.selectedWithWindow
               ? { ...el, selectedAtClick: false, selectedWithWindow: false }
-              : el
-        })
-        recalculateSelectionWindow(state)
-      },
+              : el;
+        });
+        recalculateSelectionWindow(state);
+      }
     ),
-    elementSelectionCancelled: create.reducer(state => {
-      state.elements = deselectElements(state.elements)
-      state.selectionWindow = null
+    elementSelectionCancelled: create.reducer((state) => {
+      state.elements = deselectElements(state.elements);
+      state.selectionWindow = null;
     }),
     elementPositionUpdate: create.reducer(
       (state, action: PayloadAction<PositionUpdatePayload>) => {
-        state.elements = state.elements.map(el =>
+        state.elements = state.elements.map((el) =>
           el.id === action.payload.id
             ? {
                 ...el,
@@ -370,12 +367,12 @@ export const editorSlice = createAppSlice({
                 rawY: action.payload.y,
                 rawHeight: action.payload.height,
                 rawWidth: action.payload.width,
-                shape: getUpdatedShape(el.shape, action.payload)
+                shape: getUpdatedShape(el.shape, action.payload),
               }
-            : el,
-        )
+            : el
+        );
         // recalculateSelectionWindow(state)
-      },
+      }
     ),
     // elementSizeUpdate: create.reducer(
     //   (state, action : PayloadAction)
@@ -392,33 +389,33 @@ export const editorSlice = createAppSlice({
     mouseMoveEpicTrigger: createEmptyPayloadReducer<MouseMovePayload>(create),
     elementContextOpened: create.reducer(
       (state, action: PayloadAction<ContextMenu>) => {
-        state.contextMenu = action.payload
-      },
+        state.contextMenu = action.payload;
+      }
     ),
-    elementContextMenuClosed: create.reducer(state => {
-      state.contextMenu = null
+    elementContextMenuClosed: create.reducer((state) => {
+      state.contextMenu = null;
     }),
-    contextMenuAddTransition: create.reducer(state => {
+    contextMenuAddTransition: create.reducer((state) => {
       if (state.contextMenu) {
-        const contextMenuElement = state.contextMenu.targetElement
-        const el = state.elements.find(el => el.id === contextMenuElement)
+        const contextMenuElement = state.contextMenu.targetElement;
+        const el = state.elements.find((el) => el.id === contextMenuElement);
 
         if (el) {
-          const x = el.x + NEW_PLACEMENT_PADDING // need to find proper start position for new rect
-          const y = el.y + heightFromStart(el) + NEW_PLACEMENT_PADDING
+          const x = el.x + NEW_PLACEMENT_PADDING; // need to find proper start position for new rect
+          const y = el.y + heightFromStart(el) + NEW_PLACEMENT_PADDING;
           const newRect: AnyElement = {
             ...defaultRect(x, y),
             selectedAtClick: true,
-          }
-          state.elements = deselectElements(state.elements).concat(newRect)
-          state.contextMenu = null
+          };
+          state.elements = deselectElements(state.elements).concat(newRect);
+          state.contextMenu = null;
         }
       }
     }),
-    contextMenuAddPlace: create.reducer(state => {
+    contextMenuAddPlace: create.reducer((state) => {
       if (state.contextMenu) {
-        const contextMenuElement = state.contextMenu.targetElement
-        const el = state.elements.find(el => el.id === contextMenuElement)
+        const contextMenuElement = state.contextMenu.targetElement;
+        const el = state.elements.find((el) => el.id === contextMenuElement);
 
         if (el) {
           // const x = el.x + PADDING // need to find proper start position for new rect
@@ -426,15 +423,15 @@ export const editorSlice = createAppSlice({
           const newRect: AnyElement = {
             ...defaultCircle(0, 0),
             selectedAtClick: true,
-          }
-          state.elements = deselectElements(state.elements).concat(newRect)
-          state.contextMenu = null
+          };
+          state.elements = deselectElements(state.elements).concat(newRect);
+          state.contextMenu = null;
         }
       }
     }),
   }),
   selectors: {
-    elementSelector: state => state.elements,
+    elementSelector: (state) => state.elements,
     // selectedIdsSelector: state => state.selected,
     // elementIdSelector: createSelector(
     //   (state: EditorSliceState) => state.elements,
@@ -446,23 +443,23 @@ export const editorSlice = createAppSlice({
     //   },
     //   (elements: Elements) => {elements.filter()}
     // ),
-    selectionWindowElementsSelector: state => {
-      if (!state.selectionWindow) return null
-      
+    selectionWindowElementsSelector: (state) => {
+      if (!state.selectionWindow) return null;
+
       return {
-        selectedElements: state.elements.filter(el =>
-          el.selectedWithWindow ? el.selectedWithWindow : false,
+        selectedElements: state.elements.filter((el) =>
+          el.selectedWithWindow ? el.selectedWithWindow : false
         ),
         window: state.selectionWindow,
-      }
+      };
     },
     selectedElementIdsSelector: createSelector(
-      (state : EditorSliceState) => state.selectionWindow?.selectedElementIds,
-      (elements: string[] | undefined) => elements ? elements : undefined
+      (state: EditorSliceState) => state.selectionWindow?.selectedElementIds,
+      (elements: string[] | undefined) => (elements ? elements : undefined)
     ),
-    contextMenuSelector: state => state.contextMenu,
+    contextMenuSelector: (state) => state.contextMenu,
   },
-})
+});
 
 export const {
   elementSelected,
@@ -476,17 +473,17 @@ export const {
   mouseMoveEpicTrigger,
   contextMenuAddTransition,
   contextMenuAddPlace,
-} = editorSlice.actions
+} = editorSlice.actions;
 
 export const {
   elementSelector,
   selectionWindowElementsSelector,
   /* selectedIdsSelector,*/ contextMenuSelector,
   selectedElementIdsSelector,
-} = editorSlice.selectors
+} = editorSlice.selectors;
 
 export const editorActionFilter = createActionFilter(
   elementDragEpicTrigger,
   elementDragEndEpicTrigger,
-  mouseMoveEpicTrigger,
-)
+  mouseMoveEpicTrigger
+);

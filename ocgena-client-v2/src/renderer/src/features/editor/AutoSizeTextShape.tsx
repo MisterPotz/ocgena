@@ -144,7 +144,7 @@ function getSizeBeautifiedText(text: Konva.Text, wishedText: string) {
     // reduce size of biggest line
     const newLines = makeWrapPlaceHypothesis(text, biggestLine)
     const tempCurrentTextLines = currentTextLines
-    currentTextLines = currentTextLines.toSpliced(
+    currentTextLines = currentTextLines.splice(
       biggestLineIndex,
       1,
       ...newLines.newLineArr,
