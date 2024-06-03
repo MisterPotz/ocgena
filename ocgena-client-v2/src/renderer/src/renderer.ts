@@ -27,7 +27,12 @@
  */
 
 import './index.css';
-import './app.tsx'
+import { createRoot } from 'react-dom/client';
+import { App } from './app.tsx';
 
 console.log('👋 This message is being logged by "renderer.ts", included via Vite');
 
+const appElement = document.getElementById("app");
+console.log('App element:', appElement!); // Check if this is null
+const root = createRoot(document.getElementById("app"));
+root.render(App());
