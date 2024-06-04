@@ -17,10 +17,8 @@ export interface Project {
   modelPaths: string[];
   runToSimulationDB: RunsToPaths;
   runToOcel: RunsToPaths;
-  current: boolean;
 }
 
 export interface AppDomainState {
-  currentProject: Project | null;
   recentProjects: Project[];
 }

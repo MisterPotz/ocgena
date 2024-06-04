@@ -19,16 +19,10 @@ export const createNewProjectEpic = combineEpics((action$, state$) =>
         })()
       ).pipe(
         map((projects) => {
-          const current = projects.find((el) => el.current);
-          return {
-            currentProject: current,
+          return loadFulfilled({
             recentProjects: projects,
-          };
-        }),
-        map((kek) => {
-          console.log(kek);
-          return loadFulfilled(kek);
-        }),
+          } as AppDomainState);
+        })
       );
     })
   )
