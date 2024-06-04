@@ -2,6 +2,7 @@ import { Allotment, LayoutPriority } from "allotment";
 import "allotment/dist/style.css";
 import { useAppSelector } from "../../app/hooks";
 import { executionModeSelector } from "../../app/redux";
+import "@vscode/codicons/dist/codicon.css";
 
 export const ACTIVITIES = [
   "Explorer",
@@ -176,18 +177,21 @@ export function ActionButton(props: ActionButtonProps) {
             relative
             flex
             flex-row 
+            justify-center
+            items-center
             rounded-none
             px-2
             shadow-none
             transition-colors
             duration-300
             ease-in-out
+            h-9
             ${props.buttonStyle ? props.buttonStyle : ""} `}
     >
       <div
         className={`codicon ${props.iconClass} relative scale-90 text-xs `}
       />
-      <div className={`relative pe-1 ps-1 text-xs text-black`}>
+      <div className={`relative pe-1 ps-1 text-sm text-black`}>
         {props.text}
       </div>
     </button>
@@ -266,7 +270,9 @@ export function RunButton({ onClick }: { onClick: () => void }) {
 
 export function ActionBarDynamic() {
   return (
-    <div className={`flex h-9 flex-row items-start justify-start bg-zinc-50`}>
+    <div
+      className={`flex flex-row items-center justify-start h-9 container bg-zinc-50`}
+    >
       <div
         className="
             rounded-none
