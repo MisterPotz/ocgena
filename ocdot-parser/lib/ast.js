@@ -173,6 +173,11 @@ var AST;
                 return head.toString();
             }
         }
+        // protected stringifyExpressionOp(expressionOp : ExpressionOp) : string { 
+        //   let op = expressionOp.op
+        //   let expression = this.stringifyExpressionElement(expressionOp.target)
+        //   return `${op} ${expression}`
+        // }
         stringifyExpression(expression) {
             return expression.infix.join('');
         }

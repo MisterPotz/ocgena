@@ -3,6 +3,7 @@ import "allotment/dist/style.css";
 import { useAppSelector } from "../../app/hooks";
 import { executionModeSelector } from "../../app/redux";
 import "@vscode/codicons/dist/codicon.css";
+import { EditorWrapper } from "../ocdot/ocdot_editor";
 
 export const ACTIVITIES = [
   "Explorer",
@@ -118,11 +119,92 @@ function Tab({ title, active, onClick }: TabProps) {
 // }
 
 export const EditorArea = () => {
-  return <div className="container">Editor area</div>;
+  return (
+    <div className="flex flex-col items-start h-full container">
+      <Panes></Panes>
+      <div className="flex-grow container">
+        <Allotment>
+          <Allotment.Pane preferredSize={"50%"} minSize={150}>
+            <EditorWrapper />
+          </Allotment.Pane>
+          <Allotment.Pane preferredSize={"50%"} minSize={150}>
+            Right tab
+          </Allotment.Pane>
+        </Allotment>
+      </div>
+    </div>
+  );
+};
+
+export const Panes = () => {
+  return (
+    <div className="container h-9 bg-slate-100 flex flex-row divide-neutral-500">
+      <PaneTab active text="first tab" />
+      <PaneTab active={false} text="second tab" />
+    </div>
+  );
+};
+
+export const PaneTab = ({
+  active,
+  text,
+}: {
+  active: boolean;
+  text: string;
+}) => {
+  const activeStyles = "bg-white";
+  const notActiveStyles = "bg-gray-200";
+
+  const resStyles = active ? activeStyles : notActiveStyles;
+  return (
+    <div
+      className={`flex flex-row max-w-80 items-center relative px-2 divide-transparent divide-x-4
+      ${resStyles}`}
+    >
+      <span className="flex-grow overflow-ellipsis overflow-hidden text-base line-clamp-1">
+        {text}
+      </span>
+      <div className="relative scale-90 w-6 h-6">
+        <i
+          className="align-middle codicon codicon-close relative scale-125 text-xl hover:bg-slate-200
+          rounded-sm
+          "
+          style={{ bottom: "1px" }}
+        />
+      </div>
+    </div>
+  );
 };
 
 export const LeftArea = () => {
-  return <div className="container">Left area</div>;
+  return (
+    <div className="container h-full">
+      <Allotment className="h-full container" vertical>
+        <Allotment.Pane preferredSize={"50%"}>
+          <div className="flex flex-col items-stretch h-full w-full overflow-auto">
+            <div className="text-sm w-full bg-slate-200 p-1">Model files</div>
+
+            {/* <div className="flex flex-col"></div> */}
+            <div className="flex flex-col items-center justify-center flex-grow mx-2">
+              <LeftAreaButton text={"New OC-net model"} />
+            </div>
+          </div>
+        </Allotment.Pane>
+        <Allotment.Pane preferredSize={"50%"}>
+          <div className="flex flex-col justify-start items-stretch h-full w-full overflow-auto">
+            <div className="text-sm w-full bg-slate-200 p-1">
+              Simulation configuration files
+            </div>
+
+            {/* <div className="flex flex-col"></div> */}
+            <div className="flex flex-col items-center justify-center flex-grow mx-2">
+              <LeftAreaButton text={"New simulation configuration"} />
+            </div>
+          </div>
+        </Allotment.Pane>
+      </Allotment>
+    </div>
+  );
 };
 
 export const BottomArea = () => {
@@ -139,7 +221,7 @@ export const Layout = () => {
       <ActionBarDynamic></ActionBarDynamic>
 
       <Allotment proportionalLayout={false} className="container flex-grow">
-        <Allotment.Pane>
+        <Allotment.Pane minSize={150}>
           <LeftArea></LeftArea>
         </Allotment.Pane>
         <Allotment.Pane priority={LayoutPriority.High} preferredSize={"70%"}>
@@ -209,6 +291,39 @@ export type ActionBarProps = {
   // onOpenNewFile: (fileType: FileType) => void;
 };
 
+export type LeftAreaButtonProp = {
+  text: string;
+  // onOpenNewFile: (fileType: FileType) => void;
+};
+
+export function LeftAreaButton({ text }: LeftAreaButtonProp) {
+  return (
+    <button
+      // onClick={props.onClick}
+      className={`
+            relative
+            flex
+            flex-row 
+            justify-center
+            items-center
+            rounded-none
+            px-2
+            border-1
+            shadow-sm
+            transition-colors
+            duration-300
+            ease-in-out
+            min-h-9
+            `}
+    >
+      <i className={`codicon codicon-add relative scale-90 text-xs `} />
+      <span className={`relative pe-1 ps-1 text-sm text-black flex-grow`}>
+        {text}
+      </span>
+    </button>
+  );
+}
+
 export function FileButton({
   onClick,
   text,
@@ -220,7 +335,7 @@ export function FileButton({
     <ActionButton
       onClick={onClick}
       iconClass="codicon-symbol-file"
-      text="Open model file"
+      text={text}
       buttonStyle={`text-black bg-transparent text-opacity-75 border-0 hover:bg-zinc-200`}
     />
   );
