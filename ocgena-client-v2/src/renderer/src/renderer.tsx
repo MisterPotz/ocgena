@@ -28,6 +28,7 @@
 
 import "../index.css";
 import { createRoot } from "react-dom/client";
+import "allotment/dist/style.css";
 import { App } from "./app";
 import React from "react";
 import { Provider } from "react-redux";

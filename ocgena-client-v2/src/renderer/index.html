@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <title>Hello World!</title>
   </head>
-  <body class="m-0">
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
-    <div class="h-80" id="app" style="margin: 0; height: 100vh; width: 100vw;" ></div>
-    <script type="module" src="./src/renderer.tsx"></script>
+  <body class="m-0 h-screen">
+    <div class="flex flex-col h-full">
+      <h1>💖 Hello World!</h1>
+      <p>Welcome to your Electron application.</p>
+      <div class="container h-full" id="app"></div>
+      <script type="module" src="./src/renderer.tsx"></script>
+    </div>
   </body>
 </html>
