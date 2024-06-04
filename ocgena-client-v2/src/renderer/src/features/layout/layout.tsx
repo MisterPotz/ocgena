@@ -156,8 +156,8 @@ export const EditorArea = () => {
 export const Panes = () => {
   return (
     <div className="container h-7 bg-slate-100 flex flex-row divide-neutral-500">
-      <PaneTab active text="first tab" />
-      <PaneTab active={false} text="second tab" />
+      <PaneTab active text="model" />
+      <PaneTab active={false} text="sim_config" />
     </div>
   );
 };
@@ -225,7 +225,12 @@ export const LeftArea = () => {
 };
 
 export const BottomArea = () => {
-  return <div className="container">Bottom area</div>;
+  return <div className="container text-base divide-x-2 flex flex-row divide-gray-100 items-stretch">
+    <div className="p-2 bg-white">Project</div>
+    <div className="p-2 bg-gray-100">Errors</div>
+    <div className="p-2 bg-gray-100">Execution</div>
+
+  </div>;
 };
 
 export const ActionBar = () => {
@@ -414,8 +419,8 @@ export function ActionBarDynamic() {
       >
         <b>OCGena</b>
       </div>
-      <FileButton text={"Open model file"} onClick={() => {}} />
-      <FileButton text="Open configuration file" onClick={() => {}} />
+      {/* <FileButton text={"Open model file"} onClick={() => {}} />
+      <FileButton text="Open configuration file" onClick={() => {}} /> */}
       <RunButton onClick={() => {}} />
     </div>
   );
