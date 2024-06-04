@@ -135,10 +135,10 @@ export const ActionBar = () => {
 
 export const Layout = () => {
   return (
-    <div className="container h-full">
+    <div className="container flex flex-col h-full">
       <ActionBarDynamic></ActionBarDynamic>
 
-      <Allotment proportionalLayout={false} className="container h-full">
+      <Allotment proportionalLayout={false} className="container flex-grow">
         <Allotment.Pane>
           <LeftArea></LeftArea>
         </Allotment.Pane>
