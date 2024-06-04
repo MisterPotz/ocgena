@@ -3,7 +3,14 @@ import "allotment/dist/style.css";
 import { useAppSelector } from "../../app/hooks";
 import { executionModeSelector } from "../../app/redux";
 import "@vscode/codicons/dist/codicon.css";
-import { EditorWrapper } from "../ocdot/ocdot_editor";
+import {
+  EditorWrapper,
+  GraphvizPane,
+  exampleModel,
+} from "../ocdot/ocdot_editor";
+import { OCDotToDOTConverter } from "../ocdot/ocdot_converter";
+import { useMemo } from "react";
+import { AST } from "ocdot-parser";
 
 export const ACTIVITIES = [
   "Explorer",
@@ -119,6 +126,14 @@ function Tab({ title, active, onClick }: TabProps) {
 // }
 
 export const EditorArea = () => {
+  const dotSrc = useMemo(() => {
+    const ast = AST.parse(exampleModel, { rule: AST.Types.OcDot });
+    const converter = new OCDotToDOTConverter(ast);
+    return converter.compileDot()
+  }, []);
+
+
+
   return (
     <div className="flex flex-col items-start h-full container">
       <Panes></Panes>
@@ -128,7 +143,9 @@ export const EditorArea = () => {
             <EditorWrapper />
           </Allotment.Pane>
           <Allotment.Pane preferredSize={"50%"} minSize={150}>
-            Right tab
+            <GraphvizPane dotSrc={dotSrc} loading={false} registerParentSizeUpdate={(cb) => {
+              // cb()
+            }} />
           </Allotment.Pane>
         </Allotment>
       </div>
@@ -138,7 +155,7 @@ export const EditorArea = () => {
 
 export const Panes = () => {
   return (
-    <div className="container h-9 bg-slate-100 flex flex-row divide-neutral-500">
+    <div className="container h-7 bg-slate-100 flex flex-row divide-neutral-500">
       <PaneTab active text="first tab" />
       <PaneTab active={false} text="second tab" />
     </div>
@@ -182,7 +199,7 @@ export const LeftArea = () => {
       <Allotment className="h-full container" vertical>
         <Allotment.Pane preferredSize={"50%"}>
           <div className="flex flex-col items-stretch h-full w-full overflow-auto">
-            <div className="text-sm w-full bg-slate-200 p-1">Model files</div>
+            <div className="text-sm w-full min-h-7 bg-slate-200 p-1">Model files</div>
 
             {/* <div className="flex flex-col"></div> */}
             <div className="flex flex-col items-center justify-center flex-grow mx-2">
@@ -192,7 +209,7 @@ export const LeftArea = () => {
         </Allotment.Pane>
         <Allotment.Pane preferredSize={"50%"}>
           <div className="flex flex-col justify-start items-stretch h-full w-full overflow-auto">
-            <div className="text-sm w-full bg-slate-200 p-1">
+            <div className="text-sm min-h-7 w-full bg-slate-200 p-1">
               Simulation configuration files
             </div>
 
@@ -306,14 +323,15 @@ export function LeftAreaButton({ text }: LeftAreaButtonProp) {
             flex-row 
             justify-center
             items-center
-            rounded-none
+            rounded-sm
             px-2
             border-1
-            shadow-sm
+            shadow-md
             transition-colors
             duration-300
             ease-in-out
             min-h-9
+            hover:bg-gray-100
             `}
     >
       <i className={`codicon codicon-add relative scale-90 text-xs `} />
