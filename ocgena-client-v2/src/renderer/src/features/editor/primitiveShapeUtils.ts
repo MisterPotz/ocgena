@@ -4,7 +4,6 @@ import {
   Element,
   PositionUpdatePayload,
   RectangleShape,
-  SelectionWindow,
   SelectionWindowPayload,
   SpecificShape,
 } from "./Models"
