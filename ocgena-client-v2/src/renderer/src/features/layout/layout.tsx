@@ -51,7 +51,7 @@ function Tab({ title, active, onClick }: TabProps) {
           border-opacity-10
           bg-transparent 
           px-2 
-          text-center 
+          text-center
           text-xs
           rounded-tr-lg
            text-black
@@ -417,7 +417,7 @@ export function ActionBarDynamic() {
             border-0
             border-r-1 border-solid border-r-black border-opacity-10 bg-transparent px-2 text-sm text-black"
       >
-        <b>OCGena</b>
+        <b>OCGENA</b>
       </div>
       {/* <FileButton text={"Open model file"} onClick={() => {}} />
       <FileButton text="Open configuration file" onClick={() => {}} /> */}
