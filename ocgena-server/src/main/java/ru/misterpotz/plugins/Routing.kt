@@ -35,7 +35,7 @@ enum class RequestProblems(val message: String) {
 data class SimulateRequest(
     val outputDatabasePath: String?,
     val simInput: SimulationInput,
-    val model: OCNetStruct
+    val model: OCNetStruct,
 ) {
     fun check(): List<RequestProblems> {
         return buildList {
@@ -57,9 +57,18 @@ data class SimulateRequest(
 @Serializable
 data class SimulateResponse(val handle: Long)
 
+private fun createFolderIfDoesNotExist(path: Path) {
+    val parentFolder = path.toFile().parentFile
+    if (!parentFolder.exists()) {
+        parentFolder.mkdirs()
+    }
+}
+
 suspend fun startSimulation(simulateArguments: SimulateArguments): Long {
     val serverComponent = ServiceProvider.serverComponent
-
+    simulateArguments.outputPath?.let {
+        createFolderIfDoesNotExist(it)
+    }
     val serverSimulationComponent =
         ServerSimulationComponent.create(
             simulateArguments,
@@ -96,6 +105,12 @@ suspend fun startSimulation(simulateArguments: SimulateArguments): Long {
 
 suspend fun startOcelGeneration(ocelRequest: SimulationToLogConversionParams): Long {
     val simulationToLogConversionComponent = SimulationToLogConversionComponent.create(ocelRequest)
+    requireNotNull(ocelRequest.simulationLogDBPath) {
+        "must be already present before OCEL generation"
+    }
+    ocelRequest.ocelDBPath.let {
+        createFolderIfDoesNotExist(it)
+    }
 
     val task = TasksRegistry.Task(
         runCatching {
@@ -127,7 +142,7 @@ data class ResultResponse(
     val isSuccess: Boolean,
     val isError: Boolean,
     val isInProgress: Boolean,
-    val message: String? = null
+    val message: String? = null,
 )
 
 @Serializer(forClass = LocalDateTime::class)
@@ -152,7 +167,7 @@ data class MakeOcelRequest(
     val ocelPath: String,
     val timeUnit: DurationUnit = DurationUnit.MINUTES,
     @Serializable(LocalDateTimeSerializer::class)
-    val startingDate: LocalDateTime = LocalDateTime.of(2024, 5, 5, 17, 15, 0)
+    val startingDate: LocalDateTime = LocalDateTime.of(2024, 5, 5, 17, 15, 0),
 ) {
     fun toParams(): SimulationToLogConversionParams {
         return SimulationToLogConversionParams(

@@ -31,10 +31,10 @@ class IntegratedSimulationTest {
         val model = build3Tran4InpExample()
         val simulationinput = SimulationInput(
             places = mapOf(
-                "input1" to PlaceSetting(initialTokens = 3),
-                "input2" to PlaceSetting(initialTokens = 3),
-                "input3" to PlaceSetting(initialTokens = 3),
-                "input4" to PlaceSetting(initialTokens = 3)
+                "input1" to PlaceSetting(initialTokens = 10000),
+                "input2" to PlaceSetting(initialTokens = 10000),
+                "input3" to PlaceSetting(initialTokens = 10000),
+                "input4" to PlaceSetting(initialTokens = 10000)
             ),
             transitions = mapOf(
                 "t1" to TransitionSetting(

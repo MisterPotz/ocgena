@@ -30,12 +30,17 @@ class FullHugeSynchronizedSimulationTest {
             )
         ),
         places = mapOf(
-            "bill-source" to PlaceSetting(initialTokens =       30),
-            "package-source" to PlaceSetting(initialTokens =    30),
-            "order-source" to PlaceSetting(initialTokens =      30),
-            "track-source" to PlaceSetting(initialTokens =      30)
+            "bill-source" to PlaceSetting(initialTokens =       10),
+            "package-source" to PlaceSetting(initialTokens =    10),
+            "order-source" to PlaceSetting(initialTokens =      10),
+            "track-source" to PlaceSetting(initialTokens =      10)
         )
     )
+
+    @Test
+    fun displayModel() {
+        println(ocnet.toDot())
+    }
 
     @Test
     fun fullSimulationTestWithTime() = runTest(timeout = Duration.INFINITE) {

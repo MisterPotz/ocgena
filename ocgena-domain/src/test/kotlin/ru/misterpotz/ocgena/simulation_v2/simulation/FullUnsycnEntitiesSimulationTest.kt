@@ -45,6 +45,6 @@ class FullUnsycnEntitiesSimulationTest {
 
         println(logger.events)
         println(logger.logs.prettyString())
-        Assertions.assertEquals(9, logger.events.size)
+        Assertions.assertEquals(10, logger.events.size)
     }
 }
