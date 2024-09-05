@@ -1,13 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeEmptyLineSpaces = exports.coerceAtMost = exports.coerceAtLeast = exports.isNotEmpty = exports.isEmpty = exports.isEmptyOrBlank = exports.trimIndent = exports.prependIndent = void 0;
+exports.prependIndent = prependIndent;
+exports.trimIndent = trimIndent;
+exports.isEmptyOrBlank = isEmptyOrBlank;
+exports.isEmpty = isEmpty;
+exports.isNotEmpty = isNotEmpty;
+exports.coerceAtLeast = coerceAtLeast;
+exports.coerceAtMost = coerceAtMost;
+exports.removeEmptyLineSpaces = removeEmptyLineSpaces;
 function prependIndent(value, indent = "  ") {
     return value
         .split("\n")
         .map(line => indent + line)
         .join("\n");
 }
-exports.prependIndent = prependIndent;
 function trimIndent(str) {
     const lines = str.split('\n');
     let minIndent = Infinity;
@@ -36,7 +42,6 @@ function trimIndent(str) {
         .map(line => line.slice(minIndent))
         .join('\n');
 }
-exports.trimIndent = trimIndent;
 function isEmptyOrBlank(str) {
     if (isEmpty(str))
         return true;
@@ -46,23 +51,18 @@ function isEmptyOrBlank(str) {
     }
     return true;
 }
-exports.isEmptyOrBlank = isEmptyOrBlank;
 function isEmpty(str) {
     return str.length == 0;
 }
-exports.isEmpty = isEmpty;
 function isNotEmpty(str) {
     return !isEmpty(str);
 }
-exports.isNotEmpty = isNotEmpty;
 function coerceAtLeast(value, minimumValue) {
     return Math.max(value, minimumValue);
 }
-exports.coerceAtLeast = coerceAtLeast;
 function coerceAtMost(value, maximumValue) {
     return Math.min(value, maximumValue);
 }
-exports.coerceAtMost = coerceAtMost;
 function removeEmptyLineSpaces(input) {
     const lines = input.split('\n');
     for (let i = 0; i < lines.length; i++) {
@@ -75,5 +75,4 @@ function removeEmptyLineSpaces(input) {
     }
     return lines.join('\n');
 }
-exports.removeEmptyLineSpaces = removeEmptyLineSpaces;
 //# sourceMappingURL=exts.js.map

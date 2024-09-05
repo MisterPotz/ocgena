@@ -343,5 +343,5 @@ var AST;
         return new Compiler(options).stringify(ast);
     }
     AST.stringify = stringify;
-})(AST = exports.AST || (exports.AST = {}));
+})(AST || (exports.AST = AST = {}));
 //# sourceMappingURL=ast.js.map

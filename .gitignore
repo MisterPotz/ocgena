@@ -19,3 +19,5 @@ ocgenajs
 *.DS_Store
 
 **/testing_output/
+
+.turbo

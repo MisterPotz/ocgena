@@ -1,0 +1,30 @@
+{
+  "name": "ocgena",
+  "version": "1.0.0",
+  "description": "A tool designed for simulation and modeling of novel Object-Centric Petri Nets with object-centric event-log generation capabilities",
+  "main": "index.js",
+  "scripts": {
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "make": "turbo run make",
+    "dev": "turbo run dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "turbo": "^2.0.4"
+  },
+  "workspaces":[
+    "apps/*",
+    "packages/*"
+  ],
+  "overrides": {
+    "ts-pegjs": {
+      "peggy": "^3.0.2"
+    }
+  },
+  "resolutions": {
+    "peggy": "^3.0.2"
+  },
+  "packageManager": "npm@10.8.1"
+}

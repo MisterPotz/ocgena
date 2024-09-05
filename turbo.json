@@ -1,0 +1,23 @@
+{
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["lib/"],
+      "inputs": ["$TURBO_DEFAULT$", "!lib/"] 
+    },
+    "package": {
+      "dependsOn": ["^build"],
+      "outputs": [".vite/**"]
+    },
+    "make": {
+      "dependsOn": ["^build", "^make"],
+      "outputs": [".vite/**"]
+    },
+    "start": {
+      "dependsOn": ["^build", "^start"],
+      "outputs": [".vite/**"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

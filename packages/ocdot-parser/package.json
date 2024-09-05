@@ -4,17 +4,15 @@
   "description": "Sandbox for testing out functionality related to javascript, which afterwards may be converted to Kotlin Multiplatform Javascript flavor.",
   "main": "./lib/ast.js",
   "scripts": {
-    "build": "tsc --project ./tsconfig.json",
-    "build-with-dukats": "npm run build && npm run make-dukats",
+    "build": "npm run generate-peggy-grammar && npm run compile",
+    "compile": "echo $(pwd) && tsc --project ./tsconfig.json",
     "test": "jest",
-    "build-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node,edge,attributes,attribute,cluster_statements,RootExpression -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts",
-    "make-dukats": "node ./bin/make_dukats.js"
+    "generate-peggy-grammar": "peggy --plugin ts-pegjs --allowed-start-rules ocdot,ocnet,subgraph,node,edge,attributes,attribute,cluster_statements,RootExpression -o ./src/ocdot.peggy.ts ./grammar/ocdot.peggy && prettier --write ./src/ocdot.peggy.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/shelljs": "^0.8.11",
-    "dukat": "^0.5.8-rc.4",
     "jest": "^29.5.0",
     "peggy": "^3.0.2",
     "prettier": "2.8.6",
