@@ -98,7 +98,7 @@ interface CallbackPack<
   ) => any
 }
 
-function wrapCallback(key: any, callback: (this: any, ev: any) => void) {
+function wrapWithLogCallback(key: any, callback: (this: any, ev: any) => void) {
   return function wrappedCallback(this: any, event: any) {
     // Assuming you want to log or do something before and after the callback
     if (key != "mousemove") {
@@ -108,6 +108,7 @@ function wrapCallback(key: any, callback: (this: any, ev: any) => void) {
     callback.call(this, event)
   }
 }
+
 
 export function Editor() {
   const dispatch = useAppDispatch()
@@ -560,22 +561,22 @@ class CallbackRegistrar {
   ): CallbackRegistrar {
     this.callbackPacks.push({
       window: callbackPack.window
-        ? wrapCallback(type, callbackPack.window)
+        ? wrapWithLogCallback(type, callbackPack.window)
         : undefined,
       document: callbackPack.document
-        ? wrapCallback(type, callbackPack.document)
+        ? wrapWithLogCallback(type, callbackPack.document)
         : undefined,
       stage: callbackPack.stage
-        ? wrapCallback(type, callbackPack.stage)
+        ? wrapWithLogCallback(type, callbackPack.stage)
         : undefined,
       selectionLayer: callbackPack.selectionLayer
-        ? wrapCallback(type, callbackPack.selectionLayer)
+        ? wrapWithLogCallback(type, callbackPack.selectionLayer)
         : undefined,
       elementsLayer: callbackPack.elementsLayer
-        ? wrapCallback(type, callbackPack.elementsLayer)
+        ? wrapWithLogCallback(type, callbackPack.elementsLayer)
         : undefined,
       contextMenu: callbackPack.contextMenu
-        ? wrapCallback(type, callbackPack.contextMenu)
+        ? wrapWithLogCallback(type, callbackPack.contextMenu)
         : undefined,
       key: type,
     })
