@@ -88,6 +88,8 @@ export type Keys = "space" | "left" | "right"
 
 export type MouseKeys = "left" | "right"
 
+export type ButtonKeys = "space"
+
 export interface Navigator {
   areaSelection: null | { startX: number; startY: number }
   pressedKeys: Set<Keys>

@@ -1,6 +1,6 @@
 import { PayloadAction } from "@reduxjs/toolkit";
 import { createAppSlice } from "../../app/createAppSlice";
-import { Space, SpaceViewer, Navigator, Keys, MouseKeys } from "./SpaceModel";
+import { Space, SpaceViewer, Navigator, Keys, MouseKeys, ButtonKeys } from "./SpaceModel";
 
 type EditorV2State {
     space: Space,
@@ -44,11 +44,18 @@ type MouseMove = {
     newY: number
 }
 
+type ButtonDownPaylaod = {
+    key: ButtonKeys
+}
+
 const editorV2Slice = createAppSlice({
     name: "editorv2",
     initialState: initialState,
     reducers: create => ({
         mouseDown: create.reducer((state, action: PayloadAction<MouseDownPayload>) => {
+            state.navigator.x = action.payload.x
+            state.navigator.y = action.payload.y
+
             if (action.payload.key == "left") {
                 if (action.payload.targetId != null) {
                     const positionable = getPositionableById(state.space, action.payload.targetId)
@@ -64,14 +71,18 @@ const editorV2Slice = createAppSlice({
                     }
                     state.navigator.pressedKeys.add("left")
                 }
+            } else if (action.payload.key == "right") {
+                state.navigator.pressedKeys.add("right")
             }
         }),
         mouseRelease: create.reducer((state, action: PayloadAction<MouseRelease>) => {
-                
         }),
         mouseMove: create.reducer((state, action: PayloadAction<MouseMove>) => {
 
         }),
+        buttonDown: create.reducer((state, action: PayloadAction<ButtonDownPaylaod>) => {
+            state.navigator.pressedKeys.add(action.payload.key)
+        })
     })
 })
 
@@ -82,4 +93,4 @@ function getPositionableById(space: Space, id : string) {
         }
     }
     return null
-} 
+}
