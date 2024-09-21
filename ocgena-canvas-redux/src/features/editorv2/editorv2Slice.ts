@@ -112,11 +112,11 @@ export const editorV2Slice = createAppSlice({
 
             keysChecker.updatePressedKeys(state.navigator.pressedKeys).updateMinusKeys(key)
 
-            if (action.payload.key === "left") {
+            if (keysChecker.checkBecameUnpressed("left")) {
                 state.navigator.areaSelection = null
                 state.spaceViewer.startOffsetX = undefined
                 state.spaceViewer.startOffsetY = undefined
-            } else if (action.payload.key === "right") {
+            } else if (keysChecker.checkBecameUnpressed('right')) {
                 // if there is transformer or selection (and mouse over such elements?), open popup menu
             }
 
@@ -160,6 +160,7 @@ export const editorV2Slice = createAppSlice({
                 keysChecker.checkArePressed("left") &&
                 (state.space.selector || state.space.transformer)
             ) {
+                // move the items
             }
         }),
         buttonDown: create.reducer((state, action: PayloadAction<ButtonDownPayload>) => {
@@ -206,21 +207,3 @@ function pressedKeys(state: EditorV2State, ...keys: Keys[]) {
     }
     return true
 }
-
-export function inRangeIncInc(value: number, left: number, right: number) {
-    return left <= value && value <= right
-}
-
-
-function findPositionableByCoordinate(space: Space, x: number, y: number) {
-    let highestZ = Number.MIN_SAFE_INTEGER
-    let highestPositionable = null
-  
-    for (const positionable of space.positionables) {
-      if (positionable.z >= highestZ && positionable.containsXY(x, y)) {
-        highestPositionable = positionable
-        highestZ = positionable.z
-      }
-    }
-    return highestPositionable
-  }

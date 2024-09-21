@@ -1,224 +1,276 @@
-import { inRangeIncInc } from "./editorv2Slice";
-import { PositionablesIndex, Positionable } from "./SpaceModel";
+import { PositionablesIndex, Positionable } from "./SpaceModel"
 
+type SearchSpace = {   
+        leftIndex: number
+        rightIndex: number
+        array: Positionable[],
+}
+// maybe later rewrite into quadtree like algorithm
 export class PositionablesIndexImpl implements PositionablesIndex {
-    private sortedByXY: Positionable[] = [];
-    private sortedByYX: Positionable[] = [];
+    private sortedByXY: Positionable[] = []
+    private sortedByYX: Positionable[] = []
+    private sortedByLeftBorder: Positionable[] = []
+    private sortedByRightBorder: Positionable[] = []
+    private sortedByTopBorder: Positionable[] = []
+    private sortedByBottomBorder: Positionable[] = []
 
-    constructor() {
-    }
+    constructor() {}
 
-    binarySearchEqualOrBigger(
+    private binarySearchEqualOrBiggerThan(
         value: number,
         positionables: Positionable[],
-        selector: (positionable: Positionable) => number
+        selector: (positionable: Positionable) => number,
     ): number | null {
-        if (positionables.length == 0) return null;
-        if (selector(positionables[0]) >= value) return 0;
-        if (selector(positionables[positionables.length - 1]) < value) return null;
+        if (positionables.length == 0) return null
+        if (selector(positionables[0]) >= value) return 0
+        if (selector(positionables[positionables.length - 1]) < value) return null
 
-        var left = 0;
-        var middle = 0;
-        var right = positionables.length - 1;
+        var left = 0
+        var middle = 0
+        var right = positionables.length - 1
 
         while (left <= right) {
-            middle = ((right - left) << 1) + left;
+            middle = ((right - left) >> 1) + left
             if (selector(positionables[middle]) < value) {
-                left = middle + 1;
+                left = middle + 1
             } else if (selector(positionables[middle]) > value) {
-                right = middle - 1;
+                right = middle - 1
             } else {
                 for (var i = middle - 1; i >= 0; i--) {
                     if (selector(positionables[i]) !== value) {
-                        return i + 1;
+                        return i + 1
                     }
                 }
-                return 0;
+                return 0
             }
         }
         if (selector(positionables[middle]) >= value) {
-            return middle;
+            return middle
         }
-        return middle + 1;
+        return middle + 1
     }
 
-    binarySearchEqualOrSmaller(
+    private binarySearchEqualOrSmallerThan(
         value: number,
         positionables: Positionable[],
-        selector: (positionable: Positionable) => number
+        selector: (positionable: Positionable) => number,
     ): number | null {
-        if (positionables.length == 0) return null;
+        if (positionables.length == 0) return null
         if (selector(positionables[positionables.length - 1]) <= value)
-            return positionables.length - 1;
-        if (selector(positionables[0]) > value) return null;
+            return positionables.length - 1
+        if (selector(positionables[0]) > value) return null
 
-        var left = 0;
-        var middle = 0;
-        var right = positionables.length - 1;
+        var left = 0
+        var middle = 0
+        var right = positionables.length - 1
 
         while (left <= right) {
-            middle = ((right - left) << 1) + left;
+            middle = ((right - left) >> 1) + left
             if (selector(positionables[middle]) < value) {
-                left = middle + 1;
+                left = middle + 1
             } else if (selector(positionables[middle]) > value) {
-                right = middle - 1;
+                right = middle - 1
             } else {
                 for (var i = middle + 1; i < positionables.length; i++) {
                     if (selector(positionables[i]) !== value) {
-                        return i - 1;
+                        return i - 1
                     }
                 }
-                return positionables.length - 1;
+                return positionables.length - 1
             }
         }
 
         if (selector(positionables[middle]) <= value) {
-            return middle;
+            return middle
         }
-        return middle - 1;
+        return middle - 1
+    }
+
+    private getSearchSpace(
+        leftBorder: number,
+        rightBorder: number,
+        array: Positionable[],
+        selector: (positionable: Positionable) => number,
+    ): SearchSpace | null {
+        const leftIndex = this.binarySearchEqualOrBiggerThan(leftBorder, array, selector)
+        const rightIndex = this.binarySearchEqualOrSmallerThan(rightBorder, array, selector)
+        if (!leftIndex || !rightIndex || rightIndex - leftIndex < 0) return null
+
+        return {
+            leftIndex,
+            rightIndex,
+            array
+        }
     }
 
     getPositionablesInRange(
         left: number,
         top: number,
         right: number,
-        bottom: number
+        bottom: number,
     ): Positionable[] {
-        var leftIndex: number | null = null;
-        var rightIndex: number | null = null;
-        var array: Positionable[] | null = null;
-        const answer: Positionable[] = [];
+        const answer: Positionable[] = []
 
-        if (right - left <= bottom - top) {
-            // traverse x array as its smaller
-            leftIndex =
-                this.binarySearchEqualOrBigger(
-                    left,
-                    this.sortedByXY,
-                    pos => pos.footprintFromStart().left
-                ) ?? this.sortedByXY.length;
-            rightIndex =
-                this.binarySearchEqualOrSmaller(
-                    right,
-                    this.sortedByXY,
-                    pos => pos.footprintFromStart().right
-                ) ?? -1;
-            array = this.sortedByXY;
+        const lBorderSearchSpace = this.getSearchSpace(left, right, this.sortedByLeftBorder, pos => pos.footprintFromStart().left + pos.x)
+        if (!lBorderSearchSpace) return answer
+        const rBorderSearchSpace = this.getSearchSpace(left, right, this.sortedByRightBorder, pos => pos.footprintFromStart().right + pos.x)
+        if (!rBorderSearchSpace) return answer
+        const tBorderSearchSpace = this.getSearchSpace(top, bottom, this.sortedByTopBorder, pos => pos.footprintFromStart().top + pos.y)
+        if (!tBorderSearchSpace) return answer
+        const bBorderSearchSpace = this.getSearchSpace(top, bottom, this.sortedByBottomBorder, pos => pos.footprintFromStart().bottom + pos.y)
+        if (!bBorderSearchSpace) return answer
 
-            for (var i = leftIndex; i <= rightIndex; i++) {
-                if (inRangeIncInc(this.sortedByXY[i].y, top, bottom)) {
-                    answer.push(this.sortedByXY[i]);
-                }
-            }
-        } else {
-            // traverse y array as its smaller
-            leftIndex =
-                this.binarySearchEqualOrBigger(
-                    top,
-                    this.sortedByYX,
-                    pos => pos.footprintFromStart().top
-                ) ?? this.sortedByYX.length;
-            rightIndex =
-                this.binarySearchEqualOrSmaller(
-                    bottom,
-                    this.sortedByYX,
-                    pos => pos.footprintFromStart().bottom
-                ) ?? -1;
-            array = this.sortedByYX;
+        var smallestSearchSpace : SearchSpace = lBorderSearchSpace
 
-            for (var i = leftIndex; i <= rightIndex; i++) {
-                if (inRangeIncInc(this.sortedByYX[i].x, left, right)) {
-                    answer.push(this.sortedByYX[i]);
-                }
+        for (const searchSpace of [rBorderSearchSpace, tBorderSearchSpace, bBorderSearchSpace]) {
+            if (smallestSearchSpace.rightIndex - smallestSearchSpace.leftIndex >= searchSpace.rightIndex - searchSpace.leftIndex) {
+                smallestSearchSpace = searchSpace
             }
         }
 
-        return answer;
+        for (var i = smallestSearchSpace.leftIndex; i <= smallestSearchSpace.rightIndex; i++) {
+            const pos = smallestSearchSpace.array[i]
+            if (
+                left <= pos.footprintFromStart().left + pos.x &&
+                top <= pos.footprintFromStart().top + pos.y &&
+                pos.footprintFromStart().right + pos.x <= right &&
+                pos.footprintFromStart().bottom + pos.y <= bottom
+            ) {
+                answer.push(smallestSearchSpace.array[i])
+            }
+        }
+
+        return answer
+    }
+
+    private sortedInsert(
+        positionable: Positionable,
+        comparison: (pos1: Positionable, pos2: Positionable) => number,
+        array: Positionable[],
+    ) {
+        if (array.length == 0) {
+            array.push(positionable)
+            return
+        }
+
+        for (var i = 0; i < array.length; i++) {
+            if (comparison(positionable, array[i]) != 1) {
+                array.splice(i, 0, positionable)
+                return
+            }
+        }
+        array.push(positionable)
+    }
+
+    private removeFromArr(positionable: Positionable, array: Positionable[]) {
+        for (var i = 0; i < array.length; i++) {
+            if (positionable.id === array[i].id) {
+                array.splice(i, 1)
+                break
+            }
+        }
     }
 
     insert(positionable: Positionable) {
-        if (this.sortedByXY.length == 0) {
-            this.sortedByXY.push(positionable);
-            this.sortedByYX.push(positionable);
-            return;
-        }
-
-        var inserted = false;
-        for (var i = 0; i < this.sortedByXY.length; i++) {
-            if (this.compareXYZ(positionable, this.sortedByXY[i]) != 1) {
-                this.sortedByXY.splice(i, 0, positionable);
-                inserted = true;
-                break;
-            }
-        }
-        if (!inserted) {
-            this.sortedByXY.push(positionable);
-        }
-        inserted = false;
-        for (var i = 0; i < this.sortedByYX.length; i++) {
-            if (this.compareYXZ(positionable, this.sortedByYX[i]) != 1) {
-                this.sortedByYX.splice(i, 0, positionable);
-                inserted = true;
-                break;
-            }
-        }
-        if (!inserted) {
-            this.sortedByYX.push(positionable);
-        }
+        this.sortedInsert(positionable, this.compareXYZ, this.sortedByXY)
+        this.sortedInsert(positionable, this.compareYXZ, this.sortedByYX)
+        this.sortedInsert(positionable, this.compareLeftBorder, this.sortedByLeftBorder)
+        this.sortedInsert(positionable, this.compareRightBorder, this.sortedByRightBorder)
+        this.sortedInsert(positionable, this.compareTopBorder, this.sortedByTopBorder)
+        this.sortedInsert(positionable, this.compareBottomBorder, this.sortedByBottomBorder)
     }
 
     remove(positionable: Positionable) {
-        for (var i = 0; i < this.sortedByXY.length; i++) {
-            if (positionable.id === this.sortedByXY[i].id) {
-                this.sortedByXY.splice(i, 1);
-                break;
-            }
-        }
-        for (var i = 0; i < this.sortedByYX.length; i++) {
-            if (positionable.id === this.sortedByYX[i].id) {
-                this.sortedByYX.splice(i, 1);
-                break;
-            }
-        }
+        this.removeFromArr(positionable, this.sortedByXY)
+        this.removeFromArr(positionable, this.sortedByYX)
+        this.removeFromArr(positionable, this.sortedByLeftBorder)
+        this.removeFromArr(positionable, this.sortedByRightBorder)
+        this.removeFromArr(positionable, this.sortedByTopBorder)
+        this.removeFromArr(positionable, this.sortedByBottomBorder)
     }
 
-    compare(any1: any, any2: any) {
+    private compare(any1: any, any2: any) {
         if (any1 < any2) {
-            return -1;
+            return -1
         }
         if (any1 > any2) {
-            return 1;
+            return 1
         }
-        return 0;
+        return 0
     }
 
-    compareBy(positionable1: Positionable, positionable2: Positionable, ...criteria: string[]) {
+    private compareBy(
+        positionable1: Positionable,
+        positionable2: Positionable,
+        ...criteria: ((pos: Positionable) => any)[]
+    ) {
         for (const crit of criteria) {
-            const comparison = this.compare(
-                (positionable1 as any)[crit],
-                (positionable2 as any)[crit]
-            );
+            const comparison = this.compare(crit(positionable1), crit(positionable2))
             if (comparison !== 0) {
-                return comparison;
+                return comparison
             }
         }
-        return 0;
+        return 0
     }
 
-    compareXYZ(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(positionable1, positionable2, "x", "y", "z");
+    private compareXYZ(positionable1: Positionable, positionable2: Positionable) {
+        return this.compareBy(
+            positionable1,
+            positionable2,
+            el => el.x,
+            el => el.y,
+            el => el.z,
+        )
     }
 
-    compareYXZ(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(positionable1, positionable2, "y", "x", "z");
+    private compareYXZ(positionable1: Positionable, positionable2: Positionable) {
+        return this.compareBy(
+            positionable1,
+            positionable2,
+            el => el.y,
+            el => el.x,
+            el => el.z,
+        )
+    }
+
+    private compareLeftBorder(positionable1: Positionable, positionable2: Positionable) {
+        return this.compareBy(
+            positionable1,
+            positionable2,
+            el => el.x + el.footprintFromStart().left,
+        )
+    }
+
+    private compareRightBorder(positionable1: Positionable, positionable2: Positionable) {
+        return this.compareBy(
+            positionable1,
+            positionable2,
+            el => el.x + el.footprintFromStart().right,
+        )
+    }
+
+    private compareTopBorder(positionable1: Positionable, positionable2: Positionable) {
+        return this.compareBy(
+            positionable1,
+            positionable2,
+            el => el.y + el.footprintFromStart().top,
+        )
+    }
+
+    private compareBottomBorder(positionable1: Positionable, positionable2: Positionable) {
+        return this.compareBy(
+            positionable1,
+            positionable2,
+            el => el.y + el.footprintFromStart().bottom,
+        )
     }
 
     getById(id?: string): Positionable | null {
         for (const positionable of this.sortedByXY) {
             if (positionable.id === id) {
-                return positionable;
+                return positionable
             }
         }
-        return null;
+        return null
     }
 }
