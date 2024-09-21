@@ -1,3 +1,10 @@
+interface Offsets {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
+
 export interface Positionable {
   x: number
   y: number
@@ -5,22 +12,34 @@ export interface Positionable {
   id: string
 
   containsXY: (x: number, y: number) => boolean
+  footprintFromStart(): Offsets
 }
 
 export class Rectangle implements Positionable {
   type!: "rect"
-  width: number
-  height: number
+  private _width: number
+  private _height: number
   z!: 1
   x!: 0
   y!: 0
   id: string
+  offset: Offsets
 
   constructor(id: string, width: number, height: number) {
-    this.width = width
-    this.height = height
+    this._width = width
+    this._height = height
+    this.offset = {
+      left: 0,
+      top: 0,
+      right: width,
+      bottom: height,
+    }
     this.id = id
   }
+  footprintFromStart(): Offsets {
+    return this.offset
+  }
+
   containsXY(x: number, y: number) {
     return (
       this.x <= x &&
@@ -29,20 +48,49 @@ export class Rectangle implements Positionable {
       y <= this.y + this.height
     )
   }
+
+  public set width(v: number) {
+    this._width = v
+    this.offset.right = v
+  }
+
+  public get width(): number {
+    return this._width
+  }
+
+  public get height(): number {
+    return this._height
+  }
+
+  public set height(v: number) {
+    this._height = v
+    this.offset.bottom = v
+  }
 }
 
 export class Circle implements Positionable {
   type!: "circle"
-  radius: number
+  private _radius: number
   x!: 0
   y!: 0
   z!: 1
   id: string
+  offsets: Offsets
 
   constructor(id: string, radius: number) {
-    this.radius = radius
+    this._radius = radius
     this.z = 1
     this.id = id
+    this.offsets = {
+      left: -radius,
+      top: -radius,
+      right: radius,
+      bottom: radius
+    }
+  }
+
+  footprintFromStart(): Offsets {
+      return this.offsets
   }
 
   containsXY(x: number, y: number) {
@@ -59,6 +107,22 @@ export class Circle implements Positionable {
       this.radius
     )
   }
+
+  
+  public get radius() : number {
+    return this._radius
+  }
+
+  
+  public set radius(v : number) {
+    this._radius = v;
+    this.offsets = {
+      left: -v,
+      top: -v,
+      right: v,
+      bottom: v
+    }
+  }
 }
 
 export type Shape = Rectangle | Circle
@@ -73,8 +137,15 @@ export interface Transformer {
   element: Positionable
 }
 
+export interface PositionablesIndex {
+  getPositionablesInRange(left: number, top: number, right:number, bottom: number) : Positionable[]
+  insert(positionable: Positionable): void
+  remove(positionable: Positionable): void
+  getById(id?: string) : Positionable | null
+}
+
 export interface Space {
-  positionables: Positionable[]
+  positionables: PositionablesIndex
   selector: Selector | null
   transformer: Transformer | null
 }
@@ -82,6 +153,8 @@ export interface Space {
 export interface SpaceViewer {
   offsetX: number
   offsetY: number
+  startOffsetX?: number
+  startOffsetY?: number
 }
 
 export type Keys = "space" | "left" | "right"
@@ -95,29 +168,4 @@ export interface Navigator {
   pressedKeys: Set<Keys>
   x: number
   y: number
-}
-
-function findPositionableByCoordinate(space: Space, x: number, y: number) {
-  let highestZ = Number.MIN_SAFE_INTEGER
-  let highestPositionable = null
-
-  for (const positionable of space.positionables) {
-    if (positionable.z >= highestZ && positionable.containsXY(x, y)) {
-      highestPositionable = positionable
-      highestZ = positionable.z
-    }
-  }
-  return highestPositionable
-}
-
-function mouseLeftClick(space: Space, x: number, y: number) {
-  
-}
-
-function mouseRelease(space: Space, x: number, y: number) {
-
-}
-
-function containsXY(positionable: Positionable, x: number, y: number) {
-  
 }
