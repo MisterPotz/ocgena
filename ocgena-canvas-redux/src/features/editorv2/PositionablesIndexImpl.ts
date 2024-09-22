@@ -1,9 +1,16 @@
-import { PositionablesIndex, Positionable } from "./SpaceModel"
+import {
+    PositionablesIndex,
+    Positionable,
+    leftBorder,
+    rightBorder,
+    topBorder,
+    bottomBorder,
+} from "./SpaceModel"
 
-type SearchSpace = {   
-        leftIndex: number
-        rightIndex: number
-        array: Positionable[],
+type SearchSpace = {
+    leftIndex: number
+    rightIndex: number
+    array: Positionable[]
 }
 // maybe later rewrite into quadtree like algorithm
 export class PositionablesIndexImpl implements PositionablesIndex {
@@ -86,7 +93,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         return middle - 1
     }
 
-    private getSearchSpace(
+    private getInRangeSearchSpace(
         leftBorder: number,
         rightBorder: number,
         array: Positionable[],
@@ -94,12 +101,12 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     ): SearchSpace | null {
         const leftIndex = this.binarySearchEqualOrBiggerThan(leftBorder, array, selector)
         const rightIndex = this.binarySearchEqualOrSmallerThan(rightBorder, array, selector)
-        if (!leftIndex || !rightIndex || rightIndex - leftIndex < 0) return null
+        if (leftIndex === null || rightIndex === null || rightIndex - leftIndex < 0) return null
 
         return {
             leftIndex,
             rightIndex,
-            array
+            array,
         }
     }
 
@@ -111,19 +118,42 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     ): Positionable[] {
         const answer: Positionable[] = []
 
-        const lBorderSearchSpace = this.getSearchSpace(left, right, this.sortedByLeftBorder, pos => pos.footprintFromStart().left + pos.x)
+        const lBorderSearchSpace = this.getInRangeSearchSpace(
+            left,
+            right,
+            this.sortedByLeftBorder,
+            pos => leftBorder(pos),
+        )
         if (!lBorderSearchSpace) return answer
-        const rBorderSearchSpace = this.getSearchSpace(left, right, this.sortedByRightBorder, pos => pos.footprintFromStart().right + pos.x)
+        const rBorderSearchSpace = this.getInRangeSearchSpace(
+            left,
+            right,
+            this.sortedByRightBorder,
+            pos => rightBorder(pos),
+        )
         if (!rBorderSearchSpace) return answer
-        const tBorderSearchSpace = this.getSearchSpace(top, bottom, this.sortedByTopBorder, pos => pos.footprintFromStart().top + pos.y)
+        const tBorderSearchSpace = this.getInRangeSearchSpace(
+            top,
+            bottom,
+            this.sortedByTopBorder,
+            pos => topBorder(pos),
+        )
         if (!tBorderSearchSpace) return answer
-        const bBorderSearchSpace = this.getSearchSpace(top, bottom, this.sortedByBottomBorder, pos => pos.footprintFromStart().bottom + pos.y)
+        const bBorderSearchSpace = this.getInRangeSearchSpace(
+            top,
+            bottom,
+            this.sortedByBottomBorder,
+            pos => bottomBorder(pos),
+        )
         if (!bBorderSearchSpace) return answer
 
-        var smallestSearchSpace : SearchSpace = lBorderSearchSpace
+        var smallestSearchSpace: SearchSpace = lBorderSearchSpace
 
         for (const searchSpace of [rBorderSearchSpace, tBorderSearchSpace, bBorderSearchSpace]) {
-            if (smallestSearchSpace.rightIndex - smallestSearchSpace.leftIndex >= searchSpace.rightIndex - searchSpace.leftIndex) {
+            if (
+                smallestSearchSpace.rightIndex - smallestSearchSpace.leftIndex >=
+                searchSpace.rightIndex - searchSpace.leftIndex
+            ) {
                 smallestSearchSpace = searchSpace
             }
         }
@@ -131,10 +161,10 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         for (var i = smallestSearchSpace.leftIndex; i <= smallestSearchSpace.rightIndex; i++) {
             const pos = smallestSearchSpace.array[i]
             if (
-                left <= pos.footprintFromStart().left + pos.x &&
-                top <= pos.footprintFromStart().top + pos.y &&
-                pos.footprintFromStart().right + pos.x <= right &&
-                pos.footprintFromStart().bottom + pos.y <= bottom
+                left <= leftBorder(pos) &&
+                top <= topBorder(pos) &&
+                rightBorder(pos) <= right &&
+                bottomBorder(pos) <= bottom
             ) {
                 answer.push(smallestSearchSpace.array[i])
             }
@@ -219,7 +249,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
             positionable2,
             el => el.x,
             el => el.y,
-            el => el.z,
+            el => -el.z,
         )
     }
 
@@ -229,7 +259,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
             positionable2,
             el => el.y,
             el => el.x,
-            el => el.z,
+            el => -el.z,
         )
     }
 
@@ -237,7 +267,8 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         return this.compareBy(
             positionable1,
             positionable2,
-            el => el.x + el.footprintFromStart().left,
+            el => leftBorder(el),
+            el => -el.z,
         )
     }
 
@@ -245,7 +276,8 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         return this.compareBy(
             positionable1,
             positionable2,
-            el => el.x + el.footprintFromStart().right,
+            el => rightBorder(el),
+            el => -el.z,
         )
     }
 
@@ -253,7 +285,8 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         return this.compareBy(
             positionable1,
             positionable2,
-            el => el.y + el.footprintFromStart().top,
+            el => topBorder(el),
+            el => -el.z,
         )
     }
 
@@ -261,7 +294,8 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         return this.compareBy(
             positionable1,
             positionable2,
-            el => el.y + el.footprintFromStart().bottom,
+            el => bottomBorder(el),
+            el => -el.z,
         )
     }
 
@@ -269,6 +303,82 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         for (const positionable of this.sortedByXY) {
             if (positionable.id === id) {
                 return positionable
+            }
+        }
+        return null
+    }
+
+    getByCoordinate(x: number, y: number): Positionable | null {
+        const leftBorderCandidatesEndIndex = this.binarySearchEqualOrSmallerThan(
+            x,
+            this.sortedByLeftBorder,
+            el => leftBorder(el),
+        )
+        if (leftBorderCandidatesEndIndex === null) return null
+        const rightBorderCandidatesStartIndex = this.binarySearchEqualOrBiggerThan(
+            x,
+            this.sortedByRightBorder,
+            el => rightBorder(el),
+        )
+        if (rightBorderCandidatesStartIndex === null) return null
+        const topBorderCandidatesEndIndex = this.binarySearchEqualOrSmallerThan(
+            y,
+            this.sortedByTopBorder,
+            el => topBorder(el),
+        )
+        if (topBorderCandidatesEndIndex === null) return null
+        const bottomBorderCandidatesStartIndex = this.binarySearchEqualOrBiggerThan(
+            y,
+            this.sortedByBottomBorder,
+            el => bottomBorder(el),
+        )
+        if (bottomBorderCandidatesStartIndex === null) return null
+
+        var smallest = leftBorderCandidatesEndIndex + 1
+        for (const spaceSize of [
+            this.sortedByRightBorder.length - rightBorderCandidatesStartIndex,
+            topBorderCandidatesEndIndex + 1,
+            this.sortedByBottomBorder.length - bottomBorderCandidatesStartIndex,
+        ]) {
+            if (spaceSize < smallest) {
+                smallest = spaceSize
+            }
+        }
+        var startIndex: number
+        var endIndex: number
+        var array: Positionable[]
+        switch (smallest) {
+            case leftBorderCandidatesEndIndex + 1: {
+                startIndex = 0
+                endIndex = leftBorderCandidatesEndIndex
+                array = this.sortedByLeftBorder
+                break
+            }
+            case this.sortedByRightBorder.length - rightBorderCandidatesStartIndex: {
+                startIndex = rightBorderCandidatesStartIndex
+                endIndex = this.sortedByRightBorder.length - 1
+                array = this.sortedByRightBorder
+                break
+            }
+            case topBorderCandidatesEndIndex + 1: {
+                startIndex = 0
+                endIndex = topBorderCandidatesEndIndex
+                array = this.sortedByTopBorder
+                break
+            }
+            case this.sortedByBottomBorder.length - bottomBorderCandidatesStartIndex: {
+                startIndex = bottomBorderCandidatesStartIndex
+                endIndex = this.sortedByBottomBorder.length - 1
+                array = this.sortedByBottomBorder
+                break
+            }
+            default: {
+                return null
+            }
+        }
+        for (var i = startIndex; i <= endIndex; i++) {
+            if (array[i].containsXY(x, y)) {
+                return array[i]
             }
         }
         return null

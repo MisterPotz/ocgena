@@ -7,8 +7,15 @@ import {
     Keys,
     MouseKeys,
     ButtonKeys,
+    containsXY,
+    borders,
+    Positionable,
+    leftBorder,
+    rightBorder,
+    topBorder,
+    bottomBorder,
+    Rect,
 } from "./SpaceModel"
-import { number } from "fp-ts"
 import { PositionablesIndexImpl } from "./PositionablesIndexImpl"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
 
@@ -37,6 +44,8 @@ const initialState: EditorV2State = {
         startOffsetY: undefined,
     },
 }
+
+type EditorStateMode = "area-selecting" | "moving-objects" | "panning" | "transforming" | "idle"
 
 type MouseDownPayload = {
     targetId?: string
@@ -85,23 +94,40 @@ export const editorV2Slice = createAppSlice({
                 state.navigator.pressedKeys.add(key)
             } else if (keysChecker.checkBecamePressed("left")) {
                 // need to test whether down is on selection
-                if ((state.space.selector || state.space.transformer ) && action.payload.x) {
+                if (
+                    state.space.selector &&
+                    containsXY(state.space.selector.borders, action.payload.x, action.payload.y)
+                ) {
+                    state.space.selector.moveX = action.payload.x
+                    state.space.selector.moveY = action.payload.y
+                    state.navigator.pressedKeys.add(key)
+                } else if (
+                    state.space.transformer &&
+                    containsXY(state.space.transformer.borders, action.payload.x, action.payload.y)
+                ) {
+                    state.space.transformer.moveX = action.payload.x
+                    state.space.transformer.moveY = action.payload.y
+                    state.navigator.pressedKeys.add(key)
+                } else {
+                    const positionable = state.space.positionables.getByCoordinate(
+                        action.payload.x,
+                        action.payload.y,
+                    )
 
-                } else if (action.payload.targetId != null) {
-                    const positionable = state.space.positionables.getById(action.payload.targetId)
                     if (positionable != null) {
                         state.space.transformer = {
                             element: positionable,
+                            borders: borders(positionable),
                         }
+                    } else {
+                        state.navigator.areaSelection = {
+                            startX: action.payload.x,
+                            startY: action.payload.y,
+                        }
+                        state.navigator.pressedKeys.add("left")
+                        state.space.transformer = null
+                        state.space.selector = null
                     }
-                } else {
-                    state.navigator.areaSelection = {
-                        startX: action.payload.x,
-                        startY: action.payload.y,
-                    }
-                    state.navigator.pressedKeys.add("left")
-                    state.space.transformer = null
-                    state.space.selector = null
                 }
             } else if (keysChecker.checkBecamePressed("right")) {
                 state.navigator.pressedKeys.add("right")
@@ -116,7 +142,7 @@ export const editorV2Slice = createAppSlice({
                 state.navigator.areaSelection = null
                 state.spaceViewer.startOffsetX = undefined
                 state.spaceViewer.startOffsetY = undefined
-            } else if (keysChecker.checkBecameUnpressed('right')) {
+            } else if (keysChecker.checkBecameUnpressed("right")) {
                 // if there is transformer or selection (and mouse over such elements?), open popup menu
             }
 
@@ -147,13 +173,13 @@ export const editorV2Slice = createAppSlice({
                     state.space.selector = null
                     state.space.transformer = {
                         element: selectedPositionables[0],
+                        borders: borders(selectedPositionables[0]),
                     }
                 } else if (selectedPositionables.length > 1) {
                     state.space.transformer = null
                     state.space.selector = {
                         elements: selectedPositionables,
-                        moveX: 0,
-                        moveY: 0,
+                        borders: getMaxBorders(selectedPositionables),
                     }
                 }
             } else if (
@@ -169,6 +195,7 @@ export const editorV2Slice = createAppSlice({
                 .updatePlusKeys(action.payload.key)
 
             if (keysChecker.checkBecamePressed("space", "left")) {
+                state.navigator.areaSelection = null
                 state.spaceViewer.startOffsetX = state.navigator.x
                 state.spaceViewer.startOffsetY = state.navigator.y
             }
@@ -199,11 +226,30 @@ function mouseKeyToKeys(mouseKey: MouseKeys): Keys {
     }
 }
 
-function pressedKeys(state: EditorV2State, ...keys: Keys[]) {
-    for (const key of keys) {
-        if (!state.navigator.pressedKeys.has(key)) {
-            return false
+function getMaxBorders(positionables: Positionable[]): Rect {
+    var maxLeft = leftBorder(positionables[0])
+    var maxRight = rightBorder(positionables[0])
+    var maxTop = topBorder(positionables[0])
+    var maxBottom = bottomBorder(positionables[0])
+
+    for (const pos of positionables) {
+        if (maxLeft > leftBorder(pos)) {
+            maxLeft = leftBorder(pos)
+        }
+        if (maxRight < rightBorder(pos)) {
+            maxRight = rightBorder(pos)
+        }
+        if (maxTop > topBorder(pos)) {
+            maxTop = topBorder(pos)
+        }
+        if (maxBottom < bottomBorder(pos)) {
+            maxBottom = bottomBorder(pos)
         }
     }
-    return true
+    return {
+        left: maxLeft,
+        right: maxRight,
+        top: maxTop,
+        bottom: maxBottom,
+    }
 }
