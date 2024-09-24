@@ -121,16 +121,20 @@ export type Shape = Rectangle | Circle
 
 export interface Selector {
     elements: Positionable[]
-    moveX?: number
-    moveY?: number
+    topLeftElement: Positionable
+    bottomRightElement: Positionable
+    startX?: number
+    startY?: number
     borders: Rect
 }
 
 export interface Transformer {
     element: Positionable
-    borders: Rect,
-    moveX ?: number,
-    moveY ?: number
+    borders: Rect
+    moveX?: number
+    moveY?: number
+    startX?: number
+    startY?: number
 }
 
 export interface PositionablesIndex {
@@ -143,13 +147,13 @@ export interface PositionablesIndex {
     insert(positionable: Positionable): void
     remove(positionable: Positionable): void
     getById(id?: string): Positionable | null
-    getByCoordinate(x: number, y: number) : Positionable | null
+    getByCoordinate(x: number, y: number): Positionable | null
 }
 
 export interface Space {
     positionables: PositionablesIndex
     selector: Selector | null
-    transformer: Transformer | null
+    // transformer: Transformer | null
 }
 
 export interface SpaceViewer {

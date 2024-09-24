@@ -110,42 +110,40 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         }
     }
 
-    getPositionablesInRange(
+    private determineInRangeSearchSpace(
         left: number,
         top: number,
         right: number,
         bottom: number,
-    ): Positionable[] {
-        const answer: Positionable[] = []
-
+    ): SearchSpace | null {
         const lBorderSearchSpace = this.getInRangeSearchSpace(
             left,
             right,
             this.sortedByLeftBorder,
             pos => leftBorder(pos),
         )
-        if (!lBorderSearchSpace) return answer
+        if (!lBorderSearchSpace) return null
         const rBorderSearchSpace = this.getInRangeSearchSpace(
             left,
             right,
             this.sortedByRightBorder,
             pos => rightBorder(pos),
         )
-        if (!rBorderSearchSpace) return answer
+        if (!rBorderSearchSpace) return null
         const tBorderSearchSpace = this.getInRangeSearchSpace(
             top,
             bottom,
             this.sortedByTopBorder,
             pos => topBorder(pos),
         )
-        if (!tBorderSearchSpace) return answer
+        if (!tBorderSearchSpace) return null
         const bBorderSearchSpace = this.getInRangeSearchSpace(
             top,
             bottom,
             this.sortedByBottomBorder,
             pos => bottomBorder(pos),
         )
-        if (!bBorderSearchSpace) return answer
+        if (!bBorderSearchSpace) return null
 
         var smallestSearchSpace: SearchSpace = lBorderSearchSpace
 
@@ -157,16 +155,58 @@ export class PositionablesIndexImpl implements PositionablesIndex {
                 smallestSearchSpace = searchSpace
             }
         }
+        return smallestSearchSpace
+    }
 
-        for (var i = smallestSearchSpace.leftIndex; i <= smallestSearchSpace.rightIndex; i++) {
-            const pos = smallestSearchSpace.array[i]
+    getPositionablesInRange(
+        left: number,
+        top: number,
+        right: number,
+        bottom: number,
+    ): Positionable[] {
+        const answer: Positionable[] = []
+        const searchSpace = this.determineInRangeSearchSpace(left, top, right, bottom)
+
+        if (!searchSpace) return answer
+
+        for (var i = searchSpace.leftIndex; i <= searchSpace.rightIndex; i++) {
+            const pos = searchSpace.array[i]
             if (
                 left <= leftBorder(pos) &&
                 top <= topBorder(pos) &&
                 rightBorder(pos) <= right &&
                 bottomBorder(pos) <= bottom
             ) {
-                answer.push(smallestSearchSpace.array[i])
+                answer.push(searchSpace.array[i])
+            }
+        }
+
+        return answer
+    }
+
+    getPositionablesOutOfRange(
+        left: number,
+        top: number,
+        right: number,
+        bottom: number,
+    ): Positionable[] {
+        const answer: Positionable[] = []
+        const searchSpace = this.determineInRangeSearchSpace(left, top, right, bottom)
+
+        if (!searchSpace) {
+            return [...this.sortedByLeftBorder]
+        }
+        for (var i = 0; i < searchSpace.array.length; i++) {
+            const pos = searchSpace.array[i]
+            if (
+                !(
+                    left <= leftBorder(pos) &&
+                    top <= topBorder(pos) &&
+                    rightBorder(pos) <= right &&
+                    bottomBorder(pos) <= bottom
+                )
+            ) {
+                answer.push(searchSpace.array[i])
             }
         }
 
@@ -202,7 +242,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     }
 
     insert(positionable: Positionable) {
-        this.sortedInsert(positionable, this.compareXYZ, this.sortedByXY)
+        this.sortedInsert(positionable, compareXYZ, this.sortedByXY)
         this.sortedInsert(positionable, this.compareYXZ, this.sortedByYX)
         this.sortedInsert(positionable, this.compareLeftBorder, this.sortedByLeftBorder)
         this.sortedInsert(positionable, this.compareRightBorder, this.sortedByRightBorder)
@@ -219,42 +259,21 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         this.removeFromArr(positionable, this.sortedByBottomBorder)
     }
 
-    private compare(any1: any, any2: any) {
-        if (any1 < any2) {
-            return -1
+    insertPack(positionables: Positionable[]) {
+        for (const pos of positionables) {
+            this.insert(pos)
         }
-        if (any1 > any2) {
-            return 1
-        }
-        return 0
     }
 
-    private compareBy(
-        positionable1: Positionable,
-        positionable2: Positionable,
-        ...criteria: ((pos: Positionable) => any)[]
-    ) {
-        for (const crit of criteria) {
-            const comparison = this.compare(crit(positionable1), crit(positionable2))
-            if (comparison !== 0) {
-                return comparison
-            }
+    removePack(positionables: Positionable[]) {
+        for (const pos of positionables) {
+            this.remove(pos)
         }
-        return 0
     }
 
-    private compareXYZ(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(
-            positionable1,
-            positionable2,
-            el => el.x,
-            el => el.y,
-            el => -el.z,
-        )
-    }
 
     private compareYXZ(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(
+        return compareBy(
             positionable1,
             positionable2,
             el => el.y,
@@ -264,7 +283,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     }
 
     private compareLeftBorder(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(
+        return compareBy(
             positionable1,
             positionable2,
             el => leftBorder(el),
@@ -273,7 +292,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     }
 
     private compareRightBorder(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(
+        return compareBy(
             positionable1,
             positionable2,
             el => rightBorder(el),
@@ -282,7 +301,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     }
 
     private compareTopBorder(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(
+        return compareBy(
             positionable1,
             positionable2,
             el => topBorder(el),
@@ -291,7 +310,7 @@ export class PositionablesIndexImpl implements PositionablesIndex {
     }
 
     private compareBottomBorder(positionable1: Positionable, positionable2: Positionable) {
-        return this.compareBy(
+        return compareBy(
             positionable1,
             positionable2,
             el => bottomBorder(el),
@@ -383,4 +402,56 @@ export class PositionablesIndexImpl implements PositionablesIndex {
         }
         return null
     }
+}
+
+function compare(any1: any, any2: any) {
+    if (any1 < any2) {
+        return -1
+    }
+    if (any1 > any2) {
+        return 1
+    }
+    return 0
+}
+
+function compareBy(
+    positionable1: Positionable,
+    positionable2: Positionable,
+    ...criteria: ((pos: Positionable) => any)[]
+) {
+    for (const crit of criteria) {
+        const comparison = compare(crit(positionable1), crit(positionable2))
+        if (comparison !== 0) {
+            return comparison
+        }
+    }
+    return 0
+}
+
+export function compareXYZ(positionable1: Positionable, positionable2: Positionable) {
+    return compareBy(
+        positionable1,
+        positionable2,
+        el => el.x,
+        el => el.y,
+        el => -el.z,
+    )
+}
+
+export function compareTopLeft(positionable1: Positionable, positionable2: Positionable) {
+    return compareBy(
+        positionable1,
+        positionable2,
+        el => leftBorder(el),
+        el => topBorder(el)
+    )
+}
+
+export function compareBottomRight(positionable1: Positionable, positionable2: Positionable) {
+    return compareBy(
+        positionable1,
+        positionable2,
+        el => rightBorder(el),
+        el => bottomBorder(el)
+    )
 }

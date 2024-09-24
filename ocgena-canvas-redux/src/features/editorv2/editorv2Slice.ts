@@ -8,7 +8,6 @@ import {
     MouseKeys,
     ButtonKeys,
     containsXY,
-    borders,
     Positionable,
     leftBorder,
     rightBorder,
@@ -16,20 +15,20 @@ import {
     bottomBorder,
     Rect,
 } from "./SpaceModel"
-import { PositionablesIndexImpl } from "./PositionablesIndexImpl"
+import { compareBottomRight, compareTopLeft, PositionablesIndexImpl } from "./PositionablesIndexImpl"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
 
 type EditorV2State = {
     space: Space
     spaceViewer: SpaceViewer
     navigator: Navigator
+    selectionCommands: SelectionCommand[]
 }
 
 const initialState: EditorV2State = {
     space: {
         positionables: new PositionablesIndexImpl(),
         selector: null,
-        transformer: null,
     },
     navigator: {
         areaSelection: null,
@@ -43,9 +42,8 @@ const initialState: EditorV2State = {
         startOffsetX: undefined,
         startOffsetY: undefined,
     },
+    selectionCommands: []
 }
-
-type EditorStateMode = "area-selecting" | "moving-objects" | "panning" | "transforming" | "idle"
 
 type MouseDownPayload = {
     targetId?: string
@@ -75,6 +73,71 @@ type ButtonUpPayload = {
 
 const keysChecker = new CombinedPressedKeyChecker()
 
+// what if i join selector and transformer?
+
+interface SelectionCommand {
+    applyToState(state: EditorV2State): void
+    undoToState(state: EditorV2State): void
+}
+
+class SelectItems implements SelectionCommand {
+    items : Positionable[]
+    topLeftItem: Positionable
+    bottomRightItem: Positionable
+
+    constructor(items: Positionable[], topLeftItem: Positionable, bottomRightItem: Positionable) {
+        this.items = items
+        this.topLeftItem = topLeftItem
+        this.bottomRightItem = bottomRightItem
+    }
+
+    applyToState(state: EditorV2State) {
+        state.space.selector = {
+            elements : this.items,
+            topLeftElement: this.topLeftItem,
+            bottomRightElement: this.bottomRightItem,
+            borders : getBorders(this.topLeftItem, this.bottomRightItem)
+        }
+    }
+
+    undoToState(state: EditorV2State) {
+        state.space.selector = null
+    }
+}
+
+class MoveItems implements SelectionCommand {
+    items : Positionable[]
+    moveX: number
+    moveY: number
+
+    constructor(items: Positionable[], moveX: number, moveY: number) {
+        this.items = items
+        this.moveX = moveX
+        this.moveY = moveY
+    }
+
+    applyToState(state: EditorV2State) {
+    }
+
+    undoToState(state: EditorV2State) {
+        for (const pos of this.items) {
+            pos.x -= this.moveX
+            pos.y -= this.moveY
+        }
+    }
+}
+
+function finishSelectedElementSelection(state: EditorV2State) {
+    if (state.navigator.areaSelection) {
+        if (state.space.selector) {
+            const selectCommand = new SelectItems(state.space.selector.elements, state.space.selector.topLeftElement, state.space.selector.bottomRightElement)
+            selectCommand.applyToState(state)
+            state.selectionCommands.push(selectCommand)
+        }
+        state.navigator.areaSelection = null
+    }
+}
+
 export const editorV2Slice = createAppSlice({
     name: "editorv2",
     initialState: initialState,
@@ -91,23 +154,13 @@ export const editorV2Slice = createAppSlice({
             if (keysChecker.checkBecamePressed("space", "left")) {
                 state.spaceViewer.startOffsetX = action.payload.x
                 state.spaceViewer.startOffsetY = action.payload.y
-                state.navigator.pressedKeys.add(key)
             } else if (keysChecker.checkBecamePressed("left")) {
-                // need to test whether down is on selection
                 if (
                     state.space.selector &&
                     containsXY(state.space.selector.borders, action.payload.x, action.payload.y)
                 ) {
-                    state.space.selector.moveX = action.payload.x
-                    state.space.selector.moveY = action.payload.y
-                    state.navigator.pressedKeys.add(key)
-                } else if (
-                    state.space.transformer &&
-                    containsXY(state.space.transformer.borders, action.payload.x, action.payload.y)
-                ) {
-                    state.space.transformer.moveX = action.payload.x
-                    state.space.transformer.moveY = action.payload.y
-                    state.navigator.pressedKeys.add(key)
+                    state.space.selector.startX = action.payload.x
+                    state.space.selector.startY = action.payload.y
                 } else {
                     const positionable = state.space.positionables.getByCoordinate(
                         action.payload.x,
@@ -115,33 +168,46 @@ export const editorV2Slice = createAppSlice({
                     )
 
                     if (positionable != null) {
-                        state.space.transformer = {
-                            element: positionable,
-                            borders: borders(positionable),
-                        }
+                        const newSelectionCommand = new SelectItems([positionable], positionable, positionable)
+                        newSelectionCommand.applyToState(state)
+                        state.selectionCommands.push(newSelectionCommand)
+                        state.space.selector!.startX = action.payload.x
+                        state.space.selector!.startY = action.payload.y
                     } else {
+                        state.space.selector = null
                         state.navigator.areaSelection = {
                             startX: action.payload.x,
                             startY: action.payload.y,
                         }
-                        state.navigator.pressedKeys.add("left")
-                        state.space.transformer = null
-                        state.space.selector = null
                     }
                 }
             } else if (keysChecker.checkBecamePressed("right")) {
-                state.navigator.pressedKeys.add("right")
             }
+            state.navigator.pressedKeys.add(key)
         }),
         mouseRelease: create.reducer((state, action: PayloadAction<MouseRelease>) => {
             const key = mouseKeyToKeys(action.payload.key)
 
             keysChecker.updatePressedKeys(state.navigator.pressedKeys).updateMinusKeys(key)
 
-            if (keysChecker.checkBecameUnpressed("left")) {
-                state.navigator.areaSelection = null
+            if (keysChecker.checkArePressed('space', 'left') && keysChecker.checkBecameUnpressed('left')) {
                 state.spaceViewer.startOffsetX = undefined
                 state.spaceViewer.startOffsetY = undefined
+            } else if (keysChecker.checkBecameUnpressed("left")) {
+                if (state.navigator.areaSelection) {
+                    finishSelectedElementSelection(state)
+                } else if (state.space.selector) {
+                    if (state.space.selector.startX && state.space.selector.startY) {
+                        const moveCommand = new MoveItems(
+                            state.space.selector.elements,
+                            action.payload.releaseX - state.space.selector.startX,
+                            action.payload.releaseY - state.space.selector.startY,
+                        )
+                        state.selectionCommands.push(moveCommand)
+                        state.space.selector.startX = undefined
+                        state.space.selector.startY = undefined
+                    }
+                }
             } else if (keysChecker.checkBecameUnpressed("right")) {
                 // if there is transformer or selection (and mouse over such elements?), open popup menu
             }
@@ -152,41 +218,42 @@ export const editorV2Slice = createAppSlice({
             keysChecker.updatePressedKeys(state.navigator.pressedKeys)
             const newX = action.payload.newX
             const newY = action.payload.newY
+            const oldX = state.navigator.x
+            const oldY = state.navigator.y
 
-            if (keysChecker.checkArePressed("space", "left")) {
-                state.spaceViewer.offsetY = newY - state.spaceViewer.startOffsetY!
-                state.spaceViewer.offsetX = newX - state.spaceViewer.startOffsetX!
-            } else if (keysChecker.checkArePressed("left") && state.navigator.areaSelection) {
-                // update selected figures
-                const leftSelect = Math.min(newX, state.navigator.areaSelection!.startX)
-                const rightSelect = Math.max(newX, state.navigator.areaSelection!.startX)
-                const topSelect = Math.min(newY, state.navigator.areaSelection!.startY)
-                const bottomSelect = Math.max(newY, state.navigator.areaSelection!.startY)
-                const selectedPositionables = state.space.positionables.getPositionablesInRange(
-                    leftSelect,
-                    topSelect,
-                    rightSelect,
-                    bottomSelect,
-                )
-
-                if (selectedPositionables.length == 1) {
-                    state.space.selector = null
-                    state.space.transformer = {
-                        element: selectedPositionables[0],
-                        borders: borders(selectedPositionables[0]),
-                    }
-                } else if (selectedPositionables.length > 1) {
-                    state.space.transformer = null
-                    state.space.selector = {
-                        elements: selectedPositionables,
-                        borders: getMaxBorders(selectedPositionables),
+            if (keysChecker.checkArePressed('space', "left")) {
+                if (state.spaceViewer.startOffsetX && state.spaceViewer.startOffsetY) {
+                    state.spaceViewer.offsetY = newY - state.spaceViewer.startOffsetY!
+                    state.spaceViewer.offsetX = newX - state.spaceViewer.startOffsetX!
+                }
+            } else if (keysChecker.checkArePressed("left")) {
+                if (state.navigator.areaSelection) {
+                    const capturedMoreElements = (Math.abs(newX - state.navigator.areaSelection.startX) >= Math.abs(oldX - state.navigator.areaSelection.startX)) ||
+                    (Math.abs(newY - state.navigator.areaSelection.startY) >= Math.abs(oldY - state.navigator.areaSelection.startY))
+                    
+                    // update selected figures
+                    const leftSelect = Math.min(newX, state.navigator.areaSelection!.startX)
+                    const rightSelect = Math.max(newX, state.navigator.areaSelection!.startX)
+                    const topSelect = Math.min(newY, state.navigator.areaSelection!.startY)
+                    const bottomSelect = Math.max(newY, state.navigator.areaSelection!.startY)
+                    const selectedPositionables = state.space.positionables.getPositionablesInRange(
+                        leftSelect,
+                        topSelect,
+                        rightSelect,
+                        bottomSelect,
+                    )
+                    const edgeElements = getEdgeElements(selectedPositionables)
+                    if (selectedPositionables.length > 0 && edgeElements) {
+                        state.space.selector = {
+                            elements : selectedPositionables,
+                            topLeftElement: edgeElements.topLeft,
+                            bottomRightElement: edgeElements.bottomRight,
+                            borders: getBorders(edgeElements.topLeft, edgeElements.bottomRight)
+                        }
+                    } else {
+                        state.space.selector = null
                     }
                 }
-            } else if (
-                keysChecker.checkArePressed("left") &&
-                (state.space.selector || state.space.transformer)
-            ) {
-                // move the items
             }
         }),
         buttonDown: create.reducer((state, action: PayloadAction<ButtonDownPayload>) => {
@@ -195,7 +262,9 @@ export const editorV2Slice = createAppSlice({
                 .updatePlusKeys(action.payload.key)
 
             if (keysChecker.checkBecamePressed("space", "left")) {
-                state.navigator.areaSelection = null
+                if (state.navigator.areaSelection) {
+                    finishSelectedElementSelection(state)
+                }
                 state.spaceViewer.startOffsetX = state.navigator.x
                 state.spaceViewer.startOffsetY = state.navigator.y
             }
@@ -226,30 +295,31 @@ function mouseKeyToKeys(mouseKey: MouseKeys): Keys {
     }
 }
 
-function getMaxBorders(positionables: Positionable[]): Rect {
-    var maxLeft = leftBorder(positionables[0])
-    var maxRight = rightBorder(positionables[0])
-    var maxTop = topBorder(positionables[0])
-    var maxBottom = bottomBorder(positionables[0])
+function getBorders(topLeftElement: Positionable, bottomRightElement: Positionable) : Rect {
+     return {
+        left : leftBorder(topLeftElement),
+        top: topBorder(topLeftElement),
+        right: rightBorder(bottomRightElement),
+        bottom: bottomBorder(bottomRightElement)
+     }
+}
 
-    for (const pos of positionables) {
-        if (maxLeft > leftBorder(pos)) {
-            maxLeft = leftBorder(pos)
+function getEdgeElements(positionable : Positionable[]) : { topLeft: Positionable, bottomRight: Positionable } | null {
+    if (positionable.length == 0) return null
+    var topLeft = positionable[0]
+    var bottomRight = positionable[positionable.length - 1]
+
+    for (const pos of positionable) {
+        if (compareTopLeft(topLeft, pos) == 1) {
+            topLeft = pos
         }
-        if (maxRight < rightBorder(pos)) {
-            maxRight = rightBorder(pos)
-        }
-        if (maxTop > topBorder(pos)) {
-            maxTop = topBorder(pos)
-        }
-        if (maxBottom < bottomBorder(pos)) {
-            maxBottom = bottomBorder(pos)
+        if (compareBottomRight(pos, bottomRight) == 1) {
+            bottomRight = pos
         }
     }
+
     return {
-        left: maxLeft,
-        right: maxRight,
-        top: maxTop,
-        bottom: maxBottom,
+        topLeft,
+        bottomRight
     }
 }
