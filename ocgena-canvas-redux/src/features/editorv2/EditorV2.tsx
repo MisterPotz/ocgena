@@ -2,11 +2,65 @@ import Konva from "konva"
 import { useEffect, useRef, useState } from "react"
 import { Layer, Rect, Stage } from "react-konva"
 import { useAppDispatch, useAppSelector } from "../../app/hooks"
+import {
+    buttonDown,
+    buttonUp,
+    editorV2Slice,
+    mouseDown,
+    mouseMove,
+    mouseRelease,
+} from "./editorv2Slice"
+import { ButtonKeys, MouseKeys } from "./SpaceModel"
+
+function mouseBtnToKey(button: number): MouseKeys | null {
+    switch (button) {
+        case 0:
+            return "left"
+        case 2:
+            return "right"
+        default:
+            return null
+    }
+}
+
+function keyboardBtnToKey(button: string): ButtonKeys | null {
+    switch (button) {
+        case " ":
+            return "space"
+        default:
+            return null
+    }
+}
 
 export function EditorV2() {
     const stage = useRef<Konva.Stage | null>(null)
     const state = useAppSelector(state => state.editorv2)
     const dispatch = useAppDispatch()
+
+    useEffect(() => {
+        const handleKeyDown: (ev: WindowEventMap["keydown"]) => any = evt => {
+            const key = keyboardBtnToKey(evt.key)
+            if (key) {
+                dispatch(buttonDown({ key }))
+            }
+        }
+
+        const handleKeyUp: (ev: WindowEventMap["keyup"]) => any = evt => {
+            const key = keyboardBtnToKey(evt.key)
+            if (key) {
+                dispatch(buttonUp({ key }))
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown)
+        window.addEventListener("keyup", handleKeyUp)
+
+        // Cleanup function to remove the event listeners
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown)
+            window.removeEventListener("keyup", handleKeyUp)
+        }
+    }, [dispatch])
 
     return (
         <>
@@ -19,10 +73,51 @@ export function EditorV2() {
                 width={1200}
                 height={800}
                 onMouseDown={evt => {
-                    dispatch()
+                    const mouseKey = mouseBtnToKey(evt.evt.button)
+                    const stageloc = stage.current
+                    const pointerPos = stageloc?.getPointerPosition()
+                    if (mouseKey && stageloc && pointerPos) {
+                        dispatch(
+                            mouseDown({
+                                key: mouseKey,
+                                x: pointerPos.x,
+                                y: pointerPos.y,
+                                targetId: undefined,
+                            }),
+                        )
+                    }
+                }}
+                onMouseUp={evt => {
+                    const mouseKey = mouseBtnToKey(evt.evt.button)
+                    const stageloc = stage.current
+                    const pointerPos = stageloc?.getPointerPosition()
+                    if (mouseKey && stageloc && pointerPos) {
+                        const stageCoord = stageloc.container().getBoundingClientRect()
+
+                        dispatch(
+                            mouseRelease({
+                                key: mouseKey,
+                                releaseX: evt.evt.clientX - stageCoord.x,
+                                releaseY: evt.evt.clientY - pointerPos.y,
+                            }),
+                        )
+                    }
+                }}
+                onMouseMove={evt => {
+                    const stageloc = stage.current
+                    const pointerPos = stageloc?.getPointerPosition()
+                    if (stageloc && pointerPos) {
+                        const stageCoord = stageloc.container().getBoundingClientRect()
+                        dispatch(
+                            mouseMove({
+                                newX: evt.evt.clientX - stageCoord.x,
+                                newY: evt.evt.clientY - stageCoord.y,
+                            }),
+                        )
+                    }
                 }}
             >
-                <PatternBackground/>
+                <PatternBackground />
                 {/* <Layer ref={elementsLayerRef}>
               {elements.map((el, index) => {
                 return (

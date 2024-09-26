@@ -164,7 +164,7 @@ export function Editor() {
           if (selector && selectorShape) {
             handleMouseKey(ev, {
               leftKey: () => {
-                const mouseX = ev.clientX
+                const mouseX = ev.clientX 
                 const mouseY = ev.clientY
 
                 const clientStartX = selector.x + stageClientRectX

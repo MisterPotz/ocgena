@@ -1,8 +1,6 @@
 import "./App.css"
 import { Counter } from "./features/counter/Counter"
-import ArrowConnector, { ArrowConnectorFollowMouse, PatternImage } from "./features/editor/ArrowConnector"
-import { Editor } from "./features/editor/Editor"
-import { Quotes } from "./features/quotes/Quotes"
+import { EditorV2 } from "./features/editorv2/EditorV2"
 import logo from "./logo.svg"
 
 const App = () => {
@@ -10,10 +8,11 @@ const App = () => {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <Editor />
+        <EditorV2 />
+        {/* <Editor/> */}
         {/* <ArrowConnector />
         <ArrowConnectorFollowMouse /> */}
-        <PatternImage />
+        {/* <PatternImage /> */}
         {/* <Counter /> */}
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
