@@ -7,6 +7,27 @@ export interface Rect {
 
 type Offsets = Rect
 
+export interface RectangleShape {
+    left: number
+    top: number
+    width: number
+    height: number
+    z: number
+    type: "rectangle"
+    id: string
+}
+
+export interface CircleShape {
+    x: number
+    y: number
+    radius: number
+    z: number
+    type: "circle"
+    id: string
+}
+
+export type PositionableShape = RectangleShape | CircleShape
+
 export interface Positionable {
     x: number
     y: number
@@ -15,6 +36,7 @@ export interface Positionable {
 
     containsXY: (x: number, y: number) => boolean
     footprintFromStart(): Offsets
+    toPositionableShape(): PositionableShape
 }
 
 export class Rectangle implements Positionable {
@@ -44,6 +66,18 @@ export class Rectangle implements Positionable {
 
     containsXY(x: number, y: number) {
         return this.x <= x && x <= this.x + this.width && this.y <= y && y <= this.y + this.height
+    }
+
+    toPositionableShape(): RectangleShape {
+        return {
+            type: "rectangle",
+            id: this.id,
+            left: this.x,
+            top: this.y,
+            z: this.z,
+            width: this.width,
+            height: this.height,
+        }
     }
 
     public set width(v: number) {
@@ -102,6 +136,17 @@ export class Circle implements Positionable {
         return Math.sqrt((this.x - x) * (this.x - x) + (this.y - y) * (this.y - y)) <= this.radius
     }
 
+    toPositionableShape(): CircleShape {
+        return {
+            type: "circle",
+            id: this.id,
+            radius: this.radius,
+            x: this.x,
+            y: this.y,
+            z: this.z,
+        }
+    }
+
     public get radius(): number {
         return this._radius
     }
@@ -120,16 +165,16 @@ export class Circle implements Positionable {
 export type Shape = Rectangle | Circle
 
 export interface Selector {
-    elements: Positionable[]
-    topLeftElement: Positionable
-    bottomRightElement: Positionable
+    elements: PositionableShape[]
+    topLeftElement: PositionableShape
+    bottomRightElement: PositionableShape
     startX?: number
     startY?: number
     borders: Rect
 }
 
 export interface Transformer {
-    element: Positionable
+    element: PositionableShape
     borders: Rect
     moveX?: number
     moveY?: number
@@ -151,7 +196,7 @@ export interface PositionablesIndex {
 }
 
 export interface Space {
-    positionables: PositionablesIndex
+    positionables: PositionableShape[]
     selector: Selector | null
     // transformer: Transformer | null
 }

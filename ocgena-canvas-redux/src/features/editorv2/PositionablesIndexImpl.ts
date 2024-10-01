@@ -1,5 +1,5 @@
 import {
-    PositionablesIndex,
+    PositionablesIndex as PositionablesPositionIndex,
     Positionable,
     leftBorder,
     rightBorder,
@@ -13,7 +13,7 @@ type SearchSpace = {
     array: Positionable[]
 }
 // maybe later rewrite into quadtree like algorithm
-export class PositionablesIndexImpl implements PositionablesIndex {
+export class PositionablesPositionIndexImpl implements PositionablesPositionIndex {
     private sortedByXY: Positionable[] = []
     private sortedByYX: Positionable[] = []
     private sortedByLeftBorder: Positionable[] = []

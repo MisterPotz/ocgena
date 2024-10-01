@@ -14,24 +14,26 @@ import {
     topBorder,
     bottomBorder,
     Rect,
+    PositionableShape,
+    PositionablesIndex,
 } from "./SpaceModel"
 import {
     compareBottomRight,
     compareTopLeft,
-    PositionablesIndexImpl,
+    PositionablesPositionIndexImpl,
 } from "./PositionablesIndexImpl"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
-
+import { PositionablesRepository } from "./PositionablesMap"
 type EditorV2State = {
     space: Space
     spaceViewer: SpaceViewer
     navigator: Navigator
-    selectionCommands: SelectionCommand[]
+    selectionCommands: SelectionCommandOld[]
 }
 
 const initialState: EditorV2State = {
     space: {
-        positionables: new PositionablesIndexImpl(),
+        positionables: [],
         selector: null,
     },
     navigator: {
@@ -79,71 +81,129 @@ const keysChecker = new CombinedPressedKeyChecker()
 
 // what if i join selector and transformer?
 
-interface SelectionCommand {
+type SelectItems = {
+    items: PositionableShape[]
+    topLeftItem: PositionableShape
+    bottomRightItem: PositionableShape
+    type: "select"
+}
+
+type MoveItems = {
+    items: PositionableShape[]
+    moveX: number
+    moveY: number
+    type: "move"
+}
+
+type Command = {
+    applyToState(context: Context): void
+    undoToState(context: Context): void
+}
+
+type Context = {
+    editorV2State: EditorV2State
+    positionablesMap: PositionablesRepository
+    positionablesIndex: PositionablesIndex
+}
+
+// function getCommand(key: SelectItems | MoveItems): Command {
+//     switch (key.type) {
+//         case "move": {
+//             return {
+//                 applyToState(context) {},
+//                 undoToState(context) {
+//                     for (const pos of context.positionablesMap.getPositionables(key.items)) {
+//                         pos.x -= key.moveX
+//                         pos.y -= key.moveY
+//                     }
+//                     context.editorV2State.space.positionables =
+//                         context.positionablesMap.mapToShapes()
+//                 },
+//             }
+//         }
+//         case "select": {
+//             return {
+//                 applyToState(context) {
+//                     context.editorV2State.space.selector = {
+//                         elements: context.positionablesMap.getPositionables(key.items),
+//                         topLeftElement: this.topLeftItem,
+//                         bottomRightElement: this.bottomRightItem,
+//                         borders: getBorders(this.topLeftItem, this.bottomRightItem),
+//                     }
+//                 },
+//             }
+//         }
+//     }
+// }
+
+interface SelectionCommandOld {
     applyToState(state: EditorV2State): void
     undoToState(state: EditorV2State): void
 }
 
-class SelectItems implements SelectionCommand {
-    items: Positionable[]
-    topLeftItem: Positionable
-    bottomRightItem: Positionable
+// class SelectItems implements SelectionCommandOld {
+//     items: PositionableShape[]
+//     topLeftItem: PositionableShape
+//     bottomRightItem: PositionableShape
 
-    constructor(items: Positionable[], topLeftItem: Positionable, bottomRightItem: Positionable) {
-        this.items = items
-        this.topLeftItem = topLeftItem
-        this.bottomRightItem = bottomRightItem
-    }
+//     constructor(items: PositionableShape[], topLeftItem: PositionableShape, bottomRightItem: PositionableShape) {
+//         this.items = items
+//         this.topLeftItem = topLeftItem
+//         this.bottomRightItem = bottomRightItem
+//     }
 
-    applyToState(state: EditorV2State) {
-        state.space.selector = {
-            elements: this.items,
-            topLeftElement: this.topLeftItem,
-            bottomRightElement: this.bottomRightItem,
-            borders: getBorders(this.topLeftItem, this.bottomRightItem),
-        }
-    }
+//     applyToState(state: EditorV2State) {
+//         state.space.selector = {
+//             elements: this.items,
+//             topLeftElement: this.topLeftItem,
+//             bottomRightElement: this.bottomRightItem,
+//             borders: getBorders(this.topLeftItem, this.bottomRightItem),
+//         }
+//     }
 
-    undoToState(state: EditorV2State) {
-        state.space.selector = null
-    }
-}
+//     undoToState(state: EditorV2State) {
+//         state.space.selector = null
+//     }
+// }
 
-class MoveItems implements SelectionCommand {
-    items: Positionable[]
-    moveX: number
-    moveY: number
+// class MoveItems implements SelectionCommandOld {
+//     items: Positionable[]
+//     moveX: number
+//     moveY: number
 
-    constructor(items: Positionable[], moveX: number, moveY: number) {
-        this.items = items
-        this.moveX = moveX
-        this.moveY = moveY
-    }
+//     constructor(items: Positionable[], moveX: number, moveY: number) {
+//         this.items = items
+//         this.moveX = moveX
+//         this.moveY = moveY
+//     }
 
-    applyToState(state: EditorV2State) {}
+//     applyToState(state: EditorV2State) {}
 
-    undoToState(state: EditorV2State) {
-        for (const pos of this.items) {
-            pos.x -= this.moveX
-            pos.y -= this.moveY
-        }
-    }
-}
+//     undoToState(state: EditorV2State) {
+//         for (const pos of this.items) {
+//             pos.x -= this.moveX
+//             pos.y -= this.moveY
+//         }
+//     }
+// }
 
 function finishSelectedElementSelection(state: EditorV2State) {
     if (state.navigator.areaSelection) {
-        if (state.space.selector) {
-            const selectCommand = new SelectItems(
-                state.space.selector.elements,
-                state.space.selector.topLeftElement,
-                state.space.selector.bottomRightElement,
-            )
-            selectCommand.applyToState(state)
-            state.selectionCommands.push(selectCommand)
-        }
+        // if (state.space.selector) {
+        //     const selectCommand = new SelectItems(
+        //         state.space.selector.elements,
+        //         state.space.selector.topLeftElement,
+        //         state.space.selector.bottomRightElement,
+        //     )
+        //     selectCommand.applyToState(state)
+        //     state.selectionCommands.push(selectCommand)
+        // }
         state.navigator.areaSelection = null
     }
 }
+
+const positionableIndex = new PositionablesPositionIndexImpl()
+const positionableMap = new PositionablesRepository()
 
 export const editorV2Slice = createAppSlice({
     name: "editorv2",
@@ -169,21 +229,24 @@ export const editorV2Slice = createAppSlice({
                     state.space.selector.startX = action.payload.x
                     state.space.selector.startY = action.payload.y
                 } else {
-                    const positionable = state.space.positionables.getByCoordinate(
-                        action.payload.x,
-                        action.payload.y,
-                    )
+                    const positionable =
+                        /* state.space.positionables */ positionableIndex.getByCoordinate(
+                            action.payload.x,
+                            action.payload.y,
+                        )
 
                     if (positionable != null) {
-                        const newSelectionCommand = new SelectItems(
-                            [positionable],
-                            positionable,
-                            positionable,
-                        )
-                        newSelectionCommand.applyToState(state)
-                        state.selectionCommands.push(newSelectionCommand)
-                        state.space.selector!.startX = action.payload.x
-                        state.space.selector!.startY = action.payload.y
+                        // const newSelectionCommand = new SelectItems(
+                        //     [positionable],
+                        //     positionable,
+                        //     positionable,
+                        // )
+                        // newSelectionCommand.applyToState(state)
+                        // state.selectionCommands.push(newSelectionCommand)
+                        // state.space.selector = {
+                        //     state.space.selector!.startX = action.payload.x
+                        //     state.space.selector!.startY = action.payload.y
+                        // }
                     } else {
                         state.space.selector = null
                         state.navigator.areaSelection = {
@@ -212,14 +275,15 @@ export const editorV2Slice = createAppSlice({
                     finishSelectedElementSelection(state)
                 } else if (state.space.selector) {
                     if (state.space.selector.startX && state.space.selector.startY) {
-                        const moveCommand = new MoveItems(
-                            state.space.selector.elements,
-                            action.payload.releaseX - state.space.selector.startX,
-                            action.payload.releaseY - state.space.selector.startY,
-                        )
-                        state.selectionCommands.push(moveCommand)
+                        // const moveCommand = new MoveItems(
+                        //     state.space.selector.elements,
+                        //     action.payload.releaseX - state.space.selector.startX,
+                        //     action.payload.releaseY - state.space.selector.startY,
+                        // )
+                        // state.selectionCommands.push(moveCommand)
                         state.space.selector.startX = undefined
                         state.space.selector.startY = undefined
+                        state.space.selector = null
                     }
                 }
             } else if (keysChecker.checkBecameUnpressed("right")) {
@@ -242,34 +306,34 @@ export const editorV2Slice = createAppSlice({
                 }
             } else if (keysChecker.checkArePressed("left")) {
                 if (state.navigator.areaSelection) {
-                    const capturedMoreElements =
-                        Math.abs(newX - state.navigator.areaSelection.startX) >=
-                            Math.abs(oldX - state.navigator.areaSelection.startX) ||
-                        Math.abs(newY - state.navigator.areaSelection.startY) >=
-                            Math.abs(oldY - state.navigator.areaSelection.startY)
+                    // const capturedMoreElements =
+                    //     Math.abs(newX - state.navigator.areaSelection.startX) >=
+                    //         Math.abs(oldX - state.navigator.areaSelection.startX) ||
+                    //     Math.abs(newY - state.navigator.areaSelection.startY) >=
+                    //         Math.abs(oldY - state.navigator.areaSelection.startY)
 
-                    // update selected figures
-                    const leftSelect = Math.min(newX, state.navigator.areaSelection!.startX)
-                    const rightSelect = Math.max(newX, state.navigator.areaSelection!.startX)
-                    const topSelect = Math.min(newY, state.navigator.areaSelection!.startY)
-                    const bottomSelect = Math.max(newY, state.navigator.areaSelection!.startY)
-                    const selectedPositionables = state.space.positionables.getPositionablesInRange(
-                        leftSelect,
-                        topSelect,
-                        rightSelect,
-                        bottomSelect,
-                    )
-                    const edgeElements = getEdgeElements(selectedPositionables)
-                    if (selectedPositionables.length > 0 && edgeElements) {
-                        state.space.selector = {
-                            elements: selectedPositionables,
-                            topLeftElement: edgeElements.topLeft,
-                            bottomRightElement: edgeElements.bottomRight,
-                            borders: getBorders(edgeElements.topLeft, edgeElements.bottomRight),
-                        }
-                    } else {
-                        state.space.selector = null
-                    }
+                    // // update selected figures
+                    // const leftSelect = Math.min(newX, state.navigator.areaSelection!.startX)
+                    // const rightSelect = Math.max(newX, state.navigator.areaSelection!.startX)
+                    // const topSelect = Math.min(newY, state.navigator.areaSelection!.startY)
+                    // const bottomSelect = Math.max(newY, state.navigator.areaSelection!.startY)
+                    // const selectedPositionables = positionableIndex.getPositionablesInRange(
+                    //     leftSelect,
+                    //     topSelect,
+                    //     rightSelect,
+                    //     bottomSelect,
+                    // )
+                    // const edgeElements = getEdgeElements(selectedPositionables)
+                    // if (selectedPositionables.length > 0 && edgeElements) {
+                    //     state.space.selector = {
+                    //         elements: selectedPositionables,
+                    //         topLeftElement: edgeElements.topLeft,
+                    //         bottomRightElement: edgeElements.bottomRight,
+                    //         borders: getBorders(edgeElements.topLeft, edgeElements.bottomRight),
+                    //     }
+                    // } else {
+                    //     state.space.selector = null
+                    // }
                 }
             }
         }),

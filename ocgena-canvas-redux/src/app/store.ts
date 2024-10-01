@@ -11,6 +11,10 @@ import {
 import { combineEpics, createEpicMiddleware } from "redux-observable"
 import { createFilteringMiddleware } from "../utils/redux_utils"
 import { editorV2Slice } from "../features/editorv2/editorv2Slice"
+import { enableMapSet } from "immer"
+
+
+enableMapSet()
 
 const rootEpic = combineEpics(editorHandleDragEpic)
 const epicMiddleware = createEpicMiddleware<Action, Action, void, any>()
