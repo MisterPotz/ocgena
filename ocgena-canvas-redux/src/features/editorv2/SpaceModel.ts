@@ -215,10 +215,10 @@ export type MouseKeys = "left" | "right"
 export type ButtonKeys = "space"
 
 export interface Navigator {
-    areaSelection: null | { startX: number; startY: number }
+    areaSelection: boolean
     pressedKeys: Set<Keys>
-    x: number
-    y: number
+    // x: number
+    // y: number
 }
 
 export function containsXY(rect: Rect, x: number, y: number) {

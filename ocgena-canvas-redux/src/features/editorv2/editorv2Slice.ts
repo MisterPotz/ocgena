@@ -37,10 +37,10 @@ const initialState: EditorV2State = {
         selector: null,
     },
     navigator: {
-        areaSelection: null,
+        areaSelection: false,
         pressedKeys: new Set<Keys>(),
-        x: 0,
-        y: 0,
+        // x: 0,
+        // y: 0,
     },
     spaceViewer: {
         offsetX: 0,
@@ -53,20 +53,11 @@ const initialState: EditorV2State = {
 
 type MouseDownPayload = {
     targetId?: string
-    x: number
-    y: number
     key: MouseKeys
 }
 
-type MouseRelease = {
-    releaseX: number
-    releaseY: number
+type MouseReleasePayload = {
     key: MouseKeys
-}
-
-type MouseMove = {
-    newX: number
-    newY: number
 }
 
 type ButtonDownPayload = {
@@ -198,7 +189,7 @@ function finishSelectedElementSelection(state: EditorV2State) {
         //     selectCommand.applyToState(state)
         //     state.selectionCommands.push(selectCommand)
         // }
-        state.navigator.areaSelection = null
+        state.navigator.areaSelection = false
     }
 }
 
@@ -210,9 +201,6 @@ export const editorV2Slice = createAppSlice({
     initialState: initialState,
     reducers: create => ({
         mouseDown: create.reducer((state, action: PayloadAction<MouseDownPayload>) => {
-            state.navigator.x = action.payload.x
-            state.navigator.y = action.payload.y
-
             const key = mouseKeyToKeys(action.payload.key)
             keysChecker
                 .updatePressedKeys(state.navigator.pressedKeys)
@@ -259,7 +247,7 @@ export const editorV2Slice = createAppSlice({
             }
             state.navigator.pressedKeys.add(key)
         }),
-        mouseRelease: create.reducer((state, action: PayloadAction<MouseRelease>) => {
+        mouseRelease: create.reducer((state, action: PayloadAction<MouseReleasePayload>) => {
             const key = mouseKeyToKeys(action.payload.key)
 
             keysChecker.updatePressedKeys(state.navigator.pressedKeys).updateMinusKeys(key)
@@ -291,51 +279,6 @@ export const editorV2Slice = createAppSlice({
             }
 
             state.navigator.pressedKeys.delete(key)
-        }),
-        mouseMove: create.reducer((state, action: PayloadAction<MouseMove>) => {
-            keysChecker.updatePressedKeys(state.navigator.pressedKeys)
-            const newX = action.payload.newX
-            const newY = action.payload.newY
-            const oldX = state.navigator.x
-            const oldY = state.navigator.y
-
-            if (keysChecker.checkArePressed("space", "left")) {
-                if (state.spaceViewer.startOffsetX && state.spaceViewer.startOffsetY) {
-                    state.spaceViewer.offsetY = newY - state.spaceViewer.startOffsetY!
-                    state.spaceViewer.offsetX = newX - state.spaceViewer.startOffsetX!
-                }
-            } else if (keysChecker.checkArePressed("left")) {
-                if (state.navigator.areaSelection) {
-                    // const capturedMoreElements =
-                    //     Math.abs(newX - state.navigator.areaSelection.startX) >=
-                    //         Math.abs(oldX - state.navigator.areaSelection.startX) ||
-                    //     Math.abs(newY - state.navigator.areaSelection.startY) >=
-                    //         Math.abs(oldY - state.navigator.areaSelection.startY)
-
-                    // // update selected figures
-                    // const leftSelect = Math.min(newX, state.navigator.areaSelection!.startX)
-                    // const rightSelect = Math.max(newX, state.navigator.areaSelection!.startX)
-                    // const topSelect = Math.min(newY, state.navigator.areaSelection!.startY)
-                    // const bottomSelect = Math.max(newY, state.navigator.areaSelection!.startY)
-                    // const selectedPositionables = positionableIndex.getPositionablesInRange(
-                    //     leftSelect,
-                    //     topSelect,
-                    //     rightSelect,
-                    //     bottomSelect,
-                    // )
-                    // const edgeElements = getEdgeElements(selectedPositionables)
-                    // if (selectedPositionables.length > 0 && edgeElements) {
-                    //     state.space.selector = {
-                    //         elements: selectedPositionables,
-                    //         topLeftElement: edgeElements.topLeft,
-                    //         bottomRightElement: edgeElements.bottomRight,
-                    //         borders: getBorders(edgeElements.topLeft, edgeElements.bottomRight),
-                    //     }
-                    // } else {
-                    //     state.space.selector = null
-                    // }
-                }
-            }
         }),
         buttonDown: create.reducer((state, action: PayloadAction<ButtonDownPayload>) => {
             keysChecker
