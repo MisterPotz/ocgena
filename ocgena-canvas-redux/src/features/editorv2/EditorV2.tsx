@@ -35,6 +35,7 @@ import {
 import { KonvaEventObject } from "konva/lib/Node"
 import { string } from "fp-ts"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
+import { produce } from "immer"
 
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
@@ -213,14 +214,14 @@ class ShapesView {
     }
 
     addElements(shapes: PositionableShape[]) {
-        this.repository.addElements(shapes)
+        // this.repository.addElements(shapes)
         for (const shape of shapes) {
             this.layer.add(this.createKonvaNode(shape))
         }
     }
 
     removeElements(shapes: PositionableShape[]) {
-        this.repository.removeElements(shapes)
+        // this.repository.removeElements(shapes)
         for (const shape of shapes) {
             const child = this.getKonvaNode(shape)
             if (!!child) {
@@ -230,7 +231,7 @@ class ShapesView {
     }
 
     updateElements(shapes: PositionableShape[]) {
-        this.repository.updateElements(shapes)
+        // this.repository.updateElements(shapes)
 
         for (const shape of shapes) {
             const child = this.getKonvaNode(shape)
@@ -316,14 +317,18 @@ class ShapesView {
 }
 
 type ViewerSelectorArea = {
-    startX: number
-    startY: number
+    selectionDrawStartX?: number
+    selectionDrawStartY?: number
+    dragStartX?: number
+    dragStartY?: number
+    dragOffsetX?: number
+    dragOffsetY?: number
     currentlySelected: PositionableShape[]
 }
 
 type ViewerOffset = {
-    startX?: number
-    startY?: number
+    dragStartX?: number
+    dragStartY?: number
     offsetX: number
     offsetY: number
 }
@@ -379,14 +384,19 @@ class ViewFacade {
     stage: Konva.Stage
     shapesLayer: Konva.Layer
     shapesView: ShapesView
-    shapesRepository: ShapesRepository
+    selectionView: ShapesView
+    
+    shapesLayerRepository: ShapesRepository
+    selectionLayerRepository: ShapesRepository
     loggingEvents: LogCategories[] = ["buttons"]
 
-    constructor(stage: Konva.Stage, shapesLayer: Konva.Layer) {
+    constructor(stage: Konva.Stage, shapesLayer: Konva.Layer, selectionLayer: Konva.Layer) {
         this.stage = stage
         this.shapesLayer = shapesLayer
-        this.shapesRepository = new ShapesRepository()
-        this.shapesView = new ShapesView(shapesLayer, this.shapesRepository)
+        this.shapesLayerRepository = new ShapesRepository()
+        this.selectionLayerRepository = new ShapesRepository()
+        this.shapesView = new ShapesView(shapesLayer, this.shapesLayerRepository)
+        this.selectionView = new ShapesView(selectionLayer, this.selectionLayerRepository)
     }
 
     mouseDownObservable() {
@@ -484,7 +494,13 @@ class ViewFacade {
             this.keyDownObservable(),
             this.keyReleaseObservable(),
         )
-            .pipe(scan(this.reduce.bind(this), this.initialState))
+            .pipe(
+                scan((acc, value, idx) => {
+                    return produce(acc, state => {
+                        this.reduce(state, value, idx)
+                    })
+                }, this.initialState),
+            )
             .subscribe(this.viewerData)
     }
 
@@ -496,59 +512,113 @@ class ViewFacade {
         switch (event.type) {
             case "move": {
                 this.keysChecker.updatePressedKeys(state.pressedKeys)
+                state.x = event.canvasX
+                state.y = event.canvasY
 
                 if (this.keysChecker.checkArePressed("space", "left")) {
-                    if (state.offset.startX && state.offset.startY) {
-                        state.offset.offsetX = event.canvasX - state.offset.startX!
-                        state.offset.offsetY = event.canvasY - state.offset.startY!
+                    if (state.offset.dragStartX && state.offset.dragStartY) {
+                        state.offset.offsetX = event.canvasX - state.offset.dragStartX!
+                        state.offset.offsetY = event.canvasY - state.offset.dragStartY!
                     }
                 } else if (this.keysChecker.checkArePressed("left")) {
-                    if (state.selectorArea) {
-                        const leftSelect = Math.min(event.canvasX, state.selectorArea.startX)
-                        const rightSelect = Math.max(event.canvasX, state.selectorArea.startX)
-                        const topSelect = Math.min(event.canvasY, state.selectorArea.startY)
-                        const bottomSelect = Math.max(event.canvasY, state.selectorArea.startY)
+                    if (
+                        state.selectorArea &&
+                        state.selectorArea.selectionDrawStartX &&
+                        state.selectorArea.selectionDrawStartY
+                    ) {
+                        const leftSelect = Math.min(
+                            event.canvasX,
+                            state.selectorArea.selectionDrawStartX,
+                        )
+                        const rightSelect = Math.max(
+                            event.canvasX,
+                            state.selectorArea.selectionDrawStartX,
+                        )
+                        const topSelect = Math.min(
+                            event.canvasY,
+                            state.selectorArea.selectionDrawStartY,
+                        )
+                        const bottomSelect = Math.max(
+                            event.canvasY,
+                            state.selectorArea.selectionDrawStartY,
+                        )
 
-                        const intersectingItems = this.shapesRepository.searchIntersecting(
+                        const intersectingItems = this.shapesLayerRepository.searchIntersecting(
                             leftSelect,
                             rightSelect,
                             topSelect,
                             bottomSelect,
                         )
 
-                        if (
-                            state.selectorArea.currentlySelected &&
-                            !deepEquals(state.selectorArea.currentlySelected, intersectingItems)
-                        ) {
-                            const newState: ViewerData = {
-                                ...state,
-                                selectorArea: {
-                                    ...state.selectorArea,
-                                    currentlySelected: intersectingItems,
-                                },
-                                x: event.canvasX,
-                                y: event.canvasY
-                            }
-    
+                        if (!deepEquals(state.selectorArea.currentlySelected, intersectingItems)) {
+                            state.selectorArea.currentlySelected = intersectingItems
+
                             this.log(
                                 `selection area: ${intersectingItems.filter(el => el.id).join(", ")}`,
                                 "intersection",
                             )
-                            return newState
                         }
+                    } else if (
+                        state.selectorArea &&
+                        state.selectorArea.dragStartX &&
+                        state.selectorArea.dragStartY
+                    ) {
+                        state.selectorArea.dragOffsetX =
+                            event.canvasX - state.selectorArea.dragStartX
+                        state.selectorArea.dragOffsetY =
+                            event.canvasY - state.selectorArea.dragStartY
                     }
-                }
-                return {
-                    ...state,
-                    x: event.canvasX,
-                    y: event.canvasY,
                 }
             }
             case "down": {
-                if (event.button) {
-                    state.pressedKeys.add(event.button)
+                if (!event.button) return state
+
+                this.keysChecker.updatePressedKeys(state.pressedKeys).updatePlusKeys(event.button)
+
+                if (this.keysChecker.checkBecamePressed("space", "left")) {
+                    state.offset.dragStartX = event.canvasX
+                    state.offset.dragStartY = event.canvasY
+                } else if (this.keysChecker.checkBecamePressed("left")) {
+                    if (
+                        state.selectorArea?.currentlySelected &&
+                        !state.selectorArea.selectionDrawStartX &&
+                        !state.selectorArea.selectionDrawStartY
+                    ) {
+                        state.selectorArea.dragStartX = event.canvasX
+                        state.selectorArea.dragStartY = event.canvasY
+                    } else {
+                        const positionables = this.shapesLayerRepository.searchIntersecting(
+                            event.canvasX - 2,
+                            event.canvasY - 2,
+                            event.canvasX + 2,
+                            event.canvasY + 2
+                        )
+
+                        if (positionables.length > 0) {
+
+                            // const newSelectionCommand = new SelectItems(
+                            //     [positionable],
+                            //     positionable,
+                            //     positionable,
+                            // )
+                            // newSelectionCommand.applyToState(state)
+                            // state.selectionCommands.push(newSelectionCommand)
+                            // state.space.selector = {
+                            //     state.space.selector!.startX = action.payload.x
+                            //     state.space.selector!.startY = action.payload.y
+                            // }
+                        } else {
+                            state.space.selector = null
+                            state.navigator.areaSelection = {
+                                startX: action.payload.x,
+                                startY: action.payload.y,
+                            }
+                        }
+                    }
+                } else if (keysChecker.checkBecamePressed("right")) {
                 }
 
+                state.pressedKeys.add(event.button)
                 return {
                     ...state,
                     x: event.canvasX,
@@ -577,6 +647,20 @@ class ViewFacade {
             this.disposable.unsubscribe()
             this.disposable = null
         }
+    }
+
+    private pushViewsToSelectionBuffer(positionable: PositionableShape[]) {
+        this.shapesView.removeElements(positionable)
+        this.shapesLayerRepository.removeElements(positionable)
+        this.shapesView.addElements(positionable)
+        this.selectionLayerRepository.addElements(positionable)
+    }
+
+    private pushViewsFromSelectionBuffer(positionable: PositionableShape[]) {
+        this.shapesView.removeElements(positionable)
+        this.shapesLayerRepository.removeElements(positionable)
+        this.shapesView.addElements(positionable)
+        this.selectionLayerRepository.addElements(positionable)
     }
 
     private getMouseCoords(mouseEvent: MouseEvent): { x: number; y: number } {

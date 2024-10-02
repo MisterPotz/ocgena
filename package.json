@@ -14,7 +14,7 @@
   "devDependencies": {
     "turbo": "^2.0.4"
   },
-  "workspaces":[
+  "workspaces": [
     "apps/*",
     "packages/*"
   ],
@@ -26,5 +26,8 @@
   "resolutions": {
     "peggy": "^3.0.2"
   },
-  "packageManager": "npm@10.8.1"
+  "packageManager": "npm@10.8.1",
+  "dependencies": {
+    "immer": "^10.1.1"
+  }
 }
