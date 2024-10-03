@@ -398,6 +398,7 @@ class SelectionBuffer {
     buffer: PositionableShape[] = []
 }
 
+// todo encapsulate the updates into 'Mode' class (selection / panning)
 class ViewFacade {
     initialState: ViewerData = {
         x: 0,
