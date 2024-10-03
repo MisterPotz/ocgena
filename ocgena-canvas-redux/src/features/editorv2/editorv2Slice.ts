@@ -215,8 +215,8 @@ export const editorV2Slice = createAppSlice({
                 if (state.navigator.areaSelection) {
                     finishSelectedElementSelection(state)
                 }
-                state.spaceViewer.startOffsetX = state.navigator.x
-                state.spaceViewer.startOffsetY = state.navigator.y
+                // state.spaceViewer.startOffsetX = state.navigator.x
+                // state.spaceViewer.startOffsetY = state.navigator.y
             }
 
             state.navigator.pressedKeys.add(action.payload.key)

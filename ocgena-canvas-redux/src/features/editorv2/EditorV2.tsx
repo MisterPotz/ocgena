@@ -33,9 +33,11 @@ import {
     zip,
 } from "rxjs"
 import { KonvaEventObject } from "konva/lib/Node"
-import { string } from "fp-ts"
+import { state, string } from "fp-ts"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
 import { produce } from "immer"
+import { SelectInteractionMode } from "./SelectInteractionMode"
+import { aC } from "vitest/dist/reporters-P7C2ytIv.js"
 
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
@@ -126,9 +128,7 @@ export default function deepEquals(object1: any, object2: any) {
     }
     return true
 }
-function test() {
-    
-}
+function test() {}
 function isObject(object: Object) {
     return object != null && typeof object === "object"
 }
@@ -206,28 +206,28 @@ class ShapesRepository {
     }
 }
 
-class ShapeLayerFacade {
-    viewUpdater: ShapesViewUpdater
+export class ShapeLayerFacade {
+    viewDelegate: ShapesViewDelegate
     repository: ShapesRepository
 
-    constructor(viewUpdater: ShapesViewUpdater, repository: ShapesRepository) {
-        this.viewUpdater = viewUpdater
+    constructor(viewUpdater: ShapesViewDelegate, repository: ShapesRepository) {
+        this.viewDelegate = viewUpdater
         this.repository = repository
     }
 
     addElements(shapes: PositionableShape[]) {
-        this.viewUpdater.addElements(shapes)
+        this.viewDelegate.addElements(shapes)
         this.repository.addElements(shapes)
     }
 
     removeElements(shapes: PositionableShape[]) {
-        this.viewUpdater.removeElements(shapes)
+        this.viewDelegate.removeElements(shapes)
         this.repository.removeElements(shapes)
     }
 
     updateElements(shapes: PositionableShape[]) {
         this.repository.updateElements(shapes)
-        this.viewUpdater.updateElements(shapes)
+        this.viewDelegate.updateElements(shapes)
     }
 
     // searchIntersecting(left: number, top: number, right: number, bottom: number) {
@@ -237,9 +237,14 @@ class ShapeLayerFacade {
     searchIntersecting(area: { left: number; top: number; right: number; bottom: number }) {
         return this.repository.searchIntersecting(area.left, area.top, area.right, area.bottom)
     }
+
+    moveItemsTo(shapes: PositionableShape[], dst: ShapeLayerFacade) {
+        this.removeElements(shapes)
+        dst.addElements(shapes)
+    }
 }
 
-class ShapesViewUpdater {
+class ShapesViewDelegate {
     layer: Konva.Layer
 
     constructor(elementsLayer: Konva.Layer) {
@@ -349,13 +354,27 @@ class ShapesViewUpdater {
     }
 }
 
+type SelectingAreaState = {
+    selectionDrawStartX: number
+    selectionDrawStartY: number
+    type: "selectingarea"
+}
+
+type DraggingState = {
+    dragStartX: number
+    dragStartY: number
+    type: "dragging"
+}
+
+type Idle = {
+    type: "idle"
+}
+type SelectState = SelectingAreaState | DraggingState | Idle
+
 type ViewerSelectorArea = {
-    selectionDrawStartX?: number
-    selectionDrawStartY?: number
-    dragStartX?: number
-    dragStartY?: number
-    dragOffsetX?: number
-    dragOffsetY?: number
+    dragOffsetX: number
+    dragOffsetY: number
+    state: SelectState
     currentlySelected: PositionableShape[]
 }
 
@@ -366,7 +385,7 @@ type ViewerOffset = {
     offsetY: number
 }
 
-type ViewerData = {
+export type ViewerData = {
     x: number
     y: number
     pressedKeys: Set<Keys>
@@ -374,16 +393,22 @@ type ViewerData = {
     offset: ViewerOffset
 }
 
-type MouseEventData = {
+export type MouseEventButtonData = {
     canvasX: number
     canvasY: number
-    type: "down" | "release" | "move"
-    button?: MouseKeys
+    type: "down" | "release"
+    button: MouseKeys
 }
+export type MouseEventMoveData = {
+    canvasX: number
+    canvasY: number
+    type: "move"
+}
+export type MouseEventData = MouseEventButtonData | MouseEventMoveData
 
-type KeyEventData = {
+export type KeyEventData = {
     type: "keydown" | "keyrelease"
-    button?: ButtonKeys
+    button: ButtonKeys
 }
 
 type StartDragging = {
@@ -394,10 +419,99 @@ type ExternalEvent = {
     type: "ext"
 }
 
-type LogCategories = "buttons" | "intersection"
-
 class SelectionBuffer {
     buffer: PositionableShape[] = []
+}
+
+export type UpdateContext = {
+    keyChecker: CombinedPressedKeyChecker
+}
+export type InteractionMode = {
+    type: "panning" | "selection"
+    onMouseEvent(state: ViewerData, event: MouseEventData, updateContext: UpdateContext): void
+    onButtonEvent(state: ViewerData, event: KeyEventData, updateContext: UpdateContext): void
+}
+
+class PanningInteractionMode implements InteractionMode {
+    type: "panning" | "selection" = "panning"
+    keysChecker: CombinedPressedKeyChecker = new CombinedPressedKeyChecker()
+    constructor() {}
+    private onMouseMove(state: ViewerData, event: MouseEventData): void {
+        if (state.offset.dragStartX && state.offset.dragStartY) {
+            state.offset.offsetX = event.canvasX - state.offset.dragStartX!
+            state.offset.offsetY = event.canvasY - state.offset.dragStartY!
+        }
+    }
+    private onMouseKeyDown(state: ViewerData, event: MouseEventData): void {
+        state.offset.dragStartX = event.canvasX
+        state.offset.dragStartY = event.canvasY
+    }
+    private onMouseKeyRelease(state: ViewerData, event: MouseEventData): void {
+        state.offset.dragStartX = undefined
+        state.offset.dragStartY = undefined
+    }
+
+    onMouseEvent(state: ViewerData, event: MouseEventData): void {
+        switch (event.type) {
+            case "down":
+                this.onMouseKeyDown(state, event)
+                break
+            case "release":
+                this.onMouseKeyRelease(state, event)
+                break
+            case "move":
+                this.onMouseMove(state, event)
+                break
+        }
+    }
+
+    onButtonEvent(state: ViewerData, event: KeyEventData): void {
+        switch (event.type) {
+            case "keydown": {
+                this.keysChecker.updatePressedKeys(state.pressedKeys).updatePlusKeys(event.button)
+
+                if (this.keysChecker.checkBecamePressed("space", "left")) {
+                    state.offset.dragStartX = state.x
+                    state.offset.dragStartY = state.y
+                }
+                break
+            }
+            case "keyrelease": {
+                this.keysChecker
+                    .updatePressedKeys(state.pressedKeys)
+                    .checkBecameUnpressed(event.button)
+
+                if (this.keysChecker.checkBecameUnpressed("space", "left")) {
+                    state.offset.dragStartX = undefined
+                    state.offset.dragStartY = undefined
+                }
+                break
+            }
+        }
+    }
+}
+
+type LogCategories = "buttons" | "intersection"
+const loggingEvents: LogCategories[] = ["buttons", "intersection"]
+export function log(message: string, ...levels: LogCategories[]) {
+    var allLevels = true
+    for (const level of levels) {
+        if (!loggingEvents.includes(level)) {
+            allLevels = false
+        }
+    }
+    if (allLevels) {
+        console.log("[", levels.join(", "), "]", message)
+    }
+}
+
+export function getClickAreaByPoint(x: number, y: number) {
+    return {
+        left: x - 2,
+        top: x - 2,
+        right: x + 2,
+        bottom: x + 2,
+    }
 }
 
 // todo encapsulate the updates into 'Mode' class (selection / panning)
@@ -418,106 +532,34 @@ class ViewFacade {
     stage: Konva.Stage
     mainLayerFacade: ShapeLayerFacade
     selectionLayerFacade: ShapeLayerFacade
-    loggingEvents: LogCategories[] = ["buttons"]
+    panInteractionMode = new PanningInteractionMode()
+    selectInteractionMode: SelectInteractionMode
+    activeInteractionMode: InteractionMode | null = null
+    keysToMods: { [key: string]: { keys: Keys[]; mode: InteractionMode } }
+    modes : InteractionMode[] = []
 
     constructor(stage: Konva.Stage, shapesLayer: Konva.Layer, selectionLayer: Konva.Layer) {
         this.stage = stage
         const shapesLayerRepository = new ShapesRepository()
         const selectionLayerRepository = new ShapesRepository()
-        const shapesView = new ShapesViewUpdater(shapesLayer)
-        const selectionView = new ShapesViewUpdater(selectionLayer)
+        const shapesView = new ShapesViewDelegate(shapesLayer)
+        const selectionView = new ShapesViewDelegate(selectionLayer)
         this.mainLayerFacade = new ShapeLayerFacade(shapesView, shapesLayerRepository)
         this.selectionLayerFacade = new ShapeLayerFacade(selectionView, selectionLayerRepository)
-    }
-
-    mouseDownObservable() {
-        return fromEvent(this.stage, "mousedown", (evt: KonvaEventObject<MouseEvent>) => {
-            const { x, y } = this.getMouseCoords(evt.evt)
-            const btn = mouseBtnToKey(evt.evt.button)
-            this.log(`mouse down ${btn}`, "buttons")
-            const mouseEvent: MouseEventData = {
-                canvasX: x,
-                canvasY: y,
-                type: "down",
-                button: btn,
-            }
-            return mouseEvent
-        })
-    }
-
-    mouseMoveObservable() {
-        return fromEvent(this.stage, "mousemove", (evt: KonvaEventObject<MouseEvent>) => {
-            const { x, y } = this.getMouseCoords(evt.evt)
-            const mouseEvent: MouseEventData = {
-                canvasX: x,
-                canvasY: y,
-                type: "move",
-            }
-            return mouseEvent
-        })
-    }
-
-    mouseUpObservable() {
-        return fromEvent(this.stage, "mouseup", (evt: KonvaEventObject<MouseEvent>) => {
-            const { x, y } = this.getMouseCoords(evt.evt)
-            const btn = mouseBtnToKey(evt.evt.button)
-            this.log(`mouse release ${btn}`, "buttons")
-
-            const mouseEvent: MouseEventData = {
-                canvasX: x,
-                canvasY: y,
-                type: "release",
-                button: btn,
-            }
-            return mouseEvent
-        })
-    }
-
-    keyDownObservable() {
-        return fromEvent(window, "keydown", (evt: KeyboardEvent) => {
-            const key: ButtonKeys | null = keyboardBtnToKey(evt.key)
-            if (key) {
-                evt.preventDefault()
-                this.log(`key down ${key}`, "buttons")
-                const keyEventData: KeyEventData = {
-                    button: key,
-                    type: "keydown",
-                }
-                return keyEventData
-            }
-            return null
-        }).pipe(filter(el => el != null))
-    }
-
-    keyReleaseObservable() {
-        return fromEvent(window, "keyup", (evt: KeyboardEvent) => {
-            const key = keyboardBtnToKey(evt.key)
-            if (key) {
-                this.log(`key up ${key}`, "buttons")
-                const keyEventData: KeyEventData = {
-                    button: key,
-                    type: "keyrelease",
-                }
-                return keyEventData
-            }
-            return null
-        }).pipe(filter(el => el != null))
-    }
-
-    log(message: string, ...levels: LogCategories[]) {
-        var allLevels = true
-        for (const level of levels) {
-            if (!this.loggingEvents.includes(level)) {
-                allLevels = false
-            }
+        this.selectInteractionMode = new SelectInteractionMode(
+            this.mainLayerFacade,
+            this.selectionLayerFacade,
+        )
+        this.keysToMods = {
+            panning: { keys: ["space", "left"], mode: this.panInteractionMode },
+            selection: { keys: ["left"], mode: this.selectInteractionMode },
         }
-        if (allLevels) {
-            console.log("[", levels.join(", "), "]", message)
-        }
+        this.modes = [this.panInteractionMode, this.selectInteractionMode]
     }
 
     start() {
-        merge(
+        this.disposable?.unsubscribe()
+        this.disposable = merge(
             this.externalEvents,
             this.mouseDownObservable(),
             this.mouseMoveObservable(),
@@ -527,6 +569,7 @@ class ViewFacade {
         )
             .pipe(
                 scan((acc, value, idx) => {
+                    if (!value) return acc
                     return produce(acc, state => {
                         this.reduce(state, value, idx)
                     })
@@ -535,163 +578,61 @@ class ViewFacade {
             .subscribe(this.viewerData)
     }
 
+    isMouseEvent(
+        mouseEvent: ExternalEvent | MouseEventData | KeyEventData,
+    ): mouseEvent is MouseEventData {
+        return (
+            mouseEvent.type === "down" ||
+            mouseEvent.type === "release" ||
+            mouseEvent.type === "move"
+        )
+    }
+
+    isKeyboardEvent(
+        keyboardEvent: ExternalEvent | MouseEventData | KeyEventData,
+    ): keyboardEvent is KeyEventData {
+        return (
+            keyboardEvent.type === "keydown" ||
+            keyboardEvent.type === "keyrelease"
+        )
+    }
+
     reduce(state: ViewerData, event: ExternalEvent | MouseEventData | KeyEventData, idx: number) {
+        this.keysChecker.updatePressedKeys(state.pressedKeys)
+        switch (event.type) {
+            case "down": this.keysChecker.updatePlusKeys(event.button); break;
+            case "release": state.pressedKeys.delete(event.button); break;
+            case 'keydown': state.pressedKeys.add(event.button); break;
+            case 'keyrelease': state.pressedKeys.delete(event.button); break;
+            default: {
+                break
+            }
+        }
+
+        if (this.isMouseEvent(event)) {
+            this.modes.forEach(el => el.onMouseEvent(state, event))
+        } else if (this.isKeyboardEvent(event)) {
+            this.modes.forEach(el => el.onButtonEvent(state, event))
+        }
         switch (event.type) {
             case "move": {
-                this.keysChecker.updatePressedKeys(state.pressedKeys)
                 state.x = event.canvasX
                 state.y = event.canvasY
-
-                if (this.keysChecker.checkArePressed("space", "left")) {
-                    if (state.offset.dragStartX && state.offset.dragStartY) {
-                        state.offset.offsetX = event.canvasX - state.offset.dragStartX!
-                        state.offset.offsetY = event.canvasY - state.offset.dragStartY!
-                    }
-                } else if (this.keysChecker.checkArePressed("left")) {
-                    if (
-                        state.selectorArea &&
-                        state.selectorArea.selectionDrawStartX &&
-                        state.selectorArea.selectionDrawStartY
-                    ) {
-                        const leftSelect = Math.min(
-                            event.canvasX,
-                            state.selectorArea.selectionDrawStartX,
-                        )
-                        const rightSelect = Math.max(
-                            event.canvasX,
-                            state.selectorArea.selectionDrawStartX,
-                        )
-                        const topSelect = Math.min(
-                            event.canvasY,
-                            state.selectorArea.selectionDrawStartY,
-                        )
-                        const bottomSelect = Math.max(
-                            event.canvasY,
-                            state.selectorArea.selectionDrawStartY,
-                        )
-
-                        const intersectingItems = this.mainLayerFacade.searchIntersecting({
-                            left: leftSelect,
-                            top: topSelect,
-                            right: rightSelect,
-                            bottom: bottomSelect,
-                        })
-
-                        if (!deepEquals(state.selectorArea.currentlySelected, intersectingItems)) {
-                            state.selectorArea.currentlySelected = intersectingItems
-
-                            this.log(
-                                `selection area: ${intersectingItems.filter(el => el.id).join(", ")}`,
-                                "intersection",
-                            )
-                        }
-                    } else if (
-                        state.selectorArea &&
-                        state.selectorArea.dragStartX &&
-                        state.selectorArea.dragStartY
-                    ) {
-                        state.selectorArea.dragOffsetX =
-                            event.canvasX - state.selectorArea.dragStartX
-                        state.selectorArea.dragOffsetY =
-                            event.canvasY - state.selectorArea.dragStartY
-                    }
-                }
-                break;
+                break
             }
-            case "down": {
-                if (!event.button) return
-                this.keysChecker.updatePressedKeys(state.pressedKeys).updatePlusKeys(event.button)
-
-                if (this.keysChecker.checkBecamePressed("space", "left")) {
-                    state.offset.dragStartX = event.canvasX
-                    state.offset.dragStartY = event.canvasY
-                } else if (this.keysChecker.checkBecamePressed("left")) {
-                    const elementsAtSelection = this.selectionLayerFacade.searchIntersecting(
-                        this.getClickAreaByPoint(event.canvasX, event.canvasY),
-                    )
-
-                    if (
-                        state.selectorArea?.currentlySelected &&
-                        !state.selectorArea.selectionDrawStartX &&
-                        !state.selectorArea.selectionDrawStartY &&
-                        elementsAtSelection.length > 0
-                    ) {
-                        state.selectorArea.dragStartX = event.canvasX
-                        state.selectorArea.dragStartY = event.canvasY
-                    } else {
-                        const elementsAtMain = this.mainLayerFacade.searchIntersecting(
-                            this.getClickAreaByPoint(event.canvasX, event.canvasY),
-                        )
-                        if (elementsAtMain.length > 0) {
-                            const selectedElement = elementsAtMain[0]
-
-                            state.selectorArea = {
-                                currentlySelected: [selectedElement],
-                            }
-                        } else {
-                            state.selectorArea = undefined
-                        }
-                    }
-                } else if (this.keysChecker.checkBecamePressed("right")) {
-                }
-
-                state.pressedKeys.add(event.button)
-                break;
-            }
-            case "release": {
-                if (!event.button) return
-                this.keysChecker.updatePressedKeys(state.pressedKeys).updateMinusKeys(event.button)
-
-                if (
-                    this.keysChecker.checkArePressed("space", "left") &&
-                    this.keysChecker.checkBecameUnpressed("left")
-                ) {
-                    state.offset.dragStartX = undefined
-                    state.offset.dragStartY = undefined
-                } else if (this.keysChecker.checkBecameUnpressed("left")) {
-                    if (
-                        state.selectorArea?.selectionDrawStartX &&
-                        state.selectorArea?.selectionDrawStartY
-                    ) {
-                        state.selectorArea.selectionDrawStartX = undefined
-                        state.selectorArea.selectionDrawStartY = undefined
-                    } else if (state.selectorArea?.dragStartX && state.selectorArea?.dragStartY) {
-                        // drag offset already applied during move events
-                        state.selectorArea.dragStartX = undefined
-                        state.selectorArea.dragStartY = undefined
-                    }
-                } else if (this.keysChecker.checkBecameUnpressed("right")) {
-                    // if there is transformer or selection (and mouse over such elements?), open popup menu
-                }
-
-                state.pressedKeys.delete(event.button)
-                break;
-            }
+            case "down": state.pressedKeys.add(event.button); break;
+            case "release": state.pressedKeys.delete(event.button); break;
+            case 'keydown': state.pressedKeys.add(event.button); break;
+            case 'keyrelease': state.pressedKeys.delete(event.button); break;
             default: {
-                break;
+                break
             }
         }
     }
 
     stop() {
-        if (this.disposable) {
-            this.disposable.unsubscribe()
-            this.disposable = null
-        }
-    }
-
-    private pushViewsToSelectionBuffer(positionable: PositionableShape[]) {
-        this.shapesView.removeElements(positionable)
-        this.shapesLayerRepository.removeElements(positionable)
-        this.shapesView.addElements(positionable)
-        this.selectionLayerRepository.addElements(positionable)
-    }
-
-    private pushViewsFromSelectionBuffer(positionable: PositionableShape[]) {
-        this.shapesView.removeElements(positionable)
-        this.shapesLayerRepository.removeElements(positionable)
-        this.shapesView.addElements(positionable)
-        this.selectionLayerRepository.addElements(positionable)
+        this.disposable?.unsubscribe()
+        this.disposable = null
     }
 
     private getMouseCoords(mouseEvent: MouseEvent): { x: number; y: number } {
@@ -703,47 +644,105 @@ class ViewFacade {
         }
     }
 
-    private getClickAreaByPoint(x: number, y: number) {
-        return {
-            left: x - 2,
-            top: x - 2,
-            right: x + 2,
-            bottom: x + 2,
-        }
+    private mouseDownObservable() {
+        return fromEvent(this.stage, "mousedown", (evt: KonvaEventObject<MouseEvent>) => {
+            const { x, y } = this.getMouseCoords(evt.evt)
+            const btn = mouseBtnToKey(evt.evt.button)
+            if (!btn) return
+            log(`mouse down ${btn}`, "buttons")
+            const mouseEvent: MouseEventData = {
+                canvasX: x,
+                canvasY: y,
+                type: "down",
+                button: btn,
+            }
+            return mouseEvent
+        }).pipe(filter(el => !!el))
+    }
+
+    private mouseMoveObservable() {
+        return fromEvent(this.stage, "mousemove", (evt: KonvaEventObject<MouseEvent>) => {
+            const { x, y } = this.getMouseCoords(evt.evt)
+            const mouseEvent: MouseEventData = {
+                canvasX: x,
+                canvasY: y,
+                type: "move",
+            }
+            return mouseEvent
+        })
+    }
+
+    private mouseUpObservable() {
+        return fromEvent(this.stage, "mouseup", (evt: KonvaEventObject<MouseEvent>) => {
+            const { x, y } = this.getMouseCoords(evt.evt)
+            const btn = mouseBtnToKey(evt.evt.button)
+            if (!btn) return
+            log(`mouse release ${btn}`, "buttons")
+
+            const mouseEvent: MouseEventData = {
+                canvasX: x,
+                canvasY: y,
+                type: "release",
+                button: btn,
+            }
+            return mouseEvent
+        })
+    }
+
+    private keyDownObservable() {
+        return fromEvent(window, "keydown", (evt: KeyboardEvent) => {
+            const key: ButtonKeys | null = keyboardBtnToKey(evt.key)
+            if (key) {
+                evt.preventDefault()
+                log(`key down ${key}`, "buttons")
+                const keyEventData: KeyEventData = {
+                    button: key,
+                    type: "keydown",
+                }
+                return keyEventData
+            }
+            return null
+        }).pipe(filter(el => el != null))
+    }
+
+    private keyReleaseObservable() {
+        return fromEvent(window, "keyup", (evt: KeyboardEvent) => {
+            const key = keyboardBtnToKey(evt.key)
+            if (key) {
+                log(`key up ${key}`, "buttons")
+                const keyEventData: KeyEventData = {
+                    button: key,
+                    type: "keyrelease",
+                }
+                return keyEventData
+            }
+            return null
+        }).pipe(filter(el => el != null))
     }
 }
 
 export function EditorV2() {
     const stage = useRef<Konva.Stage | null>(null)
+    const mainLayer = useRef<Konva.Layer | null>(null)
+    const selectionLayer = useRef<Konva.Layer | null>(null)
+    const viewFacade = useRef<ViewFacade | null>(null)
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        const handleKeyDown: (ev: WindowEventMap["keydown"]) => any = evt => {
-            const key = keyboardBtnToKey(evt.key)
-            if (key) {
-                evt.preventDefault()
-                console.log("sending button down ", key)
-                dispatch(buttonDown({ key }))
+        if (stage.current && mainLayer.current && selectionLayer.current) {
+            viewFacade.current = new ViewFacade(
+                stage.current,
+                mainLayer.current,
+                selectionLayer.current,
+            )
+
+            viewFacade.current.start()
+
+            return () => {
+                viewFacade.current?.stop()
             }
         }
-
-        const handleKeyUp: (ev: WindowEventMap["keyup"]) => any = evt => {
-            const key = keyboardBtnToKey(evt.key)
-            if (key) {
-                dispatch(buttonUp({ key }))
-            }
-        }
-
-        window.addEventListener("keydown", handleKeyDown)
-        window.addEventListener("keyup", handleKeyUp)
-        window.addEventListener("mousedown", handleKeyUp)
-
-        // Cleanup function to remove the event listeners
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown)
-            window.removeEventListener("keyup", handleKeyUp)
-        }
-    }, [dispatch])
+    }, [stage.current, mainLayer.current, , selectionLayer.current])
 
     return (
         <>
@@ -755,52 +754,10 @@ export function EditorV2() {
                 ref={stage}
                 width={1200}
                 height={800}
-                onMouseDown={evt => {
-                    const mouseKey = mouseBtnToKey(evt.evt.button)
-                    const stageloc = stage.current
-                    const pointerPos = stageloc?.getPointerPosition()
-                    if (mouseKey && stageloc && pointerPos) {
-                        dispatch(
-                            mouseDown({
-                                key: mouseKey,
-                                x: pointerPos.x,
-                                y: pointerPos.y,
-                                targetId: undefined,
-                            }),
-                        )
-                    }
-                }}
-                onMouseUp={evt => {
-                    const mouseKey = mouseBtnToKey(evt.evt.button)
-                    const stageloc = stage.current
-                    const pointerPos = stageloc?.getPointerPosition()
-                    if (mouseKey && stageloc && pointerPos) {
-                        const stageCoord = stageloc.container().getBoundingClientRect()
-
-                        dispatch(
-                            mouseRelease({
-                                key: mouseKey,
-                                releaseX: evt.evt.clientX - stageCoord.x,
-                                releaseY: evt.evt.clientY - pointerPos.y,
-                            }),
-                        )
-                    }
-                }}
-                onMouseMove={evt => {
-                    const stageloc = stage.current
-                    const pointerPos = stageloc?.getPointerPosition()
-                    if (stageloc && pointerPos) {
-                        const stageCoord = stageloc.container().getBoundingClientRect()
-                        dispatch(
-                            mouseMove({
-                                newX: evt.evt.clientX - stageCoord.x,
-                                newY: evt.evt.clientY - stageCoord.y,
-                            }),
-                        )
-                    }
-                }}
             >
                 <PatternBackground />
+                <Layer ref={mainLayer} />
+                <Layer ref={selectionLayer} />
                 {/* <Layer ref={elementsLayerRef}>
               {elements.map((el, index) => {
                 return (
