@@ -126,7 +126,9 @@ export default function deepEquals(object1: any, object2: any) {
     }
     return true
 }
-
+function test() {
+    
+}
 function isObject(object: Object) {
     return object != null && typeof object === "object"
 }
