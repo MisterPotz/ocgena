@@ -1,22 +1,18 @@
-import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
 import deepEquals, {
     InteractionMode,
     ShapeLayerFacade,
     ViewerData,
-    MouseEventData,
     getClickAreaByPoint,
     log,
-    KeyEventData,
-    UpdateContext,
+    InteractionModeEvent,
 } from "./EditorV2"
-import { ButtonKeys } from "./SpaceModel"
+import { Keys } from "./SpaceModel"
 
 export class SelectInteractionMode implements InteractionMode {
     type: "panning" | "selection" = "selection"
 
     mainLayerFacade: ShapeLayerFacade
     selectionLayerFacade: ShapeLayerFacade
-    keyChecker: CombinedPressedKeyChecker = new CombinedPressedKeyChecker()
     constructor(mainLayerFacade: ShapeLayerFacade, selectionLayerFacade: ShapeLayerFacade) {
         this.mainLayerFacade = mainLayerFacade
         this.selectionLayerFacade = selectionLayerFacade
@@ -40,15 +36,14 @@ export class SelectInteractionMode implements InteractionMode {
     }
     private transitionNullState(
         state: ViewerData,
-        event: MouseEventData | KeyEventData,
-        updateContext: UpdateContext,
+        event: InteractionModeEvent,
     ) {
         if (!state.selectorArea) return
 
         switch (event.type) {
-            case "down": {
+            case "modeactive": {
                 const itemsPressedAtMain = this.mainLayerFacade.searchIntersecting(
-                    getClickAreaByPoint(event.canvasX, event.canvasY),
+                    getClickAreaByPoint(event.x, event.y),
                 )
                 if (itemsPressedAtMain.length > 0) {
                     state.selectorArea.currentlySelected = [itemsPressedAtMain[0]]
@@ -59,8 +54,8 @@ export class SelectInteractionMode implements InteractionMode {
                 } else {
                     state.selectorArea.state = {
                         type: "selectingarea",
-                        selectionDrawStartX: event.canvasX,
-                        selectionDrawStartY: event.canvasY,
+                        selectionDrawStartX: event.x,
+                        selectionDrawStartY: event.y,
                     }
                 }
                 break
@@ -69,27 +64,26 @@ export class SelectInteractionMode implements InteractionMode {
     }
     private transitionSelectingAreaState(
         state: ViewerData,
-        event: MouseEventData | KeyEventData,
-        updateContext: UpdateContext,
+        event: InteractionModeEvent,
     ) {
         if (state.selectorArea?.state.type !== "selectingarea") return
 
         switch (event.type) {
-            case "move": {
+            case "mousemove": {
                 const leftSelect = Math.min(
-                    event.canvasX,
+                    event.newX,
                     state.selectorArea.state.selectionDrawStartX,
                 )
                 const rightSelect = Math.max(
-                    event.canvasX,
+                    event.newX,
                     state.selectorArea.state.selectionDrawStartX,
                 )
                 const topSelect = Math.min(
-                    event.canvasY,
+                    event.newY,
                     state.selectorArea.state.selectionDrawStartY,
                 )
                 const bottomSelect = Math.max(
-                    event.canvasY,
+                    event.newY,
                     state.selectorArea.state.selectionDrawStartY,
                 )
 
@@ -110,7 +104,7 @@ export class SelectInteractionMode implements InteractionMode {
                 }
                 break
             }
-            case "release": {
+            case "modeoff": {
                 log(
                     `commencing intersection with ${state.selectorArea.currentlySelected.map(el => el.id).join(",")}`,
                     "intersection",
@@ -121,15 +115,6 @@ export class SelectInteractionMode implements InteractionMode {
                     type: "idle",
                 }
             }
-            case "keydown": {
-                if (updateContext.keyChecker.checkBecamePressed("space", "left")) {
-                    this.pushElementsToSelection(state)
-
-                    state.selectorArea.state = {
-                        type: "idle",
-                    }
-                }
-            }
             default:
                 break
         }
@@ -137,21 +122,20 @@ export class SelectInteractionMode implements InteractionMode {
 
     private transitionIdleState(
         state: ViewerData,
-        event: MouseEventData | KeyEventData,
-        updateContext: UpdateContext,
+        event: InteractionModeEvent,
     ) {
         if (state.selectorArea?.state?.type !== "idle") return
 
         switch (event.type) {
-            case "down": {
+            case "modeactive": {
                 const itemsAtSelectionLayer = this.selectionLayerFacade.searchIntersecting(
-                    getClickAreaByPoint(event.canvasX, event.canvasY),
+                    getClickAreaByPoint(event.x, event.y),
                 )
                 if (itemsAtSelectionLayer.length == 0) {
                     this.pullElementsFromSelection(state)
                 }
                 const itemsPressedAtMain = this.mainLayerFacade.searchIntersecting(
-                    getClickAreaByPoint(event.canvasX, event.canvasY),
+                    getClickAreaByPoint(event.x, event.y),
                 )
                 if (itemsPressedAtMain.length > 0) {
                     state.selectorArea.currentlySelected = [itemsPressedAtMain[0]]
@@ -170,67 +154,62 @@ export class SelectInteractionMode implements InteractionMode {
     }
     private transitionDragState(
         state: ViewerData,
-        event: MouseEventData | KeyEventData,
-        updateContext: UpdateContext,
+        event: InteractionModeEvent,
     ) {
         if (state.selectorArea?.state.type !== "dragging") return
 
         switch (event.type) {
-            case "down":
+            case "modeactive":
                 break
-            case "release": {
+            case "modeoff": {
                 state.selectorArea.state = {
                     type: "idle",
                 }
                 break
             }
-            case "move": {
-                state.selectorArea.dragOffsetX = event.canvasX - state.selectorArea.state.dragStartX
-                state.selectorArea.dragOffsetY = event.canvasY - state.selectorArea.state.dragStartY
+            case "mousemove": {
+                state.selectorArea.dragOffsetX = event.newX - state.selectorArea.state.dragStartX
+                state.selectorArea.dragOffsetY = event.newY - state.selectorArea.state.dragStartY
                 break
             }
-            case "keydown": {
-                if (updateContext.keyChecker.checkBecamePressed("space", "left")) {
-                    state.selectorArea.state = {
-                        type: "idle",
-                    }
+        }
+    }
+
+    transitionToIdleIfCan(state: ViewerData): void {
+        switch (state.selectorArea?.state?.type) {
+            case "idle":
+            case undefined:
+            case null:
+                break
+            case "selectingarea":
+            case "dragging": {
+                this.pushElementsToSelection(state)
+
+                state.selectorArea.state = {
+                    type: "idle",
                 }
             }
         }
     }
-
-    onMouseEvent(state: ViewerData, event: MouseEventData, updateContext: UpdateContext): void {
-        switch (state.selectorArea?.state?.type) {
-            case "dragging":
-                this.transitionDragState(state, event, updateContext)
-                break
-            case "idle":
-                this.transitionIdleState(state, event, updateContext)
-                break
-            case "selectingarea":
-                this.transitionSelectingAreaState(state, event, updateContext)
-                break
-            case undefined:
-            case null:
-                this.transitionNullState(state, event, updateContext)
-                break
-        }
+    
+    activationKeys(): Keys[] {
+        return ["left"]
     }
 
-    onButtonEvent(state: ViewerData, event: KeyEventData, updateContext: UpdateContext): void {
+    onEvent(state: ViewerData, event: InteractionModeEvent): void {
         switch (state.selectorArea?.state?.type) {
             case "dragging":
-                this.transitionDragState(state, event, updateContext)
+                this.transitionDragState(state, event)
                 break
             case "idle":
-                this.transitionIdleState(state, event, updateContext)
+                this.transitionIdleState(state, event)
                 break
             case "selectingarea":
-                this.transitionSelectingAreaState(state, event, updateContext)
+                this.transitionSelectingAreaState(state, event)
                 break
             case undefined:
             case null:
-                this.transitionNullState(state, event, updateContext)
+                this.transitionNullState(state, event)
                 break
         }
     }

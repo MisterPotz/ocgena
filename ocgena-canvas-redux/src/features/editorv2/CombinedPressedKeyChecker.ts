@@ -5,7 +5,7 @@ export class CombinedPressedKeyChecker {
     private plusKeys: Set<Keys> = new Set<Keys>();
     private minusKeys: Set<Keys> = new Set<Keys>();
 
-    checkArePressed(...keys: Keys[]) {
+    checkArePressed(keys: Keys[]) {
         for (const key of keys) {
             if (!this.pressedKeysSet.has(key)) {
                 return false;
@@ -14,7 +14,7 @@ export class CombinedPressedKeyChecker {
         return true;
     }
 
-    checkBecamePressed(...keys: Keys[]) {
+    checkBecamePressed(keys: Keys[]) {
         var atLeastOneInPlus = false;
 
         for (const key of keys) {
@@ -28,7 +28,7 @@ export class CombinedPressedKeyChecker {
         return atLeastOneInPlus;
     }
 
-    checkBecameUnpressed(...keys: Keys[]) {
+    checkBecameUnpressed(keys: Keys[]) {
         var atLeastOneInMinus = false;
         for (const key of keys) {
             const isAlreadyPressed = this.pressedKeysSet.has(key);
@@ -41,16 +41,17 @@ export class CombinedPressedKeyChecker {
         return atLeastOneInMinus;
     }
 
-    updatePressedKeys(keysSet: Set<Keys>) {
+    updatePressedKeys(keysSet: Keys[]) {
         this.plusKeys.clear();
         this.minusKeys.clear();
+        this.pressedKeysSet.clear();
         for (const key of keysSet) {
             this.pressedKeysSet.add(key)
         }
         return this;
     }
 
-    updatePlusKeys(...plusKeys: Keys[]) {
+    updatePlusKeys(plusKeys: Keys[]) {
         this.plusKeys.clear();
         for (const key of plusKeys) {
             this.plusKeys.add(key);
@@ -58,11 +59,19 @@ export class CombinedPressedKeyChecker {
         return this;
     }
 
-    updateMinusKeys(...minusKeys: Keys[]) {
+    updateMinusKeys(minusKeys: Keys[]) {
         this.minusKeys.clear();
         for (const key of minusKeys) {
             this.minusKeys.add(key);
         }
         return this;
+    }
+
+    compileNewKeys() : Keys[] {
+        const ans : Keys[] = []
+        for (const key of this.pressedKeysSet.union(this.plusKeys).difference(this.minusKeys)) {
+            ans.push(key)
+        }
+        return ans
     }
 }

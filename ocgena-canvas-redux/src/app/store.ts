@@ -11,10 +11,11 @@ import {
 import { combineEpics, createEpicMiddleware } from "redux-observable"
 import { createFilteringMiddleware } from "../utils/redux_utils"
 import { editorV2Slice } from "../features/editorv2/editorv2Slice"
-import { enableMapSet } from "immer"
+import { enableMapSet, enablePatches } from "immer"
 
 
 enableMapSet()
+enablePatches()
 
 const rootEpic = combineEpics(editorHandleDragEpic)
 const epicMiddleware = createEpicMiddleware<Action, Action, void, any>()
@@ -22,7 +23,7 @@ const filteringMiddleware = createFilteringMiddleware(editorActionFilter)
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
-const rootReducer = combineSlices(/* counterSlice, quotesApiSlice,  */ editorSlice, editorV2Slice)
+const rootReducer = combineSlices(/* counterSlice, quotesApiSlice,  */  editorV2Slice)
 // Infer the `RootState` type from the root reducer
 export type RootState = ReturnType<typeof rootReducer>
 

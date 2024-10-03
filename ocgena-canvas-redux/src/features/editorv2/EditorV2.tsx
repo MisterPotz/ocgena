@@ -1,15 +1,6 @@
 import Konva from "konva"
 import { useEffect, useRef, useState } from "react"
 import { Layer, Rect, Stage } from "react-konva"
-import { useAppDispatch, useAppSelector } from "../../app/hooks"
-import {
-    buttonDown,
-    buttonUp,
-    editorV2Slice,
-    mouseDown,
-    mouseMove,
-    mouseRelease,
-} from "./editorv2Slice"
 import {
     ButtonKeys,
     Circle,
@@ -20,24 +11,21 @@ import {
     Rectangle,
 } from "./SpaceModel"
 import RBush, { BBox } from "rbush"
-import { ShapeConfig, shapes } from "konva/lib/Shape"
 import {
     BehaviorSubject,
+    catchError,
+    debounceTime,
     filter,
     fromEvent,
     merge,
-    Observable,
     scan,
     Subject,
     Subscription,
-    zip,
 } from "rxjs"
 import { KonvaEventObject } from "konva/lib/Node"
-import { state, string } from "fp-ts"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
-import { produce } from "immer"
+import { produceWithPatches } from "immer"
 import { SelectInteractionMode } from "./SelectInteractionMode"
-import { aC } from "vitest/dist/reporters-P7C2ytIv.js"
 
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
@@ -388,7 +376,7 @@ type ViewerOffset = {
 export type ViewerData = {
     x: number
     y: number
-    pressedKeys: Set<Keys>
+    pressedKeys: Keys[]
     selectorArea?: ViewerSelectorArea
     offset: ViewerOffset
 }
@@ -397,7 +385,7 @@ export type MouseEventButtonData = {
     canvasX: number
     canvasY: number
     type: "down" | "release"
-    button: MouseKeys
+    button: Keys
 }
 export type MouseEventMoveData = {
     canvasX: number
@@ -408,7 +396,7 @@ export type MouseEventData = MouseEventButtonData | MouseEventMoveData
 
 export type KeyEventData = {
     type: "keydown" | "keyrelease"
-    button: ButtonKeys
+    button: Keys
 }
 
 type StartDragging = {
@@ -426,10 +414,32 @@ class SelectionBuffer {
 export type UpdateContext = {
     keyChecker: CombinedPressedKeyChecker
 }
+
+export type InteractButtonsDownEvent = {
+    type: "modeactive"
+    x: number
+    y: number
+}
+
+export type InteractButtonsReleaseEvent = {
+    type: "modeoff"
+}
+
+export type InteractMouseMoveEvent = {
+    type: "mousemove"
+    newX: number
+    newY: number
+}
+
+export type InteractionModeEvent =
+    | InteractButtonsDownEvent
+    | InteractButtonsReleaseEvent
+    | InteractMouseMoveEvent
+
 export type InteractionMode = {
     type: "panning" | "selection"
-    onMouseEvent(state: ViewerData, event: MouseEventData, updateContext: UpdateContext): void
-    onButtonEvent(state: ViewerData, event: KeyEventData, updateContext: UpdateContext): void
+    activationKeys(): Keys[]
+    onEvent(state: ViewerData, event: InteractionModeEvent): void
 }
 
 class PanningInteractionMode implements InteractionMode {
@@ -442,57 +452,34 @@ class PanningInteractionMode implements InteractionMode {
             state.offset.offsetY = event.canvasY - state.offset.dragStartY!
         }
     }
-    private onMouseKeyDown(state: ViewerData, event: MouseEventData): void {
-        state.offset.dragStartX = event.canvasX
-        state.offset.dragStartY = event.canvasY
-    }
-    private onMouseKeyRelease(state: ViewerData, event: MouseEventData): void {
-        state.offset.dragStartX = undefined
-        state.offset.dragStartY = undefined
+    activationKeys(): Keys[] {
+        return ["space", "left"]
     }
 
-    onMouseEvent(state: ViewerData, event: MouseEventData): void {
+    onEvent(state: ViewerData, event: InteractionModeEvent): void {
         switch (event.type) {
-            case "down":
-                this.onMouseKeyDown(state, event)
-                break
-            case "release":
-                this.onMouseKeyRelease(state, event)
-                break
-            case "move":
-                this.onMouseMove(state, event)
-                break
-        }
-    }
-
-    onButtonEvent(state: ViewerData, event: KeyEventData): void {
-        switch (event.type) {
-            case "keydown": {
-                this.keysChecker.updatePressedKeys(state.pressedKeys).updatePlusKeys(event.button)
-
-                if (this.keysChecker.checkBecamePressed("space", "left")) {
-                    state.offset.dragStartX = state.x
-                    state.offset.dragStartY = state.y
-                }
+            case "modeactive": {
+                state.offset.dragStartX = event.x
+                state.offset.dragStartY = event.y
                 break
             }
-            case "keyrelease": {
-                this.keysChecker
-                    .updatePressedKeys(state.pressedKeys)
-                    .checkBecameUnpressed(event.button)
-
-                if (this.keysChecker.checkBecameUnpressed("space", "left")) {
-                    state.offset.dragStartX = undefined
-                    state.offset.dragStartY = undefined
-                }
+            case "modeoff": {
+                state.offset.dragStartX = undefined
+                state.offset.dragStartY = undefined
                 break
             }
+            case "mousemove":
+                if (state.offset.dragStartX && state.offset.dragStartY) {
+                    state.offset.offsetX = event.newX - state.offset.dragStartX!
+                    state.offset.offsetY = event.newY - state.offset.dragStartY!
+                }
+                break
         }
     }
 }
 
-type LogCategories = "buttons" | "intersection"
-const loggingEvents: LogCategories[] = ["buttons", "intersection"]
+type LogCategories = "buttons" | "intersection" | "pan" | "select"
+const loggingEvents: LogCategories[] = ["buttons", "intersection", "pan", "select"]
 export function log(message: string, ...levels: LogCategories[]) {
     var allLevels = true
     for (const level of levels) {
@@ -505,6 +492,10 @@ export function log(message: string, ...levels: LogCategories[]) {
     }
 }
 
+export function dlog(message: string) {
+    document.getElementById("debugging")!.innerHTML = message
+}
+
 export function getClickAreaByPoint(x: number, y: number) {
     return {
         left: x - 2,
@@ -514,12 +505,25 @@ export function getClickAreaByPoint(x: number, y: number) {
     }
 }
 
+export function isMouseEvent(
+    mouseEvent: ExternalEvent | MouseEventData | KeyEventData,
+): mouseEvent is MouseEventData {
+    return mouseEvent.type === "down" || mouseEvent.type === "release" || mouseEvent.type === "move"
+}
+
+export function isKeyboardEvent(
+    keyboardEvent: ExternalEvent | MouseEventData | KeyEventData,
+): keyboardEvent is KeyEventData {
+    return keyboardEvent.type === "keydown" || keyboardEvent.type === "keyrelease"
+}
+
 // todo encapsulate the updates into 'Mode' class (selection / panning)
+// todo debug coordinates and text
 class ViewFacade {
     initialState: ViewerData = {
         x: 0,
         y: 0,
-        pressedKeys: new Set<ButtonKeys>(),
+        pressedKeys: [],
         offset: {
             offsetX: 0,
             offsetY: 0,
@@ -530,35 +534,38 @@ class ViewFacade {
     externalEvents = new Subject<ExternalEvent>()
     disposable: Subscription | null = null
     stage: Konva.Stage
+    stageContainer: HTMLElement
     mainLayerFacade: ShapeLayerFacade
     selectionLayerFacade: ShapeLayerFacade
-    panInteractionMode = new PanningInteractionMode()
-    selectInteractionMode: SelectInteractionMode
-    activeInteractionMode: InteractionMode | null = null
-    keysToMods: { [key: string]: { keys: Keys[]; mode: InteractionMode } }
-    modes : InteractionMode[] = []
+    modes: InteractionMode[] = []
 
-    constructor(stage: Konva.Stage, shapesLayer: Konva.Layer, selectionLayer: Konva.Layer) {
+    constructor(
+        stageContainer: HTMLElement,
+        stage: Konva.Stage,
+        shapesLayer: Konva.Layer,
+        selectionLayer: Konva.Layer,
+    ) {
         this.stage = stage
+        this.stageContainer = stageContainer
         const shapesLayerRepository = new ShapesRepository()
         const selectionLayerRepository = new ShapesRepository()
         const shapesView = new ShapesViewDelegate(shapesLayer)
         const selectionView = new ShapesViewDelegate(selectionLayer)
         this.mainLayerFacade = new ShapeLayerFacade(shapesView, shapesLayerRepository)
         this.selectionLayerFacade = new ShapeLayerFacade(selectionView, selectionLayerRepository)
-        this.selectInteractionMode = new SelectInteractionMode(
+        const selectInteractionMode = new SelectInteractionMode(
             this.mainLayerFacade,
             this.selectionLayerFacade,
         )
-        this.keysToMods = {
-            panning: { keys: ["space", "left"], mode: this.panInteractionMode },
-            selection: { keys: ["left"], mode: this.selectInteractionMode },
-        }
-        this.modes = [this.panInteractionMode, this.selectInteractionMode]
+        const panInteractionMode = new PanningInteractionMode()
+
+        this.modes = [panInteractionMode, selectInteractionMode]
+        this.modes.sort((a, b) => a.activationKeys().length - b.activationKeys().length)
     }
 
     start() {
         this.disposable?.unsubscribe()
+
         this.disposable = merge(
             this.externalEvents,
             this.mouseDownObservable(),
@@ -570,64 +577,61 @@ class ViewFacade {
             .pipe(
                 scan((acc, value, idx) => {
                     if (!value) return acc
-                    return produce(acc, state => {
+                    const [newState, patches] = produceWithPatches(acc, state => {
                         this.reduce(state, value, idx)
                     })
+                    if (value.type !== "move") {
+                        console.log(newState)
+                    }
+                    return newState
                 }, this.initialState),
+                catchError((err, caught) => {
+                    console.log(err)
+                    return caught
+                }),
             )
             .subscribe(this.viewerData)
     }
 
-    isMouseEvent(
-        mouseEvent: ExternalEvent | MouseEventData | KeyEventData,
-    ): mouseEvent is MouseEventData {
-        return (
-            mouseEvent.type === "down" ||
-            mouseEvent.type === "release" ||
-            mouseEvent.type === "move"
-        )
-    }
-
-    isKeyboardEvent(
-        keyboardEvent: ExternalEvent | MouseEventData | KeyEventData,
-    ): keyboardEvent is KeyEventData {
-        return (
-            keyboardEvent.type === "keydown" ||
-            keyboardEvent.type === "keyrelease"
-        )
-    }
-
     reduce(state: ViewerData, event: ExternalEvent | MouseEventData | KeyEventData, idx: number) {
-        this.keysChecker.updatePressedKeys(state.pressedKeys)
+        var newKeys: Keys[] = []
         switch (event.type) {
-            case "down": this.keysChecker.updatePlusKeys(event.button); break;
-            case "release": state.pressedKeys.delete(event.button); break;
-            case 'keydown': state.pressedKeys.add(event.button); break;
-            case 'keyrelease': state.pressedKeys.delete(event.button); break;
-            default: {
-                break
-            }
-        }
-
-        if (this.isMouseEvent(event)) {
-            this.modes.forEach(el => el.onMouseEvent(state, event))
-        } else if (this.isKeyboardEvent(event)) {
-            this.modes.forEach(el => el.onButtonEvent(state, event))
-        }
-        switch (event.type) {
-            case "move": {
+            case "move":
+                newKeys = state.pressedKeys
                 state.x = event.canvasX
                 state.y = event.canvasY
                 break
-            }
-            case "down": state.pressedKeys.add(event.button); break;
-            case "release": state.pressedKeys.delete(event.button); break;
-            case 'keydown': state.pressedKeys.add(event.button); break;
-            case 'keyrelease': state.pressedKeys.delete(event.button); break;
+            case "release":
+            case "keyrelease":
+                this.keysChecker
+                    .updatePressedKeys(state.pressedKeys)
+                    .updateMinusKeys([event.button])
+                newKeys = this.keysChecker.compileNewKeys()
+                break
+            case "keydown":
+            case "down":
+                this.keysChecker.updatePressedKeys(state.pressedKeys).updatePlusKeys([event.button])
+                newKeys = this.keysChecker.compileNewKeys()
+                break
             default: {
+                newKeys = state.pressedKeys
                 break
             }
         }
+
+        for (const mode of this.modes) {
+            const activationKeys = [...mode.activationKeys()]
+            if (this.keysChecker.checkBecamePressed(activationKeys)) {
+                const x = state.x
+                const y = state.y
+                mode.onEvent(state, { type: "modeactive", x, y })
+            } else if (this.keysChecker.checkBecameUnpressed(activationKeys)) {
+                mode.onEvent(state, { type: "modeoff" })
+            } else if (this.keysChecker.checkArePressed(activationKeys) && event.type === "move") {
+                mode.onEvent(state, { type: "mousemove", newX: event.canvasX, newY: event.canvasY })
+            }
+        }
+        state.pressedKeys = newKeys
     }
 
     stop() {
@@ -636,7 +640,8 @@ class ViewFacade {
     }
 
     private getMouseCoords(mouseEvent: MouseEvent): { x: number; y: number } {
-        const { x, y } = this.stage.getClientRect({ skipTransform: true })
+        var { x, y } = this.stageContainer.getBoundingClientRect()
+        // log(`stage coords at x:${x}, y:${y}, clientX:${mouseEvent.clientX}, clientY:${mouseEvent.clientY}`, "buttons")
 
         return {
             x: mouseEvent.clientX - x,
@@ -645,11 +650,19 @@ class ViewFacade {
     }
 
     private mouseDownObservable() {
-        return fromEvent(this.stage, "mousedown", (evt: KonvaEventObject<MouseEvent>) => {
-            const { x, y } = this.getMouseCoords(evt.evt)
-            const btn = mouseBtnToKey(evt.evt.button)
+        return fromEvent(this.stage, "mousedown", (evt: MouseEvent) => {
+            var { x, y } = this.stageContainer.getBoundingClientRect()
+
+            log(
+                `stage coords at x:${x}, y:${y}, clientX:${evt.clientX}, clientY:${evt.clientY}`,
+                "buttons",
+            )
+            x = evt.clientX - x
+            y = evt.clientY - y
+            // const { x, y } = this.getMouseCoords(evt)
+            const btn = mouseBtnToKey(evt.button)
             if (!btn) return
-            log(`mouse down ${btn}`, "buttons")
+            log(`mouse down ${btn} at x:${x}, y:${y},`, "buttons")
             const mouseEvent: MouseEventData = {
                 canvasX: x,
                 canvasY: y,
@@ -661,8 +674,10 @@ class ViewFacade {
     }
 
     private mouseMoveObservable() {
-        return fromEvent(this.stage, "mousemove", (evt: KonvaEventObject<MouseEvent>) => {
-            const { x, y } = this.getMouseCoords(evt.evt)
+        return fromEvent(this.stage, "mousemove", (evt: MouseEvent) => {
+            const { x, y } = this.getMouseCoords(evt)
+
+            dlog(`x:${x},y:${y}`)
             const mouseEvent: MouseEventData = {
                 canvasX: x,
                 canvasY: y,
@@ -673,9 +688,9 @@ class ViewFacade {
     }
 
     private mouseUpObservable() {
-        return fromEvent(this.stage, "mouseup", (evt: KonvaEventObject<MouseEvent>) => {
-            const { x, y } = this.getMouseCoords(evt.evt)
-            const btn = mouseBtnToKey(evt.evt.button)
+        return fromEvent(this.stage, "mouseup", (evt: MouseEvent) => {
+            const { x, y } = this.getMouseCoords(evt)
+            const btn = mouseBtnToKey(evt.button)
             if (!btn) return
             log(`mouse release ${btn}`, "buttons")
 
@@ -694,6 +709,8 @@ class ViewFacade {
             const key: ButtonKeys | null = keyboardBtnToKey(evt.key)
             if (key) {
                 evt.preventDefault()
+                evt.cancelable
+                if (evt.repeat) return
                 log(`key down ${key}`, "buttons")
                 const keyEventData: KeyEventData = {
                     button: key,
@@ -726,52 +743,66 @@ export function EditorV2() {
     const mainLayer = useRef<Konva.Layer | null>(null)
     const selectionLayer = useRef<Konva.Layer | null>(null)
     const viewFacade = useRef<ViewFacade | null>(null)
-    const dispatch = useAppDispatch()
+    const stageParent = useRef<HTMLDivElement | null>(null)
+    const debuggingText = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
-        if (stage.current && mainLayer.current && selectionLayer.current) {
+        if (
+            stage.current &&
+            mainLayer.current &&
+            selectionLayer.current &&
+            stageParent.current &&
+            debuggingText.current
+        ) {
             viewFacade.current = new ViewFacade(
+                stageParent.current,
                 stage.current,
                 mainLayer.current,
                 selectionLayer.current,
             )
 
             viewFacade.current.start()
+            console.log("started view facade")
 
             return () => {
                 viewFacade.current?.stop()
+                console.log("stopped view facade")
             }
         }
-    }, [stage.current, mainLayer.current, , selectionLayer.current])
+    }, [
+        stageParent.current,
+        stage.current,
+        mainLayer.current,
+        selectionLayer.current,
+        debuggingText.current,
+    ])
 
     return (
         <>
-            <Stage
-                style={{
-                    border: "solid",
-                    borderWidth: "1px",
-                }}
-                ref={stage}
-                width={1200}
-                height={800}
-            >
-                <PatternBackground />
-                <Layer ref={mainLayer} />
-                <Layer ref={selectionLayer} />
-                {/* <Layer ref={elementsLayerRef}>
-              {elements.map((el, index) => {
-                return (
-                  <AutoSizeTextShape
-                    key={el.id}
-                    element={el}
-                    updatePosition={payload => {
-                      dispatch(elementPositionUpdate(payload))
-                    }}
-                  />
-                )
-              })}
-            </Layer> */}
-            </Stage>
+            <div>
+                <div
+                    id="debugging"
+                    ref={debuggingText}
+                    style={{ fontSize: "1rem", textAlign: "start", paddingBottom: "10px" }}
+                >
+                    Kek lol arbidol
+                </div>
+                <div ref={stageParent} style={{ position: "relative" }}>
+                    <Stage
+                        style={{
+                            border: "solid",
+                            borderWidth: "1px",
+                        }}
+                        ref={stage}
+                        width={800}
+                        height={600}
+                    >
+                        <PatternBackground />
+                        <Layer ref={mainLayer} />
+                        <Layer ref={selectionLayer} />
+                    </Stage>
+                </div>
+            </div>
         </>
     )
 }
@@ -779,8 +810,8 @@ export function EditorV2() {
 function PatternBackground() {
     const [patternImage, setPatternImage] = useState(new window.Image())
 
-    const offsetX = useAppSelector(state => state.editorv2.spaceViewer.offsetX)
-    const offsetY = useAppSelector(state => state.editorv2.spaceViewer.offsetY)
+    const offsetX = 0 //useAppSelector(state => state.editorv2.spaceViewer.offsetX)
+    const offsetY = 0 //useAppSelector(state => state.editorv2.spaceViewer.offsetY)
 
     useEffect(() => {
         const dotPatternCanvas = document.createElement("canvas")

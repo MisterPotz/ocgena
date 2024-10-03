@@ -196,9 +196,6 @@ export interface PositionablesIndex {
 }
 
 export interface Space {
-    positionables: PositionableShape[]
-    selector: Selector | null
-    // transformer: Transformer | null
 }
 
 export interface SpaceViewer {
@@ -213,13 +210,6 @@ export type Keys = "space" | "left" | "right"
 export type MouseKeys = "left" | "right"
 
 export type ButtonKeys = "space"
-
-export interface Navigator {
-    areaSelection: boolean
-    pressedKeys: Set<Keys>
-    // x: number
-    // y: number
-}
 
 export function containsXY(rect: Rect, x: number, y: number) {
     return rect.left <= x && rect.top <= y && x <= rect.right && y <= rect.bottom
