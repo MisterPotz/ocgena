@@ -200,85 +200,11 @@ export const editorV2Slice = createAppSlice({
     name: "editorv2",
     initialState: initialState,
     reducers: create => ({
+        mouseMove: create.reducer((state, action: PayloadAction<MouseDownPayload>) => {
+        }),
         mouseDown: create.reducer((state, action: PayloadAction<MouseDownPayload>) => {
-            const key = mouseKeyToKeys(action.payload.key)
-            keysChecker
-                .updatePressedKeys(state.navigator.pressedKeys)
-                .updatePlusKeys(action.payload.key)
-
-            if (keysChecker.checkBecamePressed("space", "left")) {
-                state.spaceViewer.startOffsetX = action.payload.x
-                state.spaceViewer.startOffsetY = action.payload.y
-            } else if (keysChecker.checkBecamePressed("left")) {
-                if (
-                    state.space.selector &&
-                    containsXY(state.space.selector.borders, action.payload.x, action.payload.y)
-                ) {
-                    state.space.selector.startX = action.payload.x
-                    state.space.selector.startY = action.payload.y
-                } else {
-                    const positionable =
-                        /* state.space.positionables */ positionableIndex.getByCoordinate(
-                            action.payload.x,
-                            action.payload.y,
-                        )
-
-                    if (positionable != null) {
-                        // const newSelectionCommand = new SelectItems(
-                        //     [positionable],
-                        //     positionable,
-                        //     positionable,
-                        // )
-                        // newSelectionCommand.applyToState(state)
-                        // state.selectionCommands.push(newSelectionCommand)
-                        // state.space.selector = {
-                        //     state.space.selector!.startX = action.payload.x
-                        //     state.space.selector!.startY = action.payload.y
-                        // }
-                    } else {
-                        state.space.selector = null
-                        state.navigator.areaSelection = {
-                            startX: action.payload.x,
-                            startY: action.payload.y,
-                        }
-                    }
-                }
-            } else if (keysChecker.checkBecamePressed("right")) {
-            }
-            state.navigator.pressedKeys.add(key)
         }),
         mouseRelease: create.reducer((state, action: PayloadAction<MouseReleasePayload>) => {
-            const key = mouseKeyToKeys(action.payload.key)
-
-            keysChecker.updatePressedKeys(state.navigator.pressedKeys).updateMinusKeys(key)
-
-            if (
-                keysChecker.checkArePressed("space", "left") &&
-                keysChecker.checkBecameUnpressed("left")
-            ) {
-                state.spaceViewer.startOffsetX = undefined
-                state.spaceViewer.startOffsetY = undefined
-            } else if (keysChecker.checkBecameUnpressed("left")) {
-                if (state.navigator.areaSelection) {
-                    finishSelectedElementSelection(state)
-                } else if (state.space.selector) {
-                    if (state.space.selector.startX && state.space.selector.startY) {
-                        // const moveCommand = new MoveItems(
-                        //     state.space.selector.elements,
-                        //     action.payload.releaseX - state.space.selector.startX,
-                        //     action.payload.releaseY - state.space.selector.startY,
-                        // )
-                        // state.selectionCommands.push(moveCommand)
-                        state.space.selector.startX = undefined
-                        state.space.selector.startY = undefined
-                        state.space.selector = null
-                    }
-                }
-            } else if (keysChecker.checkBecameUnpressed("right")) {
-                // if there is transformer or selection (and mouse over such elements?), open popup menu
-            }
-
-            state.navigator.pressedKeys.delete(key)
         }),
         buttonDown: create.reducer((state, action: PayloadAction<ButtonDownPayload>) => {
             keysChecker

@@ -44,8 +44,9 @@ export class CombinedPressedKeyChecker {
     updatePressedKeys(keysSet: Set<Keys>) {
         this.plusKeys.clear();
         this.minusKeys.clear();
-        this.pressedKeysSet = keysSet;
-
+        for (const key of keysSet) {
+            this.pressedKeysSet.add(key)
+        }
         return this;
     }
 
