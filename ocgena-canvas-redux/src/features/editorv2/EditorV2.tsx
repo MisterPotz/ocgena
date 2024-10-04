@@ -17,6 +17,7 @@ import {
     debounceTime,
     filter,
     fromEvent,
+    map,
     merge,
     scan,
     Subject,
@@ -28,7 +29,7 @@ import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
 import { current, produceWithPatches } from "immer"
 import { SelectInteractionMode } from "./SelectInteractionMode"
 import { ActiveModeDeterminer } from "./ActiveModeDeterminer"
-
+import { prettyPrintJson, FormatOptions } from "pretty-print-json"
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
         case 0:
@@ -481,7 +482,7 @@ class PanningInteractionMode implements InteractionMode {
 }
 
 type LogCategories = "buttons" | "intersection" | "pan" | "select"
-const loggingEvents: LogCategories[] = ["buttons", "intersection", "pan", "select"]
+const loggingEvents: LogCategories[] = [ "intersection", "pan", "select"]
 export function log(message: string, ...levels: LogCategories[]) {
     var allLevels = true
     for (const level of levels) {
@@ -492,10 +493,6 @@ export function log(message: string, ...levels: LogCategories[]) {
     if (allLevels) {
         console.log("[", levels.join(", "), "]", message)
     }
-}
-
-export function dlog(message: string) {
-    document.getElementById("debugging")!.innerHTML = message
 }
 
 export function getClickAreaByPoint(x: number, y: number) {
@@ -517,6 +514,24 @@ export function isKeyboardEvent(
     keyboardEvent: ExternalEvent | MouseEventData | KeyEventData,
 ): keyboardEvent is KeyEventData {
     return keyboardEvent.type === "keydown" || keyboardEvent.type === "keyrelease"
+}
+
+function DebugView(props: { viewerData: ViewerData }) {
+    const debugRef = useRef<HTMLPreElement | null>(null)
+    useEffect(() => {
+        debugRef.current!.innerHTML = prettyPrintJson.toHtml(props.viewerData, {
+            indent: 3,
+            trailingCommas: false,
+            quoteKeys: false,
+            lineNumbers: false
+        })
+    }, [props.viewerData])
+    
+    return (
+        <>
+            <pre className="json-container" ref={debugRef}></pre>
+        </>
+    )
 }
 
 // todo debug coordinates and text
@@ -564,7 +579,7 @@ class ViewFacade {
         )
     }
 
-    start() {
+    start(updateViewerData?: (v: ViewerData) => void) {
         this.disposable?.unsubscribe()
 
         this.disposable = merge(
@@ -581,11 +596,14 @@ class ViewFacade {
                     const [newState, patches] = produceWithPatches(acc, state => {
                         this.reduce(state, value, idx)
                     })
-                    if (value.type !== "move") {
-                        console.log(newState)
-                    }
                     return newState
                 }, this.initialState),
+                map((state: ViewerData) => {
+                    if (!!updateViewerData) {
+                        updateViewerData(state)
+                    }
+                    return state
+                }),
                 catchError((err, caught) => {
                     console.log(err)
                     return caught
@@ -666,7 +684,6 @@ class ViewFacade {
 
     private getMouseCoords(mouseEvent: MouseEvent): { x: number; y: number } {
         var { x, y } = this.stageContainer.getBoundingClientRect()
-        // log(`stage coords at x:${x}, y:${y}, clientX:${mouseEvent.clientX}, clientY:${mouseEvent.clientY}`, "buttons")
 
         return {
             x: mouseEvent.clientX - x,
@@ -702,7 +719,7 @@ class ViewFacade {
         return fromEvent(this.stage, "mousemove", (evt: MouseEvent) => {
             const { x, y } = this.getMouseCoords(evt)
 
-            dlog(`x:${x},y:${y}`)
+            // dlog(`x:${x},y:${y}`)
             const mouseEvent: MouseEventData = {
                 canvasX: x,
                 canvasY: y,
@@ -769,16 +786,10 @@ export function EditorV2() {
     const selectionLayer = useRef<Konva.Layer | null>(null)
     const viewFacade = useRef<ViewFacade | null>(null)
     const stageParent = useRef<HTMLDivElement | null>(null)
-    const debuggingText = useRef<HTMLDivElement | null>(null)
+    const [viewerData, setViewerData] = useState<ViewerData>()
 
     useEffect(() => {
-        if (
-            stage.current &&
-            mainLayer.current &&
-            selectionLayer.current &&
-            stageParent.current &&
-            debuggingText.current
-        ) {
+        if (stage.current && mainLayer.current && selectionLayer.current && stageParent.current) {
             viewFacade.current = new ViewFacade(
                 stageParent.current,
                 stage.current,
@@ -786,7 +797,9 @@ export function EditorV2() {
                 selectionLayer.current,
             )
 
-            viewFacade.current.start()
+            viewFacade.current.start(el => {
+                setViewerData(el)
+            })
             console.log("started view facade")
 
             return () => {
@@ -794,24 +807,20 @@ export function EditorV2() {
                 console.log("stopped view facade")
             }
         }
-    }, [
-        stageParent.current,
-        stage.current,
-        mainLayer.current,
-        selectionLayer.current,
-        debuggingText.current,
-    ])
+    }, [stageParent.current, stage.current, mainLayer.current, selectionLayer.current])
 
     return (
         <>
-            <div>
-                <div
-                    id="debugging"
-                    ref={debuggingText}
-                    style={{ fontSize: "1rem", textAlign: "start", paddingBottom: "10px" }}
-                >
-                    Kek lol arbidol
-                </div>
+            <div
+                style={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "start",
+                    justifyContent: 'flex-start',
+                }}
+            >
+         
                 <div ref={stageParent} style={{ position: "relative" }}>
                     <Stage
                         style={{
@@ -826,6 +835,13 @@ export function EditorV2() {
                         <Layer ref={mainLayer} />
                         <Layer ref={selectionLayer} />
                     </Stage>
+                </div>
+                <div
+                    id="debugging"
+                    // ref={debuggingText}
+                    style={{ fontSize: "1rem", textAlign: "start", paddingBottom: "10px" }}
+                >
+                    {!!viewerData ? <DebugView viewerData={viewerData} /> : <></>}
                 </div>
             </div>
         </>
