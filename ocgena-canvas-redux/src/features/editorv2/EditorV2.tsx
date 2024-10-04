@@ -15,6 +15,7 @@ import {
     BehaviorSubject,
     catchError,
     debounceTime,
+    distinctUntilKeyChanged,
     filter,
     fromEvent,
     map,
@@ -462,8 +463,8 @@ class PanningInteractionMode implements InteractionMode {
 
         switch (event.type) {
             case "modeactive": {
-                state.offset.dragStartX = event.x
-                state.offset.dragStartY = event.y
+                state.offset.dragStartX = event.x + state.offset.offsetX
+                state.offset.dragStartY = event.y + state.offset.offsetY
                 break
             }
             case "modeoff": {
@@ -473,8 +474,8 @@ class PanningInteractionMode implements InteractionMode {
             }
             case "mousemove":
                 if (state.offset.dragStartX && state.offset.dragStartY) {
-                    state.offset.offsetX = event.newX - state.offset.dragStartX!
-                    state.offset.offsetY = event.newY - state.offset.dragStartY!
+                    state.offset.offsetX = state.offset.dragStartX! - event.newX
+                    state.offset.offsetY = state.offset.dragStartY! - event.newY
                 }
                 break
         }
@@ -482,7 +483,7 @@ class PanningInteractionMode implements InteractionMode {
 }
 
 type LogCategories = "buttons" | "intersection" | "pan" | "select"
-const loggingEvents: LogCategories[] = [ "intersection", "pan", "select"]
+const loggingEvents: LogCategories[] = ["intersection", "pan", "select"]
 export function log(message: string, ...levels: LogCategories[]) {
     var allLevels = true
     for (const level of levels) {
@@ -523,10 +524,10 @@ function DebugView(props: { viewerData: ViewerData }) {
             indent: 3,
             trailingCommas: false,
             quoteKeys: false,
-            lineNumbers: false
+            lineNumbers: false,
         })
     }, [props.viewerData])
-    
+
     return (
         <>
             <pre className="json-container" ref={debugRef}></pre>
@@ -582,7 +583,9 @@ class ViewFacade {
     start(updateViewerData?: (v: ViewerData) => void) {
         this.disposable?.unsubscribe()
 
-        this.disposable = merge(
+        const subs = new Subscription()
+
+        const viewerData$ = merge(
             this.externalEvents,
             this.mouseDownObservable(),
             this.mouseMoveObservable(),
@@ -610,6 +613,9 @@ class ViewFacade {
                 }),
             )
             .subscribe(this.viewerData)
+
+        subs.add(viewerData$)
+        this.disposable = subs
     }
 
     reduce(state: ViewerData, event: ExternalEvent | MouseEventData | KeyEventData, idx: number) {
@@ -817,10 +823,9 @@ export function EditorV2() {
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "start",
-                    justifyContent: 'flex-start',
+                    justifyContent: "flex-start",
                 }}
             >
-         
                 <div ref={stageParent} style={{ position: "relative" }}>
                     <Stage
                         style={{
@@ -831,7 +836,10 @@ export function EditorV2() {
                         width={800}
                         height={600}
                     >
-                        <PatternBackground />
+                        <PatternBackground
+                            offsetX={(viewerData?.offset?.offsetX ?? 0)}
+                            offsetY={(viewerData?.offset?.offsetY ?? 0)}
+                        />
                         <Layer ref={mainLayer} />
                         <Layer ref={selectionLayer} />
                     </Stage>
@@ -848,11 +856,10 @@ export function EditorV2() {
     )
 }
 
-function PatternBackground() {
+function PatternBackground(props: { offsetX: number; offsetY: number }) {
     const [patternImage, setPatternImage] = useState(new window.Image())
 
-    const offsetX = 0 //useAppSelector(state => state.editorv2.spaceViewer.offsetX)
-    const offsetY = 0 //useAppSelector(state => state.editorv2.spaceViewer.offsetY)
+    const { offsetX, offsetY } = props
 
     useEffect(() => {
         const dotPatternCanvas = document.createElement("canvas")
