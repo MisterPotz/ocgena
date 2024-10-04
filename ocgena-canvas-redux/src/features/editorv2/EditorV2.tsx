@@ -21,11 +21,13 @@ import {
     scan,
     Subject,
     Subscription,
+    throttleTime,
 } from "rxjs"
 import { KonvaEventObject } from "konva/lib/Node"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
-import { produceWithPatches } from "immer"
+import { current, produceWithPatches } from "immer"
 import { SelectInteractionMode } from "./SelectInteractionMode"
+import { ActiveModeDeterminer } from "./ActiveModeDeterminer"
 
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
@@ -379,6 +381,7 @@ export type ViewerData = {
     pressedKeys: Keys[]
     selectorArea?: ViewerSelectorArea
     offset: ViewerOffset
+    currentModeType?: InteractionModeType | null
 }
 
 export type MouseEventButtonData = {
@@ -442,22 +445,19 @@ export type InteractionMode = {
     onEvent(state: ViewerData, event: InteractionModeEvent): void
 }
 
+export type InteractionModeType = InteractionMode["type"]
+
 class PanningInteractionMode implements InteractionMode {
     type: "panning" | "selection" = "panning"
     keysChecker: CombinedPressedKeyChecker = new CombinedPressedKeyChecker()
     constructor() {}
-    private onMouseMove(state: ViewerData, event: MouseEventData): void {
-        if (state.offset.dragStartX && state.offset.dragStartY) {
-            state.offset.offsetX = event.canvasX - state.offset.dragStartX!
-            state.offset.offsetY = event.canvasY - state.offset.dragStartY!
-        }
-    }
+
     activationKeys(): Keys[] {
         return ["space", "left"]
     }
 
     onEvent(state: ViewerData, event: InteractionModeEvent): void {
-        log(`[paninteractionmode] received ${event.type}`, 'pan')
+        log(`[paninteractionmode] received ${event.type}`, "pan")
 
         switch (event.type) {
             case "modeactive": {
@@ -539,6 +539,7 @@ class ViewFacade {
     mainLayerFacade: ShapeLayerFacade
     selectionLayerFacade: ShapeLayerFacade
     modes: InteractionMode[] = []
+    activeModeDeterminer: ActiveModeDeterminer
 
     constructor(
         stageContainer: HTMLElement,
@@ -554,14 +555,13 @@ class ViewFacade {
         const selectionView = new ShapesViewDelegate(selectionLayer)
         this.mainLayerFacade = new ShapeLayerFacade(shapesView, shapesLayerRepository)
         this.selectionLayerFacade = new ShapeLayerFacade(selectionView, selectionLayerRepository)
-        const selectInteractionMode = new SelectInteractionMode(
-            this.mainLayerFacade,
-            this.selectionLayerFacade,
+        this.modes = [
+            new PanningInteractionMode(),
+            new SelectInteractionMode(this.mainLayerFacade, this.selectionLayerFacade),
+        ]
+        this.activeModeDeterminer = new ActiveModeDeterminer(
+            this.modes.map(el => ({ type: el.type, activationKeys: el.activationKeys() })),
         )
-        const panInteractionMode = new PanningInteractionMode()
-
-        this.modes = [panInteractionMode, selectInteractionMode]
-        this.modes.sort((a, b) => a.activationKeys().length - b.activationKeys().length)
     }
 
     start() {
@@ -604,15 +604,13 @@ class ViewFacade {
                 break
             case "release":
             case "keyrelease":
-                this.keysChecker
-                    .updatePressedKeys(state.pressedKeys)
-                    .updateMinusKeys([event.button])
-                newKeys = this.keysChecker.compileNewKeys()
+                this.keysChecker.updateKeys(state.pressedKeys, [], [event.button])
+                newKeys = this.keysChecker.getNewKeys()
                 break
             case "keydown":
             case "down":
-                this.keysChecker.updatePressedKeys(state.pressedKeys).updatePlusKeys([event.button])
-                newKeys = this.keysChecker.compileNewKeys()
+                this.keysChecker.updateKeys(state.pressedKeys, [event.button], [])
+                newKeys = this.keysChecker.getNewKeys()
                 break
             default: {
                 newKeys = state.pressedKeys
@@ -620,23 +618,45 @@ class ViewFacade {
             }
         }
 
-        var previousModeActivated = false
-        for (const mode of this.modes) {
-            const activationKeys = [...mode.activationKeys()]
-
-            if (this.keysChecker.checkBecamePressed(activationKeys) && !previousModeActivated) {
-                const x = state.x
-                const y = state.y
-                previousModeActivated = true
-                mode.onEvent(state, { type: "modeactive", x, y })
-            } else if (this.keysChecker.checkBecameUnpressed(activationKeys) || previousModeActivated) {
-                mode.onEvent(state, { type: "modeoff" })
-            }
-            if (this.keysChecker.checkArePressed(activationKeys) && event.type === "move") {
+        if (event.type !== "move") {
+            const newMode = this.activeModeDeterminer.determineNewMode(
+                state.currentModeType,
+                state.pressedKeys,
+                this.keysChecker.plusKeysArr(),
+                this.keysChecker.minusKeysArr(),
+            )
+            this.switchModes(state, state.currentModeType, newMode)
+        } else if (event.type === "move" && !!state.currentModeType) {
+            const mode = this.modes.find(el => el.type === state.currentModeType)
+            if (!!mode) {
                 mode.onEvent(state, { type: "mousemove", newX: event.canvasX, newY: event.canvasY })
-            }   
+            }
         }
+
         state.pressedKeys = newKeys
+    }
+
+    private switchModes(
+        state: ViewerData,
+        oldModeType: InteractionModeType | null | undefined,
+        newModeType: InteractionModeType | null | undefined,
+    ) {
+        if (oldModeType !== newModeType) {
+            const mode = this.modes.find(el => el.type === oldModeType)
+            if (!!mode) {
+                mode.onEvent(state, { type: "modeoff" })
+                state.currentModeType = null
+            }
+            if (!!newModeType) {
+                const newMode = this.modes.find(el => el.type === newModeType)
+                if (!!newMode) {
+                    const x = state.x
+                    const y = state.y
+                    state.currentModeType = newModeType
+                    newMode.onEvent(state, { type: "modeactive", x, y })
+                }
+            }
+        }
     }
 
     stop() {
@@ -689,7 +709,7 @@ class ViewFacade {
                 type: "move",
             }
             return mouseEvent
-        })
+        }).pipe(throttleTime(10))
     }
 
     private mouseUpObservable() {

@@ -1,77 +1,113 @@
-import { Keys } from "./SpaceModel";
+import { Keys } from "./SpaceModel"
 
 export class CombinedPressedKeyChecker {
-    private pressedKeysSet: Set<Keys> = new Set<Keys>();
-    private plusKeys: Set<Keys> = new Set<Keys>();
-    private minusKeys: Set<Keys> = new Set<Keys>();
-
-    checkArePressed(keys: Keys[]) {
+    private pressedKeysSet: Set<Keys> = new Set<Keys>()
+    private plusKeys: Set<Keys> = new Set<Keys>()
+    private minusKeys: Set<Keys> = new Set<Keys>()
+    private updatedKeys: Set<Keys> = new Set<Keys>()
+    private arrToSet(keys: Keys[]): Set<Keys> {
+        const checkKeysSet = new Set<Keys>()
         for (const key of keys) {
-            if (!this.pressedKeysSet.has(key)) {
-                return false;
-            }
+            checkKeysSet.add(key)
         }
-        return true;
+        return checkKeysSet
     }
 
-    checkBecamePressed(keys: Keys[]) {
-        var atLeastOneInPlus = false;
-
+    private setToArr(keys: Set<Keys>): Keys[] {
+        const arr: Keys[] = []
         for (const key of keys) {
-            const isAlreadyPressed = this.pressedKeysSet.has(key);
-            const inPlus = this.plusKeys.has(key);
-            const inMinus = this.minusKeys.has(key);
-            if (inPlus && !isAlreadyPressed && !inMinus) {
-                atLeastOneInPlus = true;
-            }
+            arr.push(key)
         }
-        return atLeastOneInPlus;
+        return arr
     }
 
-    checkBecameUnpressed(keys: Keys[]) {
-        var atLeastOneInMinus = false;
-        for (const key of keys) {
-            const isAlreadyPressed = this.pressedKeysSet.has(key);
-            const inPlus = this.plusKeys.has(key);
-            const inMinus = this.minusKeys.has(key);
-            if (inMinus && isAlreadyPressed && !inPlus) {
-                atLeastOneInMinus = true;
-            }
+    checkBecameOnlyCombination(keys: Keys[]) {
+        const checkKeysSet = this.arrToSet(keys)
+        if (
+            this.updatedKeys.size === checkKeysSet.size &&
+            this.updatedKeys.symmetricDifference(checkKeysSet).size === 0 &&
+            this.pressedKeysSet.symmetricDifference(checkKeysSet).size > 0
+        ) {
+            console.log(
+                "checkBecameOnlyCombination, symmetric diff",
+                this.pressedKeysSet.symmetricDifference(checkKeysSet).size,
+            )
+            return true
         }
-        return atLeastOneInMinus;
+        return false
     }
 
-    updatePressedKeys(keysSet: Keys[]) {
-        this.plusKeys.clear();
-        this.minusKeys.clear();
-        this.pressedKeysSet.clear();
+    checkStoppedBeingCombination(keys: Keys[]) {
+        const checkKeysSet = this.arrToSet(keys)
+
+        if (
+            this.pressedKeysSet.size === checkKeysSet.size &&
+            this.pressedKeysSet.symmetricDifference(checkKeysSet).size === 0 &&
+            (this.updatedKeys.size !== checkKeysSet.size ||
+                this.updatedKeys.symmetricDifference(checkKeysSet).size > 0)
+        ) {
+            return true
+        }
+        return false
+    }
+    updateKeys(pressedKeys: Keys[], newDownButtons: Keys[], newReleaseButtons: Keys[]) {
+        this.clear()
+
+        this.updatePressedKeys(pressedKeys)
+        this.updatePlusKeys(newDownButtons)
+        this.updateMinusKeys(newReleaseButtons)
+        this.updateCompiledKeys()
+
+        return this
+    }
+
+    private clear() {
+        this.plusKeys.clear()
+        this.updatedKeys.clear()
+        this.minusKeys.clear()
+        this.pressedKeysSet.clear()
+        return this
+    }
+
+    private updatePressedKeys(keysSet: Keys[]) {
+        this.clear()
         for (const key of keysSet) {
             this.pressedKeysSet.add(key)
         }
-        return this;
+        return this
     }
 
-    updatePlusKeys(plusKeys: Keys[]) {
-        this.plusKeys.clear();
+    private updatePlusKeys(plusKeys: Keys[]) {
+        this.plusKeys.clear()
         for (const key of plusKeys) {
-            this.plusKeys.add(key);
+            this.plusKeys.add(key)
         }
-        return this;
+        return this
     }
 
-    updateMinusKeys(minusKeys: Keys[]) {
-        this.minusKeys.clear();
+    private updateMinusKeys(minusKeys: Keys[]) {
+        this.minusKeys.clear()
         for (const key of minusKeys) {
-            this.minusKeys.add(key);
+            this.minusKeys.add(key)
         }
-        return this;
+        return this
     }
 
-    compileNewKeys() : Keys[] {
-        const ans : Keys[] = []
-        for (const key of this.pressedKeysSet.union(this.plusKeys).difference(this.minusKeys)) {
-            ans.push(key)
-        }
-        return ans
+    private updateCompiledKeys() {
+        this.updatedKeys.clear()
+        this.updatedKeys = this.pressedKeysSet.union(this.plusKeys).difference(this.minusKeys)
+        return this
+    }
+
+    getNewKeys(): Keys[] {
+        return this.setToArr(this.updatedKeys)
+    }
+
+    minusKeysArr() {
+        return this.setToArr(this.minusKeys)
+    }
+
+    plusKeysArr() {
+        return this.setToArr(this.plusKeys)
     }
 }
