@@ -191,12 +191,13 @@ export class SelectInteractionMode implements InteractionMode {
             }
         }
     }
-    
+
     activationKeys(): Keys[] {
         return ["left"]
     }
 
     onEvent(state: ViewerData, event: InteractionModeEvent): void {
+        log(`[selectinteractionmode] received ${event.type}`, 'intersection')
         switch (state.selectorArea?.state?.type) {
             case "dragging":
                 this.transitionDragState(state, event)

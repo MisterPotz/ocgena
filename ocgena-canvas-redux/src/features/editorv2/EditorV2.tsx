@@ -457,6 +457,8 @@ class PanningInteractionMode implements InteractionMode {
     }
 
     onEvent(state: ViewerData, event: InteractionModeEvent): void {
+        log(`[paninteractionmode] received ${event.type}`, 'pan')
+
         switch (event.type) {
             case "modeactive": {
                 state.offset.dragStartX = event.x
@@ -517,7 +519,6 @@ export function isKeyboardEvent(
     return keyboardEvent.type === "keydown" || keyboardEvent.type === "keyrelease"
 }
 
-// todo encapsulate the updates into 'Mode' class (selection / panning)
 // todo debug coordinates and text
 class ViewFacade {
     initialState: ViewerData = {
@@ -619,17 +620,21 @@ class ViewFacade {
             }
         }
 
+        var previousModeActivated = false
         for (const mode of this.modes) {
             const activationKeys = [...mode.activationKeys()]
-            if (this.keysChecker.checkBecamePressed(activationKeys)) {
+
+            if (this.keysChecker.checkBecamePressed(activationKeys) && !previousModeActivated) {
                 const x = state.x
                 const y = state.y
+                previousModeActivated = true
                 mode.onEvent(state, { type: "modeactive", x, y })
-            } else if (this.keysChecker.checkBecameUnpressed(activationKeys)) {
+            } else if (this.keysChecker.checkBecameUnpressed(activationKeys) || previousModeActivated) {
                 mode.onEvent(state, { type: "modeoff" })
-            } else if (this.keysChecker.checkArePressed(activationKeys) && event.type === "move") {
-                mode.onEvent(state, { type: "mousemove", newX: event.canvasX, newY: event.canvasY })
             }
+            if (this.keysChecker.checkArePressed(activationKeys) && event.type === "move") {
+                mode.onEvent(state, { type: "mousemove", newX: event.canvasX, newY: event.canvasY })
+            }   
         }
         state.pressedKeys = newKeys
     }
