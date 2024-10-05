@@ -3,11 +3,6 @@ import { combineSlices, configureStore } from "@reduxjs/toolkit"
 import { setupListeners } from "@reduxjs/toolkit/query"
 import { counterSlice } from "../features/counter/counterSlice"
 import { quotesApiSlice } from "../features/quotes/quotesApiSlice"
-import {
-    editorActionFilter,
-    editorHandleDragEpic,
-    editorSlice,
-} from "../features/editor/editorSlice"
 import { combineEpics, createEpicMiddleware } from "redux-observable"
 import { createFilteringMiddleware } from "../utils/redux_utils"
 import { editorV2Slice } from "../features/editorv2/editorv2Slice"
@@ -17,9 +12,9 @@ import { enableMapSet, enablePatches } from "immer"
 enableMapSet()
 enablePatches()
 
-const rootEpic = combineEpics(editorHandleDragEpic)
-const epicMiddleware = createEpicMiddleware<Action, Action, void, any>()
-const filteringMiddleware = createFilteringMiddleware(editorActionFilter)
+// const rootEpic = combineEpics(editorHandleDragEpic)
+// const epicMiddleware = createEpicMiddleware<Action, Action, void, any>()
+// const filteringMiddleware = createFilteringMiddleware(editorActionFilter)
 
 // `combineSlices` automatically combines the reducers using
 // their `reducerPath`s, therefore we no longer need to call `combineReducers`.
@@ -35,7 +30,7 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
         // Adding the api middleware enables caching, invalidation, polling,
         // and other useful features of `rtk-query`.
         middleware: getDefaultMiddleware => {
-            return getDefaultMiddleware().concat(epicMiddleware).concat(filteringMiddleware)
+            return getDefaultMiddleware() //.concat(epicMiddleware).concat(filteringMiddleware)
             // .concat(quotesApiSlice.middleware)
         },
         preloadedState,
@@ -44,7 +39,7 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
     // optional, but required for `refetchOnFocus`/`refetchOnReconnect` behaviors
     setupListeners(store.dispatch)
 
-    epicMiddleware.run(rootEpic)
+    // epicMiddleware.run(rootEpic)
     return store
 }
 

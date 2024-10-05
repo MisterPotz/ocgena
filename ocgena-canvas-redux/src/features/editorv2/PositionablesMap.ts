@@ -1,10 +1,10 @@
-import { Circle, Positionable, PositionableShape } from "./SpaceModel"
+import { Circle, Positionable, Shape } from "./SpaceModel"
 
 export class PositionablesRepository {
     private positionables: Map<string, Positionable> = new Map()
-    private positionableShapes: Map<string, PositionableShape> = new Map()
+    private positionableShapes: Map<string, Shape> = new Map()
 
-    getPositionables(shapes: PositionableShape[]) {
+    getPositionables(shapes: Shape[]) {
         const arr = []
 
         for (const shape of shapes) {
@@ -17,7 +17,7 @@ export class PositionablesRepository {
         return this.positionables.get(id)!
     }
 
-    mapToShapes(): PositionableShape[] {
+    mapToShapes(): Shape[] {
         const arr = []
         for (const [id, positionable] of this.positionables) {
             arr.push(positionable.toPositionableShape())

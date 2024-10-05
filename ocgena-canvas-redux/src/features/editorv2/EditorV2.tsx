@@ -1,21 +1,11 @@
 import Konva from "konva"
 import { useEffect, useRef, useState } from "react"
-import { Layer, Rect, Stage } from "react-konva"
-import {
-    ButtonKeys,
-    Circle,
-    Keys,
-    MouseKeys,
-    Positionable,
-    PositionableShape,
-    Rectangle,
-} from "./SpaceModel"
+import { Layer, Rect as KonvaRect, Stage } from "react-konva"
+import { ButtonKeys, Keys, MouseKeys, Shape, Rect } from "./SpaceModel"
 import RBush, { BBox } from "rbush"
 import {
     BehaviorSubject,
     catchError,
-    debounceTime,
-    distinctUntilKeyChanged,
     filter,
     fromEvent,
     map,
@@ -25,12 +15,14 @@ import {
     Subscription,
     throttleTime,
 } from "rxjs"
-import { KonvaEventObject } from "konva/lib/Node"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
-import { current, produceWithPatches } from "immer"
+import { produceWithPatches } from "immer"
 import { SelectInteractionMode } from "./SelectInteractionMode"
 import { ActiveModeDeterminer } from "./ActiveModeDeterminer"
-import { prettyPrintJson, FormatOptions } from "pretty-print-json"
+import { prettyPrintJson } from "pretty-print-json"
+import _ from "lodash"
+import { LayerViewCollectionDelegate, RectangleView, SelectionLayerViewCollection } from "./Views"
+
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
         case 0:
@@ -51,59 +43,6 @@ function keyboardBtnToKey(button: string): ButtonKeys | null {
     }
 }
 
-class PositionableShapeRBush extends RBush<PositionableShape> {
-    toBBox(shape: PositionableShape): BBox {
-        switch (shape.type) {
-            case "circle": {
-                return {
-                    minX: shape.x - shape.radius,
-                    maxX: shape.x + shape.radius,
-                    minY: shape.y - shape.radius,
-                    maxY: shape.y + shape.radius,
-                }
-            }
-            case "rectangle": {
-                return {
-                    minX: shape.left,
-                    maxX: shape.left + shape.width,
-                    minY: shape.top,
-                    maxY: shape.top + shape.height,
-                }
-            }
-        }
-    }
-
-    compareMinX(a: PositionableShape, b: PositionableShape): number {
-        return this.minX(a) - this.minX(b)
-    }
-
-    compareMinY(a: PositionableShape, b: PositionableShape): number {
-        return this.minY(a) - this.minY(b)
-    }
-
-    minX(a: PositionableShape) {
-        switch (a.type) {
-            case "circle": {
-                return a.x - a.radius
-            }
-            case "rectangle": {
-                return a.left
-            }
-        }
-    }
-
-    minY(a: PositionableShape) {
-        switch (a.type) {
-            case "circle": {
-                return a.y - a.radius
-            }
-            case "rectangle": {
-                return a.top
-            }
-        }
-    }
-}
-
 export default function deepEquals(object1: any, object2: any) {
     const keys1 = Object.keys(object1)
     const keys2 = Object.keys(object2)
@@ -120,230 +59,8 @@ export default function deepEquals(object1: any, object2: any) {
     }
     return true
 }
-function test() {}
 function isObject(object: Object) {
     return object != null && typeof object === "object"
-}
-
-class ShapesRepository {
-    tree = new PositionableShapeRBush()
-    layer = new Konva.Layer({ listening: false })
-    idToItem: Map<String, PositionableShape> = new Map()
-
-    // setupListeners() {
-    //     // this.layer.addevenaddEventListener()
-    // }
-
-    addElements(shapes: PositionableShape[]) {
-        for (const shape of shapes) {
-            this.idToItem.set(shape.id, shape)
-        }
-        this.tree.load(shapes)
-    }
-
-    addElement(shape: PositionableShape) {
-        this.idToItem.set(shape.id, shape)
-        this.tree.insert(shape)
-    }
-
-    removeElement(shape: PositionableShape) {
-        const item = this.idToItem.get(shape.id)
-        if (!!item) {
-            this.idToItem.delete(shape.id)
-            this.tree.remove(shape)
-        }
-    }
-
-    removeElements(shapes: PositionableShape[]) {
-        for (const shape of shapes) {
-            this.removeElement(shape)
-        }
-    }
-
-    updateElement(shape: PositionableShape) {
-        const prevVersion = this.idToItem.get(shape.id)
-
-        if (!!prevVersion) {
-            this.tree.remove(prevVersion)
-        }
-
-        this.idToItem.set(shape.id, shape)
-        this.tree.insert(shape)
-    }
-
-    updateElements(shapes: PositionableShape[]) {
-        for (const shape of shapes) {
-            const prevVersion = this.idToItem.get(shape.id)
-
-            if (!!prevVersion) {
-                this.tree.remove(prevVersion)
-            }
-            this.idToItem.set(shape.id, shape)
-        }
-        this.tree.load(shapes)
-    }
-
-    searchIntersecting(
-        left: number,
-        top: number,
-        right: number,
-        bottom: number,
-    ): PositionableShape[] {
-        return this.tree.search({
-            minY: top,
-            maxY: bottom,
-            minX: left,
-            maxX: right,
-        })
-    }
-}
-
-export class ShapeLayerFacade {
-    viewDelegate: ShapesViewDelegate
-    repository: ShapesRepository
-
-    constructor(viewUpdater: ShapesViewDelegate, repository: ShapesRepository) {
-        this.viewDelegate = viewUpdater
-        this.repository = repository
-    }
-
-    addElements(shapes: PositionableShape[]) {
-        this.viewDelegate.addElements(shapes)
-        this.repository.addElements(shapes)
-    }
-
-    removeElements(shapes: PositionableShape[]) {
-        this.viewDelegate.removeElements(shapes)
-        this.repository.removeElements(shapes)
-    }
-
-    updateElements(shapes: PositionableShape[]) {
-        this.repository.updateElements(shapes)
-        this.viewDelegate.updateElements(shapes)
-    }
-
-    // searchIntersecting(left: number, top: number, right: number, bottom: number) {
-    //     return this.repository.searchIntersecting(left, top, right, bottom)
-    // }
-
-    searchIntersecting(area: { left: number; top: number; right: number; bottom: number }) {
-        return this.repository.searchIntersecting(area.left, area.top, area.right, area.bottom)
-    }
-
-    moveItemsTo(shapes: PositionableShape[], dst: ShapeLayerFacade) {
-        this.removeElements(shapes)
-        dst.addElements(shapes)
-    }
-}
-
-class ShapesViewDelegate {
-    layer: Konva.Layer
-
-    constructor(elementsLayer: Konva.Layer) {
-        this.layer = elementsLayer
-    }
-
-    addElements(shapes: PositionableShape[]) {
-        // this.repository.addElements(shapes)
-        for (const shape of shapes) {
-            this.layer.add(this.createKonvaNode(shape))
-        }
-    }
-
-    removeElements(shapes: PositionableShape[]) {
-        // this.repository.removeElements(shapes)
-        for (const shape of shapes) {
-            const child = this.getKonvaNode(shape)
-            if (!!child) {
-                child.remove()
-            }
-        }
-    }
-
-    updateElements(shapes: PositionableShape[]) {
-        // this.repository.updateElements(shapes)
-
-        for (const shape of shapes) {
-            const child = this.getKonvaNode(shape)
-            if (!!child) {
-                this.updateKonvaNode(child, shape)
-            }
-        }
-    }
-
-    nodeAsCircle(node: Konva.Node): node is Konva.Circle {
-        return true
-    }
-
-    nodeAsRect(node: Konva.Node): node is Konva.Rect {
-        return true
-    }
-
-    updateKonvaNode(konvaNode: Konva.Shape, shape: PositionableShape) {
-        switch (shape.type) {
-            case "circle": {
-                if (this.nodeAsCircle(konvaNode)) {
-                    konvaNode.setAttrs({
-                        x: shape.x,
-                        y: shape.y,
-                        radius: shape.radius,
-                    })
-                }
-                break
-            }
-            case "rectangle": {
-                if (this.nodeAsRect(konvaNode)) {
-                    konvaNode.setAttrs({
-                        x: shape.left,
-                        y: shape.top,
-                        width: shape.width,
-                        height: shape.height,
-                    })
-                }
-            }
-        }
-    }
-
-    getKonvaNode(shape: PositionableShape): Konva.Shape | null {
-        const child = this.layer.getChildren(el => el.id() == shape.id)
-        if (!!child && child.length > 0) {
-            return child[0] as Konva.Shape
-        }
-        return null
-    }
-
-    private createKonvaNode(shape: PositionableShape): Konva.Shape {
-        switch (shape.type) {
-            case "circle": {
-                return new Konva.Circle({
-                    id: shape.id,
-                    x: shape.x,
-                    y: shape.y,
-                    radius: shape.radius,
-                })
-            }
-            case "rectangle": {
-                return new Konva.Rect({
-                    x: shape.left,
-                    y: shape.top,
-                    width: shape.width,
-                    height: shape.height,
-                    id: shape.id,
-                })
-            }
-        }
-    }
-
-    private createPositionable(shape: PositionableShape): Positionable {
-        switch (shape.type) {
-            case "circle": {
-                return new Circle(shape.id, shape.radius)
-            }
-            case "rectangle": {
-                return new Rectangle(shape.id, shape.width, shape.height)
-            }
-        }
-    }
 }
 
 type SelectingAreaState = {
@@ -367,7 +84,7 @@ type ViewerSelectorArea = {
     dragOffsetX: number
     dragOffsetY: number
     state: SelectState
-    currentlySelected: PositionableShape[]
+    currentlySelected: string[]
 }
 
 type ViewerOffset = {
@@ -413,7 +130,7 @@ type ExternalEvent = {
 }
 
 class SelectionBuffer {
-    buffer: PositionableShape[] = []
+    buffer: Shape[] = []
 }
 
 export type UpdateContext = {
@@ -482,8 +199,12 @@ class PanningInteractionMode implements InteractionMode {
     }
 }
 
-type LogCategories = "buttons" | "intersection" | "pan" | "select"
-const loggingEvents: LogCategories[] = ["intersection", "pan", "select"]
+type LogCategories = "buttons" | "intersection" | "pan" | "select" | "debug"
+const loggingEvents: LogCategories[] = [
+    /* "intersection", "pan", "select" */ "debug",
+    "select",
+    "intersection",
+]
 export function log(message: string, ...levels: LogCategories[]) {
     var allLevels = true
     for (const level of levels) {
@@ -496,12 +217,24 @@ export function log(message: string, ...levels: LogCategories[]) {
     }
 }
 
+export function nlog(levels: LogCategories[], message: String, ...others: any[]) {
+    var allLevels = true
+    for (const level of levels) {
+        if (!loggingEvents.includes(level)) {
+            allLevels = false
+        }
+    }
+    if (allLevels) {
+        console.log("[", levels.join(", "), "]", message, ...others)
+    }
+}
+
 export function getClickAreaByPoint(x: number, y: number) {
     return {
         left: x - 2,
-        top: x - 2,
+        top: y - 2,
         right: x + 2,
-        bottom: x + 2,
+        bottom: y + 2,
     }
 }
 
@@ -552,10 +285,11 @@ class ViewFacade {
     disposable: Subscription | null = null
     stage: Konva.Stage
     stageContainer: HTMLElement
-    mainLayerFacade: ShapeLayerFacade
-    selectionLayerFacade: ShapeLayerFacade
+    mainLayerFacade: LayerViewCollectionDelegate = new LayerViewCollectionDelegate("rbush-debug-main")
+    selectionLayerFacade: SelectionLayerViewCollection = new SelectionLayerViewCollection("rbush-debug-selection")
     modes: InteractionMode[] = []
     activeModeDeterminer: ActiveModeDeterminer
+    private lastRenderedValue: ViewerData | null = null
 
     constructor(
         stageContainer: HTMLElement,
@@ -565,12 +299,9 @@ class ViewFacade {
     ) {
         this.stage = stage
         this.stageContainer = stageContainer
-        const shapesLayerRepository = new ShapesRepository()
-        const selectionLayerRepository = new ShapesRepository()
-        const shapesView = new ShapesViewDelegate(shapesLayer)
-        const selectionView = new ShapesViewDelegate(selectionLayer)
-        this.mainLayerFacade = new ShapeLayerFacade(shapesView, shapesLayerRepository)
-        this.selectionLayerFacade = new ShapeLayerFacade(selectionView, selectionLayerRepository)
+        this.mainLayerFacade.attach(shapesLayer)
+        this.selectionLayerFacade.attach(selectionLayer)
+        this.mainLayerFacade.addChild(new RectangleView("rect1", 100, 40))
         this.modes = [
             new PanningInteractionMode(),
             new SelectInteractionMode(this.mainLayerFacade, this.selectionLayerFacade),
@@ -578,6 +309,20 @@ class ViewFacade {
         this.activeModeDeterminer = new ActiveModeDeterminer(
             this.modes.map(el => ({ type: el.type, activationKeys: el.activationKeys() })),
         )
+    }
+
+    render(oldData: ViewerData | null, newData: ViewerData) {
+        if (!_.isEqual(oldData?.selectorArea, newData.selectorArea)) {
+            switch (newData.selectorArea?.state?.type) {
+                case "dragging":
+                    break
+                case "selectingarea": {
+                    break
+                }
+                case "idle":
+                    break
+            }
+        }
     }
 
     start(updateViewerData?: (v: ViewerData) => void) {
@@ -605,6 +350,8 @@ class ViewFacade {
                     if (!!updateViewerData) {
                         updateViewerData(state)
                     }
+                    this.render(this.lastRenderedValue, state)
+                    this.lastRenderedValue = state
                     return state
                 }),
                 catchError((err, caught) => {
@@ -817,39 +564,51 @@ export function EditorV2() {
 
     return (
         <>
-            <div
-                style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "start",
-                    justifyContent: "flex-start",
-                }}
-            >
-                <div ref={stageParent} style={{ position: "relative" }}>
-                    <Stage
-                        style={{
-                            border: "solid",
-                            borderWidth: "1px",
-                        }}
-                        ref={stage}
-                        width={800}
-                        height={600}
-                    >
-                        <PatternBackground
-                            offsetX={(viewerData?.offset?.offsetX ?? 0)}
-                            offsetY={(viewerData?.offset?.offsetY ?? 0)}
-                        />
-                        <Layer ref={mainLayer} />
-                        <Layer ref={selectionLayer} />
-                    </Stage>
-                </div>
+            <div style={{ width: "100%"}}>
                 <div
-                    id="debugging"
-                    // ref={debuggingText}
-                    style={{ fontSize: "1rem", textAlign: "start", paddingBottom: "10px" }}
+                    style={{
+                        width: "100%",
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "start",
+                        justifyContent: "flex-start",
+                    }}
                 >
-                    {!!viewerData ? <DebugView viewerData={viewerData} /> : <></>}
+                    <div ref={stageParent} style={{ position: "relative" }}>
+                        <Stage
+                            style={{
+                                border: "solid",
+                                borderWidth: "1px",
+                            }}
+                            ref={stage}
+                            width={800}
+                            height={600}
+                        >
+                            <PatternBackground
+                                offsetX={viewerData?.offset?.offsetX ?? 0}
+                                offsetY={viewerData?.offset?.offsetY ?? 0}
+                            />
+                            <Layer ref={mainLayer} listening={false} />
+                            <Layer ref={selectionLayer} listening={false} />
+                        </Stage>
+                    </div>
+                    <div
+                        id="debugging"
+                        // ref={debuggingText}
+                        style={{ fontSize: "1rem", textAlign: "start", paddingBottom: "10px" }}
+                    >
+                        {!!viewerData ? <DebugView viewerData={viewerData} /> : <></>}
+                    </div>
+                </div>
+
+                <div style={{ width: "100%", alignContent: "start", alignItems: "start", justifyContent: "start", textAlign: "start"}}>
+                    <h5>Main layer rbush</h5>
+                    <pre id="rbush-debug-main" className="json-container"></pre>
+                </div>
+
+                <div style={{ width: "100%", alignContent: "start", alignItems: "start", justifyContent: "start", textAlign: "start"}}>
+                    <h5>Selection layer rbush</h5>
+                    <pre id="rbush-debug-selection" className="json-container"></pre>
                 </div>
             </div>
         </>
@@ -888,7 +647,7 @@ function PatternBackground(props: { offsetX: number; offsetY: number }) {
     return (
         <>
             <Layer>
-                <Rect
+                <KonvaRect
                     draggable={false}
                     listening={false}
                     x={0}

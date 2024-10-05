@@ -4,7 +4,6 @@ import { MutableRefObject, useEffect } from "react"
 import Konva from "konva"
 import { Circle, KonvaNodeEvents, Rect } from "react-konva"
 import { ELEMENT_CHILD_SHAPE_PREFIX } from "./Keywords"
-import { CircleShape, Element, PositionUpdatePayload } from "./Models"
 import { Text } from "konva/lib/shapes/Text"
 import { Vector2d } from "konva/lib/types"
 import { getRealHeight, getRealWidth } from "./primitiveShapeUtils"
@@ -212,11 +211,11 @@ const synchronizeTextAreaPosition = (
   targetElement.style.height = height - 5 + "px"
 }
 
-export function selectShapeDelegate(element: Element): ShapeDelegateNew {
-  switch (element.shape.type) {
-    case "rect":
-      return RectShapeDelegate.Instance
-    case "circle":
-      return CircleShapeDelegate.Instance
-  }
-}
+// export function selectShapeDelegate(element: Element): ShapeDelegateNew {
+//   switch (element.shape.type) {
+//     case "rect":
+//       return RectShapeDelegate.Instance
+//     case "circle":
+//       return CircleShapeDelegate.Instance
+//   }
+// }

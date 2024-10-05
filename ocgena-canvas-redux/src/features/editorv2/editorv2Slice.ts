@@ -13,7 +13,7 @@ import {
     topBorder,
     bottomBorder,
     Rect,
-    PositionableShape,
+    Shape,
     PositionablesIndex,
 } from "./SpaceModel"
 import {
@@ -25,7 +25,7 @@ import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
 import { PositionablesRepository } from "./PositionablesMap"
 
 type EditorV2State = {
-    positionables: PositionableShape[]
+    positionables: Shape[]
 }
 
 const initialState: EditorV2State = {
