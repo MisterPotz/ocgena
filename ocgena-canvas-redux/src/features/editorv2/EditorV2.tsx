@@ -81,8 +81,8 @@ type Idle = {
 type SelectState = SelectingAreaState | DraggingState | Idle
 
 type ViewerSelectorArea = {
-    dragOffsetX: number
-    dragOffsetY: number
+    dragOffsetX?: number
+    dragOffsetY?: number
     state: SelectState
     currentlySelected: string[]
 }
@@ -94,6 +94,8 @@ type ViewerOffset = {
     offsetY: number
 }
 
+export type EditorState = 'trueidle' | 'pan' | 'selectidle' | 'drag' | 'selectarea'
+
 export type ViewerData = {
     x: number
     y: number
@@ -101,6 +103,7 @@ export type ViewerData = {
     selectorArea?: ViewerSelectorArea
     offset: ViewerOffset
     currentModeType?: InteractionModeType | null
+    state: EditorState
 }
 
 export type MouseEventButtonData = {

@@ -27,7 +27,7 @@ class ViewRBush extends RBush<View> {
     }
 }
 
-type RBBox = {
+export type RBBox = {
     readonly minX: number
     readonly minY: number
     readonly maxX: number
