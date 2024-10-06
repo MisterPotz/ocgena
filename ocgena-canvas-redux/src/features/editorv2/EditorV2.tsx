@@ -16,7 +16,7 @@ import {
     throttleTime,
 } from "rxjs"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
-import { produceWithPatches } from "immer"
+import { produce, produceWithPatches } from "immer"
 import { SelectInteractionMode } from "./SelectInteractionMode"
 import { ActiveModeDeterminer } from "./ActiveModeDeterminer"
 import { prettyPrintJson } from "pretty-print-json"
@@ -368,6 +368,7 @@ class ViewFacade {
                     const [newState, patches] = produceWithPatches(acc, state => {
                         const viewerDataState = state
                         context.setState = (state: State) => {
+                            nlog(["debug"], "switching state to", state.type)
                             viewerDataState.stateDelegate = state
                         }
                         this.reduce(state, value, idx)
@@ -397,7 +398,6 @@ class ViewFacade {
         switch (event.type) {
             case "down":
             case "release":
-                nlog(['debug'], 'mouse button event', event.type)
                 state.stateDelegate.onMouseKeyChange(state, {
                     key: event.button,
                     type: event.type,
@@ -406,7 +406,6 @@ class ViewFacade {
                 })
                 break
             case "move":
-                nlog(['debug'], 'mouse move')
                 state.stateDelegate.onMouseMove(state, {
                     x: event.canvasX,
                     y: event.canvasY,

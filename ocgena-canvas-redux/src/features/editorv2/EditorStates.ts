@@ -52,12 +52,16 @@ abstract class BaseState implements State {
     abstract init(state: ViewerData): void
     abstract onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): void
     updateContextState(newState: State, dataState: ViewerData) {
+        this.cleanUpState(dataState)
         newState.init(dataState)
         this.context.setState(newState)
     }
 
     onMouseMove(state: ViewerData, update: MouseMoveUpdate): void {
         this.moveDelegate.onMouseMove(state, update)
+    }
+    cleanUpState(state: ViewerData): void {
+
     }
 }
 
@@ -276,6 +280,10 @@ export class SelectingAreaState extends BaseState {
 
             log(`selection area: ${intersectingItems.join(", ")}`, "intersection")
         }
+    }
+
+    cleanUpState(state: ViewerData): void {
+        state.selectorArea = undefined
     }
 
     onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): State {
