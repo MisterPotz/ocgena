@@ -22,6 +22,7 @@ import { ActiveModeDeterminer } from "./ActiveModeDeterminer"
 import { prettyPrintJson } from "pretty-print-json"
 import _ from "lodash"
 import { LayerViewCollectionDelegate, RectangleView, SelectionLayerViewCollection } from "./Views"
+import { Context, State, TrueIdleState } from "./EditorStates"
 
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
@@ -94,7 +95,7 @@ type ViewerOffset = {
     offsetY: number
 }
 
-export type EditorState = 'trueidle' | 'pan' | 'selectidle' | 'drag' | 'selectarea'
+export type EditorState = "trueidle" | "pan" | "selectidle" | "drag" | "selectarea"
 
 export type ViewerData = {
     x: number
@@ -102,15 +103,14 @@ export type ViewerData = {
     pressedKeys: Keys[]
     selectorArea?: ViewerSelectorArea
     offset: ViewerOffset
-    currentModeType?: InteractionModeType | null
-    state: EditorState
+    stateDelegate: State
 }
 
 export type MouseEventButtonData = {
     canvasX: number
     canvasY: number
     type: "down" | "release"
-    button: Keys
+    button: MouseKeys
 }
 export type MouseEventMoveData = {
     canvasX: number
@@ -271,25 +271,25 @@ function DebugView(props: { viewerData: ViewerData }) {
     )
 }
 
+type ViewerDataWithStateMachine = {
+    viewerData: ViewerData
+    currentState: State
+}
+
 // todo debug coordinates and text
 class ViewFacade {
-    initialState: ViewerData = {
-        x: 0,
-        y: 0,
-        pressedKeys: [],
-        offset: {
-            offsetX: 0,
-            offsetY: 0,
-        },
-    }
-    viewerData = new BehaviorSubject<ViewerData>(this.initialState)
+    // viewerData = new BehaviorSubject<ViewerData>(this.initialState)
     keysChecker = new CombinedPressedKeyChecker()
     externalEvents = new Subject<ExternalEvent>()
     disposable: Subscription | null = null
     stage: Konva.Stage
     stageContainer: HTMLElement
-    mainLayerFacade: LayerViewCollectionDelegate = new LayerViewCollectionDelegate("rbush-debug-main")
-    selectionLayerFacade: SelectionLayerViewCollection = new SelectionLayerViewCollection("rbush-debug-selection")
+    mainLayerFacade: LayerViewCollectionDelegate = new LayerViewCollectionDelegate(
+        "rbush-debug-main",
+    )
+    selectionLayerFacade: SelectionLayerViewCollection = new SelectionLayerViewCollection(
+        "rbush-debug-selection",
+    )
     modes: InteractionMode[] = []
     activeModeDeterminer: ActiveModeDeterminer
     private lastRenderedValue: ViewerData | null = null
@@ -333,6 +333,27 @@ class ViewFacade {
 
         const subs = new Subscription()
 
+        const context: Context = {
+            searchIntersecting: (rect: Rect) => {
+                return [
+                    ...this.selectionLayerFacade.searchIntersecting(rect),
+                    ...this.mainLayerFacade.searchIntersecting(rect),
+                ].map(el => el.id)
+            },
+            setState: (state: State) => {},
+        }
+        const startState = new TrueIdleState(context)
+        const initialState: ViewerData = {
+            x: 0,
+            y: 0,
+            pressedKeys: [],
+            offset: {
+                offsetX: 0,
+                offsetY: 0,
+            },
+            stateDelegate: startState,
+        }
+
         const viewerData$ = merge(
             this.externalEvents,
             this.mouseDownObservable(),
@@ -345,10 +366,14 @@ class ViewFacade {
                 scan((acc, value, idx) => {
                     if (!value) return acc
                     const [newState, patches] = produceWithPatches(acc, state => {
+                        const viewerDataState = state
+                        context.setState = (state: State) => {
+                            viewerDataState.stateDelegate = state
+                        }
                         this.reduce(state, value, idx)
                     })
                     return newState
-                }, this.initialState),
+                }, initialState),
                 map((state: ViewerData) => {
                     if (!!updateViewerData) {
                         updateViewerData(state)
@@ -362,74 +387,34 @@ class ViewFacade {
                     return caught
                 }),
             )
-            .subscribe(this.viewerData)
+            .subscribe()
 
         subs.add(viewerData$)
         this.disposable = subs
     }
 
     reduce(state: ViewerData, event: ExternalEvent | MouseEventData | KeyEventData, idx: number) {
-        var newKeys: Keys[] = []
         switch (event.type) {
-            case "move":
-                newKeys = state.pressedKeys
-                state.x = event.canvasX
-                state.y = event.canvasY
-                break
+            case "down":
             case "release":
-            case "keyrelease":
-                this.keysChecker.updateKeys(state.pressedKeys, [], [event.button])
-                newKeys = this.keysChecker.getNewKeys()
+                nlog(['debug'], 'mouse button event', event.type)
+                state.stateDelegate.onMouseKeyChange(state, {
+                    key: event.button,
+                    type: event.type,
+                    x: event.canvasX,
+                    y: event.canvasY,
+                })
+                break
+            case "move":
+                nlog(['debug'], 'mouse move')
+                state.stateDelegate.onMouseMove(state, {
+                    x: event.canvasX,
+                    y: event.canvasY,
+                })
                 break
             case "keydown":
-            case "down":
-                this.keysChecker.updateKeys(state.pressedKeys, [event.button], [])
-                newKeys = this.keysChecker.getNewKeys()
+            case "keyrelease":
                 break
-            default: {
-                newKeys = state.pressedKeys
-                break
-            }
-        }
-
-        if (event.type !== "move") {
-            const newMode = this.activeModeDeterminer.determineNewMode(
-                state.currentModeType,
-                state.pressedKeys,
-                this.keysChecker.plusKeysArr(),
-                this.keysChecker.minusKeysArr(),
-            )
-            this.switchModes(state, state.currentModeType, newMode)
-        } else if (event.type === "move" && !!state.currentModeType) {
-            const mode = this.modes.find(el => el.type === state.currentModeType)
-            if (!!mode) {
-                mode.onEvent(state, { type: "mousemove", newX: event.canvasX, newY: event.canvasY })
-            }
-        }
-
-        state.pressedKeys = newKeys
-    }
-
-    private switchModes(
-        state: ViewerData,
-        oldModeType: InteractionModeType | null | undefined,
-        newModeType: InteractionModeType | null | undefined,
-    ) {
-        if (oldModeType !== newModeType) {
-            const mode = this.modes.find(el => el.type === oldModeType)
-            if (!!mode) {
-                mode.onEvent(state, { type: "modeoff" })
-                state.currentModeType = null
-            }
-            if (!!newModeType) {
-                const newMode = this.modes.find(el => el.type === newModeType)
-                if (!!newMode) {
-                    const x = state.x
-                    const y = state.y
-                    state.currentModeType = newModeType
-                    newMode.onEvent(state, { type: "modeactive", x, y })
-                }
-            }
         }
     }
 
@@ -567,7 +552,7 @@ export function EditorV2() {
 
     return (
         <>
-            <div style={{ width: "100%"}}>
+            <div style={{ width: "100%" }}>
                 <div
                     style={{
                         width: "100%",
@@ -604,12 +589,28 @@ export function EditorV2() {
                     </div>
                 </div>
 
-                <div style={{ width: "100%", alignContent: "start", alignItems: "start", justifyContent: "start", textAlign: "start"}}>
+                <div
+                    style={{
+                        width: "100%",
+                        alignContent: "start",
+                        alignItems: "start",
+                        justifyContent: "start",
+                        textAlign: "start",
+                    }}
+                >
                     <h5>Main layer rbush</h5>
                     <pre id="rbush-debug-main" className="json-container"></pre>
                 </div>
 
-                <div style={{ width: "100%", alignContent: "start", alignItems: "start", justifyContent: "start", textAlign: "start"}}>
+                <div
+                    style={{
+                        width: "100%",
+                        alignContent: "start",
+                        alignItems: "start",
+                        justifyContent: "start",
+                        textAlign: "start",
+                    }}
+                >
                     <h5>Selection layer rbush</h5>
                     <pre id="rbush-debug-selection" className="json-container"></pre>
                 </div>

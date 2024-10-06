@@ -1,4 +1,4 @@
-import { EditorState, getClickAreaByPoint, ViewerData } from "./EditorV2"
+import { EditorState, getClickAreaByPoint, log, ViewerData } from "./EditorV2"
 import { ButtonKeys, MouseKeys, Rect } from "./SpaceModel"
 import { RBBox } from "./Views"
 import _ from "lodash"
@@ -20,16 +20,17 @@ interface ButtonUpdate {
     key: ButtonKeys
 }
 
-interface State {
-    type: ViewerData["state"]
-    init(context: Context, state: ViewerData): void
-    onMouseKeyChange(context: Context, state: ViewerData, keyUpdate: MouseButtonUpdate): State
-    onMouseMove(state: ViewerData, update: MouseMoveUpdate): State
+export interface State {
+    type: EditorState
+    context: Context
+    init(state: ViewerData): void
+    onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): void
+    onMouseMove(state: ViewerData, update: MouseMoveUpdate): void
 }
 
-interface Context {
-    // selectViews(views: string[] | null)
+export interface Context {
     searchIntersecting(rect: Rect): string[]
+    setState(state: State): void
 }
 
 class BaseMouseMoveDelegate {
@@ -39,69 +40,76 @@ class BaseMouseMoveDelegate {
     }
 }
 
-class TrueIdleState implements State {
-    type: EditorState = "trueidle"
+abstract class BaseState implements State {
     moveDelegate = new BaseMouseMoveDelegate()
+    context: Context
+    abstract type: EditorState
 
-    onMouseMove(state: ViewerData, update: MouseMoveUpdate): State {
+    constructor(context: Context) {
+        this.context = context
+    }
+
+    abstract init(state: ViewerData): void
+    abstract onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): void
+    updateContextState(newState: State, dataState: ViewerData) {
+        newState.init(dataState)
+        this.context.setState(newState)
+    }
+
+    onMouseMove(state: ViewerData, update: MouseMoveUpdate): void {
         this.moveDelegate.onMouseMove(state, update)
-        return this
+    }
+}
+
+export class TrueIdleState extends BaseState {
+    type: EditorState = "trueidle"
+    constructor(context: Context) {
+        super(context)
+    }
+    init(state: ViewerData): void {
     }
 
-    init(context: Context, state: ViewerData): void {
-        state.state = "trueidle"
-    }
-
-    onMouseKeyChange(context: Context, state: ViewerData, keyUpdate: MouseButtonUpdate): State {
+    onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): void {
         switch (keyUpdate.type) {
             case "release":
                 break
             case "down":
-                {
-                    switch (keyUpdate.key) {
-                        case "left": {
-                            // state.selectorArea = {
-                            //     currentlySelected: [],
-                            //     dragOffsetX: 0,
-                            //     dragOffsetY: 0,
-                            //     state: {
-                            //         type: "idle",
-                            //     },
-                            // }
-                            const itemsPressedAtMain = context.searchIntersecting(
-                                getClickAreaByPoint(keyUpdate.x, keyUpdate.y),
+                switch (keyUpdate.key) {
+                    case "left":
+                        const itemsPressed = this.context.searchIntersecting(
+                            getClickAreaByPoint(keyUpdate.x, keyUpdate.y),
+                        )
+                        if (itemsPressed.length > 0) {
+                            this.updateContextState(
+                                new DragState(this.context, itemsPressed, keyUpdate.x, keyUpdate.y),
+                                state,
                             )
-                            if (itemsPressedAtMain.length > 0) {
-                                return new SelectIdleState(itemsPressedAtMain)
-                            } else {
-                                state.selectorArea.state = {
-                                    type: "selectingarea",
-                                    selectionDrawStartX: keyUpdate.x,
-                                    selectionDrawStartY: keyUpdate.y,
-                                }
-                            }
-                            break
+                        } else if (itemsPressed.length == 0) {
+                            // selecting area mode
+                            this.updateContextState(
+                                new SelectingAreaState(this.context, keyUpdate.x, keyUpdate.y),
+                                state,
+                            )
                         }
-                        case "right":
-                            break
-                    }
+                        break
+                    case "right":
+                        break
                 }
                 break
         }
     }
 }
 
-class SelectIdleState implements State {
+export class SelectIdleState extends BaseState {
     type: EditorState = "selectidle"
     selectedItems: string[]
-    mouseMove = new BaseMouseMoveDelegate()
 
-    constructor(selectedItems: string[]) {
+    constructor(context: Context, selectedItems: string[]) {
+        super(context)
         this.selectedItems = selectedItems
     }
 
-    init(context: Context, state: ViewerData): void {
-        state.state = "selectidle"
+    init(state: ViewerData): void {
         state.selectorArea = {
             currentlySelected: [...this.selectedItems],
             dragOffsetX: 0,
@@ -112,15 +120,17 @@ class SelectIdleState implements State {
         }
     }
 
-    onMouseKeyChange(context: Context, state: ViewerData, keyUpdate: MouseButtonUpdate): State {
+    onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): State {
         const selectorArea = state.selectorArea
         if (!selectorArea) return this
 
         switch (keyUpdate.type) {
             case "down": {
                 switch (keyUpdate.key) {
-                    case "left": {
-                        const itemsPressed = context.searchIntersecting(
+                    case "left":
+                        if (!state.selectorArea) return this
+
+                        const itemsPressed = this.context.searchIntersecting(
                             getClickAreaByPoint(keyUpdate.x, keyUpdate.y),
                         )
                         if (
@@ -134,69 +144,71 @@ class SelectIdleState implements State {
                                 },
                             }
                         } else if (itemsPressed.length == 0) {
-                            // selecting area mode
-                            return new TrueIdleState()
+                            this.updateContextState(
+                                new SelectingAreaState(this.context, keyUpdate.x, keyUpdate.y),
+                                state,
+                            )
                         } else if (
                             itemsPressed.length > 0 &&
                             itemsPressed.some(el => selectorArea.currentlySelected.indexOf(el) > 0)
                         ) {
-                            return new DragState(keyUpdate.x, keyUpdate.y)
+                            this.updateContextState(
+                                new DragState(
+                                    this.context,
+                                    [...state.selectorArea.currentlySelected],
+                                    keyUpdate.x,
+                                    keyUpdate.y,
+                                ),
+                                state,
+                            )
                         }
-                        return this
-                    }
+                        break
                     case "right":
                         break
                 }
                 break
             }
-            case "release": {
-                switch (keyUpdate.key) {
-                    case "left": {
-                        break
-                    }
-                    case "right":
-                        break
-                }
+            case "release":
                 break
-            }
         }
-    }
-
-    onMouseMove(state: ViewerData, update: MouseMoveUpdate): State {
-        this.mouseMove.onMouseMove(state, update)
         return this
     }
 }
 
-class DragState implements State {
+export class DragState extends BaseState {
     type: EditorState = "drag"
-    moveDelegate = new BaseMouseMoveDelegate()
     startX: number
     startY: number
+    selectingItems: string[]
 
-    constructor(startX: number, startY: number) {
+    constructor(context: Context, selectingItems: string[], startX: number, startY: number) {
+        super(context)
         this.startX = startX
         this.startY = startY
+        this.selectingItems = selectingItems
     }
-    init(context: Context, state: ViewerData): void {
-        if (!state.selectorArea?.currentlySelected) return
-        state.selectorArea.state = {
-            type: "dragging",
-            dragStartX: this.startX,
-            dragStartY: this.startY,
+    init(state: ViewerData): void {
+        // if (!state.selectorArea?.currentlySelected) return
+        state.selectorArea = {
+            ...state.selectorArea,
+            currentlySelected: this.selectingItems,
+            state: {
+                type: "dragging",
+                dragStartX: this.startX,
+                dragStartY: this.startY,
+            },
         }
     }
 
-    onMouseMove(state: ViewerData, update: MouseMoveUpdate): State {
-        this.moveDelegate.onMouseMove(state, update)
+    onMouseMove(state: ViewerData, update: MouseMoveUpdate): void {
+        super.onMouseMove(state, update)
         if (state.selectorArea && state.selectorArea.state.type === "dragging") {
             state.selectorArea.dragOffsetX = update.x - state.selectorArea.state.dragStartX
             state.selectorArea.dragOffsetY = update.y - state.selectorArea.state.dragStartY
         }
-        return this
     }
 
-    onMouseKeyChange(context: Context, state: ViewerData, keyUpdate: MouseButtonUpdate): State {
+    onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): void {
         switch (keyUpdate.type) {
             case "down":
                 break
@@ -204,8 +216,14 @@ class DragState implements State {
                 switch (keyUpdate.key) {
                     case "left": {
                         if (state.selectorArea)
-                            return new SelectIdleState(state.selectorArea.currentlySelected)
-                        break;
+                            this.updateContextState(
+                                new SelectIdleState(
+                                    this.context,
+                                    [...state.selectorArea.currentlySelected],
+                                ),
+                                state,
+                            )
+                        break
                     }
                     case "right":
                         break
@@ -213,10 +231,83 @@ class DragState implements State {
                 break
             }
         }
-        return this
     }
 }
 
-class SelectingAreaState implements State {
-    
+export class SelectingAreaState extends BaseState {
+    type: EditorState = "selectarea"
+    startX: number
+    startY: number
+    constructor(context: Context, startX: number, startY: number) {
+        super(context)
+        this.startX = startX
+        this.startY = startY
+    }
+
+    init(state: ViewerData): void {
+        state.selectorArea = {
+            currentlySelected: [],
+            state: {
+                type: "selectingarea",
+                selectionDrawStartX: this.startX,
+                selectionDrawStartY: this.startY,
+            },
+        }
+    }
+
+    onMouseMove(state: ViewerData, update: MouseMoveUpdate): void {
+        super.onMouseMove(state, update)
+        if (!state.selectorArea || state.selectorArea.state.type !== "selectingarea") return
+
+        const leftSelect = Math.min(update.x, state.selectorArea.state.selectionDrawStartX)
+        const rightSelect = Math.max(update.x, state.selectorArea.state.selectionDrawStartX)
+        const topSelect = Math.min(update.y, state.selectorArea.state.selectionDrawStartY)
+        const bottomSelect = Math.max(update.y, state.selectorArea.state.selectionDrawStartY)
+
+        const intersectingItems = this.context.searchIntersecting({
+            left: leftSelect,
+            top: topSelect,
+            right: rightSelect,
+            bottom: bottomSelect,
+        })
+
+        if (!_.isEqual(state.selectorArea.currentlySelected, intersectingItems)) {
+            state.selectorArea.currentlySelected = intersectingItems
+
+            log(`selection area: ${intersectingItems.join(", ")}`, "intersection")
+        }
+    }
+
+    onMouseKeyChange(state: ViewerData, keyUpdate: MouseButtonUpdate): State {
+        switch (keyUpdate.type) {
+            case "release":
+                switch (keyUpdate.key) {
+                    case "left":
+                        if (
+                            !!state.selectorArea &&
+                            state.selectorArea.currentlySelected.length > 0
+                        ) {
+                            this.updateContextState(
+                                new SelectIdleState(
+                                    this.context,
+                                    [...state.selectorArea.currentlySelected],
+                                ),
+                                state
+                            )
+                        } else {
+                            this.updateContextState(
+                                new TrueIdleState(this.context),
+                                state
+                            )
+                        }
+                        break
+                    case "right":
+                        break
+                }
+                break
+            case "down":
+                break
+        }
+        return this
+    }
 }
