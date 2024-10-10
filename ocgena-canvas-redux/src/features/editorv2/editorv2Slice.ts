@@ -1,28 +1,11 @@
 import { PayloadAction } from "@reduxjs/toolkit"
 import { createAppSlice } from "../../app/createAppSlice"
 import {
-    Space,
-    SpaceViewer,
-    Keys,
     MouseKeys,
     ButtonKeys,
-    containsXY,
-    Positionable,
-    leftBorder,
-    rightBorder,
-    topBorder,
-    bottomBorder,
-    Rect,
     Shape,
-    PositionablesIndex,
 } from "./SpaceModel"
-import {
-    compareBottomRight,
-    compareTopLeft,
-    PositionablesPositionIndexImpl,
-} from "./PositionablesIndexImpl"
 import { CombinedPressedKeyChecker } from "./CombinedPressedKeyChecker"
-import { PositionablesRepository } from "./PositionablesMap"
 
 type EditorV2State = {
     positionables: Shape[]
