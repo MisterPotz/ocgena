@@ -41,7 +41,9 @@ export function createFilteringMiddleware(
   return store => next => action => {
     if (isActionWithTypes(action)) {
       if (
-        !exists<ActionFilter>(el => el.shouldFilterAction(action))(actionFilters)
+        !exists<ActionFilter>(el => el.shouldFilterAction(action))(
+          actionFilters,
+        )
       ) {
         return next(action)
       }
@@ -68,11 +70,11 @@ export function createActionFilter(
 }
 
 export function createEmptyPayloadReducer<Payload, State = any>(
-    create: ReducerCreators<State>,
-  ) {
-    return create.reducer((state, action: PayloadAction<Payload>) => {})
-  }
-  
-  export function createEmptyReducer<State>(create: ReducerCreators<State>) {
-    return create.reducer((state, action: Action) => {})
-  }
+  create: ReducerCreators<State>,
+) {
+  return create.reducer((state, action: PayloadAction<Payload>) => {})
+}
+
+export function createEmptyReducer<State>(create: ReducerCreators<State>) {
+  return create.reducer((state, action: Action) => {})
+}
