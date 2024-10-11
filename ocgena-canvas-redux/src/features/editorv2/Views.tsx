@@ -4,6 +4,8 @@ import RBush, { BBox } from "rbush"
 import { Rect } from "./SpaceModel"
 import { nlog } from "./EditorV2"
 import { prettyPrintJson } from "pretty-print-json"
+import { Group } from "konva/lib/Group"
+import { Layer, Rect as KonvaRect, Stage, Group as ReactGroup } from "react-konva"
 
 class ViewRBush extends RBush<View> {
     toBBox(view: View): BBox {
@@ -36,15 +38,12 @@ export type RBBox = {
 }
 
 function dlogbush(debugElementId: string, tree: RBush<unknown>) {
-    document.getElementById(debugElementId)!.innerHTML = prettyPrintJson.toHtml(
-        tree.toJSON(),
-        {
-            indent: 3,
-            trailingCommas: false,
-            quoteKeys: false,
-            lineNumbers: false,
-        },
-    )
+    document.getElementById(debugElementId)!.innerHTML = prettyPrintJson.toHtml(tree.toJSON(), {
+        indent: 3,
+        trailingCommas: false,
+        quoteKeys: false,
+        lineNumbers: false,
+    })
 }
 
 class ViewPositionIndex {
@@ -130,70 +129,6 @@ class ViewPositionIndex {
 
 type KonvaChild = Konva.Group | Konva.Shape
 
-class AttachmentDelegate {
-    nodeGetter: () => KonvaChild | null
-    childrenGetter?: () => View[]
-
-    constructor(nodeGetter: () => KonvaChild | null, childGetter?: () => View[]) {
-        this.nodeGetter = nodeGetter
-        this.childrenGetter = childGetter
-    }
-    layer: Konva.Layer | null = null
-    node: KonvaChild | null = null
-
-    isAttached() {
-        return !!this.layer
-    }
-
-    attach(layer: Konva.Layer) {
-        this.detach()
-        this.node = this.nodeGetter()
-        this.layer = layer
-        if (!!this.node) {
-            layer.add(this.node)
-        }
-        if (!!this.childrenGetter) {
-            const children = this.childrenGetter()
-            this.attachChildren(children)
-        }
-    }
-
-    detach() {
-        if (this.isAttached()) {
-            this.node?.remove()
-            if (!!this.childrenGetter) {
-                this.detachChildren(this.childrenGetter())
-            }
-        }
-        this.node = null
-        this.layer = null
-    }
-
-    addChild(view: View) {
-        this.attachChildren([view])
-    }
-
-    removeChild(view: View) {
-        this.detachChildren([view])
-    }
-
-    attachChildren(views: View[]) {
-        if (!!this.layer) {
-            for (const view of views) {
-                view.attach(this.layer)
-            }
-        }
-    }
-
-    detachChildren(children: View[]) {
-        for (const view of children) {
-            if (view.isAttached()) {
-                view.detach()
-            }
-        }
-    }
-}
-
 class UpdatesDelegate {
     parentGetter: () => ViewParent | null
     view: View
@@ -248,9 +183,7 @@ export class RectangleView implements View {
     x = 0
     y = 0
     id: string
-    node: Konva.Group | null = null
     textNode: Konva.Text | null = null
-    attachedLayerDelegate = new AttachmentDelegate(() => this.getOrCreateNode())
     parent = null
 
     boundBox: RBBox = {
@@ -281,9 +214,12 @@ export class RectangleView implements View {
         this.id = id
         this.recalcBounds()
     }
-    private getOrCreateNode() {
-        if (!!this.node) return this.node
 
+
+    private getOrCreateNode() {
+        return <Group > 
+
+        </Group>
         const nodeGroup = new Konva.Group({
             id: this.id,
             x: this.x,
@@ -313,6 +249,8 @@ export class RectangleView implements View {
         this.node = nodeGroup
         return nodeGroup
     }
+
+
     attach(layer: Konva.Layer): void {
         this.attachedLayerDelegate.attach(layer)
     }
@@ -603,6 +541,9 @@ class BaseLayerViewCollection implements LayerViewCollection {
     }
     searchIntersecting(point: Rect): View[] {
         return this.childIndex.searchIntersecting(point.left, point.top, point.right, point.bottom)
+    }
+    kek(konvaLayer: Layer) {
+        konvaLayer
     }
 }
 

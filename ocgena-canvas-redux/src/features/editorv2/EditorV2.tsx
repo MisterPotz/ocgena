@@ -64,6 +64,30 @@ function isObject(object: Object) {
     return object != null && typeof object === "object"
 }
 
+function selectionAreaXStart(viewerData: ViewerData) {
+    if (viewerData?.selectorArea?.state?.type !== "selectingarea") return
+
+    return Math.min(viewerData.selectorArea.state.selectionDrawStartX, viewerData.x)
+}
+
+function selectionAreaXEnd(viewerData: ViewerData) {
+    if (viewerData?.selectorArea?.state?.type !== "selectingarea") return
+
+    return Math.max(viewerData.selectorArea.state.selectionDrawStartX, viewerData.x)
+}
+
+function selectionAreaYStart(viewerData: ViewerData) {
+    if (viewerData?.selectorArea?.state?.type !== "selectingarea") return
+
+    return Math.min(viewerData.selectorArea.state.selectionDrawStartY, viewerData.y)
+}
+
+function selectionAreaYEnd(viewerData: ViewerData) {
+    if (viewerData?.selectorArea?.state?.type !== "selectingarea") return
+
+    return Math.max(viewerData.selectorArea.state.selectionDrawStartY, viewerData.y)
+}
+
 type SelectingAreaState = {
     selectionDrawStartX: number
     selectionDrawStartY: number
@@ -230,6 +254,12 @@ export function nlog(levels: LogCategories[], message: String, ...others: any[])
     if (allLevels) {
         console.log("[", levels.join(", "), "]", message, ...others)
     }
+    return false
+}
+
+export function dlog(message: String, ...others: any[]) {
+    nlog(["debug"], message, others)
+    return false
 }
 
 export function getClickAreaByPoint(x: number, y: number) {
@@ -365,11 +395,17 @@ class ViewFacade {
             .pipe(
                 scan((acc, value, idx) => {
                     if (!value) return acc
-                    const [newState, patches] = produceWithPatches(acc, state => {
+                    const newState = produce(acc, state => {
                         const viewerDataState = state
                         context.setState = (state: State) => {
-                            nlog(["debug"], "switching state to", state.type)
                             viewerDataState.stateDelegate = state
+                            nlog(
+                                ["debug"],
+                                "switching state to",
+                                state.type,
+                                "currently selected",
+                                viewerDataState.selectorArea?.currentlySelected,
+                            )
                         }
                         this.reduce(state, value, idx)
                     })
@@ -576,7 +612,25 @@ export function EditorV2() {
                                 offsetY={viewerData?.offset?.offsetY ?? 0}
                             />
                             <Layer ref={mainLayer} listening={false} />
-                            <Layer ref={selectionLayer} listening={false} />
+                            <Layer ref={selectionLayer} listening={false}>
+                                
+                                {viewerData?.selectorArea?.state?.type === "selectingarea" && (
+                                    <KonvaRect
+                                        id="selection"
+                                        x={selectionAreaXStart(viewerData)}
+                                        y={selectionAreaYStart(viewerData)}
+                                        width={
+                                            selectionAreaXEnd(viewerData)! -
+                                            selectionAreaXStart(viewerData)!
+                                        }
+                                        height={
+                                            selectionAreaYEnd(viewerData)! -
+                                            selectionAreaYStart(viewerData)!
+                                        }
+                                        stroke={'#239EF4'}
+                                    />
+                                )}
+                            </Layer>
                         </Stage>
                     </div>
                     <div
@@ -616,6 +670,12 @@ export function EditorV2() {
             </div>
         </>
     )
+}
+
+function KonvaDiagram(props : { bBoxes: BlackBox[]}) {
+    return <Layer>
+        {props.bBoxes.map(el => el.createReactNode())}
+    </Layer>=
 }
 
 function PatternBackground(props: { offsetX: number; offsetY: number }) {

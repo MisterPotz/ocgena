@@ -1,4 +1,4 @@
-import { EditorState, getClickAreaByPoint, log, ViewerData } from "./EditorV2"
+import { dlog, EditorState, getClickAreaByPoint, log, nlog, ViewerData } from "./EditorV2"
 import { ButtonKeys, MouseKeys, Rect } from "./SpaceModel"
 import { RBBox } from "./Views"
 import _ from "lodash"
@@ -133,7 +133,6 @@ export class SelectIdleState extends BaseState {
                 switch (keyUpdate.key) {
                     case "left":
                         if (!state.selectorArea) return this
-
                         const itemsPressed = this.context.searchIntersecting(
                             getClickAreaByPoint(keyUpdate.x, keyUpdate.y),
                         )
@@ -154,7 +153,7 @@ export class SelectIdleState extends BaseState {
                             )
                         } else if (
                             itemsPressed.length > 0 &&
-                            itemsPressed.some(el => selectorArea.currentlySelected.indexOf(el) > 0)
+                            itemsPressed.some(el => selectorArea.currentlySelected.indexOf(el) >= 0)
                         ) {
                             this.updateContextState(
                                 new DragState(
@@ -192,7 +191,6 @@ export class DragState extends BaseState {
         this.selectingItems = selectingItems
     }
     init(state: ViewerData): void {
-        // if (!state.selectorArea?.currentlySelected) return
         state.selectorArea = {
             ...state.selectorArea,
             currentlySelected: this.selectingItems,
