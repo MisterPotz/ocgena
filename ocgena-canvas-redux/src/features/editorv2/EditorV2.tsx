@@ -1,6 +1,6 @@
 import Konva from "konva"
-import { useEffect, useRef, useState } from "react"
-import { Layer, Rect as KonvaRect, Stage } from "react-konva"
+import { ReactElement, Ref, useEffect, useRef, useState } from "react"
+import { Layer, Rect as KonvaRect, Stage, Group, KonvaNodeComponent } from "react-konva"
 import { ButtonKeys, Keys, MouseKeys, Shape, Rect } from "./SpaceModel"
 import RBush, { BBox } from "rbush"
 import {
@@ -21,8 +21,15 @@ import { SelectInteractionMode } from "./SelectInteractionMode"
 import { ActiveModeDeterminer } from "./ActiveModeDeterminer"
 import { prettyPrintJson } from "pretty-print-json"
 import _ from "lodash"
-import { LayerViewCollectionDelegate, RectangleView, SelectionLayerViewCollection } from "./Views"
+import {
+    KonvaChild,
+    LayerViewCollectionDelegate,
+    RectangleView,
+    SelectionLayerViewCollection,
+} from "./Views"
 import { Context, State, TrueIdleState } from "./EditorStates"
+import { Group, Group } from "konva/lib/Group"
+import { NodeConfig } from "konva/lib/Node"
 
 function mouseBtnToKey(button: number): MouseKeys | undefined {
     switch (button) {
@@ -613,7 +620,6 @@ export function EditorV2() {
                             />
                             <Layer ref={mainLayer} listening={false} />
                             <Layer ref={selectionLayer} listening={false}>
-                                
                                 {viewerData?.selectorArea?.state?.type === "selectingarea" && (
                                     <KonvaRect
                                         id="selection"
@@ -627,7 +633,7 @@ export function EditorV2() {
                                             selectionAreaYEnd(viewerData)! -
                                             selectionAreaYStart(viewerData)!
                                         }
-                                        stroke={'#239EF4'}
+                                        stroke={"#239EF4"}
                                     />
                                 )}
                             </Layer>
@@ -672,13 +678,9 @@ export function EditorV2() {
     )
 }
 
-function KonvaDiagram(props : { bBoxes: BlackBox[]}) {
-    return <Layer>
-        {props.bBoxes.map(el => el.createReactNode())}
-    </Layer>=
-}
 
-function PatternBackground(props: { offsetX: number; offsetY: number }) {
+
+function PatternBackground(props: { offsetX: number; offsetY: number }) : ReactElement {
     const [patternImage, setPatternImage] = useState(new window.Image())
 
     const { offsetX, offsetY } = props

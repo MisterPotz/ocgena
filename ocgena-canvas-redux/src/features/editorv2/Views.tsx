@@ -2,10 +2,11 @@ import Konva from "konva"
 import _ from "lodash"
 import RBush, { BBox } from "rbush"
 import { Rect } from "./SpaceModel"
-import { nlog } from "./EditorV2"
+import { KonvaElementWrapper, nlog } from "./EditorV2"
 import { prettyPrintJson } from "pretty-print-json"
 import { Group } from "konva/lib/Group"
 import { Layer, Rect as KonvaRect, Stage, Group as ReactGroup } from "react-konva"
+import { ReactElement, Ref, useCallback, useEffect, useImperativeHandle, useRef } from "react"
 
 class ViewRBush extends RBush<View> {
     toBBox(view: View): BBox {
@@ -127,7 +128,7 @@ class ViewPositionIndex {
     }
 }
 
-type KonvaChild = Konva.Group | Konva.Shape
+export type KonvaChild = Konva.Group | Konva.Shape
 
 class UpdatesDelegate {
     parentGetter: () => ViewParent | null
@@ -159,13 +160,9 @@ export interface View {
     x: number
     y: number
     boundBox: RBBox
-    parent: ViewParent | null
 
+    node(): ReactElement
     containsXY: (x: number, y: number) => boolean
-    attach(layer: Konva.Layer): void
-    isAttached(): boolean
-    draw(): void
-    detach(): void
 }
 
 type ViewId = string
@@ -177,14 +174,57 @@ interface ViewGroup extends View {
     removeChild(child: ViewId | View): void
 }
 
+export function KonvaElementWrapper<T = {}>(props: {
+    elementCreator: (ref: Ref<T>) => ReactElement
+    elementDestroyer: (ref: Ref<T>) => void
+    nodeSetupper: (node: any) => void
+}) {
+    const ref = useRef<any | null>(null)
+
+    useImperativeHandle(ref, () => ({
+        get current() {
+            return ref.current
+        },
+    }))
+
+    useEffect(() => {
+        if (ref.current) {
+            const group = ref.current as Konva.Group
+            props.nodeSetupper(group)
+        }
+
+        return () => {
+            props.elementDestroyer(ref)
+        }
+    }, [ref.current, props.elementCreator])
+
+    return props.elementCreator(ref)
+}
+
+// export function KonvaElementWrapper<T = {}>(props: {
+//     elementCreator: (ref: Ref<T>) => ReactElement
+//     elementDestroyer: (ref: Ref<T>) => void
+//     nodeSetupper: (node: any) => void
+// }) {
+//     const ref = useRef<any | null>()
+//     useEffect(() => {
+//         if (!!ref.current) {
+//             props.nodeSetupper(ref.current)
+//         }
+//         return () => {
+//             props.elementDestroyer(ref)
+//         }
+//     }, [ref.current])
+//     return props.elementCreator(ref)
+// }
+
 export class RectangleView implements View {
     private _width: number
     private _height: number
     x = 0
     y = 0
     id: string
-    textNode: Konva.Text | null = null
-    parent = null
+    groupRef: Ref<Group> | null = null
 
     boundBox: RBBox = {
         minX: 0,
@@ -215,53 +255,44 @@ export class RectangleView implements View {
         this.recalcBounds()
     }
 
+    node() {
+        const cb = useCallback(
+            (ref: Ref<Group>) => {
+                this.groupRef = ref
+                return <ReactGroup id={this.id} x={this.x} y={this.y} ref={ref}></ReactGroup>
+            },
+            [this.id, this.x, this.y],
+        )
 
-    private getOrCreateNode() {
-        return <Group > 
-
-        </Group>
-        const nodeGroup = new Konva.Group({
-            id: this.id,
-            x: this.x,
-            y: this.y,
-        })
-
-        const rect = new Konva.Rect({
-            x: 0,
-            y: 0,
-            width: this._width,
-            height: this._height,
-            strokeEnabled: true,
-            stroke: "black",
-            fillEnabled: false,
-        })
-        const text = new Konva.Text({
-            text: this.id,
-            fontSize: 24,
-            ellipsis: true,
-            align: "center",
-            verticalAlign: "middle",
-            wrap: "word",
-        })
-
-        nodeGroup.add(rect)
-        nodeGroup.add(text)
-        this.node = nodeGroup
-        return nodeGroup
-    }
-
-
-    attach(layer: Konva.Layer): void {
-        this.attachedLayerDelegate.attach(layer)
-    }
-    isAttached() {
-        return this.attachedLayerDelegate.isAttached()
-    }
-    draw(): void {
-        this.node?.draw()
-    }
-    detach(): void {
-        this.attachedLayerDelegate.detach()
+        return (
+            <KonvaElementWrapper
+                elementCreator={cb}
+                elementDestroyer={(ref: Ref<Group>) => {
+                    this.groupRef = null
+                }}
+                nodeSetupper={(group: Group) => {
+                    const rect = new Konva.Rect({
+                        x: 0,
+                        y: 0,
+                        width: this._width,
+                        height: this._height,
+                        strokeEnabled: true,
+                        stroke: "black",
+                        fillEnabled: false,
+                    })
+                    const text = new Konva.Text({
+                        text: this.id,
+                        fontSize: 24,
+                        ellipsis: true,
+                        align: "center",
+                        verticalAlign: "middle",
+                        wrap: "word",
+                    })
+                    group.add(rect)
+                    group.add(text)
+                }}
+            />
+        )
     }
     containsXY(x: number, y: number) {
         return this.x <= x && x <= this.x + this._width && this.y <= y && y <= this.y + this._height
